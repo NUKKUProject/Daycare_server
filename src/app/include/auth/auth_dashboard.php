@@ -44,6 +44,13 @@ function isCurrentPage($path)
                             Dashboard
                         </a>
                     </li>
+                     <li class="nav-item">
+                            <a class="nav-link <?php echo isCurrentPage('attendance.php') ? 'active' : ''; ?>"
+                                href="/app/views/teacher/attendance.php">
+                                <i class="bi bi-qr-code-scan" style="font-size: 23px;"></i>
+                                แสกนเช็คชื่อ
+                            </a>
+                        </li>
 
                     <!-- เมนูสำหรับ Admin (แสดงเฉพาะสำหรับ admin) -->
                     <?php if (getUserRole() === 'admin'): ?>

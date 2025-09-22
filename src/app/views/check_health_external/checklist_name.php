@@ -559,7 +559,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                 });
 
                 <?php if (isset($_GET['classroom'])): ?>
-                    classroomSelect.value = '<?php echo $_GET['classroom']; ?>';
+                    classroomSelect.value = <?php echo json_encode($_GET['classroom']); ?>;
                 <?php endif; ?>
             })
             .catch(error => console.error('Error:', error));
@@ -1171,7 +1171,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                         <div class="me-3 flex-grow-1">
                                             <label class="form-label fw-bold">ข้าพเจ้า นพ./พญ.</label>
                                             <?php if ($_SESSION['role'] == 'doctor') { ?>
-                                            <input type="text" name="doctor_name" class="form-control dotted-input measurement-input text-center" placeholder="ชื่อแพทย์/พยาบาล" value="<?php echo getFullName(); ?>" required>
+                                            <input type="text" name="doctor_name" class="form-control dotted-input measurement-input text-center" placeholder="ชื่อแพทย์/พยาบาล" value="<?php echo htmlspecialchars(getFullName(), ENT_QUOTES, 'UTF-8'); ?>" required>
                                                                                     <?php } else { ?>
                                             <input type="text" name="doctor_name" class="form-control dotted-input measurement-input text-center" value="${student.doctor_name || ''}" readonly>
                                            <?php } ?>
@@ -2342,7 +2342,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                         <div class="me-3 flex-grow-1">
                                             <label class="form-label fw-bold">ข้าพเจ้า นพ./พญ.</label>
                                             <?php if ($_SESSION['role'] == 'doctor') { ?>
-                                                <input type="text" name="doctor_name" class="form-control dotted-input measurement-input text-center" placeholder="ชื่อแพทย์/พยาบาล" value="<?php echo getFullName(); ?>" required>
+                                                <input type="text" name="doctor_name" class="form-control dotted-input measurement-input text-center" placeholder="ชื่อแพทย์/พยาบาล" value="<?php echo htmlspecialchars(getFullName(), ENT_QUOTES, 'UTF-8'); ?>" required>
                                                                                         <?php } else { ?>
                                                 <input type="text" name="doctor_name" class="form-control dotted-input measurement-input text-center" value="${studentData.doctor_name || ''}" readonly>
                                            <?php } ?>

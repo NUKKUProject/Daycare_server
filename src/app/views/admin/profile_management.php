@@ -42,7 +42,7 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
             Swal.fire({
                 icon: '<?php echo $status === "success" ? "success" : "error"; ?>',
                 title: '<?php echo $status === "success" ? "สำเร็จ" : "ไม่สำเร็จ"; ?>',
-                text: '<?php echo $message; ?>',
+                text: <?php echo json_encode($message); ?>,
                 confirmButtonText: 'ตกลง'
             }).then(() => {
                 // ลบพารามิเตอร์ status และ message ออกจาก URL
@@ -428,7 +428,7 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
                     });
 
                     <?php if (isset($_GET['classroom'])): ?>
-                        classroomSelect.value = '<?php echo $_GET['classroom']; ?>';
+                        classroomSelect.value = '<?php echo json_encode($_GET['classroom']); ?>';
                     <?php endif; ?>
                 })
                 .catch(error => console.error('Error:', error));
