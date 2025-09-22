@@ -1,0 +1,748 @@
+/* หน้า View Child Styles */
+.profile-container {
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+}
+
+.profile-header {
+    background: linear-gradient(135deg, #26648E 0%, #1E4F6F 100%);
+    padding: 2rem;
+    border-radius: 15px;
+    margin-top: auto;
+    margin-bottom: 1.5rem;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.profile-header h2 {
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Profile Header Content */
+.profile-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.profile-image-small {
+    width: 60px;
+    height: 60px;
+    overflow: hidden;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+}
+
+.profile-image-small img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-info h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.profile-info p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+}
+
+/* Profile Actions */
+.profile-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-icon i {
+    font-size: 1.1rem;
+}
+
+.btn-icon:hover {
+    transform: translateY(-2px);
+}
+
+/* Navigation Tabs */
+.profile-navigation {
+    background: white;
+    padding: 0 1rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.profile-tabs {
+    border: none;
+    gap: 0.5rem;
+    padding: 0.5rem;
+}
+
+.profile-tabs .nav-link {
+    border: none;
+    padding: 0.8rem 1.2rem;
+    color: #495057;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.profile-tabs .nav-link:hover {
+    background: rgba(38, 100, 142, 0.1);
+    color: #26648E;
+}
+
+.profile-tabs .nav-link.active {
+    background: #26648E;
+    color: white;
+}
+
+.profile-tabs .nav-link i {
+    font-size: 1.1rem;
+}
+
+/* Profile Content */
+.profile-content {
+    padding: 2rem;
+}
+
+/* Profile Image Section */
+.profile-image-section {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.profile-image-container {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 1rem;
+    position: relative;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.profile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-upload-btn {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.profile-image-container:hover .image-upload-btn {
+    opacity: 1;
+}
+
+/* Form Styles */
+.form-section {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    color: #26648E;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #26648E;
+    box-shadow: 0 0 0 0.2rem rgba(38, 100, 142, 0.25);
+}
+
+/* Action Buttons */
+.action-buttons {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.action-btn i {
+    font-size: 1.1rem;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Alert Styles */
+.custom-alert {
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: none;
+    background: rgba(38, 100, 142, 0.1);
+    color: #26648E;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .profile-header {
+        padding: 1.5rem;
+        margin-top: auto;
+    }
+
+    .profile-header-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .profile-actions {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .profile-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+    }
+
+    .profile-tabs .nav-link {
+        white-space: nowrap;
+    }
+}
+
+/* QR Code Modal Styles */
+#qrCodeModal .modal-content {
+    border: none;
+    border-radius: 15px;
+}
+
+#qrCodeModal .modal-header {
+    background: #26648E;
+    color: white;
+    border-radius: 15px 15px 0 0;
+    padding: 1rem 1.5rem;
+}
+
+#qrCodeModal .modal-title {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+}
+
+#qrCodeModal .modal-body {
+    padding: 2rem;
+}
+
+#qrCodeImage {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+#qrCodeImage img {
+    border: 8px solid white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+
+.qr-student-info {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 10px;
+    margin-top: 1rem;
+}
+
+.qr-student-info h6 {
+    color: #26648E;
+    font-weight: 600;
+}
+
+.qr-student-info p {
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+#qrCodeModal .modal-footer {
+    border-top: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+#qrCodeModal .btn-primary {
+    background: #26648E;
+    border: none;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#qrCodeModal .btn-primary:hover {
+    background: #1E4F6F;
+    transform: translateY(-2px);
+}
+
+#qrCodeModal .btn-secondary {
+    background: #e9ecef;
+    border: none;
+    color: #495057;
+}
+
+#qrCodeModal .btn-secondary:hover {
+    background: #dee2e6;
+}
+
+/* Animation for Modal */
+.modal.fade .modal-dialog {
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+}
+
+.modal.show .modal-dialog {
+    transform: scale(1);
+}
+
+/* Override Nav Tabs for Profile Page */
+.profile-tabs.nav-tabs .nav-link.active {
+    color: #26648E;
+    background: white;
+    border-bottom: 3px solid #26648E;
+}
+
+/* Tab Content Styles */
+.tab-content {
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+    margin-top: 1rem;
+}
+
+/* Card Styles in Tabs */
+.tab-content .card {
+    border: none;
+    box-shadow: none;
+    margin-bottom: 0;
+}
+
+.tab-content .card-body {
+    padding: 2rem;
+}
+
+/* Table Styles */
+.table-responsive {
+    padding: 0.5rem;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background: #f8f9fa;
+    color: #26648E;
+    font-weight: 600;
+    border-bottom: 2px solid #e9ecef;
+    padding: 1rem;
+}
+
+.table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(38, 100, 142, 0.05);
+}
+
+/* Button Styles in Tables */
+.table .btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    border-radius: 6px;
+}
+
+.table .btn-info {
+    background-color: rgba(38, 100, 142, 0.1);
+    color: #26648E;
+    border: none;
+}
+
+.table .btn-info:hover {
+    background-color: rgba(38, 100, 142, 0.2);
+}
+
+.table .btn-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    border: none;
+}
+
+.table .btn-warning:hover {
+    background-color: rgba(255, 193, 7, 0.2);
+}
+
+.table .btn-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: none;
+}
+
+.table .btn-danger:hover {
+    background-color: rgba(220, 53, 69, 0.2);
+}
+
+/* Options Section */
+.options {
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.options .btn-primary {
+    background: #26648E;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.options .btn-primary:hover {
+    background: #1E4F6F;
+    transform: translateY(-2px);
+}
+
+/* Alert Styles */
+.alert-info {
+    background-color: rgba(38, 100, 142, 0.1);
+    border: 1px solid rgba(38, 100, 142, 0.2);
+    color: #26648E;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* Modal Styles for Vaccine/Health Records */
+.modal .modal-content {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.modal .modal-header {
+    background: #26648E;
+    color: white;
+    border: none;
+    padding: 1.5rem;
+}
+
+.modal .modal-body {
+    padding: 2rem;
+}
+
+.modal .form-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.modal .form-control,
+.modal .form-select {
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    padding: 0.6rem 1rem;
+}
+
+.modal .form-control:focus,
+.modal .form-select:focus {
+    border-color: #26648E;
+    box-shadow: 0 0 0 0.2rem rgba(38, 100, 142, 0.15);
+}
+
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .tab-content .card-body {
+        padding: 1rem;
+    }
+
+    .table-responsive {
+        padding: 0;
+    }
+
+    .options {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .options .btn {
+        width: 100%;
+    }
+
+    .modal .modal-body {
+        padding: 1rem;
+    }
+}
+
+/* Modal Styles */
+.modal-dialog {
+    max-width: 800px;
+}
+
+.modal-content {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #26648E 0%, #1E4F6F 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    border: none;
+    border-radius: 15px 15px 0 0;
+    align-items: center;
+}
+
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal-title i {
+    font-size: 1.4rem;
+}
+
+.modal-body {
+    padding: 2rem;
+    background: #fff;
+}
+
+/* Form Groups in Modal */
+.modal .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.modal .form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.modal .form-control,
+.modal .form-select {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.modal .form-control:focus,
+.modal .form-select:focus {
+    border-color: #26648E;
+    box-shadow: 0 0 0 0.2rem rgba(38, 100, 142, 0.15);
+}
+
+/* Date Input Specific Styles */
+.modal input[type="date"] {
+    min-height: 42px;
+}
+
+/* Checkbox and Radio Styles */
+.modal .form-check {
+    padding-left: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.modal .form-check-input {
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-left: -1.8rem;
+    margin-top: 0.2rem;
+}
+
+.modal .form-check-input:checked {
+    background-color: #26648E;
+    border-color: #26648E;
+}
+
+/* Modal Footer */
+.modal-footer {
+    padding: 1.5rem 2rem;
+    border-top: 1px solid #e9ecef;
+    background: #f8f9fa;
+    border-radius: 0 0 15px 15px;
+}
+
+/* Modal Buttons */
+.modal .btn {
+    padding: 0.6rem 1.5rem;
+    font-weight: 500;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.modal .btn-primary {
+    background: #26648E;
+    border: none;
+}
+
+.modal .btn-primary:hover {
+    background: #1E4F6F;
+    transform: translateY(-2px);
+}
+
+.modal .btn-secondary {
+    background: #e9ecef;
+    border: none;
+    color: #495057;
+}
+
+.modal .btn-secondary:hover {
+    background: #dee2e6;
+    color: #212529;
+}
+
+/* Additional Input Styles */
+.modal .input-group {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.modal .input-group-text {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    color: #495057;
+    padding: 0.75rem 1rem;
+}
+
+/* Textarea Styles */
+.modal textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Modal Animation */
+.modal.fade .modal-dialog {
+    transform: scale(0.95);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.modal.show .modal-dialog {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .modal-header {
+        padding: 1rem 1.5rem;
+    }
+    
+    .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .modal-footer {
+        padding: 1rem 1.5rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .modal .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .modal-title {
+        font-size: 1.1rem;
+    }
+}
+
+/* Modal Backdrop */
+.modal-backdrop.show {
+    opacity: 0.7;
+}
+
+/* Modal Close Button */
+.modal .btn-close {
+    color: white;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.modal .btn-close:hover {
+    opacity: 1;
+    transform: rotate(90deg);
+}
+
+/* Modal Form Validation Styles */
+.modal .was-validated .form-control:valid,
+.modal .form-control.is-valid {
+    border-color: #198754;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+}
+
+.modal .was-validated .form-control:invalid,
+.modal .form-control.is-invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+}

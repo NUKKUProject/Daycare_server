@@ -1,0 +1,19 @@
+DirectoryIndex index.php
+
+RewriteEngine On
+RewriteBase /Daycare_system/project_kku/
+
+# รีไรต์คำขอที่ไม่มีไฟล์เฉพาะเจาะจงไปยัง index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# ป้องกันการเข้าถึงไฟล์ .env และไฟล์คอนฟิกอื่นๆ
+<FilesMatch "\.(env|ini|log|bak)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+Header set Access-Control-Allow-Origin "*"
+Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+Header set Access-Control-Allow-Headers "Content-Type, Authorization"

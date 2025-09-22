@@ -1,0 +1,30 @@
+/* สร้างไฟล์ใหม่สำหรับ Common Styles */
+/* Button Base Styles */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-icon i {
+    font-size: 1.1rem;
+}
+
+/* Navigation Tabs Base */
+.nav-tabs {
+    border: none;
+    margin-bottom: 2rem;
+    gap: 0.5rem;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+} 

@@ -1,0 +1,28 @@
+FROM php:8-fpm
+
+LABEL Author="PRATCHAYAPOL <pratchayapol.ja@rmuti.ac.th>" version="latest" org.opencontainers.image.authors="pratchayapol.ja@rmuti.ac.th"
+
+# คัดลอกไฟล์โปรเจกต์ไปยังคอนเทนเนอร์
+COPY . /var/www/html
+
+# ติดตั้ง dependencies และ extensions
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    libjpeg-dev \
+    libpng-dev \
+    zip \
+    libzip-dev \
+    && docker-php-ext-install zip \
+    && docker-php-ext-install pdo pdo_mysql pdo_pgsql pgsql mysqli \
+    && docker-php-ext-configure gd --with-jpeg \
+    && docker-php-ext-install -j$(nproc) gd \
+    && rm -rf /var/lib/apt/lists/*
+
+# เปิดใช้งาน extensions
+RUN docker-php-ext-enable pdo_mysql pdo_pgsql mysqli
+
+# ตั้งสิทธิ์ให้กับ /var/www/html
+RUN chmod -R 755 /var/www/html
+
+# ตั้งค่า Working Directory
+WORKDIR /var/www/html

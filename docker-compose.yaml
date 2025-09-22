@@ -1,0 +1,75 @@
+version: '3.9'
+services:
+  web8:
+    build:
+      context: .
+      dockerfile: ./web8/Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - data2:/var/www/html
+      - ./src:/var/www/html
+      - ./default.conf/default.conf:/etc/nginx/conf.d/default.conf
+      - ./default.conf/nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      daycare_network:
+        ipv4_address: 192.168.159.2
+    restart: unless-stopped
+
+  php8:
+    build:
+      context: .
+      dockerfile: ./php8/Dockerfile
+    volumes:
+      - ./src:/var/www/html
+    networks:
+      daycare_network:
+        ipv4_address: 192.168.159.3
+    restart: unless-stopped
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    networks:
+      daycare_network:
+        ipv4_address: 192.168.159.4
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: nu_daycare
+    networks:
+      daycare_network:
+        ipv4_address: 192.168.159.5
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+networks:
+  daycare_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.159.0/24
+
+volumes:
+  data2:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/var/www/html'
+  postgres_data:
+    driver: local

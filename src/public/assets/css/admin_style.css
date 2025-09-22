@@ -1,0 +1,42 @@
+.nav-tabs .nav-link {
+    color: #495057;
+    border: none;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-tabs .nav-link.active {
+    color: #26648E;
+    border-bottom: 2px solid #26648E;
+    background: none;
+}
+
+.nav-pills .nav-link {
+    color: #495057;
+    border-radius: 20px;
+    padding: 8px 20px;
+    margin: 0 5px;
+}
+
+.nav-pills .nav-link.active {
+    background-color: #26648E;
+    color: white;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-title {
+    font-weight: 600;
+}
+
+canvas {
+    max-height: 300px;
+}

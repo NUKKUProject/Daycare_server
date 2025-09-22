@@ -1,0 +1,13 @@
+คำสั่งยอมให้อัพไฟล์ภาพลง part
+docker exec -it kku_nu_checklist-web-1 /bin/bash
+chmod -R 777 /var/www/html
+
+
+ลบโฟลเดอร์ mysql_backup
+sudo rm -r mysql_backup
+
+สร้าง mysql_backup
+mkdir mysql_backup
+
+ให้สิทธิ์ shell
+chmod +x mysql_backup

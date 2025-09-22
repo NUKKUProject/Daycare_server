@@ -1,0 +1,456 @@
+%!Adobe-FontList 1.23
+%Locale:0x409
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:AngsanaNew
+FamilyName:Angsana New
+StyleName:Regular
+FullName:Angsana New
+MenuName:Angsana New
+StyleBits:0
+WritingScript:Thai
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\angsana.ttc
+TTCOffset:56
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:409040
+FileModTime:1571121960
+WeightClass:400
+WidthClass:5
+AngleClass:0
+NameArray:0,Mac,4,Angsana New
+NameArray:0,Win,1,Angsana New
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:AngsanaNew-Bold
+FamilyName:Angsana New
+StyleName:Bold
+FullName:Angsana New Bold
+MenuName:Angsana New
+StyleBits:2
+WritingScript:Thai
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\angsana.ttc
+TTCOffset:404
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:409040
+FileModTime:1571121960
+WeightClass:700
+WidthClass:5
+AngleClass:0
+NameArray:0,Mac,4,Angsana New Bold
+NameArray:0,Win,1,Angsana New
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:AngsanaNew-BoldItalic
+FamilyName:Angsana New
+StyleName:Bold Italic
+FullName:Angsana New Bold Italic
+MenuName:Angsana New
+StyleBits:3
+WritingScript:Thai
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\angsana.ttc
+TTCOffset:752
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:409040
+FileModTime:1571121960
+WeightClass:700
+WidthClass:5
+AngleClass:1
+NameArray:0,Mac,4,Angsana New Bold Italic
+NameArray:0,Win,1,Angsana New
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:AngsanaNew-Italic
+FamilyName:Angsana New
+StyleName:Italic
+FullName:Angsana New Italic
+MenuName:Angsana New
+StyleBits:1
+WritingScript:Thai
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\angsana.ttc
+TTCOffset:1100
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:409040
+FileModTime:1571121960
+WeightClass:400
+WidthClass:5
+AngleClass:1
+NameArray:0,Mac,4,Angsana New Italic
+NameArray:0,Win,1,Angsana New
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:AngsanaUPC
+FamilyName:AngsanaUPC
+StyleName:Regular
+FullName:AngsanaUPC
+MenuName:AngsanaUPC
+StyleBits:0
+WritingScript:Thai
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\angsana.ttc
+TTCOffset:1448
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:409040
+FileModTime:1571121960
+WeightClass:400
+WidthClass:5
+AngleClass:0
+NameArray:0,Mac,4,AngsanaUPC
+NameArray:0,Win,1,AngsanaUPC
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:AngsanaUPC-Bold
+FamilyName:AngsanaUPC
+StyleName:Bold
+FullName:AngsanaUPC Bold
+MenuName:AngsanaUPC
+StyleBits:2
+WritingScript:Thai
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\angsana.ttc
+TTCOffset:1796
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:409040
+FileModTime:1571121960
+WeightClass:700
+WidthClass:5
+AngleClass:0
+NameArray:0,Mac,4,AngsanaUPC Bold
+NameArray:0,Win,1,AngsanaUPC
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:AngsanaUPC-BoldItalic
+FamilyName:AngsanaUPC
+StyleName:Bold Italic
+FullName:AngsanaUPC Bold Italic
+MenuName:AngsanaUPC
+StyleBits:3
+WritingScript:Thai
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\angsana.ttc
+TTCOffset:2144
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:409040
+FileModTime:1571121960
+WeightClass:700
+WidthClass:5
+AngleClass:1
+NameArray:0,Mac,4,AngsanaUPC Bold Italic
+NameArray:0,Win,1,AngsanaUPC
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:AngsanaUPC-Italic
+FamilyName:AngsanaUPC
+StyleName:Italic
+FullName:AngsanaUPC Italic
+MenuName:AngsanaUPC
+StyleBits:1
+WritingScript:Thai
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\angsana.ttc
+TTCOffset:2492
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:409040
+FileModTime:1571121960
+WeightClass:400
+WidthClass:5
+AngleClass:1
+NameArray:0,Mac,4,AngsanaUPC Italic
+NameArray:0,Win,1,AngsanaUPC
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\THSarabun Bold Italic.php
+FileModTime:1665165119
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:THSarabunPSK-BoldItalic
+FamilyName:TH SarabunPSK
+StyleName:Bold Italic
+FullName:TH SarabunPSK Bold Italic
+MenuName:TH SarabunPSK
+StyleBits:3
+WritingScript:Roman
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\THSarabun Bold Italic.ttf
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:117644
+FileModTime:1159747920
+WeightClass:700
+WidthClass:5
+AngleClass:0
+NameArray:0,Mac,18,TH SarabunPSK Bold Italic
+NameArray:0,Mac,4,TH SarabunPSK Bold Italic
+NameArray:0,Win,1,TH SarabunPSK
+NameArray:0,Win,16,TH SarabunPSK
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\THSarabun Bold Italic.z
+FileModTime:1665165119
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\THSarabun Bold.php
+FileModTime:1665165119
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:THSarabunPSK-Bold
+FamilyName:TH SarabunPSK
+StyleName:Bold
+FullName:TH SarabunPSK Bold
+MenuName:TH SarabunPSK
+StyleBits:2
+WritingScript:Roman
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\THSarabun Bold.ttf
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:118964
+FileModTime:1159747860
+WeightClass:700
+WidthClass:5
+AngleClass:0
+NameArray:0,Mac,18,TH SarabunPSK Bold
+NameArray:0,Mac,4,TH SarabunPSK Bold
+NameArray:0,Win,1,TH SarabunPSK
+NameArray:0,Win,16,TH SarabunPSK
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\THSarabun Bold.z
+FileModTime:1665165119
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\THSarabun Italic.php
+FileModTime:1665165119
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:THSarabunPSK-Italic
+FamilyName:TH SarabunPSK
+StyleName:Italic
+FullName:TH SarabunPSK Italic
+MenuName:TH SarabunPSK
+StyleBits:1
+WritingScript:Roman
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\THSarabun Italic.ttf
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:104352
+FileModTime:1159747920
+WeightClass:400
+WidthClass:5
+AngleClass:0
+NameArray:0,Mac,18,TH SarabunPSK Italic
+NameArray:0,Mac,4,TH SarabunPSK Italic
+NameArray:0,Win,1,TH SarabunPSK
+NameArray:0,Win,16,TH SarabunPSK
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\THSarabun Italic.z
+FileModTime:1665165119
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\THSarabun.php
+FileModTime:1665165119
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:THSarabunPSK
+FamilyName:TH SarabunPSK
+StyleName:Regular
+FullName:TH SarabunPSK
+MenuName:TH SarabunPSK
+StyleBits:0
+WritingScript:Roman
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\THSarabun.ttf
+DataFormat:sfntData
+hasSVG:no
+VariableFontType:NonVariableFont
+FileLength:99980
+FileModTime:1159747860
+WeightClass:400
+WidthClass:5
+AngleClass:0
+NameArray:0,Mac,18,TH SarabunPSK
+NameArray:0,Mac,4,TH SarabunPSK
+NameArray:0,Win,1,TH SarabunPSK
+NameArray:0,Win,16,TH SarabunPSK
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\THSarabun.z
+FileModTime:1665165119
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\courier.php
+FileModTime:1442639702
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\courierb.php
+FileModTime:1442639702
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\courierbi.php
+FileModTime:1442639702
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\courieri.php
+FileModTime:1442639702
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\helvetica.php
+FileModTime:1442639702
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\helveticab.php
+FileModTime:1442639702
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\helveticabi.php
+FileModTime:1442639702
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\helveticai.php
+FileModTime:1442639702
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\index.php
+FileModTime:1665165118
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\symbol.php
+FileModTime:1442639702
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\times.php
+FileModTime:1442639702
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\timesb.php
+FileModTime:1442639702
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\timesbi.php
+FileModTime:1442639702
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\timesi.php
+FileModTime:1442639702
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Invalid
+OutlineFileName:C:\xampp\htdocs\pars\PDF\Font\zapfdingbats.php
+FileModTime:1442639702
+%EndFont
+

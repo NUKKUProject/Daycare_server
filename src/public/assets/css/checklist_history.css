@@ -1,0 +1,435 @@
+/* Checklist History Page Styles */
+.checklist-container {
+    padding: 2rem;
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+}
+
+/* Search Form */
+.search-card {
+    background: #f8f9fa;
+    border: none;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.search-card .card-body {
+    padding: 1.5rem;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-select, .form-control {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: #26648E;
+    box-shadow: 0 0 0 0.2rem rgba(38, 100, 142, 0.15);
+}
+
+/* Search Buttons */
+.search-buttons {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1rem;
+}
+
+.btn-search {
+    background: #26648E;
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-search:hover {
+    background: #1E4F6F;
+    transform: translateY(-2px);
+}
+
+.btn-reset {
+    background: #e9ecef;
+    color: #495057;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-reset:hover {
+    background: #dee2e6;
+    color: #212529;
+}
+
+/* Results Table */
+.results-card {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead {
+    background: #26648E;
+}
+
+.table thead th {
+    color: white;
+    font-weight: 500;
+    padding: 1rem;
+    border: none;
+}
+
+.table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(38, 100, 142, 0.05);
+}
+
+/* Status Badges */
+.health-status {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.status-normal {
+    background-color: rgba(25, 135, 84, 0.1);
+    color: #198754;
+}
+
+.status-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.status-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-view {
+    background-color: rgba(38, 100, 142, 0.1);
+    color: #26648E;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: all 0.2s ease;
+}
+
+.btn-view:hover {
+    background-color: rgba(38, 100, 142, 0.2);
+    transform: translateY(-2px);
+}
+
+.btn-edit {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.btn-edit:hover {
+    background-color: rgba(255, 193, 7, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .checklist-container {
+        padding: 1rem;
+    }
+
+    .search-buttons {
+        flex-direction: column;
+    }
+
+    .search-buttons .btn {
+        width: 100%;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .action-buttons .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .table-responsive {
+        margin: 0 -1rem;
+    }
+}
+
+/* Health Detail Modal */
+.health-detail-modal {
+    max-width: 800px;
+}
+
+.health-detail-modal .modal-header {
+    background: linear-gradient(135deg, #26648E 0%, #1E4F6F 100%);
+    color: white;
+    border: none;
+}
+
+.health-detail-modal .modal-body {
+    padding: 2rem;
+}
+
+.health-detail-modal h5 {
+    color: #26648E;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.health-detail-modal .detail-section {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.health-detail-modal .detail-label {
+    font-weight: 500;
+    color: #495057;
+    min-width: 120px;
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .table thead th {
+        background: #f8f9fa !important;
+        color: #212529 !important;
+    }
+
+    .health-status {
+        border: 1px solid;
+    }
+}
+
+/* เพิ่ม style สำหรับ modal รายละเอียด */
+.swal2-popup {
+    padding: 2rem;
+    font-family: 'Sarabun', sans-serif;
+}
+
+.swal2-html-container {
+    margin: 1rem 0;
+}
+
+/* ส่วนข้อมูลทั่วไป */
+.student-info {
+    background: linear-gradient(135deg, #26648E 0%, #1F4E6E 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.student-info p {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.student-info strong {
+    display: inline-block;
+    min-width: 120px;
+}
+
+/* ส่วนผลการตรวจ */
+.health-check-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.health-check-section h5 {
+    color: #26648E;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.check-item {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.check-item-title {
+    color: #26648E;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.check-item-title i {
+    font-size: 1.1rem;
+}
+
+.check-details {
+    padding-left: 1.5rem;
+}
+
+.check-details ul {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0.5rem;
+}
+
+.check-details li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
+}
+
+.check-details li:before {
+    content: "•";
+    color: #26648E;
+}
+
+.check-note {
+    font-style: italic;
+    color: #6c757d;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* สถานะการตรวจ */
+.check-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.status-normal {
+    background-color: rgba(25, 135, 84, 0.1);
+    color: #198754;
+}
+
+.status-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.status-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+/* บันทึกเพิ่มเติม */
+.additional-notes {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.additional-notes h5 {
+    color: #26648E;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.note-item {
+    margin-bottom: 1rem;
+}
+
+.note-item:last-child {
+    margin-bottom: 0;
+}
+
+.note-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.3rem;
+}
+
+.note-content {
+    padding: 0.8rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    color: #212529;
+}
+
+.teacher-signature {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed #dee2e6;
+    text-align: right;
+    font-style: italic;
+    color: #6c757d;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .student-info {
+        padding: 1rem;
+    }
+
+    .student-info strong {
+        min-width: 100px;
+    }
+
+    .health-check-section {
+        padding: 1rem;
+    }
+
+    .check-item {
+        padding: 0.8rem;
+    }
+} 
