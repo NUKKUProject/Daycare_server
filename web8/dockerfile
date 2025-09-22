@@ -1,4 +1,4 @@
-FROM nginx:latest
+FROM nginx:1.29.1-alpine3.22-slim
 
 LABEL Author="PRATCHAYAPOL <pratchayapol.ja@rmuti.ac.th>" version="latest" org.opencontainers.image.authors="pratchayapol.ja@rmuti.ac.th"
 
