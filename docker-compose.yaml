@@ -5,7 +5,6 @@ services:
       context: .
       dockerfile: ./web8/Dockerfile
     ports:
-      - "80:80"
       - "443:443"
     volumes:
       - data2:/var/www/html
