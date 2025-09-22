@@ -1,12 +1,12 @@
 <?php 
-// โยนหน้าเว็บไปยังไฟล์ index.php
-// header("Location: ./app/views/login.php");
-// exit();
+//โยนหน้าเว็บไปยังไฟล์ index.php
+header("Location: ./app/views/login.php");
+exit();
 
 
 
 ?>
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -258,4 +258,4 @@
         updateCountdown(); // Initial call
     </script>
 </body>
-</html>
+</html> -->
