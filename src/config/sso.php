@@ -8,7 +8,6 @@ function verifySSO($token) {
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['token' => $token]));
     
     $response = curl_exec($ch);
-    curl_close($ch);
     
     return json_decode($response, true);
 }

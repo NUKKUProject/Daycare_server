@@ -33,7 +33,7 @@ curl_setopt_array($curl, array(
 ));
 
 $responseReq = curl_exec($curl);
-curl_close($curl);
+
 
 $dataReq = json_decode($responseReq, true);
 $access_token = $dataReq['accessToken'];
@@ -57,7 +57,7 @@ curl_setopt_array($curl, array(
 ));
 
 $response = curl_exec($curl);
-curl_close($curl);
+
 
 // แปลง JSON เป็นอาร์เรย์ใน PHP
 $data = json_decode($response, true);
