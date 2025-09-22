@@ -6,9 +6,9 @@ LABEL Author="PRATCHAYAPOL <pratchayapol.ja@rmuti.ac.th>" version="latest" org.o
 COPY . /var/www/html
 
 # ติดตั้ง dependencies และ extensions
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    libjpeg-dev \
+RUN apk update && apk add --no-cache \
+    postgresql-dev \
+    libjpeg-turbo-dev \
     libpng-dev \
     zip \
     libzip-dev \
@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo pdo_mysql pdo_pgsql pgsql mysqli \
     && docker-php-ext-configure gd --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/cache/apk/*
 
 # เปิดใช้งาน extensions
 RUN docker-php-ext-enable pdo_mysql pdo_pgsql mysqli
