@@ -27,10 +27,10 @@ if ($_SESSION['user_id'] != $id) {
 try {
     $pdo = getDatabaseConnection();
     if ($role === 'doctor') {
-        $update_stmt = $pdo->prepare("UPDATE doctors_user SET username = ? WHERE id = ?");
+        $update_stmt = $pdo->prepare("UPDATE doctors_user SET username = ? WHERE user_id = ?");
         $update_stmt->execute([$name, $id]);
         //ดึงข้อมูล user_id จาก doctors_user
-        $stmt = $pdo->prepare("SELECT user_id FROM doctors_user WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT user_id FROM doctors_user WHERE user_id = ?");
         $stmt->execute([$id]);
         $doctor = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($doctor) {
