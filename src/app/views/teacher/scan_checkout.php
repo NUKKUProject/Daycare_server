@@ -22,6 +22,7 @@ $data = getChildrenGroupedByTab($currentTab);
 /* Scanner Section */
 #scanner-container {
         display: flex;
+        flex-direction: column;
         justify-content: space-between;
         align-items: center;
         gap: 20px;
@@ -36,8 +37,8 @@ $data = getChildrenGroupedByTab($currentTab);
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 50%;
-        min-height: 300px;
+        width: 100%;
+        min-height: 250px;
         /* กำหนดความสูงขั้นต่ำ */
         border-radius: 10px;
         overflow: hidden;
@@ -219,7 +220,8 @@ tbody tr:hover {
 }
 
 /* Responsive Design */
-/* Responsive Design */
+   
+    /* Responsive Design */
     @media (max-width: 480px) {
         #scanner-container {
             flex-direction: column;
@@ -244,7 +246,7 @@ tbody tr:hover {
         }
 
         #video-container {
-            width: 90%;
+            width: 100%;
             min-height: 320px;
         }
 
@@ -270,26 +272,25 @@ tbody tr:hover {
 
     @media (min-width: 1025px) {
         #video-container {
-            width: 50%;
-            min-height: 400px;
+            width: 40%;
+            min-height: 250px;
         }
 
         #reader {
-            min-height: 400px !important;
+            min-height: 250px !important;
         }
     }
 
     @media (min-width: 1440px) {
         #video-container {
             width: 45%;
-            min-height: 450px;
+            min-height: 250px;
         }
 
         #reader {
-            min-height: 450px !important;
+            min-height: 250px !important;
         }
     }
-
 </style>
 
 <body>
@@ -424,8 +425,7 @@ tbody tr:hover {
                     <?php endforeach; ?>
                 </div>
             <?php endforeach; ?>
-        </div>
-     
+        </div>   
     </main>
     <!-- script สำหรับแสกน qrcode เช็คชื่อ -->
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -766,9 +766,7 @@ tbody tr:hover {
         // เรียก updateAttendanceTable() ทันทีที่ DOM โหลดเสร็จ
         document.addEventListener('DOMContentLoaded', () => {
             updateAttendanceTable(); // โหลดข้อมูลการเช็คชื่อเมื่อหน้าโหลดเสร็จ
-            updateChildrenTable();   // โหลดข้อมูลทันทีเมื่อหน้าโหลดเสร็จ
-            // ตั้ง interval ให้ดึงข้อมูลซ้ำทุก 3 วินาที
-            setInterval(updateChildrenTable, 3000);
+            setInterval(updateAttendanceTable, 3000);
         });
 
         

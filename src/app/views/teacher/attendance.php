@@ -21,6 +21,7 @@ $data = getChildrenGroupedByTab($currentTab);
 
     #scanner-container {
         display: flex;
+        flex-direction: column;
         justify-content: space-between;
         align-items: center;
         gap: 20px;
@@ -179,7 +180,7 @@ $data = getChildrenGroupedByTab($currentTab);
         }
 
         #video-container {
-            width: 90%;
+            width: 100%;
             min-height: 320px;
         }
 
@@ -205,27 +206,25 @@ $data = getChildrenGroupedByTab($currentTab);
 
     @media (min-width: 1025px) {
         #video-container {
-            width: 50%;
-            min-height: 400px;
+            width: 40%;
+            min-height: 250px;
         }
 
         #reader {
-            min-height: 400px !important;
+            min-height: 250px !important;
         }
     }
 
     @media (min-width: 1440px) {
         #video-container {
             width: 45%;
-            min-height: 450px;
+            min-height: 250px;
         }
 
         #reader {
-            min-height: 450px !important;
+            min-height: 250px !important;
         }
     }
-
-    /* Responsive Design */
 
 
     /* Student Section Styles */

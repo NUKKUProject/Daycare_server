@@ -164,17 +164,25 @@
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebarMenu');
         const mainContent = document.querySelector('.main-content'); // ใช้ querySelector
+        
 
         if (window.innerWidth >= 1024) {
             // Desktop
             if (sidebar.classList.contains('sidebar-open')) {
                 sidebar.classList.remove('sidebar-open');
                 sidebar.classList.add('sidebar-closed');
+                //ถ้าใช้ qr-scanner ต้องมีการปรับขนาด
+                if (typeof updateQrScannerSize === 'function'){
+                    setTimeout(updateQrScannerSize, 500);
+                }
 
+                
+                
                 // ใช้ class ของ Bootstrap 5
                 mainContent.classList.remove('ms-lg-6'); // หรือ ms-5
                 mainContent.classList.add('ms-0');
             } else {
+
                 sidebar.classList.remove('sidebar-closed');
                 sidebar.classList.add('sidebar-open');
 
@@ -187,7 +195,7 @@
                 sidebar.classList.remove('mobile-open', 'show');
 
             } else {
-                console.log('2');
+                
                 sidebar.classList.add('mobile-open', 'show');
 
             }
