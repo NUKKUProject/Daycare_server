@@ -52,7 +52,7 @@ if (isset($_SESSION['user_id'])) {
                 <div class="col-md-3">
                     <label for="date" class="form-label">วันที่</label>
                     <input type="date" class="form-control" id="date" name="date"
-                        value="<?php echo isset($_GET['date']) ? $_GET['date'] : date('Y-m-d'); ?>">
+                        value="<?php echo htmlspecialchars(isset($_GET['date']) ? $_GET['date'] : date('Y-m-d'), ENT_QUOTES, 'UTF-8');?>">
                 </div>
 
                 <div class="col-md-3">
