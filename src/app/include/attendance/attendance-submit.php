@@ -26,9 +26,17 @@ function isLate($time) {
 
 // รับข้อมูลจาก QR Code
 $data = json_decode(file_get_contents('php://input'), true);
+$name = trim(
+    ($data['prefix'] ?? '') . ' ' .
+    ($data['first_name'] ?? '') . ' ' .
+    ($data['last_name'] ?? '')
+);
+
 error_log("Received data: " . print_r($data, true));
 
+
 if ($data && isset($data['student_id'])) {
+    
     try {
         // ตรวจสอบว่ามีนักเรียนคนนี้ในระบบหรือไม่
         $check_student = $pdo->prepare("SELECT studentid FROM children WHERE studentid = :student_id");
@@ -37,6 +45,7 @@ if ($data && isset($data['student_id'])) {
         if (!$check_student->fetch()) {
             throw new Exception("ไม่พบข้อมูลนักเรียนในระบบ");
         }
+
 
         // ตรวจสอบว่ามีการบันทึกไปแล้วหรือไม่
         $check_stmt = $pdo->prepare("
@@ -97,6 +106,7 @@ if ($data && isset($data['student_id'])) {
             'data' => [
                 'id' => $inserted['id'],
                 'student_id' => $data['student_id'],
+                'name' => $name ?? 'ไม่ระบุชื่อ',
                 'attendance_status' => $status,
                 'time' => $current_time,
                 'attendance_id' => $inserted['id'],

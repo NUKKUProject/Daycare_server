@@ -215,6 +215,11 @@
                 sidebar.classList.add('sidebar-open');
                 mainContent.classList.remove('ms-0');
                 mainContent.classList.add('ms-lg-6'); // Bootstrap 5
+                //ถ้าใช้ qr-scanner ต้องมีการปรับขนาด
+                if (typeof updateQrScannerSize === 'function'){
+                    setTimeout(updateQrScannerSize, 500);
+                    
+                }
             }
         } else {
             // Mobile mode

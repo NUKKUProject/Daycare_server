@@ -567,8 +567,8 @@ $data = getChildrenGroupedByTab($currentTab);
                             Swal.fire({
                                 icon: 'success',
                                 title: 'บันทึกสำเร็จ',
-                                text: data.message,
-                                timer: 1500,
+                                text: data.data.name,
+                                timer: 1700,
                                 showConfirmButton: false
                             }).then(() => {
                                 // อัพเดทตารางแสดงผล
@@ -703,46 +703,32 @@ $data = getChildrenGroupedByTab($currentTab);
             console.error('Error starting QR scanner:', err);
         });
 
-        // เพิ่มการ resize เมื่อหน้าจอเปลี่ยนขนาด
-        window.addEventListener('resize', () => {
-            // รอสักครู่ก่อนเริ่มใหม่เพื่อหลีกเลี่ยง lag
-            setTimeout(() => {
-                html5QrCode.stop().then(() => {
-                    const newQrBoxSize = calculateQrBoxSize();
-                    const newConfig = {
-                        fps: 10,
-                        qrbox: {
-                            width: newQrBoxSize,
-                            height: newQrBoxSize
-                        },
-                        aspectRatio: 1.0
-                    };
-
-                    html5QrCode.start({
+        // ฟังก์ชันปรับขนาด qrbox เมื่อขนาดหน้าจอเปลี่ยน
+        function updateQrScannerSize() {
+            const newQrBoxSize = calculateQrBoxSize();
+            html5QrCode.stop().then(() => {
+                const newConfig = {
+                    fps: 10,
+                    qrbox: {
+                        width: newQrBoxSize,
+                        height: newQrBoxSize
+                    },
+                    aspectRatio: 1.0
+                };
+                html5QrCode.start({
                         facingMode: "environment"
-                    }, newConfig, onScanSuccess);
-                }).catch(err => console.error('Error restarting scanner:', err));
-            }, 500);
-        });
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                html5QrCode.stop().then(() => {
-                    const newQrBoxSize = calculateQrBoxSize();
-                    const newConfig = {
-                        fps: 10,
-                        qrbox: {
-                            width: newQrBoxSize,
-                            height: newQrBoxSize
-                        },
-                        aspectRatio: 1.0
-                    };
+                    },
+                    newConfig,
+                    onScanSuccess
+                ).catch(err => {
+                    console.error('Error restarting QR scanner:', err);
+                });
+            }).catch(err => {
+                console.error('Error stopping QR scanner:', err);
+            });
+        }
+        
 
-                    html5QrCode.start({
-                        facingMode: "environment"
-                    }, newConfig, onScanSuccess);
-                }).catch(err => console.error('Error restarting scanner:', err));
-            }, 1000); // รอให้ orientation เสร็จสิ้น
-        });
 
         // อัพเดทตารางเมื่อโหลดหน้าเว็บ
         document.addEventListener('DOMContentLoaded', () => {

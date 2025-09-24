@@ -291,6 +291,14 @@ tbody tr:hover {
             min-height: 250px !important;
         }
     }
+    .selected-guardian {
+  border: 3px solid #007bff !important;  /* Bootstrap primary */
+  box-shadow: 0 0 10px rgba(0,123,255,0.2);
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.form-check-input[type="radio"] {
+  display: none;     /* ซ่อนปุ่ม radio */
+}
 </style>
 
 <body>
@@ -516,47 +524,32 @@ tbody tr:hover {
             console.error('Error starting QR scanner:', err);
         });
 
-        // เพิ่มการ resize เมื่อหน้าจอเปลี่ยนขนาด
-        window.addEventListener('resize', () => {
-            // รอสักครู่ก่อนเริ่มใหม่เพื่อหลีกเลี่ยง lag
-            setTimeout(() => {
-                html5QrCode.stop().then(() => {
-                    const newQrBoxSize = calculateQrBoxSize();
-                    const newConfig = {
-                        fps: 10,
-                        qrbox: {
-                            width: newQrBoxSize,
-                            height: newQrBoxSize
-                        },
-                        aspectRatio: 1.0
-                    };
-
-                    html5QrCode.start({
+                // ฟังก์ชันปรับขนาด qrbox เมื่อขนาดหน้าจอเปลี่ยน
+        function updateQrScannerSize() {
+            const newQrBoxSize = calculateQrBoxSize();
+            html5QrCode.stop().then(() => {
+                const newConfig = {
+                    fps: 10,
+                    qrbox: {
+                        width: newQrBoxSize,
+                        height: newQrBoxSize
+                    },
+                    aspectRatio: 1.0
+                };
+                html5QrCode.start({
                         facingMode: "environment"
-                    }, newConfig, onScanSuccess);
-                }).catch(err => console.error('Error restarting scanner:', err));
-            }, 500);
-        });
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                html5QrCode.stop().then(() => {
-                    const newQrBoxSize = calculateQrBoxSize();
-                    const newConfig = {
-                        fps: 10,
-                        qrbox: {
-                            width: newQrBoxSize,
-                            height: newQrBoxSize
-                        },
-                        aspectRatio: 1.0
-                    };
+                    },
+                    newConfig,
+                    onScanSuccess
+                ).catch(err => {
+                    console.error('Error restarting QR scanner:', err);
+                });
+            }).catch(err => {
+                console.error('Error stopping QR scanner:', err);
+            });
+        }
 
-                    html5QrCode.start({
-                        facingMode: "environment"
-                    }, newConfig, onScanSuccess);
-                }).catch(err => console.error('Error restarting scanner:', err));
-            }, 1000); // รอให้ orientation เสร็จสิ้น
-        });
-
+       
         // เพิ่มฟังก์ชันแสดง Modal
         function showPickupModal(guardianData, studentData) {
             console.log('Guardian Data:', guardianData); // เพิ่ม debug log
@@ -576,7 +569,7 @@ tbody tr:hover {
                         <div class="row guardian-images">
                             <!-- รูปพ่อ -->
                             <div class="col-4">
-                                <div class="card h-100">
+                                <div class="card h-100 select-guardian-card" data-radio="fatherRadio" style="cursor:pointer;">
                                     <img src="${guardianData.father_image || defaultAvatar}" 
                                          class="card-img-top guardian-img rounded-circle" 
                                          alt="รูปพ่อ${guardianData.father_first_name ? ' - ' + guardianData.father_first_name : ''}"
@@ -594,7 +587,7 @@ tbody tr:hover {
                             </div>
                             <!-- รูปแม่ -->
                             <div class="col-4">
-                                <div class="card h-100">
+                                <div class="card h-100 select-guardian-card" data-radio="motherRadio" style="cursor:pointer;">
                                     <img src="${guardianData.mother_image || defaultAvatar}" 
                                          class="card-img-top guardian-img rounded-circle" 
                                          alt="รูปแม่${guardianData.mother_first_name ? ' - ' + guardianData.mother_first_name : ''}"
@@ -612,7 +605,7 @@ tbody tr:hover {
                             </div>
                             <!-- รูปญาติ -->
                             <div class="col-4">
-                                <div class="card h-100">
+                                <div class="card h-100 select-guardian-card" data-radio="relativeRadio" style="cursor:pointer;">
                                     <img src="${guardianData.relative_image || defaultAvatar}" 
                                          class="card-img-top guardian-img rounded-circle" 
                                          alt="รูปญาติ${guardianData.relative_first_name ? ' - ' + guardianData.relative_first_name : ''}"
@@ -630,16 +623,18 @@ tbody tr:hover {
                             </div>
                         </div>
                         <div class="row mt-3">
-                            <div class="col-12">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="guardian" value="other" id="otherRadio">
-                                    <label class="form-check-label" for="otherRadio">
-                                        อื่นๆ
-                                    </label>
-                                </div>
-                                <div id="otherDetails" class="mt-2" style="display: none;">
-                                    <textarea class="form-control" id="otherGuardianDetails" 
-                                              placeholder="กรุณาระบุรายละเอียดผู้รับเด็ก"></textarea>
+                            <div class="card h-100 select-guardian-card" data-radio="otherRadio" style="cursor:pointer;">
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="guardian" value="other" id="otherRadio">
+                                        <label class="form-check-label" for="otherRadio">
+                                            อื่นๆ
+                                        </label>
+                                    </div>
+                                    <div id="otherDetails" class="mt-2" style="display: none;">
+                                        <textarea class="form-control" id="otherGuardianDetails" 
+                                                placeholder="กรุณาระบุรายละเอียดผู้รับเด็ก"></textarea>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -655,6 +650,44 @@ tbody tr:hover {
                             document.getElementById('otherDetails').style.display = 
                                 this.value === 'other' ? 'block' : 'none';
                         });
+                    });
+
+                    // กำหนดเหตุการณ์เมื่อคลิกการ์ด
+                    document.querySelectorAll('.select-guardian-card').forEach(function(card){
+                    card.addEventListener('click', function(e){
+                        if(e.target.tagName.toLowerCase() === 'input' || e.target.tagName === 'LABEL') return;
+                        var radioId = card.getAttribute('data-radio');
+                        var radio = document.getElementById(radioId);
+                        if(radio) {
+                        radio.checked = true;
+                        radio.dispatchEvent(new Event('change'));
+                        }
+                    });
+                    });
+
+                    // ฟัง event change เพื่ออัปเดตขอบ
+                    document.querySelectorAll('input[name="guardian"]').forEach(function(radio){
+                    radio.addEventListener('change', function(e){
+                        // ลูปทุกการ์ด เอาคลาส selected-guardian ออกก่อน
+                        document.querySelectorAll('.select-guardian-card').forEach(function(card){
+                        card.classList.remove('selected-guardian');
+                        });
+                        // ใส่ selected-guardian ให้การ์ดที่ radio นี้
+                        if(this.checked){
+                        var card = document.querySelector('[data-radio="' + this.id + '"]');
+                        if(card) card.classList.add('selected-guardian');
+                        }
+                    });
+                    });
+
+                    // อัปเดต selected ตอนโหลด (เช่นกรณี reload แล้วค่าค้าง)
+                    window.addEventListener('DOMContentLoaded', function(){
+                    document.querySelectorAll('input[name="guardian"]').forEach(function(radio){
+                        if(radio.checked){
+                        var card = document.querySelector('[data-radio="' + radio.id + '"]');
+                        if(card) card.classList.add('selected-guardian');
+                        }
+                    });
                     });
                 },
                 preConfirm: () => {
@@ -697,7 +730,9 @@ tbody tr:hover {
                             Swal.fire({
                                 icon: 'success',
                                 title: 'บันทึกสำเร็จ',
-                                text: 'บันทึกการรับเด็กกลับบ้านเรียบร้อยแล้ว'
+                                text: 'บันทึกการรับเด็กกลับบ้านเรียบร้อยแล้ว',
+                                timer: 1500,
+                                showConfirmButton: false
                             });
                             updateAttendanceTable();
                         } else {

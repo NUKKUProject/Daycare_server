@@ -334,31 +334,31 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
                                             <h5 class="mb-3"><i class="bi bi-people-fill me-2"></i>ข้อมูลผู้ปกครอง</h5>
                                         </div>
                                         <div class="parent-relative-images mt-4">
-    <h3>ผู้ปกครองและญาติ</h3>
-    <div class="d-flex justify-content-around">
-        <div class="text-center">
-            <img src="<?= !empty($child['father_image']) ? htmlspecialchars($child['father_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Father" class="rounded-circle" style="width: 100px; height: 100px;">
-            <p>พ่อ</p>
-            <?php if ($is_admin): ?>
-                <input type="file" name="father_image" class="form-control mt-2" accept="image/*">
-            <?php endif; ?>
-        </div>
-        <div class="text-center">
-            <img src="<?= !empty($child['mother_image']) ? htmlspecialchars($child['mother_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Mother" class="rounded-circle" style="width: 100px; height: 100px;">
-            <p>แม่</p>
-            <?php if ($is_admin): ?>
-                <input type="file" name="mother_image" class="form-control mt-2" accept="image/*">
-            <?php endif; ?>
-        </div>
-        <div class="text-center">
-            <img src="<?= !empty($child['relative_image']) ? htmlspecialchars($child['relative_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Relative" class="rounded-circle" style="width: 100px; height: 100px;">
-            <p>ญาติ</p>
-            <?php if ($is_admin): ?>
-                <input type="file" name="relative_image" class="form-control mt-2" accept="image/*">
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
+                                            <h3>ผู้ปกครองและญาติ</h3>
+                                            <div class="d-flex justify-content-around">
+                                                <div class="text-center">
+                                                    <img src="<?= !empty($child['father_image']) ? htmlspecialchars($child['father_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Father" class="rounded-circle" style="width: 100px; height: 100px;">
+                                                    <p>พ่อ</p>
+                                                    <?php if ($is_admin): ?>
+                                                        <input type="file" name="father_image" class="form-control mt-2" accept="image/*">
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="text-center">
+                                                    <img src="<?= !empty($child['mother_image']) ? htmlspecialchars($child['mother_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Mother" class="rounded-circle" style="width: 100px; height: 100px;">
+                                                    <p>แม่</p>
+                                                    <?php if ($is_admin): ?>
+                                                        <input type="file" name="mother_image" class="form-control mt-2" accept="image/*">
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="text-center">
+                                                    <img src="<?= !empty($child['relative_image']) ? htmlspecialchars($child['relative_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Relative" class="rounded-circle" style="width: 100px; height: 100px;">
+                                                    <p>ญาติ</p>
+                                                    <?php if ($is_admin): ?>
+                                                        <input type="file" name="relative_image" class="form-control mt-2" accept="image/*">
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <!-- ข้อมูลบิดา -->
                                         <div class="card mb-3">
                                             <div class="card-header bg-light">
