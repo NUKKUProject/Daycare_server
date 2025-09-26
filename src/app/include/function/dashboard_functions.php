@@ -4,7 +4,7 @@ require_once(__DIR__ . '/../../../config/database.php');
 function getTotalStudents() {
     try {
         $pdo = getDatabaseConnection();
-        $stmt = $pdo->query("SELECT COUNT(*) FROM children");
+        $stmt = $pdo->query("SELECT COUNT(*) FROM children WHERE status = 'กำลังศึกษา'");
         return $stmt->fetchColumn();
     } catch (PDOException $e) {
         error_log("Error getting total students: " . $e->getMessage());
@@ -15,7 +15,7 @@ function getTotalStudents() {
 function getTotalStaff() {
     try {
         $pdo = getDatabaseConnection();
-        $stmt = $pdo->query("SELECT COUNT(*) FROM teacher");
+        $stmt = $pdo->query("SELECT COUNT(*) FROM teachers");
         return $stmt->fetchColumn();
     } catch (PDOException $e) {
         error_log("Error getting total staff: " . $e->getMessage());
@@ -77,6 +77,17 @@ function getStudentsByGroup() {
         return $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
     } catch (PDOException $e) {
         error_log("Error getting students by group: " . $e->getMessage());
+        return [];
+    }
+}
+
+function roomAllCount(){
+    try {
+        $pdo = getDatabaseConnection();
+        $stmt = $pdo->query("SELECT COUNT(*) as count FROM classrooms WHERE status = 'active'");
+        return $stmt->fetchColumn();
+    } catch (PDOException $e) {
+        error_log("Error getting classroom by group: " . $e->getMessage());
         return [];
     }
 }

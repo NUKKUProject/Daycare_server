@@ -21,6 +21,7 @@ $totalActivities = getTotalActivities() ?? 0;
 $monthlyAttendance = getMonthlyAttendance() ?? [];
 $studentsByGroup = getStudentsByGroup() ?? [];
 $staffByPosition = getStaffByPosition() ?? [];
+$roomAllCount = roomAllCount() ?? [];
 ?>
 
 <style>
@@ -119,7 +120,7 @@ $staffByPosition = getStaffByPosition() ?? [];
                         <div class="card dashboard-card bg-info text-white">
                             <div class="card-body">
                                 <h5 class="card-title">จำนวนห้องเรียน</h5>
-                                <h2 class="card-text"><?= count($studentsByGroup) ?> ห้อง</h2>
+                                <h2 class="card-text"><?= $roomAllCount ?> ห้อง</h2>
                             </div>
                         </div>
                     </div>
