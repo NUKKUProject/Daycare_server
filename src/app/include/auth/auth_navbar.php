@@ -77,7 +77,9 @@
 
 <script>
     function onClickEditProfile() {
-        const role = '<?php echo getUserRole(); ?>';
+        const role = '<?php echo htmlspecialchars(getUserRole()); ?>';
+        console.log('User role:', role); // Debug line to check the role value
+         // แก้ไขข้อมูลส่วนตัวด้วย SweetAlert2
         Swal.fire({
             title: 'แก้ไขข้อมูลส่วนตัว',
             html: `

@@ -33,7 +33,7 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
             Swal.fire({
                 icon: '<?php echo $status === "success" ? "success" : "error"; ?>',
                 title: '<?php echo $status === "success" ? "สำเร็จ" : "ไม่สำเร็จ"; ?>',
-                text: '<?php echo $message; ?>',
+                text: '<?php echo htmlspecialchars($message); ?>',
                 confirmButtonText: 'ตกลง'
             }).then(() => {
                 // ลบพารามิเตอร์ status และ message ออกจาก URL
@@ -434,7 +434,7 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
         <ul class="nav nav-pills">
             <li class="nav-item">
                 <a class="nav-link <?= !isset($_GET['classroom']) ? 'active' : '' ?>" 
-                   href="?academic_year=<?= htmlspecialchars($currentAcademicYear) ?>&tab=<?= $currentTab ?>">
+                   href="?academic_year=<?= htmlspecialchars($currentAcademicYear) ?>&tab=<?= urlencode(htmlspecialchars($currentTab)) ?>">
                     <i class="bi bi-grid me-2"></i>ทุกห้อง
                 </a>
             </li>
@@ -444,7 +444,7 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
             foreach ($classrooms as $classroom): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= isset($_GET['classroom']) && $_GET['classroom'] === $classroom['classroom'] ? 'active' : '' ?>" 
-                       href="?academic_year=<?= htmlspecialchars($currentAcademicYear) ?>&tab=<?= $currentTab ?>&classroom=<?= htmlspecialchars($classroom['classroom']) ?>">
+                       href="?academic_year=<?= htmlspecialchars($currentAcademicYear) ?>&tab=<?= urlencode(htmlspecialchars($currentTab)) ?>&classroom=<?= htmlspecialchars($classroom['classroom']) ?>">
                         <i class="bi bi-door-open me-2"></i><?= htmlspecialchars($classroom['classroom']) ?>
                     </a>
                 </li>

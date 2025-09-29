@@ -1171,7 +1171,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                         <div class="me-3 flex-grow-1">
                                             <label class="form-label fw-bold">ข้าพเจ้า นพ./พญ.</label>
                                             <?php if ($_SESSION['role'] == 'doctor') { ?>
-                                            <input type="text" name="doctor_name" class="form-control dotted-input measurement-input text-center" placeholder="ชื่อแพทย์/พยาบาล" value="<?php echo htmlspecialchars(getFullName(), ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            <input type="text" name="doctor_name" class="form-control dotted-input measurement-input text-center" placeholder="ชื่อแพทย์/พยาบาล" value="<?php echo htmlspecialchars(getFullName()); ?>" required>
                                                                                     <?php } else { ?>
                                             <input type="text" name="doctor_name" class="form-control dotted-input measurement-input text-center" value="${student.doctor_name || ''}" readonly>
                                            <?php } ?>
@@ -2342,7 +2342,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                         <div class="me-3 flex-grow-1">
                                             <label class="form-label fw-bold">ข้าพเจ้า นพ./พญ.</label>
                                             <?php if ($_SESSION['role'] == 'doctor') { ?>
-                                                <input type="text" name="doctor_name" class="form-control dotted-input measurement-input text-center" placeholder="ชื่อแพทย์/พยาบาล" value="<?php echo htmlspecialchars(getFullName(), ENT_QUOTES, 'UTF-8'); ?>" required>
+                                                <input type="text" name="doctor_name" class="form-control dotted-input measurement-input text-center" placeholder="ชื่อแพทย์/พยาบาล" value="<?php echo htmlspecialchars(getFullName()); ?>" required>
                                                                                         <?php } else { ?>
                                                 <input type="text" name="doctor_name" class="form-control dotted-input measurement-input text-center" value="${studentData.doctor_name || ''}" readonly>
                                            <?php } ?>

@@ -24,7 +24,7 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
             Swal.fire({
                 icon: '<?php echo $status === "success" ? "success" : "error"; ?>',
                 title: '<?php echo $status === "success" ? "สำเร็จ" : "ไม่สำเร็จ"; ?>',
-                text: '<?php echo $message; ?>',
+                text: '<?php echo htmlspecialchars($message); ?>',
                 confirmButtonText: 'ตกลง'
             }).then(() => {
                 // ลบพารามิเตอร์ status และ message ออกจาก URL

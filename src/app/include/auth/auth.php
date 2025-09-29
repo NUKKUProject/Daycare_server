@@ -9,60 +9,66 @@ $session_timeout = 30 * 60; // 30 นาที (เป็นวินาที)
 
 
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login_method']) && $_POST['login_method'] === 'normal') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset($_POST['password'])) {
     $username = htmlspecialchars(trim($_POST['username'])); // ป้องกัน XSS
     $password = trim($_POST['password']);
-    $isDoctor = isset($_POST['role']) && $_POST['role'] === 'doctor'; // <<< จุดตรวจสอบว่าเป็นแพทย์หรือไม่
-
 
     try {
-        $pdo = getDatabaseConnection();  // ใช้ฟังก์ชัน getDatabaseConnection เพื่อเชื่อมต่อฐานข้อมูล
+        $pdo = getDatabaseConnection();  // เชื่อมต่อฐานข้อมูล
 
-        // เลือกตารางให้ตรงกับบทบาท
-        if ($isDoctor) {
-            $stmt = $pdo->prepare("SELECT * FROM doctors_user WHERE email = :username");
-        } else {
+        if ($username === 'admin') {
+            // กรณี admin
             $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username");
-        }
-        $stmt->bindParam(':username', $username);
-        $stmt->execute();
-        $user = $stmt->fetch();
+            $stmt->bindParam(':username', $username);
 
-        // เพิ่มการ debug
-        if (!$user) {
-            error_log("User not found: " . $username);
-            header("Location: /app/views/login.php?error=" . urlencode("User not found"));
-            exit();
-        }
+            $stmt->execute();
+            $user = $stmt->fetch();
 
-        if ($user && password_verify($password, $user['password'])) {
-            // เริ่ม Session เมื่อ Login สำเร็จ
-            session_regenerate_id(true); // ป้องกัน Session Fixation Attack
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['role'] = $isDoctor ? 'doctor' : ($user['role'] ?? 'user');
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['last_activity'] = time(); // เพิ่มบรรทัดนี้
+            if (!$user) {
+                header("Location: /app/views/login.php?error=" . urlencode("User not found"));
+                exit();
+            }
 
-            // นำผู้ใช้ไปยัง Dashboard ตามบทบาท
-            if ($user['role'] === 'admin') {
+            if (password_verify($password, $user['password'])) {
+                session_regenerate_id(true);
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['role'] = 'admin';
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['last_activity'] = time();
                 header("Location: /app/views/admin/admin_dashboard.php");
-            } elseif ($user['role'] === 'student') {
-                header("Location: /app/views/student/student_dashboard.php");
-            } elseif ($user['role'] === 'teacher') {
-                header("Location: /app/views/teacher/teacher_dashboard.php");
-            } elseif ($user['role'] === 'doctor') {   
-                header("Location: /app/views/doctor/doctor_dashboard.php");
             } else {
-                header("Location: ../../app/views/login.php?error=" . urlencode("Unauthorized access"));
+                header("Location: /app/views/login.php?error=" . urlencode("Invalid password"));
             }
             exit();
         } else {
-            header("Location: /app/views/login.php?error=" . urlencode("Invalid username or password"));
+            // กรณีอื่นๆ เข้า children
+            $stmt = $pdo->prepare("SELECT * FROM children WHERE studentid = :studentid");
+            $stmt->bindParam(':studentid', $username);
+            $stmt->execute();
+            $child = $stmt->fetch();
+
+            if (!$child) {
+                header("Location: /app/views/login.php?error=" . urlencode("StudentID not found"));
+                exit();
+            }
+
+            // ใช้ id_card เป็น password ถ้าไม่มีให้เทียบกับ '0000000000000'
+            $id_card = isset($child['id_card']) && strlen(trim($child['id_card'])) === 13 ? trim($child['id_card']) : '0000000000000';
+
+            if ($password === $id_card) {
+                session_regenerate_id(true);
+                $_SESSION['user_id'] = $child['id'];
+                $_SESSION['role'] = "student";
+                $_SESSION['username'] = $child['studentid'];
+                $_SESSION['last_activity'] = time();
+                header("Location: /app/views/student/student_dashboard.php");
+            } else {
+                header("Location: /app/views/login.php?error=" . urlencode("Invalid studentid or id_card"));
+            }
             exit();
         }
     } catch (PDOException $e) {
         error_log("Database connection failed: " . $e->getMessage());
-        // แก้ไขการส่ง error message โดยใช้ urlencode และลบ new line
         $error_message = urlencode("Database connection failed: " . str_replace(["\n", "\r"], ' ', $e->getMessage()));
         header("Location: /app/views/login.php?error=" . $error_message);
         exit();

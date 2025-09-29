@@ -36,15 +36,11 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
 // เพิ่มการตรวจสอบที่ต้น view_child.php
 if (getUserRole() === 'student') {
     // ตรวจสอบเฉพาะกรณีที่เป็น student
-    $current_username = $_SESSION['username'];
-    $stmt = $pdo->prepare("SELECT studentid FROM users WHERE username = :username AND role = 'student'");
-    $stmt->execute(['username' => $current_username]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    $user_studentid = $user ? $user['studentid'] : null;
+    $user_studentid = $_SESSION['username']; // สมมติว่ามี session studentid
 
     if ($studentid !== $user_studentid) {
         // ถ้าไม่ตรงกัน ให้ redirect กลับหน้า dashboard
-        header('Location: /Daycare_system/project_kku/app/views/student/student_dashboard.php');
+        header('Location: ./student_dashboard.php');
         exit;
     }
 } elseif (getUserRole() === 'teacher') {
@@ -85,7 +81,7 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
             Swal.fire({
                 icon: '<?php echo $status === "success" ? "success" : "error"; ?>',
                 title: '<?php echo $status === "success" ? "สำเร็จ" : "ไม่สำเร็จ"; ?>',
-                text: '<?php echo $message; ?>',
+                text: '<?php echo htmlspecialchars($message); ?>',
                 confirmButtonText: 'ตกลง'
             }).then(() => {
                 // ลบพารามิเตอร์ status และ message ออกจาก URL
@@ -963,9 +959,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ฟังก์ชันโหลดข้อมูลการแพ้
     function loadAllergiesData() {
-        
-        const studentId = '<?php echo $studentid; ?>';
-        
+
+        const studentId = '<?php echo addslashes(htmlspecialchars($studentid)); ?>';
+
         // โหลดข้อมูลการแพ้ทั้งหมด
         Promise.all([
             fetch('../../include/process/manage_allergies.php', {
@@ -992,8 +988,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }).then(response => response.json())
         ])
         .then(([drugData, foodData]) => {
-            console.log('Drug Data:', drugData);
-            console.log('Food Data:', foodData);
+
             
             const allergiesData = {
                 drug: drugData.status === 'success' ? drugData.data[0] : null,
@@ -2302,7 +2297,7 @@ function saveVaccineList() {
             <div id="singleDateSection" class="col-md-3" style="display: none;">
                 <label for="date" class="form-label">วันที่</label>
                 <input type="date" class="form-control" id="date" name="date" 
-                    value="<?php echo isset($_GET['date']) ? $_GET['date'] : date('Y-m-d'); ?>">
+                    value="<?php echo htmlspecialchars(isset($_GET['date']) ? $_GET['date'] : date('Y-m-d')); ?>">
                         </div>
 
             <!-- ส่วนเลือกช่วงวันที่ -->
@@ -2804,7 +2799,7 @@ const isTeacher = <?= json_encode($is_teacher) ?>;
             <div id="healthSingleDateSection" class="col-md-3" style="display: none;">
                 <label for="healthDate" class="form-label">วันที่</label>
                 <input type="date" class="form-control" id="healthDate" name="date" 
-                    value="<?php echo isset($_GET['date']) ? $_GET['date'] : date('Y-m-d'); ?>">
+                    value="<?php echo htmlspecialchars(isset($_GET['date']) ? $_GET['date'] : date('Y-m-d')); ?>">
             </div>
 
             <!-- ส่วนเลือกช่วงวันที่ -->
@@ -3637,7 +3632,7 @@ const isTeacher = <?= json_encode($is_teacher) ?>;
             <div id="growthSingleDateSection" class="col-md-3" style="display: none;">
                 <label for="growthDate" class="form-label">วันที่</label>
                 <input type="date" class="form-control" id="growthDate" name="date" 
-                    value="<?php echo isset($_GET['date']) ? $_GET['date'] : date('Y-m-d'); ?>">
+                    value="<?php echo htmlspecialchars(isset($_GET['date']) ? $_GET['date'] : date('Y-m-d')); ?>">
                                                     </div>
 
             <!-- ส่วนเลือกช่วงวันที่ -->
@@ -3783,7 +3778,7 @@ const isTeacher = <?= json_encode($is_teacher) ?>;
 
 
             // รับสิทธิ์จาก PHP เข้ามาใช้ใน JS
-            const studentid = <?= $studentid ?>;
+            const studentid = '<?php echo addslashes(htmlspecialchars($studentid)); ?>';
             const isAdmin = <?= json_encode($is_admin) ?>;
             const isTeacher = <?= json_encode($is_teacher) ?>;
 

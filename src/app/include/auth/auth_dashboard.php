@@ -214,15 +214,8 @@ function isCurrentPage($path)
                     <?php if (getUserRole() === 'student'): ?>
                         <?php
                         // ดึง studentid จาก username ปัจจุบัน
-                        $pdo = getDatabaseConnection();
-                        $current_username = $_SESSION['username'];
-                        $stmt = $pdo->prepare("SELECT studentid 
-                                              FROM users 
-                                              WHERE username = :username 
-                                              AND role = 'student'");
-                        $stmt->execute(['username' => $current_username]);
-                        $student = $stmt->fetch(PDO::FETCH_ASSOC);
-                        $studentid = $student ? $student['studentid'] : null;
+                        $studentid = $_SESSION['username'] ?? '';
+                    
                         ?>
 
                         <li class="nav-item">

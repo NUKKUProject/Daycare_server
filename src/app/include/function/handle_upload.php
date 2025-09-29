@@ -31,7 +31,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['uploadedFile'])) {
         $file = $_FILES['uploadedFile'];
         $user_id = $_SESSION['user_id']; // ดึง user_id จาก session
-        
+
         // ตรวจสอบข้อผิดพลาดในการอัพโหลด
         if ($file['error'] !== UPLOAD_ERR_OK) {
             throw new Exception('เกิดข้อผิดพลาดในการอัพโหลดไฟล์');
@@ -49,8 +49,20 @@ try {
         }
 
         // สร้างชื่อไฟล์ใหม่
-        $image_file = $file['name'];
-        $new_name = date("d_m_Y_H_i_s") . '-' . $image_file;
+        $originalFileName = basename($file['name']); // ลบพาธ traversal ออก
+        $fileExtension = pathinfo($originalFileName, PATHINFO_EXTENSION);
+
+        // ทำความสะอาดนามสกุลไฟล์
+        $fileExtension = preg_replace('/[^a-zA-Z0-9]/', '', $fileExtension);
+
+        // จำกัดนามสกุลไฟล์ที่อนุญาต
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+        if (!in_array(strtolower($fileExtension), $allowedExtensions)) {
+            throw new Exception('นามสกุลไฟล์ไม่ถูกต้อง');
+        }
+
+        // สร้างชื่อไฟล์ใหม่อย่างปลอดภัย
+        $new_name = date("d_m_Y_H_i_s") . '-' . uniqid() . '.' . $fileExtension;
 
         // กำหนด path
         $upload_dir = __DIR__ . '/../../../../public/uploads/profile_images/';
@@ -59,6 +71,15 @@ try {
         }
 
         $path = $upload_dir . $new_name;
+
+        // ตรวจสอบพาธจริงเพื่อป้องกัน Path Traversal
+        $realUploadDir = realpath($upload_dir);
+        $realUploadFile = realpath(dirname($path)) . '/' . basename($path);
+
+        // ตรวจสอบว่าพาธจริงอยู่ในไดเรกทอรีที่อนุญาต
+        if (strpos($realUploadFile, $realUploadDir) !== 0) {
+            throw new Exception('Security violation: Invalid file path.');
+        }
 
         // ตรวจสอบว่ามีไฟล์อยู่แล้วหรือไม่
         if (file_exists($path)) {
@@ -75,12 +96,12 @@ try {
 
         // อัพเดทฐานข้อมูล
         $pdo = getDatabaseConnection();
-        
+
         // ลบรูปเก่า (ถ้ามี)
         $stmt = $pdo->prepare("SELECT profile_img FROM users WHERE id = ?");
         $stmt->execute([$user_id]);
         $old_image = $stmt->fetchColumn();
-        
+
         if ($old_image) {
             $old_path = $upload_dir . $old_image;
             if (file_exists($old_path)) {
@@ -96,7 +117,7 @@ try {
 
         $_SESSION['status'] = 'success';
         $_SESSION['message'] = 'อัพโหลดรูปภาพสำเร็จ';
-        
+
     } else {
         throw new Exception('ไม่พบไฟล์ที่อัพโหลด');
     }

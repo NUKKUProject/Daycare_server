@@ -313,7 +313,7 @@ function showWaitingPage($firstname_th = '', $lastname_th = '')
             </div>
 
             <h3 class="title">รออนุมัติสิทธิ์การใช้งาน</h3>
-            <h5>บัญชีของคุณ <label style="color:#1976d2;font-weight:bold;"><?php echo trim($firstname_th . ' ' . $lastname_th); ?></label></h5>
+            <h5>บัญชีของคุณ <label style="color:#1976d2;font-weight:bold;"><?php echo htmlspecialchars(trim($firstname_th . ' ' . $lastname_th), ENT_QUOTES, 'UTF-8'); ?></label></h5>
 
             <div class="status-card">
                 <div class="status-text">

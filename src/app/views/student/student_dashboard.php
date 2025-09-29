@@ -77,7 +77,10 @@ canvas {
             <i class="bi bi-list"></i>
         </button>
         
-        <main class="main-content ">
+        <main class="main-content">
+            <div class="container-fluid px-4">
+
+           
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">แดชบอร์ดข้อมูล</h1>
             </div>
@@ -286,6 +289,7 @@ canvas {
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
         </main>
     </div>

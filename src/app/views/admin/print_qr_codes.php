@@ -253,7 +253,7 @@ foreach ($data as $groupData) {
                 <div>
                     <h1><i class="bi bi-qr-code me-2"></i>พิมพ์ QR Code</h1>
                     <p>กลุ่ม: <?= $group === 'all' ? 'ทั้งหมด' : ($group === 'big' ? 'เด็กโต' : ($group === 'medium' ? 'เด็กกลาง' : 'เตรียมอนุบาล')) ?></p>
-                    <p>ห้อง: <?= $classroom === 'all' ? 'ทั้งหมด' : $classroom ?></p>
+                    <p>ห้อง: <?= htmlspecialchars($classroom === 'all' ? 'ทั้งหมด' : $classroom) ?></p>
                 </div>
                 <div class="action-buttons">
                 <button class="btn btn-primary" onclick="window.print()">
