@@ -597,6 +597,11 @@ try {
                 
                 // 6. ทำการย้ายไฟล์
                 if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $uploadFile)) {
+                    // ตรวจสอบและ sanitize ชื่อไฟล์
+                    $originalFileName = $_FILES['profile_image']['name'];
+                    $safeFileName = preg_replace("/[^a-zA-Z0-9\.\-_]/", "", $originalFileName); // ลบอักขระที่ไม่ปลอดภัย
+                    $fileName = time() . '_' . $safeFileName;
+
                     $updateData['profile_image'] = '/public/uploads/profiles/' . $fileName;
                     echo 'File uploaded successfully.';
                 } else {
@@ -610,53 +615,68 @@ try {
 
             // จัดการรูปภาพพ่อ
             if (isset($_FILES['father_image']) && $_FILES['father_image']['error'] === UPLOAD_ERR_OK) {
-                // กำหนดไดเรกทอรีอัปโหลดอย่างปลอดภัย (ใช้พาธสมบูรณ์)
-                $uploadDir = __DIR__ . '/../../../public/uploads/parents/';
+                try {
+                    // กำหนดไดเรกทอรีอัปโหลดอย่างปลอดภัย
+                    $uploadDir = __DIR__ . '/../../../public/uploads/parents/';
 
-                // ตรวจสอบว่าไดเรกทอรีมีอยู่และเขียนได้
-                if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
-                    die('Directory does not exist or is not writable.');
-                }
+                    // ตรวจสอบว่าไดเรกทอรีมีอยู่และเขียนได้
+                    if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
+                        throw new Exception('Directory does not exist or is not writable.');
+                    }
 
-                // สร้างชื่อไฟล์ที่ปลอดภัย
-                $originalFileName = $_FILES['father_image']['name'];
-                $fileExtension = pathinfo($originalFileName, PATHINFO_EXTENSION);
+                    // ตรวจสอบขนาดไฟล์
+                    $maxFileSize = 5 * 1024 * 1024; // 5MB
+                    if ($_FILES['father_image']['size'] > $maxFileSize) {
+                        throw new Exception('File size exceeds limit.');
+                    }
 
-                // ทำความสะอาดนามสกุลไฟล์
-                $fileExtension = preg_replace('/[^a-zA-Z0-9]/', '', $fileExtension);
+                    // สร้างชื่อไฟล์ที่ปลอดภัย
+                    $originalFileName = $_FILES['father_image']['name'];
+                    $fileExtension = pathinfo($originalFileName, PATHINFO_EXTENSION);
 
-                // จำกัดนามสกุลไฟล์ที่อนุญาต
-                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
-                if (!in_array(strtolower($fileExtension), $allowedExtensions)) {
-                    die('File extension not allowed.');
-                }
+                    // ทำความสะอาดนามสกุลไฟล์
+                    $fileExtension = preg_replace('/[^a-zA-Z0-9]/', '', $fileExtension);
 
-                // สร้างชื่อไฟล์ใหม่อย่างปลอดภัย
-                $fileName = $student_id . '_father_' . uniqid() . '.' . $fileExtension;
+                    // จำกัดนามสกุลไฟล์ที่อนุญาต
+                    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+                    if (!in_array(strtolower($fileExtension), $allowedExtensions)) {
+                        throw new Exception('File extension not allowed.');
+                    }
 
-                // สร้างพาธปลายทาง
-                $uploadFile = $uploadDir . $fileName;
+                    // ตรวจสอบ MIME type อย่างปลอดภัย
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                    $mimeType = finfo_file($finfo, $_FILES['father_image']['tmp_name']);
+                    finfo_close($finfo);
 
-                // ตรวจสอบพาธจริงเพื่อป้องกัน Path Traversal
-                $realUploadDir = realpath($uploadDir);
-                $realUploadFile = realpath(dirname($uploadFile)) . '/' . basename($uploadFile);
+                    $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                    if (!in_array($mimeType, $allowedMimeTypes)) {
+                        throw new Exception('File type not allowed.');
+                    }
 
-                // ตรวจสอบว่าพาธจริงอยู่ในไดเรกทอรีที่อนุญาต
-                if (strpos($realUploadFile, $realUploadDir) !== 0) {
-                    die('Security violation: Invalid file path.');
-                }
+                    // สร้างชื่อไฟล์ใหม่อย่างปลอดภัย
+                    $fileName = $student_id . '_father_' . uniqid() . '.' . $fileExtension;
 
-                $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-                if (!in_array($_FILES['father_image']['type'], $allowedMimeTypes)) {
-                    die('File type not allowed.');
-                }
+                    // สร้างพาธปลายทาง
+                    $uploadFile = $uploadDir . $fileName;
 
-                // ทำการย้ายไฟล์
-                if (move_uploaded_file($_FILES['father_image']['tmp_name'], $uploadFile)) {
-                    $updateData['father_image'] = '/public/uploads/parents/' . $fileName;
-                    echo 'File uploaded successfully.';
-                } else {
-                    echo 'Failed to upload file.';
+                    // ตรวจสอบพาธจริงเพื่อป้องกัน Path Traversal
+                    $realUploadDir = realpath($uploadDir);
+                    $realUploadFile = realpath(dirname($uploadFile)) . '/' . basename($uploadFile);
+
+                    // ตรวจสอบว่าพาธจริงอยู่ในไดเรกทอรีที่อนุญาต
+                    if (strpos($realUploadFile, $realUploadDir) !== 0) {
+                        throw new Exception('Security violation: Invalid file path.');
+                    }
+
+                    // ทำการย้ายไฟล์
+                    if (move_uploaded_file($_FILES['father_image']['tmp_name'], $uploadFile)) {
+                        $updateData['father_image'] = '/public/uploads/parents/' . $fileName;
+                        echo 'File uploaded successfully.';
+                    } else {
+                        throw new Exception('Failed to upload file.');
+                    }
+                } catch (Exception $e) {
+                    echo 'Error: ' . $e->getMessage();
                 }
             } else {
                 // ถ้าไม่มีการอัปโหลดรูปใหม่ ให้ใช้รูปเดิม
@@ -665,102 +685,110 @@ try {
 
             // จัดการรูปภาพแม่
             if (isset($_FILES['mother_image']) && $_FILES['mother_image']['error'] === UPLOAD_ERR_OK) {
-                // กำหนดไดเรกทอรีอัปโหลดอย่างปลอดภัย (ใช้พาธสมบูรณ์)
-                $uploadDir = __DIR__ . '/../../../public/uploads/parents/';
+                try {
+                    // กำหนดไดเรกทอรีอัปโหลดอย่างปลอดภัย (ใช้พาธสมบูรณ์)
+                    $uploadDir = __DIR__ . '/../../../public/uploads/parents/';
 
-                // ตรวจสอบว่าไดเรกทอรีมีอยู่และเขียนได้
-                if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
-                    die('Directory does not exist or is not writable.');
+                    // ตรวจสอบว่าไดเรกทอรีมีอยู่และเขียนได้
+                    if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
+                        throw new Exception('Directory does not exist or is not writable.');
+                    }
+
+                    // ตรวจสอบขนาดไฟล์
+                    $maxFileSize = 5 * 1024 * 1024; // 5MB
+                    if ($_FILES['mother_image']['size'] > $maxFileSize) {
+                        throw new Exception('File size exceeds limit.');
+                    }
+
+                    // สร้างชื่อไฟล์ที่ปลอดภัย
+                    $originalFileName = $_FILES['mother_image']['name'];
+                    $fileExtension = pathinfo($originalFileName, PATHINFO_EXTENSION);
+
+                    // ทำความสะอาดนามสกุลไฟล์
+                    $fileExtension = preg_replace('/[^a-zA-Z0-9]/', '', $fileExtension);
+
+                    // จำกัดนามสกุลไฟล์ที่อนุญาต
+                    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+                    if (!in_array(strtolower($fileExtension), $allowedExtensions)) {
+                        throw new Exception('File extension not allowed.');
+                    }
+
+                    // ตรวจสอบ MIME type อย่างปลอดภัย
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                    $mimeType = finfo_file($finfo, $_FILES['mother_image']['tmp_name']);
+                    finfo_close($finfo);
+
+                    $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                    if (!in_array($mimeType, $allowedMimeTypes)) {
+                        throw new Exception('File type not allowed.');
+                    }
+
+                    // สร้างชื่อไฟล์ใหม่อย่างปลอดภัย
+                    $fileName = $student_id . '_mother_' . uniqid() . '.' . $fileExtension;
+
+                    // สร้างพาธปลายทาง
+                    $uploadFile = $uploadDir . $fileName;
+
+                    // ตรวจสอบพาธจริงเพื่อป้องกัน Path Traversal
+                    $realUploadDir = realpath($uploadDir);
+                    $realUploadFile = realpath(dirname($uploadFile)) . '/' . basename($uploadFile);
+
+                    // ตรวจสอบว่าพาธจริงอยู่ในไดเรกทอรีที่อนุญาต
+                    if (strpos($realUploadFile, $realUploadDir) !== 0) {
+                        throw new Exception('Security violation: Invalid file path.');
+                    }
+
+                    // ทำการย้ายไฟล์
+                    if (move_uploaded_file($_FILES['mother_image']['tmp_name'], $uploadFile)) {
+                        $updateData['mother_image'] = '/public/uploads/parents/' . $fileName;
+                        echo 'File uploaded successfully.';
+                    } else {
+                        throw new Exception('Failed to upload file.');
+                    }
+                } catch (Exception $e) {
+                    echo 'Error: ' . $e->getMessage();
                 }
-
-                // สร้างชื่อไฟล์ที่ปลอดภัย
-                $originalFileName = $_FILES['mother_image']['name'];
-                $fileExtension = pathinfo($originalFileName, PATHINFO_EXTENSION);
-
-                // ทำความสะอาดนามสกุลไฟล์
-                $fileExtension = preg_replace('/[^a-zA-Z0-9]/', '', $fileExtension);
-
-                // จำกัดนามสกุลไฟล์ที่อนุญาต
-                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
-                if (!in_array(strtolower($fileExtension), $allowedExtensions)) {
-                    die('File extension not allowed.');
-                }
-
-                // สร้างชื่อไฟล์ใหม่อย่างปลอดภัย
-                $fileName = $student_id . '_mother_' . uniqid() . '.' . $fileExtension;
-
-                // สร้างพาธปลายทาง
-                $uploadFile = $uploadDir . $fileName;
-
-                // ตรวจสอบพาธจริงเพื่อป้องกัน Path Traversal
-                $realUploadDir = realpath($uploadDir);
-                $realUploadFile = realpath(dirname($uploadFile)) . '/' . basename($uploadFile);
-
-                // ตรวจสอบว่าพาธจริงอยู่ในไดเรกทอรีที่อนุญาต
-                if (strpos($realUploadFile, $realUploadDir) !== 0) {
-                    die('Security violation: Invalid file path.');
-                }
-
-                $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-                if (!in_array($_FILES['mother_image']['type'], $allowedMimeTypes)) {
-                    die('File type not allowed.');
-                }
-
-                // ทำการย้ายไฟล์
-                if (move_uploaded_file($_FILES['mother_image']['tmp_name'], $uploadFile)) {
-                    $updateData['mother_image'] = '/public/uploads/parents/' . $fileName;
-                } else {
-                    echo 'Failed to upload mother image.';
-                }
-            } else {
+            }else {
                 // ถ้าไม่มีการอัปโหลดรูปใหม่ ให้ใช้รูปเดิม
                 $updateData['mother_image'] = $existingData['mother_image'] ?? null;
             }
 
             // จัดการรูปภาพญาติ
             if (isset($_FILES['relative_image']) && $_FILES['relative_image']['error'] === UPLOAD_ERR_OK) {
-                // กำหนดไดเรกทอรีอัปโหลดอย่างปลอดภัย (ใช้พาธสมบูรณ์)
                 $uploadDir = __DIR__ . '/../../../public/uploads/parents/';
 
-                // ตรวจสอบว่าไดเรกทอรีมีอยู่และเขียนได้
                 if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
                     die('Directory does not exist or is not writable.');
                 }
 
-                // สร้างชื่อไฟล์ที่ปลอดภัย
+                // Sanitize Student ID
+                $student_id = preg_replace('/[^a-zA-Z0-9_-]/', '', $student_id);
+
                 $originalFileName = $_FILES['relative_image']['name'];
-                $fileExtension = pathinfo($originalFileName, PATHINFO_EXTENSION);
+                $fileExtension = strtolower(pathinfo($originalFileName, PATHINFO_EXTENSION));
+                $fileExtension = preg_replace('/[^a-z0-9]/', '', $fileExtension);
 
-                // ทำความสะอาดนามสกุลไฟล์
-                $fileExtension = preg_replace('/[^a-zA-Z0-9]/', '', $fileExtension);
-
-                // จำกัดนามสกุลไฟล์ที่อนุญาต
                 $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
-                if (!in_array(strtolower($fileExtension), $allowedExtensions)) {
+                if (!in_array($fileExtension, $allowedExtensions)) {
                     die('File extension not allowed.');
                 }
 
-                // สร้างชื่อไฟล์ใหม่อย่างปลอดภัย
                 $fileName = $student_id . '_relative_' . uniqid() . '.' . $fileExtension;
 
-                // สร้างพาธปลายทาง
-                $uploadFile = $uploadDir . $fileName;
-
-                // ตรวจสอบพาธจริงเพื่อป้องกัน Path Traversal
-                $realUploadDir = realpath($uploadDir);
-                $realUploadFile = realpath(dirname($uploadFile)) . '/' . basename($uploadFile);
-
-                // ตรวจสอบว่าพาธจริงอยู่ในไดเรกทอรีที่อนุญาต
-                if (strpos($realUploadFile, $realUploadDir) !== 0) {
-                    die('Security violation: Invalid file path.');
+                // Extra filename check: Do not allow path separators
+                if (strpos($fileName, '/') !== false || strpos($fileName, '\\') !== false) {
+                    die('Invalid file name detected.');
                 }
 
+                $uploadFile = $uploadDir . $fileName;
+
                 $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-                if (!in_array($_FILES['relative_image']['type'], $allowedMimeTypes)) {
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $mimeType = $finfo->file($_FILES['relative_image']['tmp_name']);
+                if (!in_array($mimeType, $allowedMimeTypes)) {
                     die('File type not allowed.');
                 }
 
-                // ทำการย้ายไฟล์
                 if (move_uploaded_file($_FILES['relative_image']['tmp_name'], $uploadFile)) {
                     $updateData['relative_image'] = '/public/uploads/parents/' . $fileName;
                 } else {
