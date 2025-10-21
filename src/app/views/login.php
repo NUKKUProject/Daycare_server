@@ -90,7 +90,7 @@
                                 <button type="button" class="btn btn-light w-100 py-2 mb-3" id="normalLoginBtn">
                                     <i class="bi bi-person-fill me-2"></i>เข้าสู่ระบบด้วยบัญชีทั่วไป
                                 </button>
-                                <a class="btn btn-success w-100 py-2 mb-3" href="https://sso-uat-web.kku.ac.th/login?app=0198bb3e-bead-7eb3-97a7-70e4e9e4aebe">
+                                <a class="btn btn-success w-100 py-2 mb-3" href="https://ssonext.kku.ac.th/login?app=0198bb3e-beab-7004-95c1-864db39d9e85">
                                     <i class="bi bi-shield-lock-fill me-2"></i>เข้าสู่ระบบด้วย KKU SSO
                                 </a>
                                 <!-- <button type="button" class="btn btn-success w-100 py-2" onclick="docterLogin()">

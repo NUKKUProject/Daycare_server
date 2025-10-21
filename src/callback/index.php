@@ -10,10 +10,11 @@ $pdo = getDatabaseConnection();
 
 $code = $_GET['code'];
 
+
 $curl = curl_init();
 
 curl_setopt_array($curl, array(
-    CURLOPT_URL => 'https://sso-uat-api.kku.ac.th/auth.token',
+    CURLOPT_URL => 'https://ssonext-api.kku.ac.th/auth.token',
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_ENCODING => '',
     CURLOPT_MAXREDIRS => 10,
@@ -24,18 +25,18 @@ curl_setopt_array($curl, array(
     CURLOPT_POSTFIELDS => '{ 
     "code": "' . $code . '",
     "redirectUrl": "https://mis-daycare.kku.ac.th/callback",
-    "clientId": "0198bb3e-bead-7eb3-97a7-70e4e9e4aebe",
-    "clientSecret":"K5ROucjz3WevgOXIa7DAdTPbsJHTrbn33kkBUESggL6L2P3KXlS4i6ij5sG7bgQm"
+    "clientId": "0198bb3e-beab-7004-95c1-864db39d9e85",
+    "clientSecret":"xFrsvhQ6qTatibLLY4L6iPsn7xNjMrkT91gub0bRjbta3XagBm9AE7VYHgeDHibY"
 }',
     CURLOPT_HTTPHEADER => array(
-        'Content-Type: application/json'
-    ),
+    'Content-Type: text/plain'
+  ),
 ));
 
 $responseReq = curl_exec($curl);
 
-
 $dataReq = json_decode($responseReq, true);
+
 $access_token = $dataReq['accessToken'];
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -43,7 +44,7 @@ $access_token = $dataReq['accessToken'];
 $curl = curl_init();
 
 curl_setopt_array($curl, array(
-    CURLOPT_URL => 'https://sso-uat-api.kku.ac.th/user.profile',
+    CURLOPT_URL => 'https://ssonext-api.kku.ac.th/user.profile',
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_ENCODING => '',
     CURLOPT_MAXREDIRS => 10,
