@@ -21,7 +21,7 @@ FROM children c
 LEFT JOIN health_data_external h
     ON c.studentid = h.student_id 
     AND h.academic_year = :academic_year
-WHERE c.academic_year = :academic_year::int ";
+WHERE 1=1 AND c.status = 'กำลังศึกษา'";
 
     $params = [];
 
@@ -42,6 +42,12 @@ WHERE c.academic_year = :academic_year::int ";
     } else {
         // fallback กรณีไม่ได้ส่งปีการศึกษา (อาจใช้ปีปัจจุบันหรือค่า default)
         $params[':academic_year'] = date('Y') + 543; // สำหรับปี พ.ศ.
+    }
+
+        // เงื่อนไขสำหรับ student_year
+    if (!empty($_GET['student_year']) && $_GET['student_year'] !== 'all') {
+        $sql .= " AND c.academic_year = :children_academic_year";
+        $params[':children_academic_year'] = $_GET['student_year'];
     }
 
     if (!empty($_GET['search'])) {

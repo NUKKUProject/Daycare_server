@@ -213,10 +213,20 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
                     <div class="col-md-2">
                         <label for="date" class="form-label">ตรวจประจำปีการศึกษา</label>
-                        <select name="academic_year" class="form-select">
+                       <select name="academic_year" class="form-select">
+                            <?php
+                                // สมมติ $academicYears เรียงจากมาก -> น้อย อยู่แล้ว (2568, 2567, 2566)
+                                $currentTop = isset($academicYears[0]['name']) ? (int)$academicYears[0]['name'] : null;
+                                $nextYear = $currentTop ? $currentTop + 1 : null;
+                            ?>
+
+                            <?php if ($nextYear): ?>
+                                <option value="<?= $nextYear ?>"><?= $nextYear ?></option>
+                            <?php endif; ?>
+
                             <?php foreach ($academicYears as $index => $year): ?>
-                                <option value="<?= $year['name'] ?>" <?= $index === 0 ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($year['name']) ?>
+                                <option value="<?= htmlspecialchars($year['name']) ?>" <?= $index === 0 ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($year['name']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -643,7 +653,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                     ${student.oral_components ? `
                     <div class="card mb-3 shadow-sm">
                         <div class="card-header" style="background-color: #f1f8e9;">
-                            <h6 class="mb-0">สว่นประกอบของช่องปาก (เหงือก/ลิ้น/เพดาน)</h6>
+                            <h6 class="mb-0">ส่วนประกอบของช่องปาก (เหงือก/ลิ้น/เพดาน)</h6>
                         </div>
                         <div class="card-body">
                             <p class="mb-0">${student.oral_components}</p>
@@ -1117,7 +1127,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                                 <label class="form-label fw-semibold mb-0 me-3 " style="min-width: 140px;">จำนวนฟันทั้งหมดกี่ซี่:</label>
                                                 <div class="input-wrapper">
                                                     <input type="number" name="total_teeth" class="form-control dotted-input measurement-input text-center" 
-                                                        style="max-width: 80px;" min="0" max="32" placeholder="1-32">
+                                                        style="max-width: 80px;" min="0" max="32" placeholder="32">
                                                     <small class="text-muted ms-2">ซี่</small>
                                                 </div>
                                             </div>
@@ -1774,8 +1784,8 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                             <label class="form-label fw-bold" style="white-space: nowrap;">ทันตแพทย์ผู้ตรวจ ทพ./ทพ.หญิง</label>
                                             <?php if ($_SESSION['role'] == 'doctor') { ?>
                                             <input type="text" name="doctor_name" class="form-control dotted-input measurement-input text-center" placeholder="ชื่อแพทย์/พยาบาล" value="<?php echo htmlspecialchars(getFullName()); ?>" required>
-                                                                                    <?php } else { ?>
-                                            <input type="text" name"doctor_name" class="form-control dotted-input measurement-input text-center" value="${studentData.doctor_name || ''}" readonly>
+                                            <?php } else { ?>
+                                            <input type="text" name="doctor_name" class="form-control dotted-input measurement-input text-center" value="${studentData.doctor_name || ''}" readonly>
                                            <?php } ?>
                                            <label class="form-label mb-0" style="white-space: nowrap;">ได้ทำการตรวจสุขภาพช่องปาก</label>
                                         </div>                                                                       
@@ -1833,7 +1843,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                                 <label class="form-label fw-semibold mb-0 me-3 " style="min-width: 140px;">จำนวนฟันทั้งหมดกี่ซี่:</label>
                                                 <div class="input-wrapper">
                                                     <input type="number" name="total_teeth" class="form-control dotted-input measurement-input text-center" 
-                                                        style="max-width: 80px;" min="0" max="32" placeholder="1-32" value="${studentData.total_teeth || 0}">
+                                                        style="max-width: 80px;" min="0" max="32" placeholder="32" value="${studentData.total_teeth || 0}">
                                                     <small class="text-muted ms-2">ซี่</small>
                                                 </div>
                                             </div>
@@ -2107,7 +2117,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
                 </form>`;
                     Swal.fire({
-                        title: 'แก้ไขข้อมูลการตรวจสุขภาพ',
+                        title: 'แก้ไขข้อมูลการตรวจฟัน',
                         html: modalContent,
                         showCancelButton: true,
                         width: '85%',

@@ -321,7 +321,9 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
                                                 // แปลงวันเกิดเป็น ค.ศ. สำหรับ input (ไม่ต้อง +543)
                                                 $birthday = !empty($child['birthday']) ? date('d/m/Y', strtotime($child['birthday'])) : '';
                                                 ?>
-                                                <input class="form-control" name="birthday" id="Birthday" type="text" value="<?= htmlspecialchars($birthday) ?>" placeholder="วว/ดด/ปปปป" required>
+                                                
+                                                <input class="form-control" name="birthday" id="Birthday" type="text"
+                                            value="<?= htmlspecialchars($birthday) ?>" placeholder="วว/ดด/ปปปป" required>
                                             </div>
                                         </div>
                                     </div>
@@ -541,12 +543,7 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
                                         </div>
                                         <input type="hidden" name="age_student" id="Age_student"
                                             value="<?= htmlspecialchars($child['age_student'] ?? '') ?>">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">วัน/เดือน/ปี เกิด:</label>
-                                        <input class="form-control" name="birthday" id="Birthday" type="text"
-                                            value="<?= htmlspecialchars($birthday) ?>" placeholder="วว/ดด/ปปปป" required>
-                                    </div>
+                                    </div>                                
                                 </div>
                                     <div class="col-md-4">
                                         <label class="form-label">สถานที่เกิด:</label>

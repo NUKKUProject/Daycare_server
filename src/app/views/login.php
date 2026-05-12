@@ -1,4 +1,8 @@
-<?php include __DIR__ . '/../include/auth/auth.php'; ?>
+<?php include __DIR__ . '/../include/auth/auth.php'; 
+
+
+$_SESSION['url'] = 'testsdso;dfdsodfhsdik';
+?>
 <!DOCTYPE html>
 <html lang="th">
 

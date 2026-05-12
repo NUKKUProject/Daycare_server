@@ -394,8 +394,6 @@ function get_childgroup()
         $sql = "
             SELECT DISTINCT c.child_group
             FROM children c
-            JOIN teachers t
-                ON (c.child_group = ANY(string_to_array(t.group_ids, ',')))
         ";
 
         // เตรียมคำสั่ง SQL

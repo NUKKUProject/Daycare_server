@@ -417,7 +417,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
         <div class="card search-card">
             <div class="card-body">
                 <form id="searchForm" method="GET" class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="child_group" class="form-label">กลุ่มเรียน</label>
                         <select name="child_group" id="child_group" class="form-select" onchange="loadClassrooms()">
                             <option value="">-- เลือกกลุ่มเรียน --</option>
@@ -433,17 +433,41 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                         </select>
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="classroom" class="form-label">ห้องเรียน</label>
                         <select name="classroom" id="classroom" class="form-select">
                             <option value="">-- เลือกห้องเรียน --</option>
                         </select>
                     </div>
 
-                    <div class="col-md-3">
-                        <label for="date" class="form-label">ประจำปีการศึกษา</label>
+                    <div class="col-md-2">
+                        <label for="date" class="form-label">ตรวจประจำปีการศึกษา</label>
                         <select name="academic_year" class="form-select">
+                            <?php
+                                // สมมติ $academicYears เรียงจากมาก -> น้อย อยู่แล้ว (2568, 2567, 2566)
+                                $currentTop = isset($academicYears[0]['name']) ? (int)$academicYears[0]['name'] : null;
+                                $nextYear = $currentTop ? $currentTop + 1 : null;
+                            ?>
+
+                            <?php if ($nextYear): ?>
+                                <option value="<?= $nextYear ?>"><?= $nextYear ?></option>
+                            <?php endif; ?>
+
                             <?php foreach ($academicYears as $index => $year): ?>
+                                <option value="<?= htmlspecialchars($year['name']) ?>" <?= $index === 0 ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($year['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="student_year" class="form-label">กลุ่มเด็ก</label>
+                        <select name="student_year" id="student_year" class="form-select" onchange="filterData()">
+                            <option value="all" <?= (isset($_GET['student_year']) && $_GET['student_year'] == 'all') ? 'selected' : '' ?>>
+                                ทั้งหมด
+                            </option>
+                            <?php foreach ($academicYears as $year): ?>
                                 <option value="<?= $year['name'] ?>" <?= $index === 0 ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($year['name']) ?>
                                 </option>
@@ -451,7 +475,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                         </select>
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label for="search" class="form-label">ค้นหาชื่อ</label>
                         <input type="text" class="form-control" id="search" name="search" placeholder="ชื่อ-นามสกุล"
                             value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
@@ -2100,9 +2124,19 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                 <div class="mb-3">
                     <label class="form-label">ประจำปีการศึกษา</label>
                       <select name="academic_year" class="form-select">
+                            <?php
+                                // สมมติ $academicYears เรียงจากมาก -> น้อย อยู่แล้ว (2568, 2567, 2566)
+                                $currentTop = isset($academicYears[0]['name']) ? (int)$academicYears[0]['name'] : null;
+                                $nextYear = $currentTop ? $currentTop + 1 : null;
+                            ?>
+
+                            <?php if ($nextYear): ?>
+                                <option value="<?= $nextYear ?>"><?= $nextYear ?></option>
+                            <?php endif; ?>
+
                             <?php foreach ($academicYears as $index => $year): ?>
-                                <option value="<?= $year['name'] ?>" <?= $index === 0 ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($year['name']) ?>
+                                <option value="<?= htmlspecialchars($year['name']) ?>" <?= $index === 0 ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($year['name']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>

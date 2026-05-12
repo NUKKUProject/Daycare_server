@@ -21,7 +21,7 @@ FROM children c
 LEFT JOIN health_tooth_external h
     ON c.studentid = h.student_id 
     AND h.academic_year = :health_academic_year
-WHERE 1=1 ";
+WHERE 1=1 AND c.status = 'กำลังศึกษา'";
 
     $params = [];
 

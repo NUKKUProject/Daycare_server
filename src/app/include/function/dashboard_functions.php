@@ -92,6 +92,42 @@ function roomAllCount(){
     }
 }
 
+function getStudentAttendanceTodayByGroup(){
+    try {
+        $pdo = getDatabaseConnection();
+        $stmt = $pdo->query("
+            SELECT 
+                c.child_group,
+                COUNT(DISTINCT a.student_id) as present_count
+            FROM attendance a
+            JOIN children c ON a.student_id = c.studentid
+            WHERE DATE(a.check_date) = CURRENT_DATE
+              AND a.status IN ('present','late')
+            GROUP BY c.child_group
+        ");
+        return $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+    } catch (PDOException $e) {
+        error_log('Error getting student attendance today by group: ' . $e->getMessage());
+        return [];
+    }
+}
+
+function attendanceTodayCount(){
+    try {
+        $pdo = getDatabaseConnection();
+        $stmt = $pdo->query("
+            SELECT COUNT(DISTINCT student_id)
+            FROM attendance
+            WHERE DATE(check_date) = CURRENT_DATE
+              AND status IN ('present','late')
+        ");
+        return (int)$stmt->fetchColumn();
+    } catch (PDOException $e) {
+        error_log('Error getting attendance today count: ' . $e->getMessage());
+        return 0;
+    }
+}
+
 function getStaffByPosition() {
     try {
         $pdo = getDatabaseConnection();

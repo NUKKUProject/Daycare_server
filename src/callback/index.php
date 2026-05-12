@@ -3,10 +3,11 @@
 session_start();
 include '../config/database.php';
 
+// 1. ดึง ID ที่ฝากไว้ใน Cookie ออกมา (MQ==)
+$meeting_id = null;
+
 
 $pdo = getDatabaseConnection();
-
-
 
 $code = $_GET['code'];
 
@@ -90,6 +91,32 @@ $faculty_name = $data['profile']['facultyName'];
 // $workline = "สายวิชาการ";
 // $faculty_name = "คณะพยาบาลศาสตร์";
 
+if (isset($_COOKIE['checkin_id'])) {
+    $meeting_id = $_COOKIE['checkin_id'];
+}
+
+if ($meeting_id ) {
+    $profile_data = [
+        'citizen_id' => $data['profile']['citizenId'],
+        'mail' => $data['profile']['mail'],
+        'firstname_th' => $data['profile']['firstnameEng'],
+        'lastname_th' => $data['profile']['lastnameEng'],
+        'faculty_name' => $data['profile']['facultyName'],
+    ];
+    // แปลงเป็น JSON string
+    $profile_json = json_encode($profile_data, JSON_UNESCAPED_UNICODE);
+    
+    // 4. หลังจากบันทึกเสร็จ ให้ลบ Cookie ทิ้ง
+    $domain = (strpos($_SERVER['HTTP_HOST'], 'kku.ac.th') !== false) ? ".kku.ac.th" : "";
+    setcookie("checkin_id", "", time() - 3600, "/", $domain);
+    setcookie('user_profile_data', $profile_json, time() + 3600, '/', '.kku.ac.th', true, false);
+
+    // 5. Redirect ไปหน้า Success พร้อมส่ง ID ไปแสดงผล
+    header("Location: /checkin-system/checkin/" . $meeting_id);
+    $meeting_id=null;
+    exit();
+
+} 
 
 try {
     // ค้นหาผู้ใช้ในฐานข้อมูล

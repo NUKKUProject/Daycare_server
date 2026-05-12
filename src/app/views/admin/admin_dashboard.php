@@ -22,6 +22,9 @@ $monthlyAttendance = getMonthlyAttendance() ?? [];
 $studentsByGroup = getStudentsByGroup() ?? [];
 $staffByPosition = getStaffByPosition() ?? [];
 $roomAllCount = roomAllCount() ?? [];
+$attendanceTodayCount = attendanceTodayCount() ?? 0;
+$attendanceRateToday = $totalStudents > 0 ? round(($attendanceTodayCount / $totalStudents) * 100, 2) : 0;
+$studentAttendanceTodayByGroup = getStudentAttendanceTodayByGroup() ?? [];
 ?>
 
 <style>
@@ -77,9 +80,8 @@ $roomAllCount = roomAllCount() ?? [];
 <main class="main-content ">
     <div class="container-fluid px-4">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-            <h1 class="h2">แดชบอร์ดข้อมูล</h1>
+            <h1 class="h2">แดชบอร์ดข้อมูล </h1>
         </div>
-
 
         <!-- แท็บหลัก -->
         <ul class="nav nav-tabs dashboard-tabs mb-4" id="mainTab" role="tablist">
@@ -117,21 +119,55 @@ $roomAllCount = roomAllCount() ?? [];
                         </div>
                     </div>
                     <div class="col-md-4 mb-4">
-                        <div class="card dashboard-card bg-info text-white">
+                        <div class="card dashboard-card bg-warning text-white">
                             <div class="card-body">
                                 <h5 class="card-title">จำนวนห้องเรียน</h5>
                                 <h2 class="card-text"><?= $roomAllCount ?> ห้อง</h2>
                             </div>
                         </div>
                     </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card dashboard-card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-subtitle mb-2">จำนวนการมาเรียนวันนี้</h5>
+                                <h3 class="card-title mb-0"><?= $attendanceTodayCount ?> คน</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body">
+                                <h5 class="card-subtitle mb-2">จำนวนนักเรียน ขาด / ลา</h5>
+                                <h3 class="card-title mb-0"><?= $totalStudents - $attendanceTodayCount ?> คน</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5 class="card-subtitle mb-2">อัตราการมาเรียนวันนี้</h5>
+                                <h2 class="card-title mb-0"><?= $attendanceRateToday ?>%</h2>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- กราฟแสดงภาพรวม -->
-                <div class="col-12 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title-graph">สัดส่วนนักเรียนแต่ละระดับชั้น</h5>
-                            <canvas id="studentsPieChart"></canvas>
+                <div class="row">
+                    <div class="col-6 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title-graph">สัดส่วนนักเรียนแต่ละระดับชั้น</h5>
+                                <canvas id="studentsPieChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-4">   
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title-graph">สัดส่วนการมาเรียนตามระดับชั้น</h5>
+                                <canvas id="studentsAttendanceChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -185,7 +221,7 @@ $roomAllCount = roomAllCount() ?? [];
                         <a class="nav-link active" id="students-info-tab" data-bs-toggle="pill" href="#students-info" role="tab">ข้อมูลทั่วไป</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="students-attendance-tab" data-bs-toggle="pill" href="#students-attendance" role="tab">การมาเรียน</a>
+                        <a class="nav-link" id="students-attendance-tab" data-bs-toggle="pill" href="#students-attendance" role="tab" onclick="loadAttendanceData()">การมาเรียน</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" id="students-activities-tab" data-bs-toggle="pill" href="#students-activities" role="tab">กิจกรรม</a>
@@ -241,6 +277,21 @@ $roomAllCount = roomAllCount() ?? [];
                                             <select class="form-select form-select-sm" id="weekSelect" style="width: auto; display: none;">
                                                 <option value="">เลือกสัปดาห์</option>
                                             </select>
+                                            <select name="child_group" id="child_group" class="form-select form-select-sm" onchange="loadClassrooms()" style="width: auto; ">
+                                                <option value="">กลุ่มเรียนทั้งหมด</option>
+                                                <?php
+                                                $groups = get_childgroup();
+                                                foreach ($groups as $group) {
+                                                    if (!empty($group['child_group'])) {
+                                                        $selected = (isset($_GET['child_group']) && $_GET['child_group'] == $group['child_group']) ? 'selected' : '';
+                                                        echo "<option value='" . $group['child_group'] . "' $selected>" . $group['child_group'] . "</option>";
+                                                    }
+                                                }
+                                                ?>
+                                            </select>                                  
+                                                <select name="classroom" id="classroom" class="form-select form-select-sm" style="width: auto; ">
+                                                    <option value="">ห้องเรียนทั้งหมด</option>
+                                                </select>
                                             <button class="btn btn-primary btn-sm" id="fetchDataBtn">
                                                 <i class="bi bi-search"></i> ดูข้อมูล
                                             </button>
@@ -260,7 +311,10 @@ $roomAllCount = roomAllCount() ?? [];
                                                 <div class="card bg-success text-white">
                                                     <div class="card-body">
                                                         <h6 class="card-subtitle mb-2">มาเรียน</h6>
-                                                        <h3 class="card-title mb-0" id="presentCount">0</h3>
+                                                        <div class="d-flex align-items-baseline">
+                                                            <h3 class="card-title mb-0" id="presentCount">0</h3>/<p class="card-title mb-0 ms-1" id="presentTotal">0</p>
+                                                        </div>
+                                                        
                                                     </div>
                                                 </div>
                                             </div>
@@ -305,15 +359,50 @@ $roomAllCount = roomAllCount() ?? [];
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+    function loadAttendanceData() {
+        // โหลดข้อมูลการมาเรียนเมื่อเปิดแท็บนักเรียนการมาเรียน
+        document.getElementById('fetchDataBtn').click();
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        // ตัวแปรสำหรับกราฟทั้งหมด
-        let attendanceChart, studentsPieChart, staffPositionChart;
+        let attendanceChart, studentsPieChart, staffPositionChart ,studentsAttendanceChart;
 
         // ตัวแปรสำหรับการดึงข้อมูลการมาเรียน
         const attendanceMonthPicker = document.getElementById('attendanceMonth');
         const viewTypeSelect = document.getElementById('viewType');
         const weekSelect = document.getElementById('weekSelect');
         const fetchDataBtn = document.getElementById('fetchDataBtn');
+        const childGroupSelect = document.getElementById('child_group');
+        const classroomSelect = document.getElementById('classroom');
+
+        function fetchAttendanceDataToday() {
+            // กราฟวงกลมแสดงสัดส่วนการมาเรียน
+            studentsAttendanceChart = new Chart(document.getElementById('studentsAttendanceChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['เด็กกลาง', 'เด็กโต','เตรียมอนุบาล'],
+                    datasets: [{
+                        data: [<?= implode(',', array_map(function($group) use ($studentAttendanceTodayByGroup) {
+                            return $studentAttendanceTodayByGroup[$group] ?? 0;
+                        }, array_keys($studentsByGroup))) ?>],
+                        backgroundColor: [
+                            'rgb(255, 99, 132)',
+                            'rgb(54, 162, 235)',
+                            'rgb(255, 205, 86)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+        }
 
         // สร้างกราฟหลัก
         function initializeMainCharts() {
@@ -411,8 +500,18 @@ $roomAllCount = roomAllCount() ?? [];
                 return;
             }
 
+            // เพิ่มตัวกรองกลุ่มเรียนและห้องเรียนถ้ามีการเลือก หากไม่เลือกให้แสดงข้อมํูลทั้งหมด
+            if (childGroupSelect.value) {
+                params['child_group'] = childGroupSelect.value;
+            }
+            if (classroomSelect.value) {
+                params['classroom'] = classroomSelect.value;
+            }
+
             params[viewTypeSelect.value === 'week' ? 'week_start' : 'month'] =
                 viewTypeSelect.value === 'week' ? weekSelect.value : attendanceMonthPicker.value;
+
+
 
             try {
                 const queryString = new URLSearchParams(params).toString();
@@ -438,8 +537,10 @@ $roomAllCount = roomAllCount() ?? [];
             try {
                 // อัพเดทตัวเลขสถิติ
                 document.getElementById('totalDays').textContent = data.total_days || 0;
-                document.getElementById('presentCount').textContent = data.present_count || 0;
-                document.getElementById('absentCount').textContent = data.absent_count || 0;
+                document.getElementById('presentTotal').textContent = data.expected_attendance || 0;
+                document.getElementById('presentCount').textContent = data.present_total || 0;
+                document.getElementById('absentCount').textContent = data.absent_total || 0;
+                document.getElementById('leaveCount').textContent = data.leave_total || 0;
                 document.getElementById('attendanceRate').textContent = `${data.attendance_rate || 0}%`;
 
                 const chartCanvas = document.getElementById('attendanceChart');
@@ -556,7 +657,39 @@ $roomAllCount = roomAllCount() ?? [];
 
         // เริ่มต้นสร้างกราฟหลัก
         initializeMainCharts();
+        // ดึงข้อมูลการมาเรียนเริ่มต้น
+        fetchAttendanceDataToday();
+
     });
+
+function loadClassrooms() {
+        var childGroup = document.getElementById('child_group').value;
+
+        if (!childGroup) {
+            document.getElementById('classroom').innerHTML = '<option value="">ห้องเรียนทั้งหมด</option>';
+            return;
+        }
+
+
+        fetch(`../../include/function/get_classrooms.php?child_group=${childGroup}`)
+            .then(response => response.json())
+            .then(data => {
+                var classroomSelect = document.getElementById('classroom');
+                classroomSelect.innerHTML = '<option value="">ห้องเรียนทั้งหมด</option>';
+
+                data.forEach(function(classroom) {
+                    var option = document.createElement('option');
+                    option.value = classroom.classroom_name;
+                    option.textContent = classroom.classroom_name;
+                    classroomSelect.appendChild(option);
+                });
+
+                <?php if (isset($_GET['classroom'])): ?>
+                    classroomSelect.value = <?php echo json_encode($_GET['classroom']); ?>;
+                <?php endif; ?>
+            })
+            .catch(error => console.error('Error:', error));
+    }
 </script>
 
 </body>
