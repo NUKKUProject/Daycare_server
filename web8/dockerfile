@@ -1,6 +1,4 @@
-FROM nginx:1.29.1-alpine3.22-slim
-
-LABEL Author="PRATCHAYAPOL <pratchayapol.ja@rmuti.ac.th>" version="latest" org.opencontainers.image.authors="pratchayapol.ja@rmuti.ac.th"
+FROM nginx:1.30.0-alpine3.23-slim
 
 # Install required dependencies for GD extension
 RUN apk update && apk add --no-cache \
