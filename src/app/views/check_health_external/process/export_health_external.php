@@ -16,27 +16,27 @@ try {
 checkUserRole(['admin', 'teacher', 'doctor']);
 
 // รับค่าจาก URL parameters
-$academic_year = $_GET['academic_year'] ?? '';
+$exam_date = $_GET['exam_date'] ?? '';
 $doctor = $_GET['doctor'] ?? '';
 
 // ดึงข้อมูลจากฐานข้อมูล
 if ($doctor === 'all') {
     // ไม่กรอง doctor_name
     $sql = "SELECT * FROM health_data_external 
-            WHERE academic_year = :year";
+            WHERE exam_date = :exam_date";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
-        ':year' => $academic_year
+        ':exam_date' => $exam_date
     ]);
 } else {
     // กรอง doctor_name ตามค่าที่รับมา
     $sql = "SELECT * FROM health_data_external 
-            WHERE academic_year = :year AND doctor_name = :doctor";
+            WHERE exam_date = :exam_date AND doctor_name = :doctor";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
-        ':year' => $academic_year,
+        ':exam_date' => $exam_date,
         ':doctor' => $doctor
     ]);
 }
@@ -91,9 +91,9 @@ function drawDottedUnderlineTextFull($pdf, $text, $cellWidth = 70, $fontSize = 1
     $startX = $x + 2;
     $endX = $x + $cellWidth - 2;
 
-    // วาดเส้นประใต้ข้อความ
-    for ($i = $startX; $i < $endX; $i += 2) {
-        $pdf->Line($i, $lineY, $i + 1, $lineY);
+    // วาดเส้นประใต้ข้อความ (จุดติดกันแน่นมากข้น)
+    for ($i = $startX; $i < $endX; $i += 0.8) {
+        $pdf->Line($i, $lineY, $i + 0.4, $lineY);
     }
 }
 if (!function_exists('drawOptionCell')) {

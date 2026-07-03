@@ -1,68 +1,55 @@
-<!-- ฟอร์มเพิ่มข้อมูลเด็ก -->
+<!-- ฟอร์มเพิ่มข้อมูลเด็ก – แบ่งเป็นขั้นตอน (Wizard) -->
 <div class="modal-body">
     <form id="addChildForm" method="post" action="../../include/process/process_add_child.php" enctype="multipart/form-data" class="child-form-modal">
-        <!-- รูปโปรไฟล์ -->
-        <div class="form-section mb-4">
-            <h3 class="section-title">
-                <i class="bi bi-person-badge"></i>
-                รูปโปรไฟล์
-            </h3>
-            <div class="row align-items-center">
+        <p class="text-muted"><span class="required-asterisk">*</span> หมายถึงจำเป็นต้องกรอก</p>
+
+        <!-- STEP 1: โปรไฟล์ -->
+        <div class="step" id="step-1">
+            <h5 class="step-title"><i class="bi bi-person-badge"></i> รูปโปรไฟล์</h5>
+            <div class="row align-items-center mb-4">
                 <div class="col-md-4 text-center">
                     <div class="profile-image-container mb-3">
-                        <img id="preview_image" src="../../../public/assets/images/avatar.png" 
-                             class="profile-preview rounded-circle">
+                        <img id="preview_image" src="../../../public/assets/images/avatar.png"
+                             class="profile-preview rounded-circle" alt="Preview image">
                         <div class="profile-image-overlay">
                             <i class="bi bi-camera"></i>
                         </div>
                     </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger mt-2" id="removeImageBtn" style="display:none;">ลบรูป</button>
                 </div>
                 <div class="col-md-8">
                     <div class="mb-3">
                         <label for="profile_image" class="form-label">อัพโหลดรูปโปรไฟล์:</label>
-                        <input type="file" class="form-control" id="profile_image" 
-                               accept="image/*" onchange="handleImageSelect(this)">
+                        <input type="file" class="form-control" id="profile_image" accept="image/*" onchange="handleImageSelect(this)">
                         <input type="hidden" name="profile_image_data" id="profile_image_data">
-                        <div class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            รองรับไฟล์ภาพ (jpg, jpeg, png) ขนาดไม่เกิน 5MB
-                        </div>
+                        <div class="form-text"><i class="bi bi-info-circle"></i> รองรับไฟล์ภาพ (jpg, jpeg, png) ขนาดไม่เกิน 5MB</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ข้อมูลการเรียน -->
-        <div class="form-section mb-4">
-            <h3 class="section-title">
-                <i class="bi bi-book"></i>
-                ข้อมูลการเรียน
-            </h3>
-            <div class="row">
-                <!-- รหัสนักเรียน -->
+        <!-- STEP 2: ข้อมูลการเรียน -->
+        <div class="step" id="step-2" style="display:none;">
+            <h5 class="step-title"><i class="bi bi-book"></i> ข้อมูลการเรียน</h5>
+            <div class="row mb-4">
                 <div class="col-md-3">
                     <div class="mb-3">
-                        <label for="student_id" class="form-label">รหัสนักเรียน:</label>
-                        <input type="text" class="form-control" name="student_id" id="student_id" 
-                               placeholder="กรุณากรอกรหัสนักเรียน" required>
+                        <label for="student_id" class="form-label">รหัสนักเรียน:<span class="required-asterisk">*</span></label>
+                        <input type="text" class="form-control" name="student_id" id="student_id" placeholder="เช่น 12345" required>
                     </div>
                 </div>
-                <!-- ปีการศึกษา -->
                 <div class="col-md-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label for="academic_year" class="form-label mb-0">ปีการศึกษา:</label>
-                        <button type="button" class="btn btn-sm btn-primary" onclick="openAcademicYearManager()">
-                            <i class="bi bi-gear-fill"></i> จัดการปีการศึกษา
-                        </button>
+                        <label for="academic_year" class="form-label mb-0">ปีการศึกษา:<span class="required-asterisk">*</span></label>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="openAcademicYearManager()"><i class="bi bi-gear-fill"></i> จัดการปีการศึกษา</button>
                     </div>
                     <select name="academic_year" id="academic_year" class="form-select" required>
                         <option value="" disabled selected>กรุณาเลือกปีการศึกษา</option>
                     </select>
                 </div>
-                <!-- กลุ่มเด็ก -->
                 <div class="col-md-3">
                     <div class="mb-3">
-                        <label for="child_group" class="form-label">กลุ่มเด็ก:</label>
+                        <label for="child_group" class="form-label">กลุ่มเด็ก:<span class="required-asterisk">*</span></label>
                         <select name="child_group" id="child_group" class="form-select" onchange="loadClassrooms()" required>
                             <option value="" disabled selected>กรุณาเลือกกลุ่มเด็ก</option>
                             <option value="เด็กกลาง">เด็กกลาง</option>
@@ -71,172 +58,133 @@
                         </select>
                     </div>
                 </div>
-                <!-- ห้องเรียน -->
                 <div class="col-md-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label for="classroom" class="form-label mb-0">ห้องเรียน:</label>
-                        <button type="button" class="btn btn-sm btn-primary" onclick="openClassroomManager()">
-                            <i class="bi bi-gear-fill"></i> จัดการห้องเรียน
-                        </button>
+                        <label for="classroom" class="form-label mb-0">ห้องเรียน:<span class="required-asterisk">*</span></label>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="openClassroomManager()"><i class="bi bi-gear-fill"></i> จัดการห้องเรียน</button>
                     </div>
-                    <select name="classroom" id="classroom" class="form-select" required>
+                    <select name="classroom" id="classroom" class="form-select" required disabled aria-describedby="classroomHelp">
                         <option value="" disabled selected>กรุณาเลือกห้องเรียน</option>
                     </select>
+                    <div id="classroomHelp" class="form-text">กรุณาเลือกกลุ่มเด็กก่อน</div>
                 </div>
             </div>
         </div>
 
-        <!-- ข้อมูลส่วนตัวและผู้ปกครอง -->
-        <div class="row">
-            <!-- ข้อมูลส่วนตัว -->
-            <div class="col-md-6">
-                <div class="form-section h-100">
-                    <h3 class="section-title">
-                        <i class="bi bi-person-circle"></i>
-                        ข้อมูลส่วนตัว
-                    </h3>
-                    <!-- หมายเลขบัตรประชาชน -->
+        <!-- STEP 3: ข้อมูลส่วนตัว & ผู้ปกครอง -->
+        <div class="step" id="step-3" style="display:none;">
+            <h5 class="step-title"><i class="bi bi-person-circle"></i> ข้อมูลส่วนตัว</h5>
+            <div class="row mb-4">
+                <div class="col-md-12">
                     <div class="mb-3">
                         <label for="id_card" class="form-label">หมายเลขบัตรประชาชน (ถ้ามี):</label>
                         <input type="text" class="form-control" name="id_card" placeholder="กรุณากรอกหมายเลขบัตรประชาชน">
                     </div>
-
-                    <!-- ชื่อเล่น -->
+                </div>
+                <div class="col-md-12">
                     <div class="mb-3">
-                        <label for="nickname" class="form-label">ชื่อเล่น:</label>
+                        <label for="nickname" class="form-label">ชื่อเล่น:<span class="required-asterisk">*</span></label>
                         <input type="text" class="form-control" name="nickname" placeholder="กรุณากรอกชื่อเล่น" required>
-                    </div>
-
-                    <div class="row">
-                        <!-- คำนำหน้าชื่อ (ภาษาไทย) -->
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="prefix_th" class="form-label">คำนำหน้าชื่อ (ไทย):</label>
-                                <select name="prefix_th" class="form-select" required>
-                                    <option value="">เลือกคำนำหน้าชื่อ</option>
-                                    <option value="เด็กชาย">เด็กชาย</option>
-                                    <option value="เด็กหญิง">เด็กหญิง</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- ชื่อและนามสกุล ภาษาไทย -->
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="first_name_th" class="form-label">ชื่อ (ไทย):</label>
-                                <input type="text" class="form-control" name="first_name_th" placeholder="กรุณากรอกชื่อ" required>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="last_name_th" class="form-label">นามสกุล (ไทย):</label>
-                                <input type="text" class="form-control" name="last_name_th" placeholder="กรุณากรอกนามสกุล" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <!-- คำนำหน้าชื่อ (ภาษาอังกฤษ) -->
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="prefix_en" class="form-label">คำนำหน้าชื่อ (อังกฤษ):</label>
-                                <select name="prefix_en" class="form-select">
-                                    <option value="">Select prefix</option>
-                                    <option value="Mr.">Mr.</option>
-                                    <option value="Ms.">Ms.</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- ชื่อและนามสกุล ภาษาอังกฤษ -->
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="first_name_en" class="form-label">ชื่อ (อังกฤษ):</label>
-                                <input type="text" class="form-control" name="first_name_en" placeholder="กรุณากรอกชื่อ">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="last_name_en" class="form-label">นามสกุล (อังกฤษ):</label>
-                                <input type="text" class="form-control" name="last_name_en" placeholder="กรุณากรอกนามสกุล">
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="prefix_th" class="form-label">คำนำหน้าชื่อ (ไทย):</label>
+                    <select name="prefix_th" class="form-select" required>
+                        <option value="">เลือกคำนำหน้าชื่อ</option>
+                        <option value="เด็กชาย">เด็กชาย</option>
+                        <option value="เด็กหญิง">เด็กหญิง</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="first_name_th" class="form-label">ชื่อ (ไทย):<span class="required-asterisk">*</span></label>
+                    <input type="text" class="form-control" name="first_name_th" placeholder="กรุณากรอกชื่อ" required>
+                </div>
+                <div class="col-md-4">
+                    <label for="last_name_th" class="form-label">นามสกุล (ไทย):<span class="required-asterisk">*</span></label>
+                    <input type="text" class="form-control" name="last_name_th" placeholder="กรุณากรอกนามสกุล" required>
+                </div>
+            </div>
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <label for="prefix_en" class="form-label">คำนำหน้าชื่อ (อังกฤษ):</label>
+                    <select name="prefix_en" class="form-select">
+                        <option value="">Select prefix</option>
+                        <option value="Mr.">Mr.</option>
+                        <option value="Ms.">Ms.</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="first_name_en" class="form-label">ชื่อ (อังกฤษ):</label>
+                    <input type="text" class="form-control" name="first_name_en" placeholder="กรุณากรอกชื่อ">
+                </div>
+                <div class="col-md-4">
+                    <label for="last_name_en" class="form-label">นามสกุล (อังกฤษ):</label>
+                    <input type="text" class="form-control" name="last_name_en" placeholder="กรุณากรอกนามสกุล">
+                </div>
+            </div>
 
-            <!-- ข้อมูลผู้ปกครอง -->
-            <div class="col-md-6">
-                <div class="form-section h-100">
-                    <h3 class="section-title">
-                        <i class="bi bi-people"></i>
-                        ข้อมูลผู้ปกครอง
-                    </h3>
-                    <!-- ข้อมูลบิดา -->
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="father_first_name" class="form-label">ชื่อบิดา:</label>
-                                <input type="text" class="form-control" name="father_first_name" placeholder="กรุณากรอกชื่อบิดา" >
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="father_last_name" class="form-label">นามสกุลบิดา:</label>
-                                <input type="text" class="form-control" name="father_last_name" placeholder="กรุณากรอกนามสกุลบิดา" >
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="father_phone" class="form-label">เบอร์โทรบิดา:</label>
-                                <input type="text" class="form-control" name="father_phone" placeholder="กรุณากรอกเบอร์โทรบิดา" >
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="father_phone_backup" class="form-label">เบอร์โทรสำรองบิดา:</label>
-                                <input type="text" class="form-control" name="father_phone_backup" placeholder="กรุณากรอกเบอร์โทรสำรองบิดา">
-                            </div>
-                        </div>
+            <h5 class="step-title"><i class="bi bi-people"></i> ข้อมูลผู้ปกครอง</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="father_first_name" class="form-label">ชื่อบิดา:</label>
+                        <input type="text" class="form-control" name="father_first_name" placeholder="กรุณากรอกชื่อบิดา">
                     </div>
-
-                    <!-- ข้อมูลมารดา -->
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="mother_first_name" class="form-label">ชื่อมารดา:</label>
-                                <input type="text" class="form-control" name="mother_first_name" placeholder="กรุณากรอกชื่อมารดา" >
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="mother_last_name" class="form-label">นามสกุลมารดา:</label>
-                                <input type="text" class="form-control" name="mother_last_name" placeholder="กรุณากรอกนามสกุลมารดา" >
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="mother_phone" class="form-label">เบอร์โทรมารดา:</label>
-                                <input type="text" class="form-control" name="mother_phone" placeholder="กรุณากรอกเบอร์โทรมารดา" >
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="mother_phone_backup" class="form-label">เบอร์โทรสำรองมารดา:</label>
-                                <input type="text" class="form-control" name="mother_phone_backup" placeholder="กรุณากรอกเบอร์โทรสำรองมารดา">
-                            </div>
-                        </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="father_last_name" class="form-label">นามสกุลบิดา:</label>
+                        <input type="text" class="form-control" name="father_last_name" placeholder="กรุณากรอกนามสกุลบิดา">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="father_phone" class="form-label">เบอร์โทรบิดา:</label>
+                        <input type="text" class="form-control" name="father_phone" placeholder="กรุณากรอกเบอร์โทรบิดา">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="father_phone_backup" class="form-label">เบอร์โทรสำรองบิดา:</label>
+                        <input type="text" class="form-control" name="father_phone_backup" placeholder="กรุณากรอกเบอร์โทรสำรองบิดา">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="mother_first_name" class="form-label">ชื่อมารดา:</label>
+                        <input type="text" class="form-control" name="mother_first_name" placeholder="กรุณากรอกชื่อมารดา">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="mother_last_name" class="form-label">นามสกุลมารดา:</label>
+                        <input type="text" class="form-control" name="mother_last_name" placeholder="กรุณากรอกนามสกุลมารดา">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="mother_phone" class="form-label">เบอร์โทรมารดา:</label>
+                        <input type="text" class="form-control" name="mother_phone" placeholder="กรุณากรอกเบอร์โทรมารดา">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="mother_phone_backup" class="form-label">เบอร์โทรสำรองมารดา:</label>
+                        <input type="text" class="form-control" name="mother_phone_backup" placeholder="กรุณากรอกเบอร์โทรสำรองมารดา">
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ปุ่มบันทึกข้อมูล -->
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-            <button type="submit" class="btn btn-submit">
-                <i class="bi bi-check-circle me-2"></i>
-                บันทึกข้อมูล
+        <!-- Navigation Buttons -->
+        <div class="modal-footer d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary" id="prevBtn" style="display:none;">ย้อนกลับ</button>
+            <button type="button" class="btn btn-primary" id="nextBtn">ต่อไป</button>
+            <button type="submit" class="btn btn-success btn-submit d-none" id="submitBtn">
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" style="display:none;" id="submitSpinner"></span>
+                <i class="bi bi-check-circle me-2"></i> บันทึกข้อมูล
             </button>
         </div>
     </form>
@@ -1023,5 +971,45 @@ function deleteAcademicYear(id) {
 // โหลดปีการศึกษาเมื่อโหลดหน้า
 document.addEventListener('DOMContentLoaded', function() {
     loadAcademicYears();
+});
+</script>
+
+<script>
+// ---------- Wizard navigation ----------
+const steps = [document.getElementById('step-1'), document.getElementById('step-2'), document.getElementById('step-3')];
+let currentStep = 0;
+
+function showStep(index) {
+    steps.forEach((el, i) => {
+        el.style.display = i === index ? 'block' : 'none';
+    });
+    // Button visibility
+    document.getElementById('prevBtn').style.display = index === 0 ? 'none' : 'inline-block';
+    if (index === steps.length - 1) {
+        document.getElementById('nextBtn').style.display = 'none';
+        document.getElementById('submitBtn').classList.remove('d-none');
+    } else {
+        document.getElementById('nextBtn').style.display = 'inline-block';
+        document.getElementById('submitBtn').classList.add('d-none');
+    }
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+    if (currentStep < steps.length - 1) {
+        currentStep++;
+        showStep(currentStep);
+    }
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+    if (currentStep > 0) {
+        currentStep--;
+        showStep(currentStep);
+    }
+});
+
+// Initialize first step on page load
+document.addEventListener('DOMContentLoaded', () => {
+    showStep(currentStep);
 });
 </script>

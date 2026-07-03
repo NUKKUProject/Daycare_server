@@ -11,7 +11,11 @@ $is_doctor = getUserRole() === 'doctor';
 require_once __DIR__ . '../../../include/auth/auth_dashboard.php';
 require_once __DIR__ . '/../../include/function/children_history_functions.php';
 require_once __DIR__ . '/../../include/function/get_doctors.php';
+?>
 
+<link rel="stylesheet" href="checklist_name.css">
+
+<?php
 // ใช้ user_id จาก session เป็น teacher_id
 if (isset($_SESSION['user_id'])) {
     $teacher_id = $_SESSION['user_id'];
@@ -28,386 +32,7 @@ $response = json_decode($doctorListJson, true);    // แปลงเป็น a
 $doctors = $response['data'] ?? [];                // เอาเฉพาะ 'data'
 
 ?>
-<style>
-    .form-container {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-    }
 
-    .section-header {
-        background: linear-gradient(45deg, #4CAF50, #45a049);
-        color: white;
-        padding: 0.75rem 1.25rem;
-        margin: -1.25rem -1.25rem 1.25rem -1.25rem;
-        border-radius: 0.375rem 0.375rem 0 0;
-        font-weight: 600;
-    }
-
-    .form-section {
-        background: #f8f9ff;
-        border-radius: 10px;
-        border-left: 4px solid #667eea;
-    }
-
-    .dotted-input {
-        border: none !important;
-        border-bottom: 2px dotted #6c757d !important;
-        border-radius: 0 !important;
-        background: transparent !important;
-        padding: 0.25rem 0.5rem !important;
-        box-shadow: none !important;
-    }
-
-    .dotted-input:focus {
-        border-bottom-color: #667eea !important;
-        box-shadow: 0 2px 0 #667eea !important;
-    }
-
-    .custom-table {
-        border: 2px solid #dee2e6;
-        border-radius: 8px;
-        overflow: hidden;
-        font-size: 14px;
-    }
-
-    .custom-table th {
-        font-weight: 600;
-        text-align: center;
-        padding: 0.75rem 0.5rem;
-        font-size: 0.9rem;
-        border: 1px solid #dee2e6;
-    }
-
-    .custom-table td {
-        text-align: center;
-        padding: 0.75rem 0.5rem;
-        border: 1px solid #dee2e6;
-        vertical-align: middle;
-    }
-
-    .custom-checkbox {
-        transform: scale(1.3);
-        accent-color: #667eea;
-    }
-
-    .temperature-badge {
-        background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 25px;
-        display: inline-flex;
-        align-items: center;
-        font-weight: 500;
-        margin-bottom: 1rem;
-    }
-
-    .vital-signs-card {
-        border: none;
-        border-radius: 15px;
-        background: linear-gradient(135deg, #667eea15, #764ba215);
-        border-left: 5px solid #667eea;
-    }
-
-    .behavior-card {
-        border: none;
-        border-radius: 15px;
-        background: linear-gradient(135deg, #4CAF5015, #45a04915);
-        border-left: 5px solid #4CAF50;
-    }
-
-    .measurement-input {
-        font-weight: 600;
-        color: #667eea;
-    }
-
-    /* ต้องแยกออกมาแบบนี้ */
-    .measurement-input::placeholder {
-        color: #cccccc;
-        opacity: 1;
-    }
-
-    .btn-custom {
-        background-color: rgb(21, 158, 71);
-        border: none;
-        padding: 0.75rem 2rem;
-        font-weight: 600;
-        border-radius: 25px;
-        color: white;
-        transition: all 0.3s ease;
-    }
-
-    .btn-custom:hover {
-        transform: translateY(-2px);
-        background-color: rgba(21, 158, 71, 0.8);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        color: white;
-    }
-
-    .print-section {
-        background: #f8f9fa;
-        border-top: 3px solid #667eea;
-        padding: 1.5rem;
-        text-align: center;
-    }
-
-    @media print {
-        body {
-            background: white !important;
-        }
-
-        .form-container {
-            box-shadow: none !important;
-            border: 1px solid #000 !important;
-        }
-
-        .btn-custom,
-        .print-section {
-            display: none !important;
-        }
-
-        .header-section {
-            background: #667eea !important;
-            -webkit-print-color-adjust: exact;
-            color-adjust: exact;
-        }
-    }
-
-    .input-group-text {
-        background: linear-gradient(45deg, #26648E, rgb(77, 106, 125));
-        color: white;
-        border: none;
-        font-weight: 500;
-    }
-
-    .badge-custom {
-        background: linear-gradient(45deg, #667eea, #764ba2);
-        color: white;
-        font-size: 0.8rem;
-        padding: 0.5rem 0.75rem;
-    }
-
-    /* 🆕 CSS เพิ่มเติมสำหรับหน้า 2 - ไม่กระทบของเดิม */
-
-    /* ตารางประเมินพัฒนาการ */
-    .development-table {
-        border: 2px solid #dee2e6;
-        border-radius: 8px;
-        overflow: hidden;
-        font-size: 14px;
-    }
-
-    .development-table th {
-        font-weight: 600;
-        text-align: center;
-        padding: 0.5rem 0.25rem;
-        vertical-align: middle;
-        border: 1px solid #fff;
-        border-right: 1px solid #dee2e6;
-        border-bottom: 1px solid #dee2e6;
-    }
-
-    .development-table td {
-        text-align: center;
-        padding: 0.5rem 0.25rem;
-        border: 1px solid #dee2e6;
-        vertical-align: middle;
-    }
-
-    .development-table .category-header {
-        writing-mode: vertical-rl;
-        text-orientation: mixed;
-        background: linear-gradient(45deg, #28a745, #20c997);
-        color: white;
-        font-weight: 700;
-        width: 80px;
-    }
-
-    /* การตรวจร่างกาย */
-    .examination-section {
-        background: #fff9f9;
-        border-left: 4px solid #dc3545;
-        border-radius: 10px;
-    }
-
-    .examination-item {
-        display: flex;
-        align-items: center;
-        padding: 0.5rem 0;
-        border-bottom: 1px dotted #dee2e6;
-    }
-
-    .examination-item:last-child {
-        border-bottom: none;
-    }
-
-    .checkbox-container {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-right: 1rem;
-        min-width: 250px;
-    }
-
-    .dotted-line {
-        border-bottom: 1px dotted #6c757d;
-        flex-grow: 1;
-        min-height: 1.5rem;
-        background: transparent;
-        border: none;
-        border-bottom: 1px dotted #6c757d !important;
-    }
-
-    /* ระบบประสาท */
-    .neuro-section {
-        background: #f0f8ff;
-        border-left: 4px solid #0d6efd;
-        border-radius: 10px;
-    }
-
-    /* คำแนะนำ */
-    .recommendations-section {
-        background: #fff8e1;
-        border-left: 4px solid #ff9800;
-        border-radius: 10px;
-    }
-
-    /* ลายเซ็น */
-    .signature-section {
-        background: #f8f9fa;
-        border-top: 3px solid #667eea;
-        padding: 2rem;
-        text-align: center;
-    }
-
-    .signature-box {
-        text-align: center;
-        padding: 1rem;
-    }
-
-    .signature-line {
-        border-bottom: 2px solid #333;
-        margin-bottom: 0.5rem;
-        height: 3rem;
-        position: relative;
-    }
-
-    /* Responsive สำหรับหน้า 2 */
-    @media (max-width: 768px) {
-        .development-table {
-            font-size: 10px;
-        }
-
-        .development-table th,
-        .development-table td {
-            padding: 0.25rem;
-        }
-
-        .examination-item {
-            flex-direction: column;
-            align-items: flex-start;
-            padding: 1rem 0;
-        }
-
-        .checkbox-container {
-            margin-bottom: 0.5rem;
-            min-width: auto;
-            width: 100%;
-        }
-    }
-
-    /* Print สำหรับหน้า 2 */
-    @media print {
-        .development-table {
-            font-size: 10px;
-        }
-
-        .development-table th,
-        .development-table td {
-            padding: 0.25rem;
-        }
-
-        .signature-section {
-            page-break-inside: avoid;
-        }
-    }
-
-    .score-input {
-        width: 20px;
-        font-size: 14px
-    }
-
-    .student-detail-view {
-        text-align: left;
-        font-size: 14px;
-    }
-
-    .student-detail-view .card {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .student-detail-view .card-title {
-        font-size: 16px;
-        margin-bottom: 15px;
-        padding-bottom: 8px;
-    }
-
-    .student-detail-view p {
-        margin-bottom: 8px;
-    }
-
-    .swal2-popup-large {
-        font-size: 14px !important;
-    }
-
-    .swal2-close-button-large {
-        font-size: 24px !important;
-    }
-
-    .title-student-info {
-        color: #17a2b8 !important;
-        border-bottom: 2px solid #17a2b8 !important;
-    }
-
-    .title-vital-signs {
-        color: #dc3545 !important;
-        border-bottom: 2px solid #dc3545 !important;
-    }
-
-    .title-measurements {
-        color: #28a745 !important;
-        border-bottom: 2px solid #28a745 !important;
-    }
-
-    .title-behavior {
-        color: #ffc107 !important;
-        border-bottom: 2px solid #ffc107 !important;
-    }
-
-    .title-development {
-        color: #8000ff !important;
-        /* สีม่วง */
-        border-bottom: 2px solid rgb(128, 0, 255) !important;
-    }
-
-    .title-physical-exam {
-        color: #007bff !important;
-        border-bottom: 2px solid #007bff !important;
-    }
-
-    .title-neurological {
-        color: #6c757d !important;
-        border-bottom: 2px solid #6c757d !important;
-    }
-
-    .title-recommendation {
-        color: #343a40 !important;
-        border-bottom: 2px solid #343a40 !important;
-    }
-</style>
 
 <main class="main-content">
     <div class="container-fluid px-4">
@@ -597,6 +222,244 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
         loadResults(); // โหลดผลลัพธ์ใหม่
     }
 
+    // ฟังก์ชันจัดกลุ่มข้อมูล (แบบใหม่)
+    function groupByClass(data) {
+        const groups = {};
+        data.forEach(s => {
+            const key = `${s.child_group}__${s.classroom}`;
+            if (!groups[key]) {
+                groups[key] = { child_group: s.child_group, classroom: s.classroom, students: [] };
+            }
+            groups[key].students.push(s);
+        });
+        return groups;
+    }
+
+    // ฟังก์ชันหา record ลาสุดของแต่ละเด็ก
+    function latestPerStudent(students) {
+        const map = {};
+        students.forEach(s => {
+            const prev = map[s.student_id];
+            if (!prev || (s.check_round || 1) > (prev.check_round || 1)) map[s.student_id] = s;
+        });
+        return Object.values(map);
+    }
+
+    // ฟังก์ชันฟอร์แมตวันที่
+    function formatDate(str) {
+        if (!str) return null;
+        const d = new Date(str);
+        return isNaN(d) ? null : d.toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    // ฟังก์ชันแก้ไขสถานะ
+    function resolveStatus(s) {
+        if (s.doctor_name)  return { label: 'หมอตรวจแล้ว', cls: 'badge-success',   dot: 'dot-success'   };
+        if (s.id != null)   return { label: 'รอแพทย์ตรวจ',   cls: 'badge-warning',   dot: 'dot-warning'   };
+        return                     { label: 'ยังไม่บันทึก',    cls: 'badge-secondary', dot: 'dot-secondary' };
+    }
+
+    // เก็บ student_id ที่เปิดประวัติอยู่ (รองรับหลายอัน)
+    let openedHistoryStudentIds = [];
+
+    // SVG Icons
+    const IC = {
+        eye:     `<svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+        list:    `<svg class="icon" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`,
+        pencil:  `<svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+        trash:   `<svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`,
+        plus:    `<svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+        group:   `<svg class="icon" viewBox="0 0 24 24" style="width:17px;height:17px;stroke:white;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+    };
+
+    // สร้างแถวนักเรียน
+    function renderStudentRow(student, allInGroup) {
+        const hasRecord   = student.id != null;
+        const status      = resolveStatus(student);
+        const totalRounds = allInGroup.filter(s => s.student_id === student.student_id).length;
+        const dateLabel   = formatDate(student.exam_date);
+        const histId      = `hist-${student.student_id}`;
+        const unrecorded  = !hasRecord ? 'unrecorded' : '';
+        const canManage   = <?php echo ($is_admin || $is_teacher || $is_doctor) ? 'true' : 'false'; ?>;
+        const isDoctor    = <?php echo $is_doctor ? 'true' : 'false'; ?>;
+        const isHistoryOpen = openedHistoryStudentIds.includes(student.student_id);
+
+        let viewBtn = '', histBtn = '', editBtn = '', deleteBtn = '', addBtn = '';
+
+        if (hasRecord && totalRounds > 0) {
+            histBtn = `<button class="btn btn-history" onclick="toggleHistory('${histId}', this)" style="${isHistoryOpen ? 'background:#bbf7d0;font-weight:700;' : ''}">${IC.list} ประวัติ <span class="round-counter">${totalRounds}</span></button>`;
+        }
+
+        // ่อนปุ่มแก้ไข/ลบหากมีแพทย์ตรวจแล้ว ยกเว้นแพทย์
+        const isCheckedByDoctor = student.doctor_name ? true : false;
+        const canEdit = canManage && (!isCheckedByDoctor || isDoctor);
+        const canDelete = canManage && (!isCheckedByDoctor || isDoctor);
+
+        if (canManage) {
+            if (hasRecord) {
+               
+            }
+            addBtn = `<button class="btn btn-add" onclick="addNewRecord('${student.student_id}')">${IC.plus} เพิ่ม</button>`;
+        }
+
+        const historyRows = allInGroup
+            .filter(s => s.student_id === student.student_id)
+            .sort((a, b) => (b.check_round || 1) - (a.check_round || 1))
+            .map(s => {
+                const st = resolveStatus(s);
+                const isRecordCheckedByDoctor = s.doctor_name ? true : false;
+                const canEditRecord = canManage && s.id && (!isRecordCheckedByDoctor || isDoctor);
+                const canDeleteRecord = canManage && s.id && (!isRecordCheckedByDoctor || isDoctor);
+                const editAction  = canEditRecord ? `<button class="btn btn-edit btn-sm" onclick="editRecord('${s.id}')">${IC.pencil} แก้ไข</button>` : '';
+                const viewAction  = s.id ? `<button class="btn btn-view btn-sm" onclick="viewDetails('${s.id}')">${IC.eye} ดู</button>` : '';
+                const deleteRecordAction  = canDeleteRecord ? `<button class="btn btn-delete btn-sm" onclick="deleteRecord('${s.id}')">${IC.trash} ลบ</button>` : '';
+                return `
+                    <tr>
+                        <td>ครั้งที่ ${s.check_round || 1}</td>
+                        <td>${formatDate(s.exam_date) || '—'}</td>
+                        <td><span class="badge ${st.cls}"><span class="status-dot ${st.dot}"></span>${st.label}</span></td>
+                        <td>${s.doctor_name || '—'}</td>
+                        <td><div class="btn-group">${deleteRecordAction}${viewAction}${editAction}</div></td>
+                    </tr>`;
+            }).join('');
+
+        const selectedClass = isHistoryOpen ? 'selected-row' : '';
+        const mainRow = `
+            <tr class="${unrecorded} ${selectedClass}">
+                <td class="cell-name">
+                    <div class="student-name">${student.prefix_th} ${student.first_name_th} ${student.last_name_th}</div>
+                    <div class="student-meta">
+                        <span class="id-badge">${student.student_id}</span>
+                        <span class="nickname-pill">${student.nickname}</span>
+                    </div>
+                </td>
+                <td>${student.academic_year}</td>
+                <td><span class="round-counter">${totalRounds} ครั้ง</span></td>
+                <td>
+                    <span class="badge ${status.cls}">
+                        <span class="status-dot ${status.dot}"></span>
+                        ${status.label}
+                    </span>
+                </td>
+                <td>
+                    ${dateLabel
+                        ? `<span class="date-text">${dateLabel}</span>`
+                        : `<span class="date-text date-none">—</span>`}
+                </td>
+                <td class="cell-actions">
+                    <div class="btn-group">
+                        ${viewBtn}${histBtn}${editBtn}${deleteBtn}${addBtn}
+                    </div>
+                </td>
+            </tr>`;
+
+        const histRow = totalRounds > 0 ? `
+            <tr class="history-row ${isHistoryOpen ? 'open' : ''}" id="${histId}">
+                <td colspan="6" style="padding:0;">
+                    <div class="history-panel">
+                        <div class="history-panel-title">ประวัติการตรวจทั้งหมด — ${student.prefix_th} ${student.first_name_th} ${student.last_name_th}</div>
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>รอบที่</th>
+                                    <th>วันที่ตรวจ</th>
+                                    <th>สถานะ</th>
+                                    <th>แพทย์ผู้ตรวจ</th>
+                                    <th>จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody>${historyRows}</tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>` : '';
+
+        return mainRow + histRow;
+    }
+
+    // สร้างการ์ดกลุ่มเรียน
+    function renderClassCard(group) {
+        const latest        = latestPerStudent(group.students);
+        const doneCount     = latest.filter(s => s.doctor_name).length;
+        const pendingCount  = latest.filter(s => !s.doctor_name && s.id != null).length;
+        const unrecorded    = latest.filter(s => s.id == null).length;
+
+        const rows = latest.map(s => renderStudentRow(s, group.students)).join('');
+
+        return `
+            <div class="class-card">
+                <div class="class-card-header">
+                    <h5>
+                        ${IC.group}
+                        กลุ่มเรียน: <strong>${group.child_group}</strong>
+                        &nbsp;|&nbsp;
+                        ห้องเรียน: <strong>${group.classroom}</strong>
+                    </h5>
+                    <div class="header-pills">
+                        <span class="meta-pill">${latest.length} คน</span>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ชื่อ-นามสกุล</th>
+                                <th>ปีการศึกษา</th>
+                                <th>จำนวนครั้ง</th>
+                                <th>สถานะล่าสุด</th>
+                                <th>วันที่ตรวจล่าสุด</th>
+                                <th>จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+
+                <div class="class-summary">
+                    <span class="summary-item"><span class="status-dot dot-success"></span> หมอตรวจแล้ว <strong>${doneCount}</strong></span>
+                    <span class="summary-item"><span class="status-dot dot-warning"></span> รอแพทย์ตรวจ <strong>${pendingCount}</strong></span>
+                    <span class="summary-item"><span class="status-dot dot-secondary"></span> ยังไม่บันทึก <strong>${unrecorded}</strong></span>
+                </div>
+            </div>`;
+    }
+
+    // ฟังก์ชัน render หลัก
+    function renderResults(data) {
+        const container = document.getElementById('resultTable');
+        if (!data || data.length === 0) {
+            container.innerHTML = `<div class="alert alert-info">ไม่พบข้อมูลนักเรียน</div>`;
+            return;
+        }
+        const grouped = groupByClass(data);
+        container.innerHTML = Object.values(grouped).map(renderClassCard).join('');
+    }
+
+    // ฟังก์ชัน toggle history
+    window.toggleHistory = function (panelId, btn) {
+        const row = document.getElementById(panelId);
+        if (!row) return;
+        const isOpen = row.classList.toggle('open');
+        btn.style.background    = isOpen ? '#bbf7d0' : '';
+        btn.style.fontWeight    = isOpen ? '700'     : '';
+        
+        // เก็บ student_id ที่เปิดประวัติอยู่ (รองรับหลายอัน)
+        const studentId = panelId.replace('hist-', '');
+        if (isOpen) {
+            if (!openedHistoryStudentIds.includes(studentId)) {
+                openedHistoryStudentIds.push(studentId);
+            }
+        } else {
+            openedHistoryStudentIds = openedHistoryStudentIds.filter(id => id !== studentId);
+        }
+        
+        // Toggle selected-row class บนแถวหลัก
+        const mainRow = row.previousElementSibling;
+        if (mainRow && mainRow.tagName === 'TR') {
+            mainRow.classList.toggle('selected-row', isOpen);
+        }
+    };
+
     // โหลดผลลัพธ์
     function loadResults() {
         const formData = new FormData(document.getElementById('searchForm'));
@@ -614,144 +477,15 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
         fetch(`./function/get_health_external.php?${params.toString()}`)
             .then(response => response.json())
             .then(data => {
-                const table = document.getElementById('resultTable');
-                if (data.length === 0) {
-                    table.innerHTML = '<div class="alert alert-info">ไม่พบข้อมูล</div>';
-                    return;
-                }
-
-                // จัดกลุ่มข้อมูลตามกลุ่มเรียนและห้องเรียน
-                const groupedData = groupStudentsByClass(data);
-
-                let html = '';
-
-                // แสดงข้อมูลแต่ละกลุ่ม
-                Object.entries(groupedData).forEach(([key, group]) => {
-                    html += `
-                        <div class="card mb-4">
-                            <div class="card-header bg-primary text-white">
-                                <h5 class="mb-0">กลุ่มเรียน: ${group.child_group} | ห้องเรียน: ${group.classroom}</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-striped table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>รหัสนักเรียน</th>
-                                                <th>ชื่อ-นามสกุล</th>
-                                                <th>ชื่อเล่น</th>
-                                                <th>ปีการศึกษา</th>
-                                                <th>สถานะ</th>
-                                                <th style="width:150px;">วันที่ตรวจ</th>
-                                                <th>ผลการตรวจ</th>
-                                                <th>จัดการ</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                    `;
-
-                    // แสดงข้อมูลนักเรียนในกลุ่ม
-                    group.students.forEach(student => {
-                        // ตรวจสอบสถานะจากการมี id
-                        const hasRecord = student.id != null;
-
-                        html += `
-                            <tr>
-                                <td>${student.student_id}</td>
-                                <td>${student.prefix_th} ${student.first_name_th} ${student.last_name_th}</td>
-                                <td>${student.nickname}</td>
-                                <td>${student.academic_year}</td>
-                               <td>
-                                <span class="badge 
-                                    ${student.doctor_name 
-                                        ? 'bg-success' 
-                                        : hasRecord 
-                                            ? 'bg-warning text-dark' 
-                                            : 'bg-secondary'}">
-                                    ${student.doctor_name 
-                                        ? 'หมอตรวจแล้ว' 
-                                        : hasRecord 
-                                            ? 'รอแพทย์ตรวจ' 
-                                            : 'ยังไม่มีการบันทึก'}
-                                </span>
-                            </td>
-
-                                
-                                <td>
-                                    ${hasRecord ? 
-                                    new Date(student.exam_date).toLocaleDateString('th-TH', {
-                                        day: '2-digit',
-                                        month: 'short',
-                                        year: 'numeric'
-                                    }) 
-                                    : '-'
-                                }
-
-                                </td>
-
-                                <td>
-                                    <?php if ($is_admin || $is_teacher): ?>
-                                        ${hasRecord ? `
-                                            <button type="button" class="btn btn-info btn-sm" onclick="viewDetails('${student.id}')">
-                                                <i class="bi bi-eye"></i> ดูรายละเอียด
-                                            </button>
-                                        ` : `
-                                            <span class="badge bg-secondary">ยังไม่มีการบันทึก</span>
-                                        `}
-                                    <?php else: ?>
-                                        ${hasRecord ? `
-                                            <button type="button" class="btn btn-info btn-sm" onclick="viewDetails('${student.id}')">
-                                                <i class="bi bi-eye"></i> ดูรายละเอียด
-                                            </button>
-                                        ` : `
-                                            <span class="badge bg-warning text-dark">ยังไม่มีการบันทึก</span>
-                                        `}
-                                    <?php endif; ?>
-                                </td>
-
-                                <td>
-                                    <?php if ($is_admin || $is_teacher || $is_doctor): ?>
-                                        ${hasRecord ? `
-                                            <button type="button" class="btn btn-warning btn-sm" onclick="editRecord('${student.id}')">
-                                                <i class="bi bi-pencil"></i> แก้ไข
-                                            </button>
-                                            <button type="button" class="btn btn-danger btn-sm" onclick="deleteRecord('${student.id}')">
-                                                <i class="bi bi-trash"></i> ลบ
-                                            </button>
-                                        ` : `
-                                            <button type="button" class="btn btn-primary btn-sm" onclick="addNewRecord('${student.student_id}')">
-                                                <i class="bi bi-plus-circle"></i> เพิ่มข้อมูล
-                                            </button>
-                                        `}
-                                    <?php else: ?>
-                                        ${hasRecord ? `
-                                        ` : `
-                                            <span class="text-muted">ยังไม่มีการบันทึก</span>
-                                        `}
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        `;
-                    });
-
-                    html += `
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                table.innerHTML = html;
+                renderResults(data);
             })
             .catch(error => {
                 console.error('Error:', error);
-                table.innerHTML = '<div class="alert alert-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
+                document.getElementById('resultTable').innerHTML = '<div class="alert alert-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
             });
     }
 
-    // เพิ่มฟังก์ชันจัดกลุ่มข้อมูล
+    // เพิ่มฟังก์ชันจัดกลุ่มข้อมูล (เก่า - สำหรับ compatibility)
     function groupStudentsByClass(students) {
         return students.reduce((groups, student) => {
             const key = `${student.child_group}-${student.classroom}`;
@@ -803,256 +537,293 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                         return;
                     }
 
-                    const student = data.data;
-                    const vitalSigns = JSON.parse(student.vital_signs);
+                    const student      = data.data;
+                    const vitalSigns   = JSON.parse(student.vital_signs);
                     const physicalExam = JSON.parse(student.physical_exam);
                     const neurological = JSON.parse(student.neurological);
-                    const behavior = JSON.parse(student.behavior);
-                    const measures = JSON.parse(student.physical_measures);
-                    const development = JSON.parse(student.development_assessment);
+                    const behavior     = JSON.parse(student.behavior);
+                    const measures     = JSON.parse(student.physical_measures);
+                    const development  = JSON.parse(student.development_assessment);
+
+                    /* ── helper: check if any key in source is 'abnormal' ── */
+                    function hasAbnormal(source, keys) {
+                        return keys.some(k => {
+                            const val = source[k];
+                            if (val === 'abnormal') return true;
+                            if (Array.isArray(val) && val.includes('abnormal')) return true;
+                            return false;
+                        });
+                    }
+
+                    /* ── helper: physical/neuro status pill ── */
+                    function examStatusPill(val) {
+                        if (val === 'normal' || (Array.isArray(val) && val.includes('normal')))
+                            return `<span class="status-pill pill-normal"><span class="pill-dot" style="background:#22c55e;"></span>ปกติ</span>`;
+                        if (val === 'abnormal' || (Array.isArray(val) && val.includes('abnormal')))
+                            return `<span class="status-pill pill-abnormal"><span class="pill-dot" style="background:#ef4444;"></span>ผิดปกติ</span>`;
+                        return `<span style="color:#94a3b8;font-size:12px;">—</span>`;
+                    }
+
+                    /* ── helper: development status pill ── */
+                    function devStatusPill(status, score) {
+                        const s = score ? ` (${score})` : '';
+                        if (status === 'pass')
+                            return `<span class="status-pill pill-normal"><span class="pill-dot" style="background:#22c55e;"></span>ผ่าน${s}</span>`;
+                        if (status === 'fail')
+                            return `<span class="status-pill pill-abnormal"><span class="pill-dot" style="background:#ef4444;"></span>ไม่ผ่าน${s}</span>`;
+                        return `<span style="color:#94a3b8;font-size:12px;">—</span>`;
+                    }
+
+                    /* ── helper: check if a value is abnormal (string or array) ── */
+                    function isAbnormalValue(val) {
+                        if (val === 'abnormal') return true;
+                        if (Array.isArray(val) && val.includes('abnormal')) return true;
+                        return false;
+                    }
+
+                    /* ── helper: one exam row ── */
+                    function examRow(label, key, source) {
+                        const val    = source[key];
+                        const detail = source[`${key}_detail`];
+                        const isAbnormal = isAbnormalValue(val);
+                        const isNormal = val === 'normal' || (Array.isArray(val) && val.includes('normal'));
+                        return `
+                            <div class="exam-row ${isAbnormal ? 'is-abnormal' : (isNormal ? 'is-normal' : '')}">
+                                <span class="exam-row-label">${label}</span>
+                                <span class="exam-row-value">
+                                    ${examStatusPill(val)}
+                                    ${detail ? `<span class="exam-detail">${detail}</span>` : ''}
+                                </span>
+                            </div>`;
+                    }
+
+                    /* ── helper: one development card ── */
+                    function devCard(code, label, obj) {
+                        const cls = obj.status === 'pass' ? 'dev-pass'
+                                : obj.status === 'fail' ? 'dev-fail' : 'dev-na';
+                        return `
+                            <div class="dev-item ${cls}">
+                                <label>${label}</label>
+                                <div class="dev-code">${code}</div>
+                                <div class="dev-score">ข้อที่ ${obj.score || '—'}</div>
+                            </div>`;
+                    }
+
+                    const fullName       = `${student.prefix_th}${student.first_name} ${student.last_name_th}`;
+                    const initials       = student.first_name ? student.first_name.charAt(0) : '?';
+                    const behaviorNormal = behavior.status === 'none';
+                    const examDate       = student.exam_date
+                        ? new Date(student.exam_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })
+                        : '—';
+
                     const modalContent = `
-                <div class="student-detail-view">
-                    <!-- ข้อมูลนักเรียน -->
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title title-student-info">
-                            <i class="bi bi-person-circle me-2"></i>ข้อมูลนักเรียน</h5>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>ชื่อ-นามสกุล:</strong> ${student.prefix_th}${student.first_name} ${student.last_name_th}</p>
-                                    <p><strong>ชื่อเล่น:</strong> ${student.nickname || '-'}</p>
-                                    <p><strong>ห้องเรียน:</strong> ${student.classroom}</p>
+                    <div class="detail-modal">
+
+                        <!-- ── Student Banner ── -->
+                        <div class="student-banner">
+                            <div class="student-avatar">${initials}</div>
+                            <div class="student-banner-info">
+                                <h3>${fullName}</h3>
+                                <p>ชื่อเล่น: ${student.nickname || '—'}</p>
+                            </div>
+                            <div class="student-banner-meta">
+                                <span class="meta-chip">ห้อง ${student.classroom || '—'}</span>
+                                <span class="meta-chip">${examDate}</span>
+                                <span class="meta-chip">ปีการศึกษา ${student.academic_year || '—'}</span>
+                                ${student.doctor_name
+                                    ? `<span class="meta-chip" style="background:#f0fdf4;border-color:#bbf7d0;color:#15803d;">${student.doctor_name}</span>`
+                                    : `<span class="meta-chip" style="background:#fef9c3;border-color:#fde68a;color:#a16207;">ยังไม่มีแพทย์ตรวจ</span>`}
+                            </div>
+                        </div>
+
+                        <!-- ── สัญญาณชีพ ── -->
+                        <div class="detail-section-card">
+                            <div class="detail-section-header theme-vital">
+                                <div class="detail-section-icon">
+                                    <i class="bi bi-heart-pulse"></i>
                                 </div>
-                                <div class="col-md-6">
-                                    <p><strong>วันที่ตรวจ:</strong> ${student.exam_date ? new Date(student.exam_date).toLocaleDateString('th-TH', {day: 'numeric',month: 'long',year: 'numeric'}) : ''}</p>
-                                    <p><strong>ปีการศึกษา:</strong> ${student.academic_year}</p>
-                                    <p><strong>แพทย์ผู้ตรวจ:</strong> ${student.doctor_name || '-'}</p>
+                                สัญญาณชีพ
+                            </div>
+                            <div class="detail-section-body">
+                                <div class="detail-data-grid detail-grid-4">
+                                    <div class="detail-data-item">
+                                        <label>อุณหภูมิ</label>
+                                        <div class="detail-value">${vitalSigns.temperature || '—'} <small style="font-weight:400;color:#64748b;">°C</small></div>
+                                    </div>
+                                    <div class="detail-data-item">
+                                        <label>ชีพจร</label>
+                                        <div class="detail-value">${vitalSigns.pulse || '—'} <small style="font-weight:400;color:#64748b;">ครั้ง/นาที</small></div>
+                                    </div>
+                                    <div class="detail-data-item">
+                                        <label>การหายใจ</label>
+                                        <div class="detail-value">${vitalSigns.respiration || '—'} <small style="font-weight:400;color:#64748b;">ครั้ง/นาที</small></div>
+                                    </div>
+                                    <div class="detail-data-item">
+                                        <label>ความดันโลหิต</label>
+                                        <div class="detail-value">${vitalSigns.bp || '—'} <small style="font-weight:400;color:#64748b;">mmHg</small></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- สัญญาณชีพ -->
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title title-vital-signs">
-                             <i class="bi bi-heart-pulse me-2"></i>สัญญาณชีพ</h5>
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <p><strong>อุณหภูมิ:</strong> ${vitalSigns.temperature || '-'} °C</p>
+                        <!-- ── ข้อมูลการวัด ── -->
+                        <div class="detail-section-card">
+                            <div class="detail-section-header theme-measure">
+                                <div class="detail-section-icon">
+                                    <i class="bi bi-rulers"></i>
                                 </div>
-                                <div class="col-md-3">
-                                    <p><strong>ชีพจร:</strong> ${vitalSigns.pulse || '-'} ครั้ง/นาที</p>
+                                ข้อมูลการวัด
+                            </div>
+                            <div class="detail-section-body">
+                                <div class="detail-data-grid detail-grid-3" style="margin-bottom:10px;">
+                                    <div class="detail-data-item">
+                                        <label>ส่วนสูง</label>
+                                        <div class="detail-value">${measures.height || '—'} <small style="font-weight:400;color:#64748b;">ซม.</small></div>
+                                    </div>
+                                    <div class="detail-data-item">
+                                        <label>น้ำหนัก</label>
+                                        <div class="detail-value">${measures.weight || '—'} <small style="font-weight:400;color:#64748b;">กก.</small></div>
+                                    </div>
+                                    <div class="detail-data-item">
+                                        <label>รอบศีรษะ</label>
+                                        <div class="detail-value">${measures.head_circ || '—'} <small style="font-weight:400;color:#64748b;">ซม.</small></div>
+                                    </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <p><strong>หายใจ:</strong> ${vitalSigns.respiration || '-'} ครั้ง/นาที</p>
-                                </div>
-                                <div class="col-md-3">
-                                    <p><strong>ความดันโลหิต:</strong> ${vitalSigns.bp || '-'} ครั้ง/นาที</p>
+                                <div class="detail-data-grid detail-grid-4">
+                                    <div class="detail-data-item">
+                                        <label>น้ำหนัก / อายุ</label>
+                                        <div class="detail-value">${measures.weight_for_age || '—'}</div>
+                                    </div>
+                                    <div class="detail-data-item">
+                                        <label>ส่วนสูง / อายุ</label>
+                                        <div class="detail-value">${measures.height_for_age || '—'}</div>
+                                    </div>
+                                    <div class="detail-data-item">
+                                        <label>น้ำหนัก / ส่วนสูง</label>
+                                        <div class="detail-value">${measures.weight_for_height || '—'}</div>
+                                    </div>
+                                    <div class="detail-data-item">
+                                        <label>เปอร์เซ็นไทล์</label>
+                                        <div class="detail-value">${measures.head_percentile || '—'}</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- ข้อมูลการวัด -->
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title title-measurements">
-                            <i class="bi bi-rulers me-2"></i>ข้อมูลการวัด</h5>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <p><strong>ส่วนสูง:</strong> ${measures.height || '-'} ซม.</p>
+                        <!-- ── พฤติกรรม ── -->
+                        <div class="detail-section-card">
+                            <div class="detail-section-header theme-behavior">
+                                <div class="detail-section-icon">
+                                    <i class="bi bi-emoji-smile"></i>
                                 </div>
-                                <div class="col-md-4">
-                                    <p><strong>น้ำหนัก:</strong> ${measures.weight || '-'} กก.</p>
-                                </div>
-                                <div class="col-md-4">
-                                    <p><strong>รอบศีรษะ:</strong> ${measures.head_circ || '-'} ซม.</p>
-                                </div>
+                                พฤติกรรม
                             </div>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <p><strong>น้ำหนัก/อายุ:</strong> ${measures.weight_for_age || '-'}</p>
-                                </div>
-                                <div class="col-md-4">
-                                    <p><strong>ส่วนสูง/อายุ:</strong> ${measures.height_for_age || '-'}</p>
-                                </div>
-                                <div class="col-md-4">
-                                    <p><strong>น้ำหนัก/ส่วนสูง:</strong> ${measures.weight_for_height || '-'}</p>
-                                </div>
-                            </div>
-                             <div class="row">
-                                <div class="col-md-4">
-                                    <p><strong>เปอร์เซ็นไทล: </strong> ${measures.head_percentile || '-'}</p>
+                            <div class="detail-section-body">
+                                <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+                                    <span class="status-pill ${behaviorNormal ? 'pill-normal' : 'pill-abnormal'}">
+                                        <span class="pill-dot" style="background:${behaviorNormal ? '#22c55e' : '#ef4444'};"></span>
+                                        ${behaviorNormal ? 'พฤติกรรมปกติ' : 'มีพฤติกรรมผิดปกติ'}
+                                    </span>
+                                    ${!behaviorNormal && behavior.detail
+                                        ? `<span style="font-size:13px;color:#64748b;font-style:italic;">${behavior.detail}</span>`
+                                        : ''}
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- พฤติกรรม -->
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title title-behavior">
-                            <i class="bi bi-emoji-smile me-2"></i>พฤติกรรม</h5>
-                            <p><strong>สถานะ:</strong> ${behavior.status === 'none' ? 'ปกติ' : 'มีพฤติกรรมผิดปกติ'}</p>
-                            ${behavior.status === 'has' ? `<p><strong>รายละเอียด:</strong> ${behavior.detail || '-'}</p>` : ''}
-                        </div>
-                    </div>
-
-                    <!-- การประเมินพัฒนาการทั้ง 5 ด้าน -->
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title title-development">
-                                <i class="bi bi-graph-up me-2"></i>การประเมินพัฒนาการทั้ง 5 ด้าน
-                            </h5>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>การเคลื่อนไหว (GM):</strong> ${getDevelopmentStatus(development.gm.status, development.gm.score)}</p>
-                                    <p><strong>มัดเล็กและสติปัญญา (FM):</strong> ${getDevelopmentStatus(development.fm.status, development.fm.score)}</p>
-                                    <p><strong>เข้าใจภาษา (RL):</strong> ${getDevelopmentStatus(development.rl.status, development.rl.score)}</p>
+                        <!-- ── การประเมินพัฒนาการ 5 ด้าน ── -->
+                        <div class="detail-section-card">
+                            <div class="detail-section-header theme-develop">
+                                <div class="detail-section-icon">
+                                    <i class="bi bi-graph-up"></i>
                                 </div>
-                                <div class="col-md-6">
-                                    <p><strong>ใช้ภาษา (EL):</strong> ${getDevelopmentStatus(development.el.status, development.el.score)}</p>
-                                    <p><strong>ช่วยเหลือตนเองและสังคม (PS):</strong> ${getDevelopmentStatus(development.ps.status, development.ps.score)}</p>
+                                การประเมินพัฒนาการ 5 ด้าน
+                            </div>
+                            <div class="detail-section-body">
+                                <div class="dev-grid">
+                                    ${devCard('GM', 'การเคลื่อนไหว',        development.gm)}
+                                    ${devCard('FM', 'มัดเล็กและสติปัญญา',   development.fm)}
+                                    ${devCard('RL', 'เข้าใจภาษา',            development.rl)}
+                                    ${devCard('EL', 'ใช้ภาษา',               development.el)}
+                                    ${devCard('PS', 'ช่วยเหลือตนเอง/สังคม', development.ps)}
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- การตรวจร่างกาย -->
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title title-physical-exam">
-                            <i class="fa-solid fa-stethoscope"></i> การตรวจร่างกาย</h5>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p>
-                                        <strong>สภาพทั่วไป:</strong> 
-                                            ${getPhysicalExamStatus(physicalExam.general)} 
-                                            ${physicalExam.general_detail ? ` - ${physicalExam.general_detail}` : ''}
-                                    </p>
-                                    <p>
-                                        <strong>ผิวหนัง:</strong> 
-                                            ${getPhysicalExamStatus(physicalExam.skin)}
-                                            ${physicalExam.skin_detail ? ` - ${physicalExam.skin_detail}` : ''}
-                                    </p>
-                                    <p>
-                                        <strong>ศีรษะ:</strong> 
-                                            ${getPhysicalExamStatus(physicalExam.head)}
-                                            ${physicalExam.head_detail ? ` - ${physicalExam.head_detail}` : ''}
-                                    </p>
-                                    <p>
-                                        <strong>ใบหน้า:</strong> 
-                                        ${getPhysicalExamStatus(physicalExam.face)}
-                                        ${physicalExam.face_detail ? ` - ${physicalExam.face_detail}` : ''}                                       
-                                    </p>
-                                    <p>
-                                        <strong>ตา:</strong> 
-                                        ${getPhysicalExamStatus(physicalExam.eyes)}
-                                        ${physicalExam.eyes_detail ? ` - ${physicalExam.eyes_detail}` : ''} 
-                                    </p>
-                                    <p>
-                                        <strong>หูและการได้ยิน:</strong> 
-                                        ${getPhysicalExamStatus(physicalExam.ears)}
-                                        ${physicalExam.ears_detail ? ` - ${physicalExam.ears_detail}` : ''} 
-                                    </p>
-                                    <p>
-                                        <strong>จมูก:</strong> 
-                                        ${getPhysicalExamStatus(physicalExam.nose)}
-                                        ${physicalExam.nose_detail ? ` - ${physicalExam.nose_detail}` : ''} 
-                                    </p>
-                                    <p>
-                                        <strong>ปากและช่องปาก:</strong> 
-                                        ${getPhysicalExamStatus(physicalExam.mouth)}
-                                        ${physicalExam.mouth_detail ? ` - ${physicalExam.mouth_detail}` : ''}
-                                    </p>
+                        <!-- ── การตรวจร่างกาย ── -->
+                        <div class="detail-section-card">
+                            <div class="detail-section-header ${hasAbnormal(physicalExam, ['general','skin','head','face','eyes','ears','nose','mouth','neck','breast','breathe','lungs','heart','heart_sound','pulse','abdomen','others']) ? 'theme-physical-abnormal' : 'theme-physical'}">
+                                <div class="detail-section-icon">
+                                    <i class="fa-solid fa-stethoscope"></i>
                                 </div>
-                                <div class="col-md-6">                    
-                                    <p>
-                                        <strong>คอ:</strong> 
-                                        ${getPhysicalExamStatus(physicalExam.neck)}
-                                        ${physicalExam.neck_detail ? ` - ${physicalExam.neck_detail}` : ''}
-                                    </p>
-                                    <p>
-                                        <strong>ทรวงอกและปอด:</strong> 
-                                        ${getPhysicalExamStatus(physicalExam.breast)}
-                                        ${physicalExam.breast_detail ? ` - ${physicalExam.breast_detail}` : ''}
-                                    </p>
-                                    <p>
-                                        <strong>การหายใจ:</strong> 
-                                        ${getPhysicalExamStatus(physicalExam.breathe)}
-                                        ${physicalExam.breathe_detail ? ` - ${physicalExam.breathe_detail}` : ''}
-                                    </p>
-                                    <p>
-                                        <strong>ปอด:</strong> 
-                                        ${getPhysicalExamStatus(physicalExam.lungs)}
-                                        ${physicalExam.lungs_detail ? ` - ${physicalExam.lungs_detail}` : ''}
-                                    </p>
-                                    <p>
-                                        <strong>หัวใจ:</strong> 
-                                        ${getPhysicalExamStatus(physicalExam.heart)}
-                                        ${physicalExam.heart_detail ? ` - ${physicalExam.heart_detail}` : ''}
-                                    </p>
-                                    <p>
-                                        <strong>เสียงหัวใจ:</strong> 
-                                        ${getPhysicalExamStatus(physicalExam.heart_sound)}
-                                        ${physicalExam.heart_sound_detail ? ` - ${physicalExam.heart_sound_detail}` : ''}
-                                    </p>
-                                    <p>
-                                        <strong>ชีพจร:</strong> 
-                                        ${getPhysicalExamStatus(physicalExam.pulse)}
-                                        ${physicalExam.pulse_detail ? ` - ${physicalExam.pulse_detail}` : ''}
-                                    </p>
-                                    <p>
-                                        <strong>ท้อง:</strong> 
-                                        ${getPhysicalExamStatus(physicalExam.abdomen)}
-                                        ${physicalExam.abdomen_detail ? ` - ${physicalExam.abdomen_detail}` : ''}
-                                    </p>
-                                    <p>
-                                        <strong>อื่นๆ:</strong> 
-                                        ${getPhysicalExamStatus(physicalExam.others)}
-                                        ${physicalExam.others_detail ? ` - ${physicalExam.others_detail}` : ''}
-                                    </p>
+                                การตรวจร่างกาย ${hasAbnormal(physicalExam, ['general','skin','head','face','eyes','ears','nose','mouth','neck','breast','breathe','lungs','heart','heart_sound','pulse','abdomen','others']) ? '<span class="status-pill pill-abnormal" style="margin-left:8px;font-size:12px;"><span class="pill-dot" style="background:#ef4444;"></span>พบข้อผิดปกติ</span>' : ''}
+                            </div>
+                            <div class="detail-section-body">
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                                    <div class="exam-list">
+                                        ${examRow('สภาพทั่วไป',    'general', physicalExam)}
+                                        ${examRow('ผิวหนัง',       'skin',    physicalExam)}
+                                        ${examRow('ศีรษะ',         'head',    physicalExam)}
+                                        ${examRow('ใบหน้า',        'face',    physicalExam)}
+                                        ${examRow('ตา',            'eyes',    physicalExam)}
+                                        ${examRow('หูและการได้ยิน','ears',    physicalExam)}
+                                        ${examRow('จมูก',          'nose',    physicalExam)}
+                                        ${examRow('ปากและช่องปาก','mouth',    physicalExam)}
+                                        ${examRow('คอ',            'neck',    physicalExam)}
+                                    </div>
+                                    <div class="exam-list">
+                                        ${examRow('ทรวงอกและปอด',  'breast',      physicalExam)}
+                                        ${examRow('การหายใจ',      'breathe',     physicalExam)}
+                                        ${examRow('ปอด',           'lungs',       physicalExam)}
+                                        ${examRow('หัวใจ',         'heart',       physicalExam)}
+                                        ${examRow('เสียงหัวใจ',   'heart_sound', physicalExam)}
+                                        ${examRow('ชีพจร',         'pulse',       physicalExam)}
+                                        ${examRow('ท้อง',          'abdomen',     physicalExam)}
+                                        ${examRow('อื่นๆ',         'others',      physicalExam)}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- ระบบประสาท -->
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title title-neurological">
-                             <i class="fa-solid fa-brain"></i> ระบบประสาท</h5>
-                            <p>
-                                <strong>ปฏิกิริยาขั้นพื้นฐาน:</strong> 
-                                ${getPhysicalExamStatus(neurological.neuro)}
-                                ${neurological.neuro_detail ? ` - ${neurological.neuro_detail}` : ''}
-                            </p>
-                            <p>
-                                <strong>การเคลื่อนไหว:</strong> 
-                                ${getPhysicalExamStatus(neurological.movement)}
-                                ${neurological.movement_detail ? ` - ${neurological.movement_detail}` : ''}
-                            </p>
+                        <!-- ── ระบบประสาท ── -->
+                        <div class="detail-section-card">
+                            <div class="detail-section-header ${hasAbnormal(neurological, ['neuro','movement']) ? 'theme-neuro-abnormal' : 'theme-neuro'}">
+                                <div class="detail-section-icon">
+                                    <i class="fa-solid fa-brain"></i>
+                                </div>
+                                ระบบประสาท ${hasAbnormal(neurological, ['neuro','movement']) ? '<span class="status-pill pill-abnormal" style="margin-left:8px;font-size:12px;"><span class="pill-dot" style="background:#ef4444;"></span>พบข้อผิดปกติ</span>' : ''}
+                            </div>
+                            <div class="detail-section-body">
+                                <div class="exam-list">
+                                    ${examRow('ปฏิกิริยาขั้นพื้นฐาน', 'neuro',    neurological)}
+                                    ${examRow('การเคลื่อนไหว',          'movement', neurological)}
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- คำแนะนำ -->
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title title-recommendation">
-                            <i class="bi bi-clipboard-check me-2"></i>คำแนะนำ</h5>
-                            <p>${student.recommendation || 'ไม่มีคำแนะนำ'}</p>
+                        <!-- ── คำแนะนำ ── -->
+                        <div class="detail-section-card">
+                            <div class="detail-section-header theme-reco">
+                                <div class="detail-section-icon">
+                                    <i class="bi bi-clipboard-check"></i>
+                                </div>
+                                คำแนะนำ
+                            </div>
+                            <div class="detail-section-body">
+                                <div class="reco-box ${!student.recommendation ? 'empty' : ''}">
+                                    ${student.recommendation || 'ไม่มีคำแนะนำ'}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>`;
 
-                    // แสดง Modal
+                    </div>`;
+
                     Swal.fire({
                         title: 'ข้อมูลการตรวจสุขภาพ',
                         html: modalContent,
                         showConfirmButton: false,
                         showCloseButton: true,
-                        width: '80%',
+                        width: window.innerWidth < 1025 ? '80%' : '50%',
                         customClass: {
                             popup: 'swal2-popup-large',
                             closeButton: 'swal2-close-button-large'
@@ -1089,6 +860,163 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
         return 'ไม่ระบุ';
     }
 
+    // ฟังก์ชันดูประวัติการตรวจทั้งหมด (ปรับปรุงใหม่ - เน้นแสดงข้อมูลเด็กชัดเจน)
+    // function viewAllRecords(studentId) {
+    //     const year = document.querySelector('select[name="academic_year"]').value;
+        
+    //     fetch(`./function/get_student_health_history.php?student_id=${studentId}&academic_year=${year}`)
+    //         .then(response => response.json())
+    //         .then(data => {
+    //             if (!data || data.length === 0) {
+    //                 Swal.fire({
+    //                     icon: 'info',
+    //                     title: 'ไม่พบข้อมูล',
+    //                     text: 'ไม่มีประวัติการตรวจสุขภาพสำหรับนักเรียนคนนี้',
+    //                     confirmButtonText: 'ตกลง'
+    //                 });
+    //                 return;
+    //             }
+
+    //             // เรียงข้อมูลตาม check_round
+    //             data.sort((a, b) => (a.check_round || 1) - (b.check_round || 1));
+
+    //             // ดึงข้อมูลนักเรียนจาก record แรก
+    //             const studentInfo = data[0];
+                
+    //             let recordsHtml = '';
+    //             data.forEach((record, index) => {
+    //                 const vitalSigns = JSON.parse(record.vital_signs) || {};
+    //                 const measures = JSON.parse(record.physical_measures) || {};
+    //                 const behavior = JSON.parse(record.behavior) || {};
+    //                 const isLastRecord = index === data.length - 1;
+                    
+    //                 recordsHtml += `
+    //                     <div class="card mb-3 ${record.is_doctor_checked ? 'border-success' : 'border-warning'}">
+    //                         <div class="card-header ${record.is_doctor_checked ? 'bg-success' : 'bg-warning'} text-white">
+    //                             <div class="d-flex justify-content-between align-items-center">
+    //                                 <span>
+    //                                     <i class="bi bi-${record.is_doctor_checked ? 'check-circle' : 'clock'} me-2"></i>
+    //                                     ครั้งที่ ${record.check_round || 1}
+    //                                 </span>
+    //                                 <span>${record.exam_date ? new Date(record.exam_date).toLocaleDateString('th-TH', {day: '2-digit', month: 'short', year: 'numeric'}) : '-'}</span>
+    //                             </div>
+    //                         </div>
+    //                         <div class="card-body">
+    //                             <div class="row">
+    //                                 <div class="col-md-6">
+    //                                     <p><strong>สถานะ:</strong> 
+    //                                         <span class="badge ${record.is_doctor_checked ? 'bg-success' : 'bg-warning text-dark'}">
+    //                                             ${record.doctor_name ? `หมอตรวจแล้ว (${record.doctor_name})` : 'รอแพทย์ตรวจ'}
+    //                                         </span>
+    //                                     </p>
+    //                                     <p><strong>อุณหภูมิ:</strong> ${vitalSigns.temperature || '-'} °C</p>
+    //                                     <p><strong>ชีพจร:</strong> ${vitalSigns.pulse || '-'} ครั้ง/นาที</p>
+    //                                     <p><strong>หายใจ:</strong> ${vitalSigns.respiration || '-'} ครั้ง/นาที</p>
+    //                                     <p><strong>ความดันโลหิต:</strong> ${vitalSigns.bp || '-'}</p>
+    //                                 </div>
+    //                                 <div class="col-md-6">
+    //                                     <p><strong>ส่วนสูง:</strong> ${measures.height || '-'} ซม.</p>
+    //                                     <p><strong>น้ำหนัก:</strong> ${measures.weight || '-'} กก.</p>
+    //                                     <p><strong>รอบศีรษะ:</strong> ${measures.head_circ || '-'} ซม.</p>
+    //                                     <p><strong>พฤติกรรม:</strong> ${behavior.status === 'none' ? 'ปกติ' : (behavior.detail || 'มีพฤติกรรมผิดปกติ')}</p>
+    //                                 </div>
+    //                             </div>
+    //                             ${record.recommendation ? `<p class="mt-2"><strong>คำแนะนำ:</strong> ${record.recommendation}</p>` : ''}
+    //                             <div class="mt-3">
+    //                                 <button type="button" class="btn btn-info btn-sm" onclick="viewDetails('${record.id}')">
+    //                                     <i class="bi bi-eye"></i> ดูรายละเอียดเต็ม
+    //                                 </button>
+    //                                 <?php if ($is_admin || $is_teacher || $is_doctor): ?>
+    //                                     ${!isLastRecord ? `<button type="button" class="btn btn-danger btn-sm" onclick="deleteRecord('${record.id}')">
+    //                                         <i class="bi bi-trash"></i> ลบ
+    //                                     </button>` : ''}
+    //                                 <?php endif; ?>
+    //                             </div>
+    //                         </div>
+    //                     </div>
+    //                 `;
+    //             });
+
+    //             // สร้าง Header แสดงข้อมูลเด็กแบบเด่นชัด
+    //             const studentHeaderHtml = `
+    //                 <div class="student-header-card mb-4">
+    //                     <div class="student-header-bg">
+    //                         <div class="student-avatar">
+    //                             <i class="bi bi-person-circle"></i>
+    //                         </div>
+    //                         <div class="student-main-info">
+    //                             <h3 class="student-name-title">
+    //                                 ${studentInfo.prefix_th}${studentInfo.first_name_th} ${studentInfo.last_name_th}
+    //                             </h3>
+    //                             <div class="student-nickname">
+    //                                 <i class="bi bi-heart-fill text-danger"></i>
+    //                                 <span>ชื่อเล่น: <strong>${studentInfo.nickname || '-'}</strong></span>
+    //                             </div>
+    //                         </div>
+    //                         <div class="student-badge-container">
+    //                             <span class="badge-round-count">
+    //                                 <i class="bi bi-clipboard-check"></i>
+    //                                 ตรวจแล้ว ${data.length} ครั้ง
+    //                             </span>
+    //                         </div>
+    //                     </div>
+    //                     <div class="student-details-grid">
+    //                         <div class="detail-item">
+    //                             <span class="detail-icon"><i class="bi bi-person-badge"></i></span>
+    //                             <span class="detail-label">รหัสนักเรียน</span>
+    //                             <span class="detail-value student-id-highlight">${studentInfo.student_id}</span>
+    //                         </div>
+    //                         <div class="detail-item">
+    //                             <span class="detail-icon"><i class="bi bi-building"></i></span>
+    //                             <span class="detail-label">ห้องเรียน</span>
+    //                             <span class="detail-value">${studentInfo.classroom}</span>
+    //                         </div>
+    //                         <div class="detail-item">
+    //                             <span class="detail-icon"><i class="bi bi-calendar-check"></i></span>
+    //                             <span class="detail-label">ปีการศึกษา</span>
+    //                             <span class="detail-value">${studentInfo.academic_year}</span>
+    //                         </div>
+    //                         <div class="detail-item">
+    //                             <span class="detail-icon"><i class="bi bi-people-fill"></i></span>
+    //                             <span class="detail-label">กลุ่มเรียน</span>
+    //                             <span class="detail-value">${studentInfo.child_group || '-'}</span>
+    //                         </div>
+    //                     </div>
+    //                 </div>
+    //             `;
+
+    //             const modalContent = `
+    //                 <div class="student-detail-view">
+    //                     ${studentHeaderHtml}
+    //                     <div class="history-section-title">
+    //                         <i class="bi bi-clock-history"></i>
+    //                         <span>ประวัติการตรวจสุขภาพ</span>
+    //                     </div>
+    //                     ${recordsHtml}
+    //                 </div>
+    //             `;
+
+    //             Swal.fire({
+    //                 title: '',
+    //                 html: modalContent,
+    //                 showConfirmButton: false,
+    //                 showCloseButton: true,
+    //                 width: '85%',
+    //                 customClass: {
+    //                     popup: 'swal2-popup-large',
+    //                     closeButton: 'swal2-close-button-large'
+    //                 }
+    //             });
+    //         })
+    //         .catch(error => {
+    //             console.error('Error fetching health history:', error);
+    //             Swal.fire({
+    //                 icon: 'error',
+    //                 title: 'เกิดข้อผิดพลาด',
+    //                 text: 'ไม่สามารถดึงข้อมูลประวัติได้',
+    //             });
+    //         });
+    // }
 
     // เพิ่มฟังก์ชันลบข้อมูล
     function deleteRecord(id) {
@@ -1519,6 +1447,12 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                 <i class="bi bi-graph-up me-2"></i>ประเมินพัฒนาการทั้ง 5 ด้าน
                             </div>
 
+                            <div class="d-flex justify-content mb-2">
+                                <button type="button" class="btn btn-success" onclick="setAllDevelopmentPass()">
+                                    <i class="bi bi-check-circle"></i> เลือกผ่านทั้งหมด
+                                </button>
+                            </div>
+
                             <div class="table-responsive">
                                 <table class="table development-table mb-0">
                                     <thead>
@@ -1581,6 +1515,12 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                         <div class="card-body">
                             <div class="section-header">
                                 <i class="bi bi-stethoscope me-2"></i>ผลการตรวจร่างกาย
+                            </div>
+
+                            <div class="d-flex justify-content mb-2">
+                                <button type="button" class="btn btn-success" onclick="setAllPhysicalNormal()">
+                                    <i class="bi bi-check-circle"></i> เลือกปกติทั้งหมด
+                                </button>
                             </div>
 
                             <!-- สภาพทั่วไป -->
@@ -2114,45 +2054,51 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     }
 
 
+    let savedExamDates = [];
+
     function exportToPdf() {
+        // ดึงรายการวันที่การตรวจก่อน
+        fetch('./function/get_exam_dates.php')
+            .then(res => res.json())
+            .then(data => {
+                savedExamDates = data.dates || [];
+                return showExportModal();
+            })
+            .catch(error => {
+                console.error('Error loading exam dates:', error);
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารโหลดรายการวันที่การตรวจได้', 'error');
+            });
+    }
+
+    function showExportModal() {
+        const dateOptions = savedExamDates.length > 0
+            ? savedExamDates.map(d => {
+                const date = new Date(d);
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear() + 543;
+                return `<option value="${d}">${day}/${month}/${year}</option>`;
+            }).join('')
+            : '<option value="">ไม่พบข้อมูลวันที่การตรวจ</option>';
+
         Swal.fire({
             title: 'Export ข้อมูลการตรวจสุขภาพ',
             html: `
-            <form id="exportForm" class="text-start">           
-               
-                <!-- ประจำปีการศึกษา -->
+            <form id="exportForm" class="text-start">
+                <!-- เลือกวันที่ตรวจ -->
                 <div class="mb-3">
-                    <label class="form-label">ประจำปีการศึกษา</label>
-                      <select name="academic_year" class="form-select">
-                            <?php
-                                // สมมติ $academicYears เรียงจากมาก -> น้อย อยู่แล้ว (2568, 2567, 2566)
-                                $currentTop = isset($academicYears[0]['name']) ? (int)$academicYears[0]['name'] : null;
-                                $nextYear = $currentTop ? $currentTop + 1 : null;
-                            ?>
-
-                            <?php if ($nextYear): ?>
-                                <option value="<?= $nextYear ?>"><?= $nextYear ?></option>
-                            <?php endif; ?>
-
-                            <?php foreach ($academicYears as $index => $year): ?>
-                                <option value="<?= htmlspecialchars($year['name']) ?>" <?= $index === 0 ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($year['name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                    <label class="form-label">วันที่ตรวจ</label>
+                    <select name="exam_date" id="exportExamDate" class="form-select" onchange="loadDoctorsForDate(this.value)">
+                        <option value="">-- เลือกวันที่ --</option>
+                        ${dateOptions}
+                    </select>
                 </div>
 
                 <!-- เลือกแพทย์ -->
                 <div class="mb-3">
                     <label class="form-label">เลือกแพทย์</label>
-                    
-                    <select name="doctor" class="form-select">
+                    <select name="doctor" id="exportDoctor" class="form-select">
                         <option value="all">-- ทั้งหมด --</option>
-                        <?php foreach ($doctors as $doctor): ?>
-                            <option value="<?= htmlspecialchars($doctor['username']) ?>">
-                            <?= htmlspecialchars($doctor['username']) ?>
-                            </option>
-                        <?php endforeach; ?>
                     </select>
                 </div>
             </form>
@@ -2163,10 +2109,17 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             preConfirm: () => {
                 const form = Swal.getPopup().querySelector('#exportForm');
                 const formData = new FormData(form);
+                const examDate = formData.get('exam_date');
+
+                if (!examDate) {
+                    Swal.showValidationMessage('กรุณาเลือกวันที่ตรวจ');
+                    return false;
+                }
+
                 savedFormData = formData;
 
                 // ส่งค่าไป PHP เพื่อนับข้อมูลก่อน
-                return fetch('./function/get_count_health_export.php', {
+                return fetch('./function/get_count_health_export_pdf.php', {
                         method: 'POST',
                         body: formData
                     })
@@ -2197,7 +2150,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                         // 🔁 แสดงหมุนทันที
                         Swal.fire({
                             title: 'กำลังโหลด...',
-                            html: 'กำลังสร้างไฟล์ PDF กรุณารอสักครู่',
+                            html: 'กำลังสร้างไล์ PDF กรุณารอสักครู่',
                             allowOutsideClick: false,
                             allowEscapeKey: false,
                             didOpen: () => {
@@ -2209,6 +2162,29 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                 });
             }
         })
+    }
+
+    function loadDoctorsForDate(examDate) {
+        const doctorSelect = document.getElementById('exportDoctor');
+        if (!examDate) {
+            doctorSelect.innerHTML = '<option value="all">-- ทั้งหมด --</option>';
+            return;
+        }
+
+        fetch(`./function/get_doctors_by_date.php?exam_date=${examDate}`)
+            .then(res => res.json())
+            .then(data => {
+                const doctors = data.doctors || [];
+                let options = '<option value="all">-- ทั้งหมด --</option>';
+                doctors.forEach(doc => {
+                    options += `<option value="${doc}">${doc}</option>`;
+                });
+                doctorSelect.innerHTML = options;
+            })
+            .catch(error => {
+                console.error('Error loading doctors:', error);
+                doctorSelect.innerHTML = '<option value="all">-- ทั้งหมด --</option>';
+            });
     }
     async function fetchAndDownload() {
         const queryParams = new URLSearchParams();
@@ -2703,6 +2679,12 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                 <i class="bi bi-graph-up me-2"></i>ประเมินพัฒนาการทั้ง 5 ด้าน
                             </div>
 
+                            <div class="d-flex justify-content mb-2">
+                                <button type="button" class="btn btn-success" onclick="setAllDevelopmentPass()">
+                                    <i class="bi bi-check-circle"></i> เลือกผ่านทั้งหมด
+                                </button>
+                            </div>
+
                             <div class="table-responsive">
                                 <table class="table development-table mb-0">
                                     <thead>
@@ -2765,6 +2747,12 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                         <div class="card-body">
                             <div class="section-header">
                                 <i class="bi bi-stethoscope me-2"></i>ผลการตรวจร่างกาย
+                            </div>
+
+                            <div class="d-flex justify-content mb-2">
+                                <button type="button" class="btn btn-success" onclick="setAllPhysicalNormal()">
+                                    <i class="bi bi-check-circle"></i> เลือกปกติทั้งหมด
+                                </button>
                             </div>
 
                             <!-- สภาพทั่วไป -->
@@ -3221,38 +3209,86 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
 
     function exportToExcel() {
+        // ดึงรายการวันที่การตรวจก่อน
+        fetch('./function/get_exam_dates.php')
+            .then(res => res.json())
+            .then(data => {
+                savedExamDates = data.dates || [];
+                return showExportExcelModal();
+            })
+            .catch(error => {
+                console.error('Error loading exam dates:', error);
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารโหลดรายการวันที่การตรวจได้', 'error');
+            });
+    }
+
+    function showExportExcelModal() {
+        // สร้างตัวเลือกปีการศึกษา
+        const yearOptions = <?php echo json_encode($academicYears); ?>.map((year, index) => 
+            `<option value="${year.name}" ${index === 0 ? 'selected' : ''}>${year.name}</option>`
+        ).join('');
+
+        // สร้างตัวเลือกวันที่ตรวจ
+        const dateOptions = savedExamDates.length > 0
+            ? savedExamDates.map(d => {
+                const date = new Date(d);
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear() + 543;
+                return `<option value="${d}">${day}/${month}/${year}</option>`;
+            }).join('')
+            : '<option value="">ไม่พบข้อมูลวันที่การตรวจ</option>';
+
         Swal.fire({
-            title: 'Export ข้อมูลการตรวจสุขภาพ',
+            title: 'Export ข้อมูลการตรวจสุขภาพ (Excel)',
             html: `
-                <form id="exportFormExcel" class="text-start">                         
-                    <!-- วันที่ -->
-                    <div id="dailyField" class="mb-3">
-                       <label for="date" class="form-label">ตรวจประจำปีการศึกษา</label>
-                        <select name="academic_year" class="form-select">
-                            <?php foreach ($academicYears as $index => $year): ?>
-                                <option value="<?= $year['name'] ?>" <?= $index === 0 ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($year['name']) ?>
-                                </option>
-                            <?php endforeach; ?>
+                <form id="exportFormExcel" class="text-start">
+                    <!-- เลือกประเภทการ Export -->
+                    <div class="mb-3">
+                        <label class="form-label">เลือกประเภทการ Export</label>
+                        <select name="export_type" id="exportTypeExcel" class="form-select" onchange="toggleExcelDateFields()">
+                            <option value="academic_year">ตรวจประจำปี</option>
+                            <option value="exam_date">ช่วงวัน</option>
                         </select>
-                    </div>        
-                    <input type="hidden" id="" name="doctor" value="all">       
+                    </div>
+
+                    <!-- ฟิลด์สำหรับเลือกปีการศึกษา -->
+                    <div id="excelAcademicYearField" class="mb-3">
+                        <label for="academic_year" class="form-label">ปีการศึกษา</label>
+                        <select name="academic_year" id="exportAcademicYear" class="form-select">
+                            ${yearOptions}
+                        </select>
+                    </div>
+
+                    <!-- ฟิลด์สำหรับเลือกวันที่ตรวจ -->
+                    <div id="excelExamDateField" class="mb-3" style="display: none;">
+                        <label for="exam_date" class="form-label">วันที่ตรวจ</label>
+                        <select name="exam_date" id="exportExamDateExcel" class="form-select">
+                            <option value="">-- เลือกวันที่ --</option>
+                            ${dateOptions}
+                        </select>
+                    </div>
                 </form>
             `,
             showCancelButton: true,
             confirmButtonText: 'Export',
             cancelButtonText: 'ยกเลิก',
-            didOpen: () => {
-                // โหลดห้องเรียนถ้ามีการเลือกกลุ่มเรียนไว้
-                const currentGroup = document.getElementById('child_group').value;
-                if (currentGroup) {
-                    document.getElementById('exportChildGroup').value = currentGroup;
-                    loadExportClassrooms();
-                }
-            },
             preConfirm: () => {
                 const form = Swal.getPopup().querySelector('#exportFormExcel');
                 const formData = new FormData(form);
+                const exportType = formData.get('export_type');
+
+                // ตรวจสอบข้อมูลตามประเภทที่เลือก
+                if (exportType === 'exam_date') {
+                    const examDate = formData.get('exam_date');
+                    if (!examDate) {
+                        Swal.showValidationMessage('กรุณาเลือกวันที่ตรวจ');
+                        return false;
+                    }
+                }
+
+                // ตั้งค่า doctor เป็น all เสมอ
+                formData.set('doctor', 'all');
                 savedFormData = formData;
 
                 // ส่งค่าไป PHP เพื่อนับข้อมูลก่อน
@@ -3280,7 +3316,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                     text: `พบข้อมูลจำนวน ${count} รายการ ต้องการ Export หรือไม่?`,
                     icon: 'info',
                     showCancelButton: true,
-                    confirmButtonText: 'Export',
+                    confirmButtonText: 'Export Excel',
                     cancelButtonText: 'ยกเลิก'
                 }).then(async (confirmResult) => {
                     if (confirmResult.isConfirmed) {
@@ -3299,6 +3335,62 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                 });
             }
         })
+    }
+
+    // ฟังก์ชันสลับการแสดงฟิลด์วันที่สำหรับ Excel
+    function toggleExcelDateFields() {
+        const exportType = document.getElementById('exportTypeExcel').value;
+        document.getElementById('excelAcademicYearField').style.display = exportType === 'academic_year' ? 'block' : 'none';
+        document.getElementById('excelExamDateField').style.display = exportType === 'exam_date' ? 'block' : 'none';
+    }
+
+    // ฟังก์ชันโหลดรายการแพทย์ตามวันที่สำหรับ Excel
+    function loadDoctorsForExcelDate(examDate) {
+        const doctorSelect = document.getElementById('exportDoctorExcel');
+        if (!examDate) {
+            doctorSelect.innerHTML = '<option value="all">-- ทั้งหมด --</option>';
+            return;
+        }
+
+        fetch(`./function/get_doctors_by_date.php?exam_date=${examDate}`)
+            .then(res => res.json())
+            .then(data => {
+                const doctors = data.doctors || [];
+                let options = '<option value="all">-- ทั้งหมด --</option>';
+                doctors.forEach(doc => {
+                    options += `<option value="${doc}">${doc}</option>`;
+                });
+                doctorSelect.innerHTML = options;
+            })
+            .catch(error => {
+                console.error('Error loading doctors:', error);
+                doctorSelect.innerHTML = '<option value="all">-- ทั้งหมด --</option>';
+            });
+    }
+
+    // ฟังก์ชันเลือก "ผ่านทั้งหมด" สำหรับประเมินพัฒนาการ 5 ด้าน
+    function setAllDevelopmentPass() {
+        ['gm', 'fm', 'rl', 'el', 'ps'].forEach(field => {
+            const passRadio = document.querySelector(`input[name="${field}_assessment[]"][value="pass"]`);
+            if (passRadio) passRadio.checked = true;
+        });
+        ['gm_no', 'fm_no', 'rl_no', 'el_no', 'ps_no'].forEach(name => {
+            const input = document.querySelector(`input[name="${name}"]`);
+            if (input) input.value = '';
+        });
+    }
+
+    // ฟังก์ชันเลือก "ปกติทั้งหมด" สำหรับผลการตรวจร่างกาย
+    function setAllPhysicalNormal() {
+        const fields = ['general', 'skin', 'head', 'face', 'eyes', 'ears', 'nose', 'mouth',
+                        'neck', 'breast', 'breathe', 'lungs', 'heart', 'heart_sound',
+                        'pulse', 'abdomen', 'others'];
+        fields.forEach(field => {
+            const normalRadio = document.querySelector(`input[name="${field}[]"][value="normal"]`);
+            if (normalRadio) normalRadio.checked = true;
+            const detailInput = document.querySelector(`input[name="${field}_detail"]`);
+            if (detailInput) detailInput.value = '';
+        });
     }
 
     function fetchAndDownloadExcel() {

@@ -19,7 +19,14 @@ try {
             WHEN a.status = 'late' THEN 'มาสาย'
             WHEN a.status = 'absent' THEN 'ขาดเรียน'
             ELSE a.status
-        END AS status
+        END AS status,
+        a.temperature,
+        a.has_runny_nose,
+        a.has_cough,
+        a.has_rash,
+        a.has_red_eyes,
+        a.other_symptoms,
+        a.health_checked
     FROM 
         attendance a
     LEFT JOIN 

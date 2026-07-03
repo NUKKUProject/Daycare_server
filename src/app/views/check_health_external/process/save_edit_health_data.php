@@ -16,6 +16,30 @@ try {
         throw new Exception("Invalid JSON input");
     }
 
+    // ตรวจสอบว่าเป็นแพทย์ที่กำลังบันทึกหรือไม่
+    $isDoctor = isset($_SESSION['role']) && $_SESSION['role'] === 'doctor';
+    
+    // ถ้าเป็นแพทย์ ให้อัพเดท is_doctor_checked และ doctor_name อัตโนมัติ
+    if ($isDoctor && !empty($data['data_id'])) {
+        // ดึงชื่อแพทย์จาก session หรือจากข้อมูลที่ส่งมา
+        $doctorName = $data['doctor_name'] ?? null;
+        if (!$doctorName && function_exists('getFullName')) {
+            $doctorName = getFullName();
+        }
+        
+        // อัพเดท is_doctor_checked และ doctor_name
+        $updateSql = "UPDATE health_data_external SET 
+                      is_doctor_checked = TRUE,
+                      doctor_name = :doctor_name,
+                      updated_at = NOW()
+                      WHERE id = :data_id";
+        $updateStmt = $pdo->prepare($updateSql);
+        $updateStmt->execute([
+            ':doctor_name' => $doctorName,
+            ':data_id' => $data['data_id']
+        ]);
+    }
+
    // เตรียมคำสั่ง SQL แบบ UPDATE
 $sql = "UPDATE health_data_external SET
             exam_date = :exam_date,
@@ -75,7 +99,7 @@ $stmt->execute([
     echo json_encode([
         'status' => 'success',
         'message' => 'บันทึกข้อมูลสำเร็จ',
-        'data' => $data
+        'is_doctor_checked' => $isDoctor
     ]);
 
 } catch (Exception $e) {
@@ -84,4 +108,5 @@ $stmt->execute([
         'status' => 'error',
         'message' => $e->getMessage()
     ]);
-} 
+}
+?>

@@ -32,7 +32,10 @@ try {
     ");
     $age_groups = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // ส่งข้อมูลกลับ
+    // รองรับ vaccine_id สำหรับการแก้ไข (ถ้ามี)
+    $vaccine_id = $id;
+
+// ส่งข้อมูลกลับ
     echo json_encode([
         'status' => 'success',
         'data' => [
@@ -41,7 +44,8 @@ try {
             'age_group' => $vaccine['age_group'],
             'vaccine_name' => $vaccine['vaccine_name'],
             'vaccine_description' => $vaccine['vaccine_description'],
-            'age_groups' => $age_groups
+            'age_groups' => $age_groups,
+            'vaccine_id' => $vaccine_id
         ]
     ]);
 

@@ -3,580 +3,601 @@ include __DIR__ . '/../../include/auth/auth.php';
 checkUserRole(['admin']);
 include __DIR__ . '/../partials/Header.php';
 include __DIR__ . '/../../include/auth/auth_navbar.php';
-// require_once __DIR__ . '/../../include/function/child_functions.php';
 require_once __DIR__ . '/../../include/function/children_history_functions.php';
 
-// รับค่า academic_year จาก URL
-$currentAcademicYear = $_GET['academic_year'] ?? null;
-$currentTab = $_GET['tab'] ?? 'all';
+$currentAcademicYear = isset($_GET['academic_year']) ? htmlspecialchars($_GET['academic_year']) : null;
+$currentTab = isset($_GET['tab']) ? htmlspecialchars($_GET['tab']) : 'all';
+$allowedTabs = ['all', 'medium', 'big', 'prep'];
+if (!in_array($currentTab, $allowedTabs, true)) {
+    $currentTab = 'all';
+}
 
-// ดึงข้อมูลปีการศึกษาทั้งหมด
 $academicYears = getAcademicYears();
 
-// ถ้ามีการเลือกปีการศึกษา ให้ดึงข้อมูลเด็กในปีการศึกษานั้น
+// ดึงข้อมูลเด็กทั้งหมดในปีการศึกษาที่เลือก เพื่อส่งให้ JavaScript
+$allChildrenForJS = [];
 if ($currentAcademicYear) {
-    $data = getChildrenByGroupAndYear($currentTab, $currentAcademicYear);
-} else {
-    $data = [];
+    $rawData = getChildrenByGroupAndYear('all', $currentAcademicYear);
+    foreach ($rawData as $groupData) {
+        foreach ($groupData['classrooms'] as $classroomData) {
+            foreach ($classroomData['children'] as $child) {
+                $allChildrenForJS[] = [
+                    'id'     => $child['studentid'],
+                    'prefix' => $child['prefix_th'],
+                    'first'  => $child['firstname_th'],
+                    'last'   => $child['lastname_th'],
+                    'nick'   => $child['nickname'],
+                    'group'  => $child['child_group'],
+                    'room'   => $child['classroom'],
+                    'gender' => isset($child['gender']) ? $child['gender'] : 'male',
+                    'img'    => isset($child['profile_image']) ? $child['profile_image'] : '',
+                ];
+            }
+        }
+    }
 }
 
 require_once __DIR__ . '/../../include/function/pages_referen.php';
-?>
-<?php
 // ตรวจสอบว่ามีสถานะถูกส่งมาหรือไม่
 $status = isset($_GET['status']) ? $_GET['status'] : null;
 $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
+// รับค่าห้องเรียนที่เลือก (ถ้ามี)
+$selectedClassroom = $_GET['classroom'] ?? null;
 ?>
-<?php if ($status && $message): ?>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            Swal.fire({
-                icon: '<?php echo $status === "success" ? "success" : "error"; ?>',
-                title: '<?php echo $status === "success" ? "สำเร็จ" : "ไม่สำเร็จ"; ?>',
-                text: '<?php echo htmlspecialchars($message); ?>',
-                confirmButtonText: 'ตกลง'
-            }).then(() => {
-                // ลบพารามิเตอร์ status และ message ออกจาก URL
-                const url = new URL(window.location.href);
-                url.searchParams.delete('status');
-                url.searchParams.delete('message');
-                history.pushState({}, '', url);
-            });
-        });
-    </script>
-<?php endif; ?>
 
 <?php include __DIR__ . '/../../include/auth/auth_dashboard.php'; ?>
 
 <link href="../../../public/assets/css/children_style.css" rel="stylesheet">
+<link href="../../../public/assets/css/children_ui.css" rel="stylesheet">
 
 <style>
-/* Main Layout */
-.main-content {
-    background-color: #f8f9fa;
-}
 
-/* Page Header */
-.page-header {
-    background: linear-gradient(135deg, #26648E 0%, #1F4E6E 100%);
-    padding: 2rem;
-    border-radius: 15px;
-    color: white;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.page-header h1 {
-    margin: 0;
-    font-size: 1.8rem;
-    font-weight: 600;
-}
-
-.page-header p {
-    opacity: 0.8;
-    margin-top: 0.5rem;
-}
-
-/* Action Buttons */
-.children-action-buttons {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.btn-icon {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.7rem 1.2rem;
-    border-radius: 25px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.btn-icon:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    background-color: rgba(255, 255, 255, 0.2);
-}
-
-/* Tabs */
-.children-tabs {
-    background: white;
-    padding: 1rem;
-    border-radius: 15px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    margin-bottom: 2rem;
-    border: none;
-    gap: 0.5rem;
-}
-
-.children-tabs .nav-link {
-    border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 25px;
-    color: #495057;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.children-tabs .nav-link:hover {
-    background: #e9ecef;
-    transform: translateY(-2px);
-}
-
-.children-tabs .nav-link.active {
-    background: #26648E;
-    color: white;
-}
-
-/* Group Headers */
-.group-header {
-    font-size: 1.5rem;
-    color: #26648E;
-    padding: 1rem 1.5rem;
-    background: white;
-    border-radius: 10px;
-    margin: 2rem 0 1rem;
-    border-left: 4px solid #26648E;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
-
-.classroom-header {
-    font-size: 1.2rem;
-    color: #495057;
-    margin: 1rem 0;
-    padding-left: 1rem;
-    border-left: 3px solid #6c757d;
-}
-
-/* Child Cards */
-.child-card {
-    background: white;
-    border-radius: 15px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    border: none;
-}
-
-.child-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-}
-
-.profile-image-wrapper {
-    width: 120px;
-    height: 120px;
-    margin: 0 auto 1rem;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 3px solid #f8f9fa;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.profile-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.child-info {
-    text-align: center;
-}
-
-.child-name {
-    color: #26648E;
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
-}
-
-.child-details {
-    color: #6c757d;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-}
-
-.view-details-btn {
-    width: 100%;
-    border-radius: 25px;
-    padding: 0.6rem;
-    margin-top: 1rem;
-    transition: all 0.3s ease;
-}
-
-.view-details-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .page-header {
-        padding: 1.5rem;
-    }
-
-    .children-action-buttons {
-        flex-direction: column;
-    }
-
-    .btn-icon {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .children-tabs {
-        overflow-x: auto;
-        flex-wrap: nowrap;
-    }
-
-    .children-tabs .nav-link {
-        white-space: nowrap;
-    }
-}
-
-/* Alert Styles */
-.alert {
-    border-radius: 10px;
-    padding: 1rem;
-    margin: 1rem 0;
-    border: none;
-    background-color: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
-
-.alert-info {
-    border-left: 4px solid #0dcaf0;
-    color: #055160;
-}
-
-/* Add Child Modal */
-.child-form-modal .modal-content {
-    border-radius: 15px;
-    border: none;
-}
-
-.child-form-modal .modal-header {
-    background: #26648E;
-    color: white;
-    border-radius: 15px 15px 0 0;
-}
-
-.child-form-modal .modal-footer {
-    border-top: none;
-    padding: 1rem;
-}
-
-/* Export Modal Styles */
-#exportModal .modal-content {
-    border-radius: 15px;
-    border: none;
-}
-
-#exportModal .modal-header {
-    background: #198754;
-    color: white;
-    border-radius: 15px 15px 0 0;
-}
-
-#exportModal .form-check {
-    margin-bottom: 0.5rem;
-}
-
-#exportModal .modal-footer {
-    border-top: 1px solid #dee2e6;
-    padding: 1rem;
-}
-
-#exportModal .form-select {
-    border-radius: 8px;
-}
-
-#exportModal .form-check-input:checked {
-    background-color: #198754;
-    border-color: #198754;
-}
-
-/* เพิ่มสไตล์สำหรับการ์ดปีการศึกษา */
-.academic-year-card {
-    background: white;
-    border-radius: 15px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    border: none;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
-
-.academic-year-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-}
-
-.academic-year-icon {
-    font-size: 3rem;
-    color: #26648E;
-}
-
-.academic-year-title {
-    color: #26648E;
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.academic-year-status {
-    margin-bottom: 1rem;
-}
-
-.view-year-btn {
-    width: 100%;
-    border-radius: 25px;
-    padding: 0.6rem;
-    transition: all 0.3s ease;
-}
-
-.view-year-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
 </style>
 
 <main class="main-content">
-    <div class="child_history mt-4">
-    <!-- Page Header -->
+<div class="app-wrapper mt-4">
+
+    <!-- ===== Page Header ===== -->
     <div class="page-header">
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="page-header-inner">
             <div>
-                <h1 class="h2 mb-1">ข้อมูลเด็กในระบบ</h1>
-                <p class="mb-0">จัดการข้อมูลเด็กทั้งหมดในระบบ</p>
+                <div class="page-title">📋 ข้อมูลเด็กในระบบ</div>
+                <div class="page-subtitle">
+                    <?php if ($currentAcademicYear): ?>
+                        ปีการศึกษา <?= htmlspecialchars($currentAcademicYear) ?> · จัดการและค้นหาข้อมูลเด็กทั้งหมด
+                    <?php else: ?>
+                        เลือกปีการศึกษาเพื่อดูข้อมูลเด็ก
+                    <?php endif; ?>
+                </div>
             </div>
-            <div class="action-buttons children-action-buttons">
-                <button class="btn btn-primary btn-icon" data-bs-toggle="modal" data-bs-target="#addChildModal">
-                    <i class="bi bi-plus-circle"></i>
-                    <span>เพิ่มข้อมูลเด็ก</span>
+            <div class="header-actions">
+                <button class="btn-header btn-header-outline"
+                        data-bs-toggle="modal" data-bs-target="#addChildModal">
+                    ➕ เพิ่มข้อมูลเด็ก
                 </button>
-                <button class="btn btn-success btn-icon" data-bs-toggle="modal" data-bs-target="#exportModal">
-                    <i class="bi bi-file-earmark-excel"></i>
-                    <span>Export ข้อมูล</span>
+                <button class="btn-header btn-header-outline"
+                        data-bs-toggle="modal" data-bs-target="#exportModal">
+                    📊 Export CSV
                 </button>
-                <a href="../admin/qr_codes_list.php" class="btn btn-primary btn-icon">
-                    <i class="bi bi-qr-code"></i>
-                    <span>รายการคิวอาร์โค้ด</span>
+                <a href="../admin/qr_codes_list.php" class="btn-header btn-header-solid">
+                    📷 QR Codes
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Academic Year Cards -->
     <?php if (!$currentAcademicYear): ?>
-    <div class="row g-4">
-        <?php foreach ($academicYears as $year): ?>
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <div class="card academic-year-card h-100">
-                    <div class="card-body text-center">
-                        <div class="academic-year-icon mb-3">
-                            <i class="bi bi-calendar3"></i>
-                        </div>
-                        <h3 class="academic-year-title"><?= htmlspecialchars($year['name']) ?></h3>
-                        <p class="academic-year-status">
-                            <span class="badge <?= $year['is_active'] ? 'bg-success' : 'bg-secondary' ?>">
-                                <?= $year['is_active'] ? 'เปิดใช้งาน' : 'ปิดใช้งาน' ?>
-                            </span>
-                        </p>
-                        <a href="?academic_year=<?= htmlspecialchars($year['name']) ?>" 
-                           class="btn btn-primary view-year-btn">
-                            <i class="bi bi-folder2-open me-2"></i>ดูข้อมูล
-                        </a>
+    <!-- ===== Academic Year Selection ===== -->
+    <div class="year-cards-grid">
+        <?php if (!empty($academicYears)): ?>
+            <?php foreach ($academicYears as $year): ?>
+                <a href="?academic_year=<?= htmlspecialchars($year['name']) ?>" class="year-card">
+                    <span class="year-card-icon">📅</span>
+                    <div class="year-card-title"><?= htmlspecialchars($year['name']) ?></div>
+                    <div>
+                        <span class="year-badge <?= $year['is_active'] ? 'active' : 'inactive' ?>">
+                            <?= $year['is_active'] ? '✓ เปิดใช้งาน' : 'ปิดใช้งาน' ?>
+                        </span>
                     </div>
-                </div>
-            </div>
-        <?php endforeach; ?>
-    </div>
-    <?php else: ?>
-    <!-- Back Button -->
-    <div class="mb-4">
-        <a href="children_history.php" class="btn btn-secondary">
-            <i class="bi bi-arrow-left me-2"></i>กลับไปหน้ารายการปีการศึกษา
-        </a>
-    </div>
-
-    <!-- Tabs -->
-    <ul class="nav nav-tabs children-tabs">
-        <li class="nav-item">
-            <a class="nav-link <?= $currentTab === 'all' ? 'active' : '' ?>" 
-               href="?academic_year=<?= htmlspecialchars($currentAcademicYear) ?>&tab=all">
-                <i class="bi bi-grid-3x3-gap me-2"></i>ทั้งหมด
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link <?= $currentTab === 'medium' ? 'active' : '' ?>" 
-               href="?academic_year=<?= htmlspecialchars($currentAcademicYear) ?>&tab=medium">
-                <i class="bi bi-people me-2"></i>เด็กกลาง
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link <?= $currentTab === 'big' ? 'active' : '' ?>" 
-               href="?academic_year=<?= htmlspecialchars($currentAcademicYear) ?>&tab=big">
-                <i class="bi bi-people me-2"></i>เด็กโต
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link <?= $currentTab === 'prep' ? 'active' : '' ?>" 
-               href="?academic_year=<?= htmlspecialchars($currentAcademicYear) ?>&tab=prep">
-                <i class="bi bi-people me-2"></i>เตรียมอนุบาล
-            </a>
-        </li>
-    </ul>
-
-    <!-- Classroom Tabs -->
-    <?php if ($currentTab !== 'all'): ?>
-    <div class="classroom-tabs mt-3">
-        <ul class="nav nav-pills">
-            <li class="nav-item">
-                <a class="nav-link <?= !isset($_GET['classroom']) ? 'active' : '' ?>" 
-                   href="?academic_year=<?= htmlspecialchars($currentAcademicYear) ?>&tab=<?= urlencode(htmlspecialchars($currentTab)) ?>">
-                    <i class="bi bi-grid me-2"></i>ทุกห้อง
+                    <span class="year-card-btn">เปิดดูข้อมูล →</span>
                 </a>
-            </li>
-            <?php
-            // ดึงข้อมูลห้องเรียนตามกลุ่มที่เลือก
-            $classrooms = getClassroomsByGroup($currentTab);
-            foreach ($classrooms as $classroom): ?>
-                <li class="nav-item">
-                    <a class="nav-link <?= isset($_GET['classroom']) && $_GET['classroom'] === $classroom['classroom'] ? 'active' : '' ?>" 
-                       href="?academic_year=<?= htmlspecialchars($currentAcademicYear) ?>&tab=<?= urlencode(htmlspecialchars($currentTab)) ?>&classroom=<?= htmlspecialchars($classroom['classroom']) ?>">
-                        <i class="bi bi-door-open me-2"></i><?= htmlspecialchars($classroom['classroom']) ?>
-                    </a>
-                </li>
             <?php endforeach; ?>
-        </ul>
+        <?php else: ?>
+            <div style="grid-column:1/-1; text-align:center; padding:3rem; color:#718096;">
+                <div style="font-size:3rem; margin-bottom:1rem;">📭</div>
+                <div>ยังไม่มีปีการศึกษาในระบบ</div>
+            </div>
+        <?php endif; ?>
     </div>
+
+    <?php else: ?>
+    <!-- ===== Children View ===== -->
+
+    <!-- Back Button -->
+    <a href="children_history.php" class="back-btn">← กลับไปหน้าปีการศึกษา</a>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <div class="stat-card s-all">
+            <div class="stat-icon">👦</div>
+            <div>
+                <div class="stat-value" id="statAll">0</div>
+                <div class="stat-label">เด็กทั้งหมด</div>
+            </div>
+        </div>
+        <div class="stat-card s-medium">
+            <div class="stat-icon">🌟</div>
+            <div>
+                <div class="stat-value" id="statMedium">0</div>
+                <div class="stat-label">เด็กกลาง</div>
+            </div>
+        </div>
+        <div class="stat-card s-big">
+            <div class="stat-icon">🎒</div>
+            <div>
+                <div class="stat-value" id="statBig">0</div>
+                <div class="stat-label">เด็กโต</div>
+            </div>
+        </div>
+        <div class="stat-card s-prep">
+            <div class="stat-icon">🌱</div>
+            <div>
+                <div class="stat-value" id="statPrep">0</div>
+                <div class="stat-label">เตรียมอนุบาล</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="control-panel">
+        <!-- Search -->
+        <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="searchInput"
+                   placeholder="ค้นหาชื่อ, ชื่อเล่น, รหัสนักเรียน..."
+                   autocomplete="off">
+            <button class="search-clear" id="searchClear">✕</button>
+        </div>
+
+        <!-- Group Filter -->
+        <div class="filter-tabs" id="groupFilter">
+            <button class="filter-tab active" data-group="all">ทั้งหมด</button>
+            <button class="filter-tab" data-group="เด็กกลาง">เด็กกลาง</button>
+            <button class="filter-tab" data-group="เด็กโต">เด็กโต</button>
+            <button class="filter-tab" data-group="เตรียมอนุบาล">เตรียมอนุบาล</button>
+        </div>
+
+        <!-- Sort -->
+        <select class="sort-select" id="sortSelect">
+            <option value="name-asc">ชื่อ ก→ฮ</option>
+            <option value="name-desc">ชื่อ ฮ→ก</option>
+            <option value="id-asc">รหัส น้อย→มาก</option>
+            <option value="id-desc">รหัส มาก→น้อย</option>
+        </select>
+
+        <!-- View Toggle -->
+        <div class="view-toggle">
+            <button class="view-btn active" id="viewCard" title="Card View">⊞</button>
+            <button class="view-btn" id="viewTable" title="Table View">☰</button>
+        </div>
+    </div>
+
+    <!-- Results Info + Classroom Pills -->
+    <div class="results-info">
+        <div class="results-count">
+            แสดง <strong id="visibleCount">0</strong> จาก
+            <strong id="totalCount">0</strong> คน
+        </div>
+        <div class="classroom-pills" id="classroomPills">
+            <!-- สร้างโดย JavaScript -->
+        </div>
+    </div>
+
+    <!-- No Results -->
+    <div class="no-results" id="noResults">
+        <span class="no-results-icon">🔍</span>
+        <div class="no-results-text">ไม่พบข้อมูลที่ค้นหา กรุณาลองคำค้นหาอื่น</div>
+    </div>
+
+    <!-- Card View -->
+    <div id="cardView"></div>
+
+    <!-- Table View -->
+    <div id="tableView" style="display:none;">
+        <div class="table-wrapper">
+            <table id="childrenTable">
+                <thead>
+                    <tr>
+                        <th data-col="id">รหัส <span class="sort-arrow">↕</span></th>
+                        <th data-col="name">ชื่อ-นามสกุล <span class="sort-arrow">↕</span></th>
+                        <th data-col="group">กลุ่ม <span class="sort-arrow">↕</span></th>
+                        <th data-col="room">ห้องเรียน <span class="sort-arrow">↕</span></th>
+                        <th>จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
     <?php endif; ?>
 
-    <!-- Children Cards -->
-    <div class="container-fluid px-0">
-        <?php foreach ($data as $groupData): ?>
-            <h3 class="group-header"><?= htmlspecialchars($groupData['group']) ?></h3>
-            <?php if (!empty($groupData['classrooms'])): ?>
-                <?php foreach ($groupData['classrooms'] as $classroomData): ?>
-                    <?php if (!isset($_GET['classroom']) || $_GET['classroom'] === $classroomData['classroom']): ?>
-                        <h4 class="classroom-header">ห้อง: <?= htmlspecialchars($classroomData['classroom']) ?></h4>
-                        <div class="row g-4">
-                            <?php if (!empty($classroomData['children'])): ?>
-                                <?php foreach ($classroomData['children'] as $child): ?>
-                                    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                                        <div class="child-card card h-100">
-                                            <div class="card-body">
-                                                <div class="profile-image-wrapper">
-                                                    <img src="<?= !empty($child['profile_image']) ?
-                                                        htmlspecialchars($child['profile_image']) :
-                                                        '../../../public/assets/images/avatar.png' ?>"
-                                                        class="profile-image"
-                                                        alt="Profile Image"
-                                                        onerror="this.src='../../../public/assets/images/avatar.png'">
-                                                </div>
-                                                <div class="child-info">
-                                                    <h5 class="child-name">
-                                                        <?= htmlspecialchars($child['prefix_th']) ?>
-                                                        <?= htmlspecialchars($child['firstname_th']) ?>
-                                                        <?= htmlspecialchars($child['lastname_th']) ?>
-                                                    </h5>
-                                                    <p class="child-details"><strong>ชื่อเล่น:</strong> <?= htmlspecialchars($child['nickname']) ?></p>
-                                                    <p class="child-details"><strong>กลุ่ม:</strong> <?= htmlspecialchars($child['child_group']) ?></p>
-                                                    <p class="child-details"><strong>ห้องเรียน:</strong> <?= htmlspecialchars($child['classroom']) ?></p>
-                                                    <a href="view_child.php?studentid=<?= htmlspecialchars($child['studentid']) ?>"
-                                                       class="btn btn-primary view-details-btn">
-                                                       <i class="bi bi-eye me-2"></i>ดูรายละเอียด
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <div class="col-12">
-                                    <div class="alert alert-info text-center">
-                                        <i class="bi bi-info-circle me-2"></i>ไม่มีข้อมูลในห้องนี้
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <div class="alert alert-info text-center">
-                    <i class="bi bi-info-circle me-2"></i>ไม่มีข้อมูลในกลุ่มนี้
-                </div>
-            <?php endif; ?>
-        <?php endforeach; ?>
-    </div>
-    <?php endif; ?>
-    </div>
+</div><!-- /app-wrapper -->
 </main>
 
-    <!-- ฟอร์ม Modal สำหรับเพิ่มข้อมูลเด็ก -->
-                    <div class="child-form-modal modal fade" id="addChildModal" tabindex="-1" aria-labelledby="addChildModalLabel"
-                        aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="addChildModalLabel">เพิ่มข้อมูลเด็ก</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <!-- ใช้ PHP include -->
-                                <?php include '../../include/form/form_addchild.php'; ?>
-                            </div>
-                        </div>
-                    </div>
-
-    <!-- เพิ่ม Modal สำหรับ Export ข้อมูล -->
-    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exportModalLabel">Export ข้อมูลเด็ก</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form action="../../include/export/export_children.php" method="post">
-                    <div class="modal-body">
-                        <!-- เลือกกลุ่มเด็ก -->
-                        <div class="mb-3">
-                            <label class="form-label">กลุ่มเด็ก:</label>
-                            <select name="child_group" class="form-select" required>
-                                <option value="all">ทั้งหมด</option>
-                                <option value="medium">เด็กกลาง</option>
-                                <option value="big">เด็กโต</option>
-                                <option value="prep">เตรียมอนุบาล</option>
-                            </select>
-                        </div>
-                        
-                        <!-- ข้อมูลพื้นฐานที่จำเป็น -->
-                        <input type="hidden" name="fields[]" value="student_id">
-                        <input type="hidden" name="fields[]" value="name">
-                        <input type="hidden" name="fields[]" value="nickname">
-                        <input type="hidden" name="fields[]" value="classroom">
-                        
-                        <!-- เลือกรูปแบบไฟล์ -->
-                        <div class="mb-3">
-                            <label class="form-label">รูปแบบไฟล์:</label>
-                            <select name="format" class="form-select" disabled>
-                                <option value="csv">CSV</option>
-                            </select>
-                            <small class="text-muted">ขณะนี้รองรับเฉพาะการ export เป็น CSV</small>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-                        <button type="submit" class="btn btn-success">
-                            <i class="bi bi-download me-2"></i>Export
-                        </button>
-                    </div>
-                </form>
+<!-- Modal: เพิ่มข้อมูลเด็ก -->
+<div class="modal fade" id="addChildModal" tabindex="-1" aria-labelledby="addChildModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content" style="border-radius:15px; border:none;">
+            <div class="modal-header" style="background:#26648E; color:white; border-radius:15px 15px 0 0;">
+                <h5 class="modal-title" id="addChildModalLabel">เพิ่มข้อมูลเด็ก</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
+            <?php include '../../include/form/form_addchild.php'; ?>
         </div>
     </div>
+</div>
+
+<!-- Modal: Export -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:15px; border:none;">
+            <div class="modal-header" style="background:#198754; color:white; border-radius:15px 15px 0 0;">
+                <h5 class="modal-title" id="exportModalLabel">Export ข้อมูลเด็ก</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="../../include/export/export_children.php" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">กลุ่มเด็ก</label>
+                        <select name="child_group" class="form-select" required>
+                            <option value="all">ทั้งหมด</option>
+                            <option value="medium">เด็กกลาง</option>
+                            <option value="big">เด็กโต</option>
+                            <option value="prep">เตรียมอนุบาล</option>
+                        </select>
+                    </div>
+                    <input type="hidden" name="fields[]" value="student_id">
+                    <input type="hidden" name="fields[]" value="name">
+                    <input type="hidden" name="fields[]" value="nickname">
+                    <input type="hidden" name="fields[]" value="classroom">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">รูปแบบไฟล์</label>
+                        <select name="format" class="form-select" disabled>
+                            <option value="csv">CSV</option>
+                        </select>
+                        <small class="text-muted">รองรับเฉพาะ CSV ในขณะนี้</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-success">📥 Export</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ===== DATA จาก PHP ===== -->
+<?php if ($currentAcademicYear): ?>
+<script>
+    const CHILDREN = <?= json_encode($allChildrenForJS, JSON_UNESCAPED_UNICODE) ?>;
+</script>
+<script>
+    (function () {
+        'use strict';
+
+        /* ===== STATE ===== */
+        const state = { search: '', group: 'all', room: 'all', view: 'card', sort: 'name-asc' };
+
+        /* ===== DOM ===== */
+        const searchInput    = document.getElementById('searchInput');
+        const searchClear    = document.getElementById('searchClear');
+        const groupFilter    = document.getElementById('groupFilter');
+        const sortSelect     = document.getElementById('sortSelect');
+        const viewCardBtn    = document.getElementById('viewCard');
+        const viewTableBtn   = document.getElementById('viewTable');
+        const cardView       = document.getElementById('cardView');
+        const tableView      = document.getElementById('tableView');
+        const tableBody      = document.getElementById('tableBody');
+        const classroomPills = document.getElementById('classroomPills');
+        const visibleCount   = document.getElementById('visibleCount');
+        const totalCount     = document.getElementById('totalCount');
+        const noResults      = document.getElementById('noResults');
+
+        /* ===== AVATAR PLACEHOLDER ===== */
+        function avatarPlaceholder(gender) {
+            const fill = gender === 'female' ? '%23f9a8d4' : '%2393c5fd';
+            return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='${fill}'/%3E%3Ccircle cx='40' cy='30' r='16' fill='%23fff' opacity='.7'/%3E%3Cellipse cx='40' cy='72' rx='24' ry='18' fill='%23fff' opacity='.7'/%3E%3C/svg%3E`;
+        }
+
+        function getImgSrc(child) {
+            return (child.img && child.img.trim() !== '')
+                ? child.img
+                : avatarPlaceholder(child.gender);
+        }
+
+        /* ===== HIGHLIGHT ===== */
+        function highlight(text, term) {
+            if (!term || !text) return text || '';
+            const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return String(text).replace(new RegExp(`(${escaped})`, 'gi'),
+                '<mark class="highlight">$1</mark>');
+        }
+
+        /* ===== SORT ===== */
+        function sortChildren(arr) {
+            return [...arr].sort((a, b) => {
+                switch (state.sort) {
+                    case 'name-asc':  return (a.first||'').localeCompare(b.first||'', 'th');
+                    case 'name-desc': return (b.first||'').localeCompare(a.first||'', 'th');
+                    case 'id-asc':    return (a.id||'').localeCompare(b.id||'');
+                    case 'id-desc':   return (b.id||'').localeCompare(a.id||'');
+                    default:          return 0;
+                }
+            });
+        }
+
+        /* ===== FILTER ===== */
+        function filterChildren() {
+            const term = state.search.toLowerCase().trim();
+            return CHILDREN.filter(c => {
+                const matchGroup  = state.group === 'all' || c.group === state.group;
+                const matchRoom   = state.room  === 'all' || c.room  === state.room;
+                const fullName    = `${c.prefix||''}${c.first||''} ${c.last||''}`;
+                const matchSearch = !term ||
+                    (c.first||'').toLowerCase().includes(term) ||
+                    (c.last||'').toLowerCase().includes(term)  ||
+                    (c.nick||'').toLowerCase().includes(term)  ||
+                    (c.id||'').toLowerCase().includes(term)    ||
+                    fullName.toLowerCase().includes(term);
+                return matchGroup && matchRoom && matchSearch;
+            });
+        }
+
+        /* ===== BUILD CLASSROOM PILLS ===== */
+        // Updated to accept a list of children so pills reflect the current group filter
+        function buildClassroomPills(children = CHILDREN) {
+            const rooms = [...new Set(children.map(c => c.room))].sort();
+            let html = `<button class="classroom-pill active" data-room="all">ทุกห้อง</button>`;
+            rooms.forEach(r => {
+                html += `<button class="classroom-pill" data-room="${r}">ห้อง ${r}</button>`;
+            });
+            classroomPills.innerHTML = html;
+
+            classroomPills.addEventListener('click', function (e) {
+                const pill = e.target.closest('.classroom-pill');
+                if (!pill) return;
+                document.querySelectorAll('.classroom-pill').forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                state.room = pill.dataset.room;
+                render();
+            });
+        }
+
+        /* ===== BUILD CARD ===== */
+        function buildCard(child) {
+            const term     = state.search;
+            const fullName = `${child.prefix||''}${child.first||''} ${child.last||''}`;
+            const imgSrc   = getImgSrc(child);
+
+            return `
+            <div class="child-card">
+                <div class="card-body">
+                    <div class="avatar-wrapper">
+                        <img src="${imgSrc}"
+                            alt="${fullName}"
+                            onerror="this.src='${avatarPlaceholder(child.gender)}'">
+                    </div>
+                    <div class="child-name-text">${highlight(fullName, term)}</div>
+                    <div class="child-nickname-text">น้อง${highlight(child.nick||'', term)}</div>
+                    <div class="child-nickname-text">${highlight(child.id||'')}</div>
+                    <div class="child-tags">
+                        <span class="tag tag-group">${child.group||''}</span>
+                        <span class="tag tag-room">ห้อง ${child.room||''}</span>
+                    </div>
+                    <a href="view_child.php?studentid=${child.id||''}" class="card-action-btn">
+                        👁 ดูรายละเอียด
+                    </a>
+                </div>
+            </div>`;
+        }
+
+        /* ===== BUILD TABLE ROW ===== */
+        function buildRow(child) {
+            const term     = state.search;
+            const fullName = `${child.prefix||''}${child.first||''} ${child.last||''}`;
+            const imgSrc   = getImgSrc(child);
+
+            return `
+            <tr>
+                <td><code style="font-size:0.8rem;color:#718096;">${child.id||''}</code></td>
+                <td>
+                    <div class="table-name-cell">
+                        <img src="${imgSrc}" class="table-avatar" alt="${fullName}"
+                            onerror="this.src='${avatarPlaceholder(child.gender)}'">
+                        <div>
+                            <div class="table-name">${highlight(fullName, term)}</div>
+                            <div class="table-nickname-sub">น้อง${highlight(child.nick||'', term)}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="tbl-badge tbl-badge-group">${child.group||''}</span></td>
+                <td><span class="tbl-badge tbl-badge-room">ห้อง ${child.room||''}</span></td>
+                <td>
+                    <a href="view_child.php?studentid=${child.id||''}" class="action-link">
+                        👁 ดูข้อมูล
+                    </a>
+                </td>
+            </tr>`;
+        }
+
+        /* ===== RENDER CARD VIEW ===== */
+        function renderCardView(filtered) {
+            // จัดกลุ่ม group → room → children
+            const structure = {};
+            filtered.forEach(c => {
+                if (!structure[c.group]) structure[c.group] = {};
+                if (!structure[c.group][c.room]) structure[c.group][c.room] = [];
+                structure[c.group][c.room].push(c);
+            });
+
+            const groupMeta = {
+                'เด็กกลาง':    { icon: '🌟' },
+                'เด็กโต':      { icon: '🎒' },
+                'เตรียมอนุบาล':{ icon: '🌱' },
+            };
+
+            let html = '';
+            Object.keys(structure).forEach(groupName => {
+                const rooms    = structure[groupName];
+                const meta     = groupMeta[groupName] || { icon: '👦' };
+                const groupTotal = Object.values(rooms).reduce((s, arr) => s + arr.length, 0);
+
+                html += `
+                <div class="group-section">
+                    <div class="group-header-bar">
+                        <span>${meta.icon}</span>
+                        <span class="group-header-title">${groupName}</span>
+                        <span class="group-count">${groupTotal} คน</span>
+                    </div>`;
+
+                Object.keys(rooms).sort().forEach(roomName => {
+                    const children = sortChildren(rooms[roomName]);
+                    html += `
+                    <div class="classroom-section">
+                        <div class="classroom-label">ห้อง ${roomName}</div>
+                        <div class="cards-grid">
+                            ${children.map(c => buildCard(c)).join('')}
+                        </div>
+                    </div>`;
+                });
+
+                html += `</div>`;
+            });
+
+            cardView.innerHTML = html || '';
+        }
+
+        /* ===== RENDER TABLE VIEW ===== */
+        function renderTableView(filtered) {
+            const sorted = sortChildren(filtered);
+            tableBody.innerHTML = sorted.map(c => buildRow(c)).join('');
+        }
+
+        /* ===== UPDATE STATS ===== */
+        function updateStats(filtered) {
+            const counts = { 'เด็กกลาง': 0, 'เด็กโต': 0, 'เตรียมอนุบาล': 0 };
+            filtered.forEach(c => {
+                if (counts[c.group] !== undefined) counts[c.group]++;
+            });
+
+            document.getElementById('statAll').textContent    = filtered.length;
+            document.getElementById('statMedium').textContent = counts['เด็กกลาง'];
+            document.getElementById('statBig').textContent    = counts['เด็กโต'];
+            document.getElementById('statPrep').textContent   = counts['เตรียมอนุบาล'];
+
+            visibleCount.textContent = filtered.length;
+            totalCount.textContent   = CHILDREN.length;
+        }
+
+        /* ===== MAIN RENDER ===== */
+        function render() {
+            const filtered = filterChildren();
+            updateStats(filtered);
+
+            if (state.view === 'card') {
+                renderCardView(filtered);
+            } else {
+                renderTableView(filtered);
+            }
+
+            noResults.classList.toggle('visible', filtered.length === 0);
+        }
+
+        /* ===== EVENTS ===== */
+        searchInput.addEventListener('input', function () {
+            state.search = this.value;
+            searchClear.style.display = this.value ? 'block' : 'none';
+            render();
+        });
+
+        searchClear.addEventListener('click', function () {
+            searchInput.value = '';
+            state.search = '';
+            this.style.display = 'none';
+            searchInput.focus();
+            render();
+        });
+
+        groupFilter.addEventListener('click', function (e) {
+            const tab = e.target.closest('.filter-tab');
+            if (!tab) return;
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            // Update group and reset room filter to "all"
+            state.group = tab.dataset.group;
+            state.room = 'all';
+            // Rebuild classroom pills based on the new group filter
+            const filteredForPills = filterChildren();
+            buildClassroomPills(filteredForPills);
+            render();
+        });
+
+        sortSelect.addEventListener('change', function () {
+            state.sort = this.value;
+            render();
+        });
+
+        viewCardBtn.addEventListener('click', function () {
+            state.view = 'card';
+            viewCardBtn.classList.add('active');
+            viewTableBtn.classList.remove('active');
+            cardView.style.display  = '';
+            tableView.style.display = 'none';
+            render();
+        });
+
+        viewTableBtn.addEventListener('click', function () {
+            state.view = 'table';
+            viewTableBtn.classList.add('active');
+            viewCardBtn.classList.remove('active');
+            tableView.style.display = '';
+            cardView.style.display  = 'none';
+            render();
+        });
+
+        // Table column sort
+        const thead = document.querySelector('#childrenTable thead');
+        if (thead) {
+            thead.addEventListener('click', function (e) {
+                const th = e.target.closest('th[data-col]');
+                if (!th) return;
+                const col   = th.dataset.col;
+                const isAsc = state.sort === `${col}-asc`;
+                state.sort  = isAsc ? `${col}-desc` : `${col}-asc`;
+                sortSelect.value = state.sort;
+
+                document.querySelectorAll('thead th').forEach(t => {
+                    t.classList.remove('sorted');
+                    const arrow = t.querySelector('.sort-arrow');
+                    if (arrow) arrow.textContent = '↕';
+                });
+                th.classList.add('sorted');
+                const arrow = th.querySelector('.sort-arrow');
+                if (arrow) arrow.textContent = isAsc ? '↓' : '↑';
+
+                render();
+            });
+        }
+
+        /* ===== INIT ===== */
+        buildClassroomPills(); // initial pills for all children
+        render();
+
+    })();
+</script>
+<?php endif; ?>
 
 </body>
-
 </html>

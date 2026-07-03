@@ -79,7 +79,15 @@ function isCurrentPage($path)
                             <a class="nav-link <?php echo isCurrentPage('attendance.php') ? 'active' : ''; ?>"
                                 href="/app/views/teacher/attendance.php">
                                 <i class="bi bi-qr-code-scan" style="font-size: 23px;"></i>
-                                แสกนเช็คชื่อ
+                                แสกนเช็คชื่อ<br>มาเรียน
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo isCurrentPage('scan_checkout.php') ? 'active' : ''; ?>"
+                                href="/app/views/teacher/scan_checkout.php">
+                                <i class="bi bi-qr-code-scan" style="font-size: 23px;"></i>
+                                แสกนเช็คชื่อ<br>กลับบ้าน
                             </a>
                         </li>
 

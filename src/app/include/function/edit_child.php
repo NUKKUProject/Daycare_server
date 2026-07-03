@@ -33,8 +33,13 @@ function handleEmptyValue($value, $default = null) {
 }
 
 try {
-    // ตรวจสอบสิทธิ์
-    if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    // ตรวจสอบสิทธิ์ - อนุญาตให้ admin, teacher, student ใช้งานได้
+    if (!isset($_SESSION['user_id'])) {
+        sendJsonResponse('error', 'Unauthorized access', 403);
+    }
+    
+    $allowedRoles = ['admin', 'teacher', 'student'];
+    if (!in_array($_SESSION['role'], $allowedRoles)) {
         sendJsonResponse('error', 'Unauthorized access', 403);
     }
 
@@ -69,9 +74,11 @@ try {
         $father_first_name,
         $father_last_name,
         $father_phone,
+        $father_phone_backup,
         $mother_first_name,
         $mother_last_name,
         $mother_phone,
+        $mother_phone_backup,
         $profile_image,
         $father_image,
         $mother_image,
@@ -153,9 +160,11 @@ try {
                         father_first_name = :father_first_name,
                         father_last_name = :father_last_name,
                         father_phone = :father_phone,
+                        father_phone_backup = :father_phone_backup,
                         mother_first_name = :mother_first_name,
                         mother_last_name = :mother_last_name,
                         mother_phone = :mother_phone,
+                        mother_phone_backup = :mother_phone_backup,
                         profile_image = :profile_image,
                         father_image = :father_image,
                         mother_image = :mother_image,
@@ -188,8 +197,8 @@ try {
                         firstname_en, lastname_en, id_card, issue_at, issue_date, 
                         expiry_date, race, nationality, religion, age_student, age_years, age_months, age_days,
                         birthday, place_birth, height, weight, sex, congenital_disease, classroom, child_group, nickname, father_first_name, 
-                        father_last_name, father_phone, mother_first_name, mother_last_name, 
-                        mother_phone, profile_image, father_image, mother_image, relative_image, blood_type,
+                        father_last_name, father_phone, father_phone_backup, mother_first_name, mother_last_name, 
+                        mother_phone, mother_phone_backup, profile_image, father_image, mother_image, relative_image, blood_type,
                         allergic_food, allergic_medicine, address, district, amphoe, province, 
                         zipcode, emergency_contact, emergency_phone, emergency_relation,
                         relative_first_name, relative_last_name,
@@ -203,8 +212,8 @@ try {
                         :firstname_en, :lastname_en, :id_card, :issue_at, :issue_date, 
                         :expiry_date, :race, :nationality, :religion, :age_student, :age_years, :age_months, :age_days,
                         :birthday, :place_birth, :height, :weight, :sex, :congenital_disease, :classroom, :child_group, :nickname, :father_first_name, 
-                        :father_last_name, :father_phone, :mother_first_name, :mother_last_name, 
-                        :mother_phone, :profile_image, :father_image, :mother_image, :relative_image, :blood_type,
+                        :father_last_name, :father_phone, :father_phone_backup, :mother_first_name, :mother_last_name, 
+                        :mother_phone, :mother_phone_backup, :profile_image, :father_image, :mother_image, :relative_image, :blood_type,
                         :allergic_food, :allergic_medicine, :address, :district, :amphoe, :province, 
                         :zipcode, :emergency_contact, :emergency_phone, :emergency_relation,
                         :relative_first_name, :relative_last_name,
@@ -252,9 +261,11 @@ try {
                 'father_first_name' => $father_first_name,
                 'father_last_name' => $father_last_name,
                 'father_phone' => $father_phone,
+                'father_phone_backup' => $father_phone_backup,
                 'mother_first_name' => $mother_first_name,
                 'mother_last_name' => $mother_last_name,
                 'mother_phone' => $mother_phone,
+                'mother_phone_backup' => $mother_phone_backup,
                 'profile_image' => $profile_image,
                 'father_image' => $father_image,
                 'mother_image' => $mother_image,
@@ -339,9 +350,11 @@ try {
             $stmt->bindValue(':father_first_name', $father_first_name, PDO::PARAM_STR);
             $stmt->bindValue(':father_last_name', $father_last_name, PDO::PARAM_STR);
             $stmt->bindValue(':father_phone', $father_phone, PDO::PARAM_STR);
+            $stmt->bindValue(':father_phone_backup', $father_phone_backup, PDO::PARAM_STR);
             $stmt->bindValue(':mother_first_name', $mother_first_name, PDO::PARAM_STR);
             $stmt->bindValue(':mother_last_name', $mother_last_name, PDO::PARAM_STR);
             $stmt->bindValue(':mother_phone', $mother_phone, PDO::PARAM_STR);
+            $stmt->bindValue(':mother_phone_backup', $mother_phone_backup, PDO::PARAM_STR);
             $stmt->bindValue(':profile_image', $profile_image, PDO::PARAM_STR);
             $stmt->bindValue(':father_image', $father_image, PDO::PARAM_STR);
             $stmt->bindValue(':mother_image', $mother_image, PDO::PARAM_STR);
@@ -427,9 +440,11 @@ try {
                         'father_first_name' => $father_first_name,
                         'father_last_name' => $father_last_name,
                         'father_phone' => $father_phone,
+                        'father_phone_backup' => $father_phone_backup,
                         'mother_first_name' => $mother_first_name,
                         'mother_last_name' => $mother_last_name,
                         'mother_phone' => $mother_phone,
+                        'mother_phone_backup' => $mother_phone_backup,
                         'profile_image' => $profile_image,
                         'father_image' => $father_image,
                         'mother_image' => $mother_image,
@@ -484,11 +499,23 @@ try {
 
     // จัดการข้อมูลที่รับจากฟอร์ม
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        error_log("Received POST request with data: " . print_r($_POST, true));
+        // ตรวจสอบว่าเป็น JSON request หรือไม่
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        
+        if (strpos($contentType, 'application/json') !== false) {
+            // รับ JSON input
+            $jsonInput = file_get_contents('php://input');
+            $inputData = json_decode($jsonInput, true);
+            error_log("Received JSON request: " . $jsonInput);
+        } else {
+            // รับจาก POST ปกติ (FormData)
+            $inputData = $_POST;
+            error_log("Received POST request with data: " . print_r($_POST, true));
+        }
         
         try {
             // รับข้อมูลพื้นฐาน
-            $student_id = $_POST['student_id'] ?? null;
+            $student_id = $inputData['student_id'] ?? null;
             if (!$student_id) {
                 throw new Exception("ไม่พบรหัสนักเรียน");
             }
@@ -503,51 +530,46 @@ try {
             $updateData = [
                 'id' => $existingData['id'] ?? null,
                 'student_id' => $student_id,
-                'academic_year' => !empty($_POST['academic_year']) ? (int)$_POST['academic_year'] : ($existingData['academic_year'] ?? null),
-                'prefix_th' => $_POST['prefix_th'] ?? $existingData['prefix_th'] ?? '',
-                'first_name_th' => trim($_POST['firstname_th'] ?? $existingData['firstname_th'] ?? ''),
-                'last_name_th' => trim($_POST['lastname_th'] ?? $existingData['lastname_th'] ?? ''),
-                'prefix_en' => $_POST['prefix_en'] ?? $existingData['prefix_en'] ?? '',
-                'first_name_en' => trim($_POST['firstname_en'] ?? $existingData['firstname_en'] ?? ''),
-                'last_name_en' => trim($_POST['lastname_en'] ?? $existingData['lastname_en'] ?? ''),
-                'nickname' => $_POST['nickname'] ?? $existingData['nickname'] ?? '',
-                'id_card' => !empty($_POST['id_card']) ? $_POST['id_card'] : ($existingData['id_card'] ?? null),
-                'issue_at' => $_POST['issue_at'] ?? $existingData['issue_at'] ?? null,
-                'issue_date' => !empty($_POST['issue_date']) ? $_POST['issue_date'] : ($existingData['issue_date'] ?? null),
-                'expiry_date' => !empty($_POST['expiry_date']) ? $_POST['expiry_date'] : ($existingData['expiry_date'] ?? null),
-                'race' => $_POST['race'] ?? $existingData['race'] ?? '',
-                'nationality' => $_POST['nationality'] ?? $existingData['nationality'] ?? '',
-                'religion' => $_POST['religion'] ?? $existingData['religion'] ?? '',
-                'age_student' => !empty($_POST['age_student']) ? (int)$_POST['age_student'] : ($existingData['age_student'] ?? null),
-                'age_years' => !empty($_POST['age_years']) ? (int)$_POST['age_years'] : ($existingData['age_years'] ?? null),
-                'age_months' => !empty($_POST['age_months']) ? (int)$_POST['age_months'] : ($existingData['age_months'] ?? null),
-                'age_days' => !empty($_POST['age_days']) ? (int)$_POST['age_days'] : ($existingData['age_days'] ?? null),
-                'birthday' => !empty($_POST['birthday']) ? $_POST['birthday'] : ($existingData['birthday'] ?? null),
-                'height' => !empty($_POST['height']) ? (float)$_POST['height'] : ($existingData['height'] ?? null),
-                'weight' => !empty($_POST['weight']) ? (float)$_POST['weight'] : ($existingData['weight'] ?? null),
-                'sex' => $_POST['sex'] ?? $existingData['sex'] ?? '',
-                'classroom' => $_POST['classroom'] ?? $existingData['classroom'] ?? '',
-                'child_group' => $_POST['child_group'] ?? $existingData['child_group'] ?? '',
-                'father_first_name' => $_POST['father_first_name'] ?? $existingData['father_first_name'] ?? '',
-                'father_last_name' => $_POST['father_last_name'] ?? $existingData['father_last_name'] ?? '',
-                'father_phone' => $_POST['father_phone'] ?? $existingData['father_phone'] ?? '',
-                'mother_first_name' => $_POST['mother_first_name'] ?? $existingData['mother_first_name'] ?? '',
-                'mother_last_name' => $_POST['mother_last_name'] ?? $existingData['mother_last_name'] ?? '',
-                'mother_phone' => $_POST['mother_phone'] ?? $existingData['mother_phone'] ?? '',
-                'congenital_disease' => $_POST['congenital_disease'] ?? $existingData['congenital_disease'] ?? '',
-                'blood_type' => $_POST['blood_type'] ?? $existingData['blood_type'] ?? null,
-                'address' => $_POST['address'] ?? $existingData['address'] ?? null,
-                'district' => $_POST['district'] ?? $existingData['district'] ?? null,
-                'amphoe' => $_POST['amphoe'] ?? $existingData['amphoe'] ?? null,
-                'province' => $_POST['province'] ?? $existingData['province'] ?? null,
-                'zipcode' => $_POST['zipcode'] ?? $existingData['zipcode'] ?? null,
-                'emergency_contact' => $_POST['emergency_contact'] ?? $existingData['emergency_contact'] ?? null,
-                'emergency_phone' => $_POST['emergency_phone'] ?? $existingData['emergency_phone'] ?? null,
-                'emergency_relation' => $_POST['emergency_relation'] ?? $existingData['emergency_relation'] ?? null,
-                'relative_first_name' => $_POST['relative_first_name'] ?? null,
-                'relative_last_name' => $_POST['relative_last_name'] ?? null,
-                'relative_phone' => $_POST['relative_phone'] ?? null,
-                'relative_phone_backup' => $_POST['relative_phone_backup'] ?? null
+                'academic_year' => !empty($inputData['academic_year']) ? (int)$inputData['academic_year'] : ($existingData['academic_year'] ?? null),
+                'prefix_th' => $inputData['prefix_th'] ?? $existingData['prefix_th'] ?? '',
+                'first_name_th' => trim($inputData['firstname_th'] ?? $existingData['firstname_th'] ?? ''),
+                'last_name_th' => trim($inputData['lastname_th'] ?? $existingData['lastname_th'] ?? ''),
+                'prefix_en' => $inputData['prefix_en'] ?? $existingData['prefix_en'] ?? '',
+                'first_name_en' => trim($inputData['firstname_en'] ?? $existingData['firstname_en'] ?? ''),
+                'last_name_en' => trim($inputData['lastname_en'] ?? $existingData['lastname_en'] ?? ''),
+                'nickname' => $inputData['nickname'] ?? $existingData['nickname'] ?? '',
+                'id_card' => !empty($inputData['id_card']) ? $inputData['id_card'] : ($existingData['id_card'] ?? null),
+                'race' => $inputData['race'] ?? $existingData['race'] ?? '',
+                'nationality' => $inputData['nationality'] ?? $existingData['nationality'] ?? '',
+                'religion' => $inputData['religion'] ?? $existingData['religion'] ?? '',
+                'birthday' => !empty($inputData['birthday']) ? $inputData['birthday'] : ($existingData['birthday'] ?? null),
+                'height' => !empty($inputData['height']) ? (float)$inputData['height'] : ($existingData['height'] ?? null),
+                'weight' => !empty($inputData['weight']) ? (float)$inputData['weight'] : ($existingData['weight'] ?? null),
+                'sex' => $inputData['sex'] ?? $existingData['sex'] ?? '',
+                'classroom' => $inputData['classroom'] ?? $existingData['classroom'] ?? '',
+                'child_group' => $inputData['child_group'] ?? $existingData['child_group'] ?? '',
+                'father_first_name' => $inputData['father_first_name'] ?? $existingData['father_first_name'] ?? '',
+                'father_last_name' => $inputData['father_last_name'] ?? $existingData['father_last_name'] ?? '',
+                'father_phone' => $inputData['father_phone'] ?? $existingData['father_phone'] ?? '',
+                'father_phone_backup' => $inputData['father_phone_backup'] ?? $existingData['father_phone_backup'] ?? '',
+                'mother_first_name' => $inputData['mother_first_name'] ?? $existingData['mother_first_name'] ?? '',
+                'mother_last_name' => $inputData['mother_last_name'] ?? $existingData['mother_last_name'] ?? '',
+                'mother_phone' => $inputData['mother_phone'] ?? $existingData['mother_phone'] ?? '',
+                'mother_phone_backup' => $inputData['mother_phone_backup'] ?? $existingData['mother_phone_backup'] ?? '',
+                'congenital_disease' => $inputData['congenital_disease'] ?? $existingData['congenital_disease'] ?? '',
+                'blood_type' => $inputData['blood_type'] ?? $existingData['blood_type'] ?? null,
+                'address' => $inputData['address'] ?? $existingData['address'] ?? null,
+                'district' => $inputData['district'] ?? $existingData['district'] ?? null,
+                'amphoe' => $inputData['amphoe'] ?? $existingData['amphoe'] ?? null,
+                'province' => $inputData['province'] ?? $existingData['province'] ?? null,
+                'zipcode' => $inputData['zipcode'] ?? $existingData['zipcode'] ?? null,
+                'emergency_contact' => $inputData['emergency_contact'] ?? $existingData['emergency_contact'] ?? null,
+                'emergency_phone' => $inputData['emergency_phone'] ?? $existingData['emergency_phone'] ?? null,
+                'emergency_relation' => $inputData['emergency_relation'] ?? $existingData['emergency_relation'] ?? null,
+                'relative_first_name' => $inputData['relative_first_name'] ?? $existingData['relative_first_name'] ?? '',
+                'relative_last_name' => $inputData['relative_last_name'] ?? $existingData['relative_last_name'] ?? '',
+                'relative_phone' => $inputData['relative_phone'] ?? $existingData['relative_phone'] ?? '',
+                'relative_phone_backup' => $inputData['relative_phone_backup'] ?? $existingData['relative_phone_backup'] ?? ''
             ];
 
             // จัดการรูปโปรไฟล์ของเด็ก
@@ -584,7 +606,7 @@ try {
                 $realUploadDir = realpath($uploadDir);
                 $realUploadFile = realpath(dirname($uploadFile)) . '/' . basename($uploadFile);
                 
-                // ตรวจสอบว่าพาธจริงอยู่ในไดเรกทอรีที่อนุجاز
+                // ตรวจสอบว่าพาธจริงอยู่ในไดเรกทอรีที่อนุญาต
                 if (strpos($realUploadFile, $realUploadDir) !== 0) {
                     die('Security violation: Invalid file path.');
                 }
@@ -788,17 +810,33 @@ try {
             ], true));
 
             // แปลงวันที่จาก พ.ศ. เป็น ค.ศ. ก่อนบันทึก
-            if (!empty($_POST['birthday'])) {
-                $date = DateTime::createFromFormat('d/m/Y', $_POST['birthday']);
+            if (!empty($inputData['birthday'])) {
+                // ลองแปลงจากรูปแบบ Y-m-d ก่อน (รูปแบบใหม่ที่ส่งมาจาก JS)
+                $date = DateTime::createFromFormat('Y-m-d', $inputData['birthday']);
+                if (!$date) {
+                    // ถ้าไม่ใช่ ลองแปลงจากรูปแบบ d/m/Y (รูปแบบเดิม)
+                    $date = DateTime::createFromFormat('d/m/Y', $inputData['birthday']);
+                    if ($date) {
+                        // แปลงปี พ.ศ. เป็น ค.ศ.
+                        $year = $date->format('Y') - 543;
+                        $date->setDate($year, $date->format('m'), $date->format('d'));
+                    }
+                }
                 if ($date) {
-                    // แปลงปี พ.ศ. เป็น ค.ศ.
-                    $year = $date->format('Y') - 543;
-                    $date->setDate($year, $date->format('m'), $date->format('d'));
                     $updateData['birthday'] = $date->format('Y-m-d');
+                } else {
+                    $updateData['birthday'] = $inputData['birthday'];
                 }
             } else {
-                $updateData['birthday'] = null;
+                $updateData['birthday'] = $existingData['birthday'] ?? null;
             }
+
+            // เพิ่มค่าที่ขาดหายไป
+            $updateData['age_years'] = $updateData['age_years'] ?? 0;
+            $updateData['age_months'] = $updateData['age_months'] ?? 0;
+            $updateData['age_days'] = $updateData['age_days'] ?? 0;
+            $updateData['has_drug_allergy_history'] = $updateData['has_drug_allergy_history'] ?? false;
+            $updateData['has_food_allergy_history'] = $updateData['has_food_allergy_history'] ?? false;
 
             // เรียกใช้ฟังก์ชันอัปเดต
             $result = updateChildById(
@@ -831,13 +869,15 @@ try {
                 $updateData['father_first_name'],
                 $updateData['father_last_name'],
                 $updateData['father_phone'],
+                $updateData['father_phone_backup'],
                 $updateData['mother_first_name'],
                 $updateData['mother_last_name'],
                 $updateData['mother_phone'],
-                $updateData['profile_image'],
-                $updateData['father_image'],
-                $updateData['mother_image'],
-                $updateData['relative_image'],
+                $updateData['mother_phone_backup'],
+                $updateData['profile_image'] ?? $existingData['profile_image'] ?? null,
+                $updateData['father_image'] ?? $existingData['father_image'] ?? null,
+                $updateData['mother_image'] ?? $existingData['mother_image'] ?? null,
+                $updateData['relative_image'] ?? $existingData['relative_image'] ?? null,
                 $updateData['blood_type'],
                 null, // allergic_food
                 null, // allergic_medicine
@@ -860,19 +900,16 @@ try {
                 $updateData['has_food_allergy_history']
             );
 
-            if ($result === true) {
-                header('Location: ../../views/student/view_child.php?studentid=' . urlencode($student_id) . 
-                       '&status=success&message=' . urlencode('บันทึกข้อมูลสำเร็จ'));
-                exit();
+            // updateChildById คืนค่า array เมื่อสำเร็จ
+            if ($result !== false) {
+                sendJsonResponse('success', 'บันทึกข้อมูลสำเร็จ');
             } else {
                 throw new Exception("ไม่สามารถบันทึกข้อมูลได้");
             }
 
         } catch (Exception $e) {
             error_log("Error processing form: " . $e->getMessage());
-            header('Location: ../../views/student/view_child.php?studentid=' . urlencode($student_id) . 
-                   '&status=error&message=' . urlencode($e->getMessage()));
-            exit();
+            sendJsonResponse('error', $e->getMessage());
         }
     }
 

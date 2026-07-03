@@ -22,19 +22,27 @@ try {
 
     $pdo = getDatabaseConnection();
     
-    if (!isset($_POST['action']) || !isset($_POST['type'])) {
+    // รับข้อมูลจาก JSON body หรือ POST data
+    $input = [];
+    if ($_SERVER['CONTENT_TYPE'] === 'application/json' || strpos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    } else {
+        $input = $_POST;
+    }
+    
+    if (!isset($input['action']) || !isset($input['type'])) {
         throw new Exception('Missing required parameters');
     }
 
-    $action = $_POST['action'];
-    $type = $_POST['type'];
-    $student_id = $_POST['student_id'] ?? null;
+    $action = $input['action'];
+    $type = $input['type'];
+    $student_id = $input['student_id'] ?? null;
 
     if (!$student_id) {
         throw new Exception('Student ID is required');
     }
 
-    error_log("Received data: " . print_r($_POST, true));
+    error_log("Received data: " . print_r($input, true));
 
     function arrayToPostgresArray($arr) {
         if (empty($arr)) return '{}';
@@ -42,23 +50,119 @@ try {
     }
 
     switch ($action) {
+        case 'save_multiple':
+            $items = $input['items'] ?? [];
+            if (is_string($items)) {
+                $items = json_decode($items, true) ?: [];
+            }
+            if (!is_array($items)) {
+                $items = [];
+            }
+
+            $pdo->beginTransaction();
+            try {
+                if ($type === 'drug') {
+                    $deleteStmt = $pdo->prepare("DELETE FROM drug_allergies WHERE student_id = :student_id");
+                    $deleteStmt->execute(['student_id' => $student_id]);
+
+                    $insertedCount = 0;
+                    foreach ($items as $item) {
+                        if (empty($item['drug_name']) && empty($item['detection_method']) && empty($item['symptoms']) && empty($item['has_allergy_card'])) {
+                            continue;
+                        }
+
+                        $hasAllergyCard = false;
+                        if (isset($item['has_allergy_card'])) {
+                            $value = strtolower(trim((string)$item['has_allergy_card']));
+                            $hasAllergyCard = ($value === '1' || $value === 'true' || $value === 'on');
+                        }
+
+                        $stmt = $pdo->prepare("INSERT INTO drug_allergies (student_id, drug_name, detection_method, symptoms, has_allergy_card) VALUES (:student_id, :drug_name, :detection_method, :symptoms, :has_allergy_card)");
+                        $stmt->execute([
+                            'student_id' => $student_id,
+                            'drug_name' => $item['drug_name'] ?? '',
+                            'detection_method' => $item['detection_method'] ?? '',
+                            'symptoms' => $item['symptoms'] ?? '',
+                            'has_allergy_card' => $hasAllergyCard ? 'true' : 'false'
+                        ]);
+                        $insertedCount++;
+                    }
+
+                    $updateChildStmt = $pdo->prepare("UPDATE children SET has_drug_allergy_history = :has_history WHERE studentid = :student_id");
+                    $updateChildStmt->execute([
+                        'has_history' => $insertedCount > 0 ? 'true' : 'false',
+                        'student_id' => $student_id
+                    ]);
+                } elseif ($type === 'food') {
+                    $deleteStmt = $pdo->prepare("DELETE FROM food_allergies WHERE student_id = :student_id");
+                    $deleteStmt->execute(['student_id' => $student_id]);
+
+                    $insertedCount = 0;
+                    foreach ($items as $item) {
+                        if (empty($item['food_name']) && empty($item['detection_method']) && empty($item['digestive_symptoms']) && empty($item['skin_symptoms']) && empty($item['respiratory_symptoms'])) {
+                            continue;
+                        }
+
+                        $digestiveSymptoms = $item['digestive_symptoms'] ?? [];
+                        $skinSymptoms = $item['skin_symptoms'] ?? [];
+                        $respiratorySymptoms = $item['respiratory_symptoms'] ?? [];
+
+                        if (is_string($digestiveSymptoms)) {
+                            $digestiveSymptoms = json_decode($digestiveSymptoms, true) ?: [];
+                        }
+                        if (is_string($skinSymptoms)) {
+                            $skinSymptoms = json_decode($skinSymptoms, true) ?: [];
+                        }
+                        if (is_string($respiratorySymptoms)) {
+                            $respiratorySymptoms = json_decode($respiratorySymptoms, true) ?: [];
+                        }
+
+                        $stmt = $pdo->prepare("INSERT INTO food_allergies (student_id, food_name, detection_method, digestive_symptoms, skin_symptoms, respiratory_symptoms) VALUES (:student_id, :food_name, :detection_method, :digestive_symptoms::text[], :skin_symptoms::text[], :respiratory_symptoms::text[])");
+                        $stmt->execute([
+                            'student_id' => $student_id,
+                            'food_name' => $item['food_name'] ?? '',
+                            'detection_method' => $item['detection_method'] ?? '',
+                            'digestive_symptoms' => arrayToPostgresArray($digestiveSymptoms),
+                            'skin_symptoms' => arrayToPostgresArray($skinSymptoms),
+                            'respiratory_symptoms' => arrayToPostgresArray($respiratorySymptoms)
+                        ]);
+                        $insertedCount++;
+                    }
+
+                    $updateChildStmt = $pdo->prepare("UPDATE children SET has_food_allergy_history = :has_history WHERE studentid = :student_id");
+                    $updateChildStmt->execute([
+                        'has_history' => $insertedCount > 0 ? 'true' : 'false',
+                        'student_id' => $student_id
+                    ]);
+                } else {
+                    throw new Exception('Invalid allergy type');
+                }
+
+                $pdo->commit();
+                sendResponse('success', 'บันทึกข้อมูลสำเร็จ');
+            } catch (Throwable $e) {
+                $pdo->rollBack();
+                throw $e;
+            }
+            break;
+
         case 'add':
             error_log("Adding allergy data for type: " . $type);
-            error_log("POST data: " . print_r($_POST, true));
+            error_log("Input data: " . print_r($input, true));
             
             if ($type === 'drug') {
-                if (empty($_POST['drug_name']) && empty($_POST['detection_method']) && empty($_POST['symptoms'])) {
+                if (empty($input['drug_name']) && empty($input['detection_method']) && empty($input['symptoms'])) {
                     echo json_encode(['status' => 'success', 'message' => 'ไม่มีการเปลี่ยนแปลงข้อมูล']);
                     break;
                 }
 
                 $stmt = $pdo->prepare("INSERT INTO drug_allergies (student_id, drug_name, detection_method, symptoms, has_allergy_card) VALUES (:student_id, :drug_name, :detection_method, :symptoms, :has_allergy_card)");
-                error_log("Raw has_allergy_card value: " . (isset($_POST['has_allergy_card']) ? $_POST['has_allergy_card'] : 'not set'));
+                error_log("Raw has_allergy_card value: " . (isset($input['has_allergy_card']) ? $input['has_allergy_card'] : 'not set'));
                 
                 // แปลงค่าเป็น boolean อย่างชัดเจน
                 $hasAllergyCard = false;
-                if (isset($_POST['has_allergy_card'])) {
-                    $value = strtolower($_POST['has_allergy_card']);
+                if (isset($input['has_allergy_card'])) {
+                    $value = strtolower($input['has_allergy_card']);
                     if ($value === 'true' || $value === '1') {
                         $hasAllergyCard = true;
                     }
@@ -67,17 +171,17 @@ try {
 
                 $params = [
                     'student_id' => $student_id,
-                    'drug_name' => $_POST['drug_name'] ?? '',
-                    'detection_method' => $_POST['detection_method'] ?? '',
-                    'symptoms' => $_POST['symptoms'] ?? '',
+                    'drug_name' => $input['drug_name'] ?? '',
+                    'detection_method' => $input['detection_method'] ?? '',
+                    'symptoms' => $input['symptoms'] ?? '',
                     'has_allergy_card' => $hasAllergyCard
                 ];
                 error_log("Drug params: " . print_r($params, true));
                 $stmt->execute($params);
             } elseif ($type === 'food') {
-                if (empty($_POST['food_name']) && empty($_POST['detection_method']) && 
-                    empty($_POST['digestive_symptoms']) && empty($_POST['skin_symptoms']) && 
-                    empty($_POST['respiratory_symptoms'])) {
+                if (empty($input['food_name']) && empty($input['detection_method']) && 
+                    empty($input['digestive_symptoms']) && empty($input['skin_symptoms']) && 
+                    empty($input['respiratory_symptoms'])) {
                     echo json_encode(['status' => 'success', 'message' => 'ไม่มีการเปลี่ยนแปลงข้อมูล']);
                     break;
                 }
@@ -85,11 +189,11 @@ try {
                 $stmt = $pdo->prepare("INSERT INTO food_allergies (student_id, food_name, detection_method, digestive_symptoms, skin_symptoms, respiratory_symptoms) VALUES (:student_id, :food_name, :detection_method, :digestive_symptoms::text[], :skin_symptoms::text[], :respiratory_symptoms::text[])");
                 $params = [
                     'student_id' => $student_id,
-                    'food_name' => $_POST['food_name'] ?? '',
-                    'detection_method' => $_POST['detection_method'] ?? '',
-                    'digestive_symptoms' => arrayToPostgresArray(json_decode($_POST['digestive_symptoms'] ?? '[]', true)),
-                    'skin_symptoms' => arrayToPostgresArray(json_decode($_POST['skin_symptoms'] ?? '[]', true)),
-                    'respiratory_symptoms' => arrayToPostgresArray(json_decode($_POST['respiratory_symptoms'] ?? '[]', true))
+                    'food_name' => $input['food_name'] ?? '',
+                    'detection_method' => $input['detection_method'] ?? '',
+                    'digestive_symptoms' => arrayToPostgresArray(json_decode($input['digestive_symptoms'] ?? '[]', true)),
+                    'skin_symptoms' => arrayToPostgresArray(json_decode($input['skin_symptoms'] ?? '[]', true)),
+                    'respiratory_symptoms' => arrayToPostgresArray(json_decode($input['respiratory_symptoms'] ?? '[]', true))
                 ];
                 error_log("Food params: " . print_r($params, true));
                 $stmt->execute($params);
@@ -99,10 +203,10 @@ try {
 
         case 'update':
             error_log("Updating allergy data for type: " . $type);
-            error_log("POST data: " . print_r($_POST, true));
+            error_log("Input data: " . print_r($input, true));
 
             if ($type === 'drug') {
-                if (empty($_POST['drug_name']) && empty($_POST['detection_method']) && empty($_POST['symptoms'])) {
+                if (empty($input['drug_name']) && empty($input['detection_method']) && empty($input['symptoms'])) {
                     sendResponse('success', 'ไม่มีการเปลี่ยนแปลงข้อมูล');
                     break;
                 }
@@ -114,8 +218,8 @@ try {
 
                 // ตรวจสอบและแปลงค่า has_allergy_card ให้ชัดเจน
                 $hasAllergyCard = false;
-                if (isset($_POST['has_allergy_card'])) {
-                    $value = strtolower(trim($_POST['has_allergy_card']));
+                if (isset($input['has_allergy_card'])) {
+                    $value = strtolower(trim($input['has_allergy_card']));
                     if ($value === '1' || $value === 'true') {
                         $hasAllergyCard = true;
                     } else if ($value === '0' || $value === 'false') {
@@ -123,7 +227,7 @@ try {
                     }
                 }
 
-                error_log("Has Allergy Card Input: " . ($_POST['has_allergy_card'] ?? 'not set'));
+                error_log("Has Allergy Card Input: " . ($input['has_allergy_card'] ?? 'not set'));
                 error_log("Has Allergy Card Value to save: " . ($hasAllergyCard ? 'true' : 'false'));
 
                 try {
@@ -159,9 +263,9 @@ try {
 
                     $params = [
                         'student_id' => $student_id,
-                        'drug_name' => $_POST['drug_name'] ?? '',
-                        'detection_method' => $_POST['detection_method'] ?? '',
-                        'symptoms' => $_POST['symptoms'] ?? '',
+                        'drug_name' => $input['drug_name'] ?? '',
+                        'detection_method' => $input['detection_method'] ?? '',
+                        'symptoms' => $input['symptoms'] ?? '',
                         'has_allergy_card' => $hasAllergyCard ? 'true' : 'false'
                     ];
 
@@ -194,14 +298,19 @@ try {
                     throw new Exception("Database error: " . $e->getMessage());
                 }
             } else {
-                if (empty($_POST['food_name']) && empty($_POST['detection_method']) && 
-                    empty($_POST['digestive_symptoms']) && empty($_POST['skin_symptoms']) && 
-                    empty($_POST['respiratory_symptoms'])) {
+                if (empty($input['food_name']) && empty($input['detection_method']) && 
+                    empty($input['digestive_symptoms']) && empty($input['skin_symptoms']) && 
+                    empty($input['respiratory_symptoms'])) {
                     echo json_encode(['status' => 'success', 'message' => 'ไม่มีการเปลี่ยนแปลงข้อมูล']);
                     break;
                 }
 
-                $stmt = $pdo->prepare("
+                // ตรวจสอบว่ามีข้อมูลอยู่แล้วหรือไม่
+                $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM food_allergies WHERE student_id = :student_id");
+                $checkStmt->execute(['student_id' => $student_id]);
+                $exists = $checkStmt->fetchColumn() > 0;
+
+                $stmt = $pdo->prepare($exists ? "
                     UPDATE food_allergies 
                     SET food_name = :food_name,
                         detection_method = :detection_method,
@@ -210,46 +319,62 @@ try {
                         respiratory_symptoms = :respiratory_symptoms::text[],
                         updated_at = CURRENT_TIMESTAMP
                     WHERE student_id = :student_id
+                " : "
+                    INSERT INTO food_allergies (
+                        student_id,
+                        food_name,
+                        detection_method,
+                        digestive_symptoms,
+                        skin_symptoms,
+                        respiratory_symptoms
+                    ) VALUES (
+                        :student_id,
+                        :food_name,
+                        :detection_method,
+                        :digestive_symptoms::text[],
+                        :skin_symptoms::text[],
+                        :respiratory_symptoms::text[]
+                    )
                 ");
 
-                $digestiveSymptoms = !empty($_POST['digestive_symptoms']) ? 
-                    json_decode($_POST['digestive_symptoms'], true) : 
+                $digestiveSymptoms = !empty($input['digestive_symptoms']) ? 
+                    json_decode($input['digestive_symptoms'], true) : 
                     [];
                 
-                $skinSymptoms = !empty($_POST['skin_symptoms']) ? 
-                    json_decode($_POST['skin_symptoms'], true) : 
+                $skinSymptoms = !empty($input['skin_symptoms']) ? 
+                    json_decode($input['skin_symptoms'], true) : 
                     [];
                 
-                $respiratorySymptoms = !empty($_POST['respiratory_symptoms']) ? 
-                    json_decode($_POST['respiratory_symptoms'], true) : 
+                $respiratorySymptoms = !empty($input['respiratory_symptoms']) ? 
+                    json_decode($input['respiratory_symptoms'], true) : 
                     [];
 
                 $success = $stmt->execute([
                     'student_id' => $student_id,
-                    'food_name' => $_POST['food_name'],
-                    'detection_method' => $_POST['detection_method'],
-                    'digestive_symptoms' => '{' . implode(',', $digestiveSymptoms) . '}',
-                    'skin_symptoms' => '{' . implode(',', $skinSymptoms) . '}',
-                    'respiratory_symptoms' => '{' . implode(',', $respiratorySymptoms) . '}'
+                    'food_name' => $input['food_name'],
+                    'detection_method' => $input['detection_method'],
+                    'digestive_symptoms' => arrayToPostgresArray($digestiveSymptoms),
+                    'skin_symptoms' => arrayToPostgresArray($skinSymptoms),
+                    'respiratory_symptoms' => arrayToPostgresArray($respiratorySymptoms)
+                ]);
+
+                if (!$success) {
+                    throw new Exception('Failed to update data');
+                }
+
+                // อัพเดทค่า has_food_allergy_history ในตาราง children
+                $updateChildStmt = $pdo->prepare("
+                    UPDATE children 
+                    SET has_food_allergy_history = true 
+                    WHERE studentid = :student_id
+                ");
+                $updateChildStmt->execute(['student_id' => $student_id]);
+
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'อัพเดทข้อมูลสำเร็จ'
                 ]);
             }
-
-            if (!$success) {
-                throw new Exception('Failed to update data');
-            }
-
-            // อัพเดทค่า has_food_allergy_history ในตาราง children
-            $updateChildStmt = $pdo->prepare("
-                UPDATE children 
-                SET has_food_allergy_history = true 
-                WHERE studentid = :student_id
-            ");
-            $updateChildStmt->execute(['student_id' => $student_id]);
-
-            echo json_encode([
-                'status' => 'success',
-                'message' => 'อัพเดทข้อมูลสำเร็จ'
-            ]);
             break;
 
         case 'get':

@@ -765,62 +765,71 @@ if (isset($_SESSION['user_id'])) {
                 let statusText = getStatusText(data.status);
                 let statusClass = getStatusBadgeClass(data.status);
 
+                // Build symptoms string
+                const symptoms = [];
+                if (data.has_runny_nose === true || data.has_runny_nose === 't' || data.has_runny_nose === '1') symptoms.push('น้ำมูกไหล');
+                if (data.has_cough === true || data.has_cough === 't' || data.has_cough === '1') symptoms.push('ไอ');
+                if (data.has_rash === true || data.has_rash === 't' || data.has_rash === '1') symptoms.push('ผื่น');
+                if (data.has_red_eyes === true || data.has_red_eyes === 't' || data.has_red_eyes === '1') symptoms.push('ตาแดง');
+                if (data.other_symptoms) symptoms.push(data.other_symptoms);
+                const symptomsText = symptoms.length > 0 ? symptoms.join(', ') : 'ไม่มีอาการ';
+
+                const pickupName = data.picked_up_by || (data.status_checkout === 'checked_out' ? data.leave_note || '-' : '-');
+
                 Swal.fire({
-                    title: 'รายละเอียดการเข้าเรียน',
+                    title: '<span style="font-size:1.25rem;font-weight:800;color:#1a1a2e;">รายละเอียดการเข้าเรียน</span>',
                     html: `
-                        <div class="text-start">
-                            <p><strong>รหัสนักเรียน:</strong> ${data.student_id}</p>
-                            <p><strong>ชื่อ-นามสกุล:</strong> ${data.prefix_th} ${data.firstname_th} ${data.lastname_th}</p>
-                            <p><strong>กลุ่มเรียน:</strong> ${data.child_group}</p>
-                            <p><strong>ห้องเรียน:</strong> ${data.classroom}</p>
-                            <p>
-                                <strong>สถานะ:</strong> 
-                                <span class="badge ${statusClass}">${statusText}</span>
-                            </p>
-                            <p><strong>วันที่:</strong> ${new Date(data.check_date).toLocaleDateString('th-TH', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    })}</p>
-                            <p><strong>เวลามา:</strong> ${data.check_date && new Date(data.check_date).getHours() !== 0 && new Date(data.check_date).getMinutes() !== 0 
-                                    ? new Date(data.check_date).toLocaleTimeString('th-TH', {
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    }) + ' น.'
-                                    : '-'}</p>
-                            <p>
-                                <strong>สถานะกลับบ้าน:</strong> 
-                                <span class="badge ${data.status_checkout === 'checked_out' ? 'bg-success' : 'bg-secondary'}">
-                                    ${data.status_checkout === 'checked_out' ? 'กลับแล้ว' : 'ยังไม่กลับ'}
-                                </span>
-                            </p>
-                            <p><strong>เวลากลับ:</strong> ${data.check_out_time ?
-                            new Date(data.check_out_time).toLocaleTimeString('th-TH', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            }) + ' น.' : '-'}</p>
-                            ${data.status === 'leave' ? `<p><strong>หมายเหตุ:</strong> ${data.leave_note || '-'}</p>` : ''}
-                            <hr>
-                            <p><small><strong>บันทึกเมื่อ:</strong> ${new Date(data.created_at).toLocaleString('th-TH', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })} น.</small></p>
-                            <p><small><strong>แก้ไขล่าสุด:</strong> ${new Date(data.updated_at).toLocaleString('th-TH', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })} น.</small></p>
+                        <div style="text-align:left;font-family:system-ui,-apple-system,sans-serif;">
+                            <div style="background:#f8f9fa;border-radius:12px;padding:1rem;margin-bottom:0.75rem;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                                    <div>
+                                        <div style="font-size:1.05rem;font-weight:700;color:#1a1a2e;">${data.prefix_th} ${data.firstname_th} ${data.lastname_th}</div>
+                                        <div style="font-size:0.8rem;color:#6c757d;">${data.student_id} | ${data.child_group} | ${data.classroom}</div>
+                                    </div>
+                                    <span class="badge ${statusClass}" style="font-size:0.8rem;padding:0.4rem 0.8rem;border-radius:8px;">${statusText}</span>
+                                </div>
+                                <div style="font-size:0.8rem;color:#6c757d;"><i class="bi bi-calendar3" style="color:#e94560;margin-right:4px;"></i>${new Date(data.check_date).toLocaleDateString('th-TH', {year:'numeric',month:'long',day:'numeric'})}</div>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+                                <div style="background:#f8f9fa;border-radius:12px;padding:1rem;">
+                                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                                        <div style="width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,#0f3460,#16213e);display:flex;align-items:center;justify-content:center;"><i class="bi bi-box-arrow-in-right text-white" style="font-size:0.75rem;"></i></div>
+                                        <span style="font-size:0.75rem;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:0.3px;">เวลาเข้าเรียน</span>
+                                    </div>
+                                    <div style="font-size:1.3rem;font-weight:800;color:#0f3460;margin-bottom:4px;">${data.check_date && new Date(data.check_date).getHours() !== 0 && new Date(data.check_date).getMinutes() !== 0 ? new Date(data.check_date).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) + ' น.' : '-'}</div>
+                                    <hr style="border-color:#e9ecef;margin:0.5rem 0;">
+                                    <div style="font-size:0.82rem;">
+                                        <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="color:#6c757d;">อุณหภูมิ</span><strong style="color:#1a1a2e;">${data.temperature ? data.temperature + ' °C' : '-'}</strong></div>
+                                        <div style="display:flex;justify-content:space-between;"><span style="color:#6c757d;">อาการ</span><strong style="color:#1a1a2e;text-align:right;">${symptomsText}</strong></div>
+                                    </div>
+                                </div>
+                                <div style="background:#f8f9fa;border-radius:12px;padding:1rem;">
+                                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                                        <div style="width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,#e94560,#c23152);display:flex;align-items:center;justify-content:center;"><i class="bi bi-box-arrow-right text-white" style="font-size:0.75rem;"></i></div>
+                                        <span style="font-size:0.75rem;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:0.3px;">เวลากลับบ้าน</span>
+                                    </div>
+                                    <div style="font-size:1.3rem;font-weight:800;color:#e94560;margin-bottom:4px;">${data.check_out_time ? new Date(data.check_out_time).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) + ' น.' : '-'}</div>
+                                    <div style="margin-bottom:4px;">${data.status_checkout === 'checked_out' ? '<span class="badge bg-success" style="border-radius:6px;">กลับแล้ว</span>' : '<span class="badge bg-secondary" style="border-radius:6px;">ยังไม่กลับ</span>'}</div>
+                                    <div style="border-top:1px solid #e9ecef;padding-top:4px;font-size:0.82rem;display:flex;justify-content:space-between;"><span style="color:#6c757d;">ผู้รับ</span><strong style="color:#1a1a2e;">${pickupName}</strong></div>
+                                </div>
+                            </div>
+
+                            ${data.status === 'leave' ? `<div style="background:#fff3f3;border-radius:12px;padding:0.75rem 1rem;border-left:4px solid #e94560;font-size:0.85rem;"><strong style="color:#1a1a2e;">หมายเหตุการลา:</strong> ${data.leave_note || '-'}</div>` : ''}
                         </div>
                     `,
-                    width: '600px',
-                    confirmButtonText: 'ปิด',
+                    width: '50%',
+                    confirmButtonText: '<i class="bi bi-x-circle me-1"></i> ปิด',
+                    buttonsStyling: false,
                     customClass: {
-                        confirmButton: 'btn btn-primary'
+                        confirmButton: 'btn',
+                        popup: 'rounded-4',
+                        header: 'border-0 pb-0',
+                        footer: 'border-0'
+                    },
+                    didOpen: () => {
+                        const btn = Swal.getConfirmButton();
+                        btn.style.cssText = 'background:#1a1a2e;color:#fff;border:none;border-radius:8px;padding:0.5rem 1.5rem;font-weight:600;';
                     }
                 });
             })
