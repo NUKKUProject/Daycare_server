@@ -31,6 +31,7 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
         integrity="sha384-zNy6FEbO50N+Cg5wap8IKA4M/ZnLJgzc6w2NqACZaK0u0FXfOWRRJOnQtpZun8ha"
         crossorigin="anonymous"></script>
     <!-- <script src="dashboard.js"></script> -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.3/dist/sweetalert2.min.css" integrity="sha384-gw5/Zpf2X1U9enIui8xFc+SNK5YIqEPNQ1dc0Tx3erA+znxx5UnPQpisVSel7VZH" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.3/dist/sweetalert2.min.js" integrity="sha384-9GynVk5jPocYbuypwpDEOLV5SC9mGDlWn1YMabUKSQlG7DK/zmn+MX0gtHLGjXRa" crossorigin="anonymous"></script>
     <!-- Bootstrap JS (Popper.js รวมอยู่ด้วย) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha384-Yv5O+t3uE3hunW8uyrbpPW3iw6/5/Y7HitWJBLgqfMoA36NogMmy+8wWZMpn3HWc" crossorigin="anonymous">
