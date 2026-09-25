@@ -632,6 +632,33 @@ $data = getChildrenGroupedByTab($currentTab);
     border: 1px solid #c7d7f8;
   }
 
+  .health-history-list {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .health-history-item {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .health-history-item.disease {
+    background: #eff3ff;
+    color: #1e4db7;
+  }
+
+  .health-history-item.allergy {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
   /* ===== Section Label ===== */
   .section-label {
     font-size: 0.75rem;
@@ -1111,6 +1138,7 @@ $data = getChildrenGroupedByTab($currentTab);
                 <i class="bi bi-door-open ms-1"></i>
                 <span id="healthStudentClassroom" class="badge-pill">-</span>
                 </small>
+                <div id="healthHistoryList" class="health-history-list"></div>
             </div>
             </div>
 
@@ -1251,6 +1279,24 @@ $data = getChildrenGroupedByTab($currentTab);
             document.getElementById('healthStudentClassroom').textContent = studentData.classroom || '-';
             const firstChar = (studentData.first_name || name).charAt(0).toUpperCase();
             document.getElementById('healthStudentAvatar').textContent = firstChar;
+
+            // ประวัติโรคประจำตัว / แพ้ยา / แพ้อาหาร
+            const historyList = document.getElementById('healthHistoryList');
+            const isEmpty = (val) => !val || val === '-' || val.trim() === '';
+            const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (c) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+            const historyItems = [
+                { value: studentData.congenital_disease, icon: 'bi-clipboard2-pulse', label: 'โรคประจำตัว', type: 'disease' },
+                { value: studentData.allergic_medicine, icon: 'bi-capsule', label: 'แพ้ยา', type: 'allergy' },
+                { value: studentData.allergic_food, icon: 'bi-egg-fried', label: 'แพ้อาหาร', type: 'allergy' }
+            ].filter(item => !isEmpty(item.value));
+
+            historyList.innerHTML = historyItems.map(item => `
+                <div class="health-history-item ${item.type}">
+                    <i class="bi ${item.icon}"></i> ${item.label}: ${escapeHtml(item.value)}
+                </div>
+            `).join('');
 
             // Reset form fields
             document.getElementById('healthTemperature').value = '';

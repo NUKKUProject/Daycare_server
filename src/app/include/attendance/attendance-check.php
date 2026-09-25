@@ -74,18 +74,24 @@ if ($data && isset($data['student_id'])) {
         $status = isLate($current_time) ? 'late' : 'present';
 
         // ดึงข้อมูลนักเรียนเพิ่มเติม (เพื่อให้ข้อมูลตอบกลับครบถ้วน)
-        $student_info_stmt = $pdo->prepare("SELECT prefix_th, firstname_th, lastname_th, nickname, classroom FROM children WHERE studentid = :student_id");
+        $student_info_stmt = $pdo->prepare("SELECT prefix_th, firstname_th, lastname_th, nickname, classroom, congenital_disease, allergic_medicine, allergic_food FROM children WHERE studentid = :student_id");
         $student_info_stmt->execute(['student_id' => $data['student_id']]);
         $student_info = $student_info_stmt->fetch(PDO::FETCH_ASSOC);
 
         $full_name = $name;
         $classroom = '';
         $nickname = '';
+        $congenital_disease = '';
+        $allergic_medicine = '';
+        $allergic_food = '';
         if ($student_info) {
             $full_name = trim(($student_info['prefix_th'] ?? '') . ' ' . ($student_info['firstname_th'] ?? '') . ' ' . ($student_info['lastname_th'] ?? ''));
             $classroom = $student_info['classroom'] ?? '';
             $nickname = $student_info['nickname'] ?? '';
             $first_name = $student_info['firstname_th'] ?? '';
+            $congenital_disease = $student_info['congenital_disease'] ?? '';
+            $allergic_medicine = $student_info['allergic_medicine'] ?? '';
+            $allergic_food = $student_info['allergic_food'] ?? '';
         }
 
         if ($existing) {
@@ -99,6 +105,9 @@ if ($data && isset($data['student_id'])) {
                     'first_name' => $first_name,
                     'nickname' => $nickname,
                     'classroom' => $classroom,
+                    'congenital_disease' => $congenital_disease,
+                    'allergic_medicine' => $allergic_medicine,
+                    'allergic_food' => $allergic_food,
                     'attendance_status' => $status,
                     'time' => $current_time,
                     'is_recorded' => true
@@ -115,6 +124,9 @@ if ($data && isset($data['student_id'])) {
                     'first_name' => $first_name,
                     'nickname' => $nickname,
                     'classroom' => $classroom,
+                    'congenital_disease' => $congenital_disease,
+                    'allergic_medicine' => $allergic_medicine,
+                    'allergic_food' => $allergic_food,
                     'attendance_status' => $status,
                     'time' => $current_time,
                     'is_recorded' => false
