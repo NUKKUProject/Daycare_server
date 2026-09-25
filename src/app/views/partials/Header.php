@@ -31,6 +31,7 @@
         integrity="sha384-zNy6FEbO50N+Cg5wap8IKA4M/ZnLJgzc6w2NqACZaK0u0FXfOWRRJOnQtpZun8ha"
         crossorigin="anonymous"></script>
     <!-- <script src="dashboard.js"></script> -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Bootstrap JS (Popper.js รวมอยู่ด้วย) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1-alpha3/dist/js/bootstrap.bundle.min.js"></script>
