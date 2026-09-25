@@ -74,24 +74,29 @@ if ($data && isset($data['student_id'])) {
         $status = isLate($current_time) ? 'late' : 'present';
 
         // ดึงข้อมูลนักเรียนเพิ่มเติม (เพื่อให้ข้อมูลตอบกลับครบถ้วน)
-        $student_info_stmt = $pdo->prepare("SELECT prefix_th, firstname_th, lastname_th, nickname, classroom, congenital_disease, allergic_medicine, allergic_food FROM children WHERE studentid = :student_id");
+        $student_info_stmt = $pdo->prepare("SELECT prefix_th, firstname_th, lastname_th, nickname, classroom, congenital_disease FROM children WHERE studentid = :student_id");
         $student_info_stmt->execute(['student_id' => $data['student_id']]);
         $student_info = $student_info_stmt->fetch(PDO::FETCH_ASSOC);
+
+        // ดึงประวัติแพ้ยา/แพ้อาหารจากตารางบันทึกการแพ้ (ที่หน้าจัดการข้อมูลการแพ้ยา/แพ้อาหารใช้งานจริง)
+        $drug_allergy_stmt = $pdo->prepare("SELECT drug_name FROM drug_allergies WHERE student_id = :student_id ORDER BY created_at");
+        $drug_allergy_stmt->execute(['student_id' => $data['student_id']]);
+        $allergic_medicine = implode(', ', array_filter($drug_allergy_stmt->fetchAll(PDO::FETCH_COLUMN)));
+
+        $food_allergy_stmt = $pdo->prepare("SELECT food_name FROM food_allergies WHERE student_id = :student_id ORDER BY created_at");
+        $food_allergy_stmt->execute(['student_id' => $data['student_id']]);
+        $allergic_food = implode(', ', array_filter($food_allergy_stmt->fetchAll(PDO::FETCH_COLUMN)));
 
         $full_name = $name;
         $classroom = '';
         $nickname = '';
         $congenital_disease = '';
-        $allergic_medicine = '';
-        $allergic_food = '';
         if ($student_info) {
             $full_name = trim(($student_info['prefix_th'] ?? '') . ' ' . ($student_info['firstname_th'] ?? '') . ' ' . ($student_info['lastname_th'] ?? ''));
             $classroom = $student_info['classroom'] ?? '';
             $nickname = $student_info['nickname'] ?? '';
             $first_name = $student_info['firstname_th'] ?? '';
             $congenital_disease = $student_info['congenital_disease'] ?? '';
-            $allergic_medicine = $student_info['allergic_medicine'] ?? '';
-            $allergic_food = $student_info['allergic_food'] ?? '';
         }
 
         if ($existing) {
