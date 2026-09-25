@@ -385,11 +385,6 @@ if (isset($_SESSION['user_id'])) {
             window.location.href = `nutrition_overview.php?student_id=${studentId}`;
         }
 
-        function showAddNutritionModal(studentId, studentName) {
-            // TODO: สร้าง Modal สำหรับเพิ่มข้อมูล
-            window.location.href = `nutrition_form.php?student_id=${studentId}&student_name=${encodeURIComponent(studentName)}`;
-        }
-
         function editRecord(id) {
             // ดึงข้อมูลเดิมก่อนแสดงฟอร์มแก้ไข
             fetch(`../include/process/get_nutrition_details.php?id=${id}`)
@@ -439,6 +434,7 @@ if (isset($_SESSION['user_id'])) {
                         cancelButtonText: 'ยกเลิก',
                         confirmButtonColor: '#28a745',
                         cancelButtonColor: '#dc3545',
+                        heightAuto: false,
                         preConfirm: () => {
                             return {
                                 id: id,
@@ -564,6 +560,7 @@ if (isset($_SESSION['user_id'])) {
                 confirmButtonColor: '#28a745',
                 cancelButtonColor: '#dc3545',
                 width: '600px',
+                heightAuto: false,
                 preConfirm: () => {
                     const form = document.getElementById('nutritionForm');
                     if (!form.checkValidity()) {
