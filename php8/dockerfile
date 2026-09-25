@@ -1,9 +1,10 @@
-FROM php:8.5-rc-fpm-alpine3.22
+FROM php:8.5.6-fpm-alpine3.22
 
 LABEL Author="PRATCHAYAPOL <pratchayapol.ja@rmuti.ac.th>" version="latest" org.opencontainers.image.authors="pratchayapol.ja@rmuti.ac.th"
 
 # คัดลอกไฟล์โปรเจกต์ไปยังคอนเทนเนอร์
 COPY . /var/www/html
+COPY php8/php.ini /usr/local/etc/php/conf.d/zz-session-security.ini
 
 # ติดตั้ง dependencies และ extensions
 RUN apk update && apk add --no-cache \

@@ -15,17 +15,38 @@ try {
         throw new Exception("Invalid JSON input");
     }
 
-    // ดึง check_round ล่าสุดสำหรับ student_id และ academic_year นี้
+    // หา record ล่าสุดที่ยังไม่มีหมอตรวจ (is_doctor_checked=0 และ doctor_name ว่าง)
+    // ถ้ามี → UPDATE record นั้นแทนการเพิ่มรอบใหม่
+    $existingUncheckedId = null;
     $checkRound = 1;
     if (!empty($data['student_id']) && !empty($data['academic_year'])) {
-        $stmt = $pdo->prepare("SELECT MAX(check_round) as max_round FROM health_data_external WHERE student_id = :student_id AND academic_year = :academic_year");
+        $stmt = $pdo->prepare("
+            SELECT id, check_round
+            FROM health_data_external
+            WHERE student_id = :student_id AND academic_year = :academic_year
+              AND (doctor_name IS NULL OR doctor_name = '')
+            ORDER BY check_round DESC
+            LIMIT 1
+        ");
         $stmt->execute([
             ':student_id' => $data['student_id'],
             ':academic_year' => $data['academic_year']
         ]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($result && $result['max_round']) {
-            $checkRound = (int)$result['max_round'] + 1;
+        $unchecked = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($unchecked) {
+            $existingUncheckedId = $unchecked['id'];
+            $checkRound = (int)$unchecked['check_round'];
+        } else {
+            // ไม่มี record ที่ยังไม่ตรวจ → เพิ่มรอบใหม่ (MAX + 1)
+            $stmtMax = $pdo->prepare("SELECT MAX(check_round) as max_round FROM health_data_external WHERE student_id = :student_id AND academic_year = :academic_year");
+            $stmtMax->execute([
+                ':student_id' => $data['student_id'],
+                ':academic_year' => $data['academic_year']
+            ]);
+            $result = $stmtMax->fetch(PDO::FETCH_ASSOC);
+            if ($result && $result['max_round']) {
+                $checkRound = (int)$result['max_round'] + 1;
+            }
         }
     }
 
@@ -35,6 +56,7 @@ try {
     // เตรียมคำสั่ง SQL
     $sql = "INSERT INTO health_data_external (
                 exam_date,
+                measurement_date,
                 academic_year,
                 doctor_name,
                 student_id,
@@ -63,6 +85,7 @@ try {
                 updated_at               
             ) VALUES (
                 :exam_date,
+                :measurement_date,
                 :academic_year,
                 :doctor_name,
                 :student_id,
@@ -102,6 +125,7 @@ try {
     // bind parameters
     $stmt->execute([
         ':exam_date' => $data['exam_date'],
+        ':measurement_date' => $data['measurement_date'] ?? $data['exam_date'],
         ':academic_year' => $data['academic_year'],
         ':doctor_name' => $data['doctor_name'] ?? null,
         ':student_id' => $data['student_id'],

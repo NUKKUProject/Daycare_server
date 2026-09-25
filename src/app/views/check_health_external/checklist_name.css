@@ -474,6 +474,23 @@
     font-weight: 700;
 }
 
+/* ===== Latest round label ===== */
+.latest-round {
+    margin-top: 5px;
+    font-size: 11px;
+    color: #475569;
+    line-height: 1.3;
+}
+
+.latest-round strong {
+    color: #1d4ed8;
+    background: #dbeafe;
+    border-radius: 6px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
 /* ===== Date cell ===== */
 .date-text {
     font-size: 13px;
@@ -746,6 +763,7 @@
 }
 
 .detail-data-grid:last-child { margin-bottom: 0; }
+.detail-grid-1 { grid-template-columns: 1fr; }
 .detail-grid-2 { grid-template-columns: repeat(2, 1fr); }
 .detail-grid-3 { grid-template-columns: repeat(3, 1fr); }
 .detail-grid-4 { grid-template-columns: repeat(4, 1fr); }
@@ -913,3 +931,56 @@
         grid-template-columns: 1fr !important;
     }
 }
+
+/* ============================================================
+   BULK EDIT MODE (ตารางแก้ไขแบบ Excel)
+   ============================================================ */
+.bulk-edit-wrapper {
+    overflow-x: auto;
+    max-height: 75vh;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+.bulk-edit-table {
+    border-collapse: collapse;
+    font-size: 12px;
+    min-width: 1400px;
+    width: 100%;
+}
+.bulk-edit-table th {
+    position: sticky;
+    top: 0;
+    background: #1e293b;
+    color: white;
+    padding: 6px 8px;
+    white-space: nowrap;
+    z-index: 3;
+    text-align: center;
+    vertical-align: middle;
+}
+.bulk-edit-table td {
+    padding: 3px 5px;
+    border: 1px solid #e2e8f0;
+}
+.bulk-edit-table input[type="number"] { width: 62px; }
+.bulk-edit-table input[type="text"] { width: 90px; }
+.bulk-edit-table input[type="date"] { width: 120px; }
+.bulk-edit-table select { width: 72px; font-size: 11px; padding: 2px; }
+.bulk-edit-table .bulk-input-sm { width: 58px; }
+.bulk-edit-table .bulk-fixed {
+    position: sticky;
+    left: 0;
+    background: #f8faff;
+    z-index: 2;
+    min-width: 150px;
+    white-space: nowrap;
+}
+.bulk-edit-table thead .bulk-fixed { z-index: 4; }
+.bulk-name { font-weight: 600; font-size: 12px; }
+.bulk-meta { margin-top: 2px; }
+/* สีสลับแถว (zebra striping) ให้ดูแถวข้อมูลง่าย */
+.bulk-edit-table tbody tr:nth-child(odd) { background: #ffffff; }
+.bulk-edit-table tbody tr:nth-child(even) { background: #f8faff; }
+.bulk-edit-table tr:hover { background: #eef6ff !important; }
+.bulk-exam-cell { background: #fafafa; }
+.bulk-exam-head { background: #334155 !important; }

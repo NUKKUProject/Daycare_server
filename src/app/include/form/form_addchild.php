@@ -1,8 +1,10 @@
 <!-- ฟอร์มเพิ่มข้อมูลเด็ก – แบ่งเป็นขั้นตอน (Wizard) -->
-<div class="modal-body">
+<div class="modal-body child-profile-add">
     <form id="addChildForm" method="post" action="../../include/process/process_add_child.php" enctype="multipart/form-data" class="child-form-modal">
+        <?php include __DIR__ . '/child_profile_add_fields.php'; ?>
+        <fieldset disabled class="d-none" aria-hidden="true">
         <p class="text-muted"><span class="required-asterisk">*</span> หมายถึงจำเป็นต้องกรอก</p>
-
+ช
         <!-- STEP 1: โปรไฟล์ -->
         <div class="step" id="step-1">
             <h5 class="step-title"><i class="bi bi-person-badge"></i> รูปโปรไฟล์</h5>
@@ -20,7 +22,7 @@
                 <div class="col-md-8">
                     <div class="mb-3">
                         <label for="profile_image" class="form-label">อัพโหลดรูปโปรไฟล์:</label>
-                        <input type="file" class="form-control" id="profile_image" accept="image/*" onchange="handleImageSelect(this)">
+                        <input type="file" class="form-control" id="profile_image" name="profile_image" accept="image/*" onchange="handleImageSelect(this)">
                         <input type="hidden" name="profile_image_data" id="profile_image_data">
                         <div class="form-text"><i class="bi bi-info-circle"></i> รองรับไฟล์ภาพ (jpg, jpeg, png) ขนาดไม่เกิน 5MB</div>
                     </div>
@@ -98,12 +100,12 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label for="first_name_th" class="form-label">ชื่อ (ไทย):<span class="required-asterisk">*</span></label>
-                    <input type="text" class="form-control" name="first_name_th" placeholder="กรุณากรอกชื่อ" required>
+                    <label for="firstname_th" class="form-label">ชื่อ (ไทย):<span class="required-asterisk">*</span></label>
+                    <input type="text" class="form-control" name="firstname_th" placeholder="กรุณากรอกชื่อ" required>
                 </div>
                 <div class="col-md-4">
-                    <label for="last_name_th" class="form-label">นามสกุล (ไทย):<span class="required-asterisk">*</span></label>
-                    <input type="text" class="form-control" name="last_name_th" placeholder="กรุณากรอกนามสกุล" required>
+                    <label for="lastname_th" class="form-label">นามสกุล (ไทย):<span class="required-asterisk">*</span></label>
+                    <input type="text" class="form-control" name="lastname_th" placeholder="กรุณากรอกนามสกุล" required>
                 </div>
             </div>
             <div class="row mb-4">
@@ -116,13 +118,41 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label for="first_name_en" class="form-label">ชื่อ (อังกฤษ):</label>
-                    <input type="text" class="form-control" name="first_name_en" placeholder="กรุณากรอกชื่อ">
+                    <label for="firstname_en" class="form-label">ชื่อ (อังกฤษ):</label>
+                    <input type="text" class="form-control" name="firstname_en" placeholder="กรุณากรอกชื่อ">
                 </div>
                 <div class="col-md-4">
-                    <label for="last_name_en" class="form-label">นามสกุล (อังกฤษ):</label>
-                    <input type="text" class="form-control" name="last_name_en" placeholder="กรุณากรอกนามสกุล">
+                    <label for="lastname_en" class="form-label">นามสกุล (อังกฤษ):</label>
+                    <input type="text" class="form-control" name="lastname_en" placeholder="กรุณากรอกนามสกุล">
                 </div>
+            </div>
+
+            <h5 class="step-title"><i class="bi bi-person-vcard"></i> ข้อมูลส่วนตัวเพิ่มเติม</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label for="birthday" class="form-label">วันเกิด:</label>
+                    <input type="date" class="form-control" name="birthday" id="birthday">
+                </div>
+                <div class="col-md-2">
+                    <label for="sex" class="form-label">เพศ:</label>
+                    <select name="sex" id="sex" class="form-select">
+                        <option value="">เลือกเพศ</option>
+                        <option value="ชาย">ชาย</option><option value="หญิง">หญิง</option><option value="อื่นๆ">อื่นๆ</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="blood_type" class="form-label">กรุ๊ปเลือด:</label>
+                    <select name="blood_type" id="blood_type" class="form-select">
+                        <option value="">เลือกกรุ๊ปเลือด</option>
+                        <option value="A">A</option><option value="B">B</option><option value="O">O</option><option value="AB">AB</option>
+                    </select>
+                </div>
+                <div class="col-md-2"><label class="form-label">ส่วนสูง (ซม.)</label><input type="number" step="0.1" class="form-control" name="height"></div>
+                <div class="col-md-2"><label class="form-label">น้ำหนัก (กก.)</label><input type="number" step="0.1" class="form-control" name="weight"></div>
+                <div class="col-md-3"><label class="form-label">เชื้อชาติ</label><input type="text" class="form-control" name="race"></div>
+                <div class="col-md-3"><label class="form-label">สัญชาติ</label><input type="text" class="form-control" name="nationality"></div>
+                <div class="col-md-3"><label class="form-label">ศาสนา</label><input type="text" class="form-control" name="religion"></div>
+                <div class="col-md-6"><label class="form-label">โรคประจำตัว</label><input type="text" class="form-control" name="congenital_disease" placeholder="ถ้าไม่มีให้เว้นว่าง"></div>
             </div>
 
             <h5 class="step-title"><i class="bi bi-people"></i> ข้อมูลผู้ปกครอง</h5>
@@ -152,6 +182,10 @@
                     </div>
                 </div>
                 <div class="col-md-6">
+                    <label for="father_image" class="form-label">รูปบิดา:</label>
+                    <input type="file" class="form-control" name="father_image" id="father_image" accept="image/*">
+                </div>
+                <div class="col-md-6">
                     <div class="mb-3">
                         <label for="mother_first_name" class="form-label">ชื่อมารดา:</label>
                         <input type="text" class="form-control" name="mother_first_name" placeholder="กรุณากรอกชื่อมารดา">
@@ -175,8 +209,57 @@
                         <input type="text" class="form-control" name="mother_phone_backup" placeholder="กรุณากรอกเบอร์โทรสำรองมารดา">
                     </div>
                 </div>
+                <div class="col-md-6">
+                    <label for="mother_image" class="form-label">รูปมารดา:</label>
+                    <input type="file" class="form-control" name="mother_image" id="mother_image" accept="image/*">
+                </div>
+            </div>
+
+            <h5 class="step-title mt-4"><i class="bi bi-person-heart"></i> ข้อมูลผู้ปกครอง/ผู้ดูแล</h5>
+            <div class="row g-3">
+                <div class="col-md-3"><label class="form-label">ชื่อ</label><input type="text" class="form-control" name="relative_first_name"></div>
+                <div class="col-md-3"><label class="form-label">นามสกุล</label><input type="text" class="form-control" name="relative_last_name"></div>
+                <div class="col-md-3"><label class="form-label">เบอร์โทร</label><input type="tel" class="form-control" name="relative_phone"></div>
+                <div class="col-md-3"><label class="form-label">เบอร์โทรสำรอง</label><input type="tel" class="form-control" name="relative_phone_backup"></div>
+                <div class="col-md-6"><label class="form-label">รูปผู้ปกครอง/ผู้ดูแล</label><input type="file" class="form-control" name="relative_image" accept="image/*"></div>
+            </div>
+
+            <h5 class="step-title mt-4"><i class="bi bi-house-door"></i> ที่อยู่และผู้ติดต่อฉุกเฉิน</h5>
+            <div class="row g-3">
+                <div class="col-12"><label class="form-label">ที่อยู่</label><textarea class="form-control" name="address" rows="2"></textarea></div>
+                <div class="col-md-3"><label class="form-label">ตำบล/แขวง</label><input type="text" class="form-control" name="district"></div>
+                <div class="col-md-3"><label class="form-label">อำเภอ/เขต</label><input type="text" class="form-control" name="amphoe"></div>
+                <div class="col-md-3"><label class="form-label">จังหวัด</label><input type="text" class="form-control" name="province"></div>
+                <div class="col-md-3"><label class="form-label">รหัสไปรษณีย์</label><input type="text" class="form-control" name="zipcode" maxlength="5"></div>
+                <div class="col-md-4"><label class="form-label">ชื่อผู้ติดต่อฉุกเฉิน</label><input type="text" class="form-control" name="emergency_contact"></div>
+                <div class="col-md-4"><label class="form-label">เบอร์โทรฉุกเฉิน</label><input type="tel" class="form-control" name="emergency_phone"></div>
+                <div class="col-md-4"><label class="form-label">ความสัมพันธ์</label><input type="text" class="form-control" name="emergency_relation"></div>
+            </div>
+
+            <h5 class="step-title mt-4"><i class="bi bi-heart-pulse"></i> ข้อมูลสุขภาพและการแพ้</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="allergy-card border border-danger rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <strong class="text-danger"><i class="bi bi-capsule-pill me-1"></i>การแพ้ยา</strong>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="addDrugAllergyRow()"><i class="bi bi-plus-circle me-1"></i>เพิ่มรายการ</button>
+                        </div>
+                        <div id="addDrugAllergyRows" class="d-flex flex-column gap-3"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="allergy-card border border-warning rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <strong class="text-warning-emphasis"><i class="bi bi-egg-fried me-1"></i>การแพ้อาหาร</strong>
+                            <button type="button" class="btn btn-sm btn-outline-warning" onclick="addFoodAllergyRow()"><i class="bi bi-plus-circle me-1"></i>เพิ่มรายการ</button>
+                        </div>
+                        <div id="addFoodAllergyRows" class="d-flex flex-column gap-3"></div>
+                    </div>
+                </div>
             </div>
         </div>
+
+        </fieldset>
 
         <!-- Navigation Buttons -->
         <div class="modal-footer d-flex justify-content-between">
@@ -279,6 +362,460 @@
 </div>
 
 <style>
+.child-profile-add {
+    background: linear-gradient(180deg, #f8fbff 0%, #f1f5f9 100%);
+    padding: 1.5rem;
+}
+
+.child-add-modal-header {
+    background: linear-gradient(135deg, #0f3d5e 0%, #2563a6 55%, #3b82f6 100%);
+    color: #fff;
+    border-radius: 16px 16px 0 0;
+    border: 0;
+    padding: 1.15rem 1.5rem;
+}
+
+.child-add-modal-header .modal-title {
+    font-weight: 700;
+    letter-spacing: 0.1px;
+}
+
+.child-add-modal-header .btn-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.85;
+}
+
+.child-profile-add .step {
+    display: block !important;
+    background: #fff;
+    border: 1px solid #e5edf6;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 8px 24px rgba(30, 64, 175, 0.06);
+}
+
+.child-profile-add .step-title {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: #1e3a8a;
+    font-size: 1.05rem;
+    font-weight: 700;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #dbeafe;
+}
+
+.child-profile-add .step-title i {
+    color: #2563eb;
+    font-size: 1.2rem;
+}
+
+.child-profile-add .required-asterisk {
+    color: #ef4444;
+    font-weight: 800;
+}
+
+.child-profile-add .profile-image-container {
+    width: 170px !important;
+    height: 170px !important;
+    border: 5px solid #dbeafe;
+    box-shadow: 0 8px 22px rgba(37, 99, 235, 0.15);
+}
+
+.child-profile-add .profile-preview {
+    border: 0;
+}
+
+.child-profile-add .form-text {
+    color: #64748b;
+}
+
+.child-profile-add .form-label {
+    color: #475569;
+    font-weight: 600;
+}
+
+.child-profile-add .form-control,
+.child-profile-add .form-select {
+    border-color: #cbd5e1;
+    border-radius: 10px;
+}
+
+.child-profile-add .form-control:focus,
+.child-profile-add .form-select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.child-profile-add .form-control,
+.child-profile-add .form-select {
+    min-height: 42px;
+    background-color: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.child-profile-add textarea.form-control {
+    min-height: auto;
+    resize: vertical;
+}
+
+.child-profile-add .form-control:hover,
+.child-profile-add .form-select:hover {
+    border-color: #93c5fd;
+}
+
+.child-profile-add .allergy-card {
+    background: rgba(255, 255, 255, 0.86);
+    border-width: 1px !important;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+}
+
+.child-profile-add .allergy-card > .d-flex {
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.child-profile-add .add-drug-allergy-row,
+.child-profile-add .add-food-allergy-row {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.child-profile-add .add-drug-allergy-row strong,
+.child-profile-add .add-food-allergy-row strong {
+    color: #334155;
+    font-size: 0.85rem;
+}
+
+.child-profile-add .form-check {
+    padding: 0.55rem 0.75rem 0.55rem 2rem;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.child-profile-add .form-check:hover {
+    background: #eff6ff;
+    border-color: #93c5fd;
+}
+
+.child-profile-add .modal-footer .btn {
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 0.65rem 1.15rem;
+}
+
+.child-profile-add > form > .modal-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    justify-content: flex-end !important;
+    background: rgba(255, 255, 255, 0.96);
+    border-top: 1px solid #e2e8f0;
+    padding: 1rem 0 0;
+}
+
+@media (max-width: 768px) {
+    .child-profile-add { padding: 1rem; }
+    .child-profile-add .step { padding: 1rem; border-radius: 12px; }
+    .child-profile-add .profile-image-container { width: 135px; height: 135px; }
+}
+
+.child-profile-add #prevBtn,
+.child-profile-add #nextBtn {
+    display: none !important;
+}
+
+.child-profile-add #submitBtn {
+    display: inline-block !important;
+    background: #198754;
+    border-color: #198754;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(25, 135, 84, 0.2);
+}
+
+.child-profile-add #submitBtn:hover,
+.child-profile-add #submitBtn:focus {
+    background: #146c43;
+    border-color: #146c43;
+    color: #fff;
+}
+
+/* ===== Responsive add-child modal ===== */
+#addChildModal .child-add-modal-dialog {
+    width: calc(100% - 2rem);
+    max-width: 1180px;
+    margin: 1rem auto;
+}
+
+#addChildModal .child-add-modal-content {
+    height: calc(100vh - 2rem);
+    max-height: calc(100vh - 2rem);
+    height: calc(100dvh - 2rem);
+    max-height: calc(100dvh - 2rem);
+    border: 0;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+#addChildModal .modal-body.child-profile-add {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: clamp(0.75rem, 2vw, 1.5rem);
+}
+
+#addChildModal .child-profile-add > form,
+#addChildModal .child-profile-add-card {
+    width: 100%;
+    max-width: 100%;
+}
+
+#addChildModal .child-profile-add-card {
+    overflow: visible;
+}
+
+#addChildModal .content-card-header,
+#addChildModal .content-card-body {
+    padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+#addChildModal #preview_image {
+    width: min(100%, 200px) !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1;
+}
+
+#addChildModal .parent-card-header {
+    min-width: 0;
+}
+
+#addChildModal .parent-photo-editor {
+    min-width: 80px;
+    max-width: 100%;
+}
+
+#addChildModal .parent-photo-editor .form-control {
+    min-width: 0;
+}
+
+#addChildModal .allergy-card-title {
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+}
+
+#addChildModal .allergy-card-title .btn {
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+#addChildModal .child-profile-add > form > .modal-footer {
+    margin: 0 -1.5rem;
+    padding: 1rem 1.5rem 0;
+}
+
+/* iPad / tablet: give each field enough room to read and tap comfortably */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    #addChildModal .child-add-modal-dialog {
+        width: calc(100% - 1rem);
+        max-width: none;
+        margin: 0.5rem auto;
+    }
+
+    #addChildModal .child-add-modal-content {
+        height: calc(100vh - 1rem);
+        max-height: calc(100vh - 1rem);
+        height: calc(100dvh - 1rem);
+        max-height: calc(100dvh - 1rem);
+    }
+
+    #addChildModal .content-card-body {
+        padding: 1.25rem;
+    }
+
+    #addChildModal .child-personal-grid > [class*="col-md-"],
+    #addChildModal .child-address-grid > [class*="col-md-"],
+    #addChildModal .child-emergency-grid > [class*="col-md-"] {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
+
+    #addChildModal .child-parents-grid > .col-md-4 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+
+    #addChildModal .child-profile-photo {
+        padding-right: 0.5rem;
+    }
+
+    #addChildModal .child-basic-info-grid > .col-md-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 899.98px) {
+    #addChildModal .child-profile-layout > .child-profile-photo,
+    #addChildModal .child-profile-layout > .child-profile-fields {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    #addChildModal .child-profile-photo {
+        padding-right: calc(var(--bs-gutter-x) * 0.5);
+    }
+
+    #addChildModal .child-profile-photo #profile_image {
+        max-width: 420px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #addChildModal .child-allergy-grid > .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 899.98px) {
+    #addChildModal .child-personal-grid > [class*="col-md-"],
+    #addChildModal .child-address-grid > [class*="col-md-"],
+    #addChildModal .child-emergency-grid > [class*="col-md-"] {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+@media (max-width: 767.98px) {
+    #addChildModal .child-add-modal-dialog {
+        width: 100%;
+        max-width: none;
+        min-height: 100dvh;
+        margin: 0;
+    }
+
+    #addChildModal .child-add-modal-content {
+        height: 100vh;
+        max-height: 100vh;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+    }
+
+    #addChildModal .child-add-modal-header {
+        flex: 0 0 auto;
+        padding: 0.9rem 1rem;
+        border-radius: 0;
+    }
+
+    #addChildModal .child-add-modal-header .modal-title {
+        font-size: 1rem;
+    }
+
+    #addChildModal .modal-body.child-profile-add {
+        padding: 0.75rem;
+    }
+
+    #addChildModal .content-card {
+        border-radius: 12px;
+        box-shadow: none;
+        border: 1px solid var(--gray-100);
+    }
+
+    #addChildModal .content-card-header {
+        align-items: flex-start;
+        padding: 0.9rem;
+    }
+
+    #addChildModal .content-card-body {
+        padding: 0.9rem;
+    }
+
+    #addChildModal .section-divider {
+        gap: 0.5rem;
+        margin: 1.25rem 0 1rem;
+    }
+
+    #addChildModal .section-divider-title {
+        font-size: 0.75rem;
+        letter-spacing: 0.35px;
+    }
+
+    #addChildModal .parent-card-header {
+        align-items: flex-start;
+        padding: 0.75rem;
+    }
+
+    #addChildModal .parent-card-body {
+        padding: 0.75rem;
+    }
+
+    #addChildModal .allergy-card {
+        padding: 0.85rem;
+    }
+
+    #addChildModal .allergy-card-title .btn {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    #addChildModal .child-profile-add > form > .modal-footer {
+        margin-left: -0.75rem;
+        margin-right: -0.75rem;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.5rem;
+        padding: 0.75rem 0.75rem 0;
+    }
+
+    #addChildModal #submitBtn {
+        width: auto;
+        min-width: 170px;
+    }
+}
+
+@media (max-width: 420px) {
+    #addChildModal .content-card-header {
+        display: block;
+    }
+
+    #addChildModal .content-card-header > .text-muted {
+        display: block;
+        margin-top: 0.5rem;
+    }
+
+    #addChildModal .section-divider-title {
+        white-space: normal;
+    }
+
+    #addChildModal .parent-card-header {
+        flex-wrap: wrap;
+    }
+
+    #addChildModal .parent-photo-editor {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr);
+        gap: 0.65rem;
+        align-items: center;
+    }
+
+    #addChildModal .parent-photo-editor .parent-avatar {
+        width: 56px !important;
+        height: 56px !important;
+    }
+
+    #addChildModal .parent-photo-editor .form-control {
+        margin-top: 0 !important;
+    }
+}
+
 .profile-image-container {
     position: relative;
     width: 200px;
@@ -465,6 +1002,7 @@ function loadClassrooms() {
                     classroomSelect.appendChild(option);
                 });
             }
+            classroomSelect.disabled = false;
         })
         .catch(error => {
             console.error('Error:', error);
@@ -1011,5 +1549,115 @@ document.getElementById('prevBtn').addEventListener('click', () => {
 // Initialize first step on page load
 document.addEventListener('DOMContentLoaded', () => {
     showStep(currentStep);
+    addDrugAllergyRow();
+    addFoodAllergyRow();
 });
+
+let addDrugIndex = 0;
+let addFoodIndex = 0;
+
+function addDrugAllergyRow() {
+    const container = document.getElementById('addDrugAllergyRows');
+    if (!container) return;
+    const index = addDrugIndex++;
+    const row = document.createElement('div');
+    row.className = 'border rounded p-3 bg-light add-drug-allergy-row';
+    row.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong>รายการที่ ${container.children.length + 1}</strong>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="this.closest('.add-drug-allergy-row').remove()">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+        <div class="row g-3">
+            <div class="col-12">
+                <label class="form-label fw-bold"><i class="bi bi-capsule me-2"></i>ชื่อยาที่แพ้</label>
+                <input type="text" class="form-control" name="drug_items[${index}][drug_name]" placeholder="ระบุชื่อยาที่แพ้">
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-bold"><i class="bi bi-check-circle me-2"></i>วิธีที่ทราบว่าแพ้</label>
+                <select class="form-select" name="drug_items[${index}][detection_method]">
+                    <option value="">เลือกวิธีที่ทราบ</option>
+                    <option value="symptoms_after_use">มีอาการแพ้หลังจากใช้ยา</option>
+                    <option value="skin_testing">การทดสอบทางผิวหนัง</option>
+                    <option value="blood_test">ทดสอบโดยการเจาะเลือด</option>
+                    <option value="repeat_use">ทดสอบโดยการใช้ยาซ้ำ</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-bold"><i class="bi bi-exclamation-triangle me-2"></i>อาการที่เกิดขึ้น</label>
+                <select class="form-select" name="drug_items[${index}][symptoms]">
+                    <option value="">เลือกอาการ</option>
+                    <option value="type1">ผื่นลมพิษ, การบวมในชั้นใต้ผิวหนังและเยื่อเมือก</option>
+                    <option value="type2">ผื่นลมพิษ, การบวมในชั้นใต้ผิวหนังและเยื่อเมือก และหายใจลำบาก</option>
+                    <option value="type3">ผื่นแดงลักษณะเป็นผื่นราบ และผื่นนูน กระจายอย่างสมมาตร</option>
+                    <option value="type4">ผิวแดงทั่วตัวและผื่นตุ่มหนองขนาดเล็กจำนวนมาก</option>
+                    <option value="type5">ผื่นที่เกิดขึ้นสามารถพบได้หลายแบบ</option>
+                    <option value="type6">ผื่นตุ่มน้ำ มีผิวหนังกำพร้าตายและหลุดลอก</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox" name="drug_items[${index}][has_allergy_card]" value="true">
+                    <label class="form-check-label fw-bold"><i class="bi bi-card-checklist me-2"></i>มีบัตรแพ้ยา</label>
+                </div>
+            </div>
+        </div>`;
+    container.appendChild(row);
+}
+
+function addFoodAllergyRow() {
+    const container = document.getElementById('addFoodAllergyRows');
+    if (!container) return;
+    const index = addFoodIndex++;
+    const row = document.createElement('div');
+    row.className = 'border rounded p-3 bg-light add-food-allergy-row';
+    row.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong>รายการที่ ${container.children.length + 1}</strong>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="this.closest('.add-food-allergy-row').remove()">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+        <div class="row g-3">
+            <div class="col-12">
+                <label class="form-label fw-bold"><i class="bi bi-egg me-2"></i>ชื่ออาหารที่แพ้</label>
+                <input type="text" class="form-control" name="food_items[${index}][food_name]" placeholder="ระบุชื่ออาหารที่แพ้">
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-bold"><i class="bi bi-check-circle me-2"></i>วิธีที่ทราบว่าแพ้</label>
+                <select class="form-select" name="food_items[${index}][detection_method]">
+                    <option value="">เลือกวิธีที่ทราบ</option>
+                    <option value="symptoms_after_eat">มีอาการแพ้หลังรับประทานอาหาร</option>
+                    <option value="repeat_eat">ทดสอบโดยการรับประทานอาหารซ้ำ</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-bold"><i class="bi bi-droplet me-2"></i>อาการทางเดินอาหาร</label>
+                <div class="row g-2">
+                    <div class="col-md-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="food_items[${index}][digestive_symptoms][]" value="bloody_stool"><label class="form-check-label">ถ่ายเป็นมูกเลือดเป็น ๆ หาย ๆ</label></div></div>
+                    <div class="col-md-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="food_items[${index}][digestive_symptoms][]" value="vomiting"><label class="form-check-label">อาเจียน</label></div></div>
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-bold"><i class="bi bi-droplet-half me-2"></i>อาการทางผิวหนัง</label>
+                <div class="row g-2">
+                    <div class="col-md-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="food_items[${index}][skin_symptoms][]" value="urticaria"><label class="form-check-label">ผื่นลมพิษทั่วตัว</label></div></div>
+                    <div class="col-md-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="food_items[${index}][skin_symptoms][]" value="eye_swelling"><label class="form-check-label">ตาบวม</label></div></div>
+                    <div class="col-md-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="food_items[${index}][skin_symptoms][]" value="mouth_rash"><label class="form-check-label">มีผื่นรอบปาก</label></div></div>
+                    <div class="col-md-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="food_items[${index}][skin_symptoms][]" value="atopic_dermatitis"><label class="form-check-label">ผื่นภูมิแพ้ผิวหนัง</label></div></div>
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-bold"><i class="bi bi-wind me-2"></i>อาการทางเดินหายใจ</label>
+                <div class="row g-2">
+                    <div class="col-md-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="food_items[${index}][respiratory_symptoms][]" value="wheezing"><label class="form-check-label">หายใจมีเสียงวี้ด</label></div></div>
+                    <div class="col-md-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="food_items[${index}][respiratory_symptoms][]" value="runny_nose"><label class="form-check-label">น้ำมูกไหล</label></div></div>
+                    <div class="col-md-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="food_items[${index}][respiratory_symptoms][]" value="nasal_congestion"><label class="form-check-label">คัดจมูก</label></div></div>
+                    <div class="col-md-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="food_items[${index}][respiratory_symptoms][]" value="breathing_difficulty"><label class="form-check-label">หายใจลำบาก</label></div></div>
+                </div>
+            </div>
+        </div>`;
+    container.appendChild(row);
+}
 </script>

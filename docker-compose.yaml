@@ -20,7 +20,7 @@ services:
   php8:
     build:
       context: .
-      dockerfile: ./php8/Dockerfile
+      dockerfile: ./php8/dockerfile
     volumes:
       - ./src:/var/www/html
     networks:

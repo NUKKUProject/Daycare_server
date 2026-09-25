@@ -23,7 +23,7 @@ try {
         CASE 
             WHEN c.picked_up_by = 'father' THEN 'รับโดยบิดา'
             WHEN c.picked_up_by = 'mother' THEN 'รับโดยมารดา'
-            WHEN c.picked_up_by = 'relative' THEN 'รับโดยญาติ'
+            WHEN c.picked_up_by = 'relative' THEN 'รับโดยผู้ปกครอง/ผู้ดูแล'
             WHEN c.picked_up_by = 'other' THEN 'รับโดยบุคคลอื่น'
             ELSE COALESCE(c.picked_up_by, 'ไม่ระบุ')
         END AS picked_up_by,

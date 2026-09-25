@@ -3,219 +3,339 @@
 <?php include __DIR__ . '/../partials/Header.php'; ?>
 <?php include __DIR__ . '/../../include/auth/auth_dashboard.php'; ?> 
 <?php include __DIR__ . '/../../include/auth/auth_navbar.php'; ?>
-<?php require_once __DIR__ . '/../../include/function/pages_referen.php'; ?>
-<?php require_once __DIR__ . '/../../include/function/child_functions.php'; ?>
 
 
 <?php
-$children = getChildrenData();
-
-// เพิ่มการเรียกใช้ฟังก์ชันที่จำเป็น
-require_once __DIR__ . '/../../include/function/dashboard_functions.php';
-
-// ดึงข้อมูลสำหรับ Dashboard
-$totalStudents = getTotalStudents() ?? 0;
-$totalStaff = getTotalStaff() ?? 0;
-$attendanceRate = getAttendanceRate() ?? 0;
-$totalActivities = getTotalActivities() ?? 0;
-
-// ดึงข้อมูลสำหรับกราฟ
-$monthlyAttendance = getMonthlyAttendance() ?? [];
-$studentsByGroup = getStudentsByGroup() ?? [];
-$staffByPosition = getStaffByPosition() ?? [];
+$doctorName = $_SESSION['username'] ?? 'แพทย์';
 ?>
 
 <style>
-    .nav-tabs .nav-link {
-        color: #495057;
-        border: none;
-        border-bottom: 2px solid transparent;
+    .doctor-dashboard-page {
+        background: #f5f8fc;
+        color: #1e293b;
+        min-height: 100vh;
     }
 
-    .nav-tabs .nav-link.active {
-        color: #26648E;
-        border-bottom: 2px solid #26648E;
-        background: none;
+    .doctor-dashboard {
+        margin: 0 auto;
+        max-width: 1180px;
+        padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 3vw, 2.5rem) 3.5rem;
     }
 
-    .nav-pills .nav-link {
-        color: #495057;
-        border-radius: 20px;
-        padding: 8px 20px;
-        margin: 0 5px;
+    .doctor-hero {
+        background:
+            radial-gradient(circle at 86% 15%, rgba(255, 255, 255, 0.18) 0 7%, transparent 7.5%),
+            radial-gradient(circle at 72% 110%, rgba(255, 255, 255, 0.12) 0 15%, transparent 15.5%),
+            linear-gradient(120deg, #1e4564 0%, #26648e 52%, #4a91b2 100%);
+        border-radius: 1.75rem;
+        box-shadow: 0 10px 24px rgba(30, 69, 100, 0.16);
+        color: #fff;
+        overflow: hidden;
+        padding: clamp(1.25rem, 3vw, 2.25rem);
+        position: relative;
     }
 
-    .nav-pills .nav-link.active {
-        background-color: #26648E;
-        color: white;
+    .doctor-hero::after {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 50%;
+        content: '';
+        height: 280px;
+        position: absolute;
+        right: -95px;
+        top: -145px;
+        width: 280px;
     }
 
-    .card {
-        border: none;
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-        border-radius: 10px;
-        transition: transform 0.3s ease;
+    .doctor-hero-content {
+        align-items: center;
+        display: flex;
+        gap: 1.5rem;
+        justify-content: space-between;
+        position: relative;
+        z-index: 1;
     }
 
-    .card:hover {
-        transform: translateY(-5px);
+    .doctor-hero-copy {
+        max-width: 720px;
     }
 
-    .card-title {
-        font-weight: 600;
+    .doctor-eyebrow {
+        align-items: center;
+        color: rgba(255, 255, 255, 0.82);
+        display: flex;
+        font-size: 0.82rem;
+        font-weight: 500;
+        gap: 0.5rem;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.8rem;
+        text-transform: uppercase;
     }
 
-    .card-title-graph {
-        color: rgba(31, 102, 153, 0.91);
-        font-weight: 600;
+    .doctor-eyebrow i {
+        color: #bfdbfe;
     }
 
-    canvas {
-        max-height: 300px;
+    .doctor-hero h1 {
+        font-size: clamp(1.8rem, 3vw, 2.5rem);
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        margin: 0 0 0.75rem;
+    }
+
+    .doctor-welcome-name {
+        color: #fff;
+    }
+
+    .doctor-hero-description {
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 1rem;
+        line-height: 1.6;
+        margin: 0 0 1rem;
+        max-width: 620px;
+    }
+
+    .doctor-avatar {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 1.5rem;
+        display: flex;
+        flex: 0 0 90px;
+        height: 90px;
+        justify-content: center;
+        width: 90px;
+    }
+
+    .doctor-avatar i {
+        color: #fff;
+        font-size: 2.7rem;
+    }
+
+    .doctor-section {
+        background: #fff;
+        border: 1px solid #dbe7ee;
+        border-radius: 1.5rem;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+        margin-top: 1.5rem;
+        padding: clamp(1.25rem, 3vw, 2rem);
+    }
+
+    .doctor-section-heading {
+        align-items: end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .doctor-section-heading h2 {
+        color: #1e5678;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .doctor-section-heading p {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .doctor-menu-grid {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .doctor-menu-card {
+        align-items: center;
+        background: #fff;
+        border: 1px solid #cfe1e8;
+        border-radius: 1.25rem;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+        color: #334155;
+        display: flex;
+        gap: 1rem;
+        min-height: 180px;
+        padding: 1.5rem;
+        position: relative;
+        text-decoration: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .doctor-menu-card::after {
+        color: #94a3b8;
+        content: '\F285';
+        font-family: bootstrap-icons;
+        font-size: 1.1rem;
+        position: absolute;
+        right: 1.25rem;
+        top: 1.25rem;
+        transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    .doctor-menu-card:hover {
+        border-color: #78afd0;
+        box-shadow: 0 16px 32px rgba(30, 69, 100, 0.16);
+        color: #334155;
+        transform: translateY(-4px);
+    }
+
+    .doctor-menu-card:hover::after {
+        color: #26648e;
+        transform: translateX(3px);
+    }
+
+    .doctor-menu-icon {
+        align-items: center;
+        background: #eaf4fb;
+        border-radius: 1rem;
+        color: #26648e;
+        display: inline-flex;
+        flex: 0 0 74px;
+        font-size: 2rem;
+        height: 74px;
+        justify-content: center;
+        width: 74px;
+    }
+
+    .doctor-menu-card.oral-health .doctor-menu-icon {
+        background: #fff1f2;
+        color: #d35d70;
+    }
+
+    .doctor-menu-content {
+        padding-right: 1.5rem;
+    }
+
+    .doctor-menu-content h3 {
+        color: #0f172a;
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin: 0 0 0.35rem;
+    }
+
+    .doctor-menu-content p {
+        color: #64748b;
+        font-size: 0.88rem;
+        line-height: 1.55;
+        margin: 0;
+    }
+
+    .doctor-info {
+        align-items: center;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 1rem;
+        color: #1e40af;
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.25rem;
+        padding: 0.9rem 1rem;
+    }
+
+    .doctor-info i {
+        color: #2563eb;
+        font-size: 1.1rem;
+    }
+
+    .doctor-info p {
+        font-size: 0.88rem;
+        margin: 0;
+    }
+
+    @media (max-width: 767px) {
+        .doctor-hero-content {
+            align-items: flex-start;
+            flex-direction: column-reverse;
+        }
+
+        .doctor-avatar {
+            border-radius: 1rem;
+            flex-basis: 68px;
+            height: 68px;
+            width: 68px;
+        }
+
+        .doctor-avatar i {
+            font-size: 2rem;
+        }
+
+        .doctor-hero h1 {
+            font-size: 1.95rem;
+        }
+
+        .doctor-menu-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .doctor-section-heading {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
     }
 </style>
 
-<main class="main-content d-flex justify-content-center align-items-center">
-
-   
-    
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8 col-md-10">
-                <!-- การ์ดหลัก -->
-                <div class="card border-0 shadow-lg welcome-card">
-                    <div class="card-body p-5 text-center position-relative">
-
-                        <!-- ไอคอนหลัก -->
-                        <div class="mb-4">
-                            <div class="welcome-icon-circle mx-auto mb-3">
-                                <i class="fas fa-stethoscope fa-2x text-white"></i>
-                            </div>
-                        </div>
-
-                        <!-- ข้อความต้อนรับ -->
-                        <h2 class="display-5 fw-bold text-primary mb-3">
-                            <i class="fas fa-heart text-danger me-2"></i>
-                            ยินดีต้อนรับ
-                        </h2>
-
-                        <!-- ชื่อผู้ใช้ -->
-                        <div class="mb-4">
-                            <div class="user-badge d-inline-block">
-                                <i class="fas fa-user-circle me-2"></i>
-                                <span class="fw-bold"><?php echo htmlspecialchars($_SESSION['username']); ?></span>
-                            </div>
-                        </div>
-
-                        <!-- ชื่อระบบ -->
-                        <div class="system-info mb-4">
-                            <p class="text-muted fs-5 mb-0">
-                                ระบบตรวจสุขภาพเด็ก
-                            </p>
-                            <p class="text-muted fs-5 mb-0">
-                                ณ ศูนย์ความเป็นเลิศในการพัฒนาเด็กปฐมวัย
-                            </p>
-                        </div>
-
+<main class="main-content doctor-dashboard-page">
+    <div class="doctor-dashboard">
+        <div class="doctor-hero">
+            <div class="doctor-hero-content">
+                <div class="doctor-hero-copy">
+                    <div class="doctor-eyebrow">
+                        <i class="fa-solid fa-shield-heart"></i>
+                        พื้นที่ทำงานสำหรับแพทย์
                     </div>
+                    <h1>
+                        ยินดีต้อนรับ -
+                        <span class="doctor-welcome-name"><?php echo htmlspecialchars($doctorName, ENT_QUOTES, 'UTF-8'); ?></span>
+                    </h1>
+                    <p class="doctor-hero-description">
+                        ระบบตรวจสุขภาพเด็ก ณ ศูนย์ความเป็นเลิศในการพัฒนาเด็กปฐมวัย
+                    </p>
+                </div>
+                <div class="doctor-avatar" aria-hidden="true">
+                    <i class="fa-solid fa-stethoscope"></i>
                 </div>
             </div>
         </div>
+
+        <?php if (getUserRole() === 'doctor'): ?>
+            <section class="doctor-section" aria-labelledby="doctor-menu-title">
+                <div class="doctor-section-heading">
+                    <h2 id="doctor-menu-title">เมนูสำหรับแพทย์</h2>
+                    <p>เลือกบริการที่ต้องการใช้งาน</p>
+                </div>
+
+                <div class="doctor-menu-grid">
+                    <a class="doctor-menu-card" href="/app/views/check_health_external/checklist_name.php">
+                        <div class="doctor-menu-icon">
+                            <i class="fa-solid fa-user-doctor"></i>
+                        </div>
+                        <div class="doctor-menu-content">
+                            <h3>ตรวจสุขภาพเด็ก</h3>
+                            <p>บันทึกและติดตามผลการตรวจสุขภาพเด็ก</p>
+                        </div>
+                    </a>
+
+                    <a class="doctor-menu-card oral-health" href="/app/views/check_health_tooth/checklist_name.php">
+                        <div class="doctor-menu-icon">
+                            <i class="fa-solid fa-tooth"></i>
+                        </div>
+                        <div class="doctor-menu-content">
+                            <h3>ตรวจสุขภาพช่องปาก</h3>
+                            <p>บันทึกและติดตามผลการตรวจสุขภาพช่องปาก</p>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="doctor-info">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <p>เมนูนี้แสดงตามสิทธิ์การใช้งานของแพทย์ และข้อมูลจะถูกบันทึกเข้าสู่ระบบทันที</p>
+                </div>
+            </section>
+        <?php endif; ?>
     </div>
 </main>
-<style>
-    .welcome-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 20px !important;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .welcome-card .card-body {
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 20px;
-        backdrop-filter: blur(10px);
-        position: relative;
-        z-index: 2;
-    }
-
-    .welcome-icon-circle {
-        width: 80px;
-        height: 80px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        animation: pulse 2s infinite;
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-    }
-
-    @keyframes pulse {
-        0% {
-            transform: scale(1);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        50% {
-            transform: scale(1.05);
-            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
-        }
-
-        100% {
-            transform: scale(1);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-    }
-
-    .user-badge {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 12px 25px;
-        border-radius: 50px;
-        font-size: 1.2rem;
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-        transform: translateY(0);
-        transition: all 0.3s ease;
-    }
-
-    .user-badge:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
-    }
-
-    .system-info .badge {
-        font-size: 1rem !important;
-        padding: 10px 20px !important;
-        box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
-    }
-
-
-    /* Responsive adjustments */
-    @media (max-width: 1023px) {
-        .welcome-card .card-body {
-            padding: 2rem !important;
-        }
-
-        .display-5 {
-            font-size: 2rem !important;
-        }
-
-        .user-badge {
-            font-size: 1rem;
-            padding: 10px 20px;
-        }
-
-        .welcome-footer .col-md-6 {
-            text-align: center !important;
-        }
-
-        .justify-content-md-end,
-        .justify-content-md-start {
-            justify-content: center !important;
-        }
-    }
-</style>
 
 
 

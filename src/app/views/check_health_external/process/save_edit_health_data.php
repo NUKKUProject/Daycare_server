@@ -43,6 +43,7 @@ try {
    // เตรียมคำสั่ง SQL แบบ UPDATE
 $sql = "UPDATE health_data_external SET
             exam_date = :exam_date,
+            measurement_date = :measurement_date,
             academic_year = :academic_year,
             doctor_name = :doctor_name,
             student_id = :student_id,
@@ -73,6 +74,7 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute([
     ':data_id' => $data['data_id'],
     ':exam_date' => $data['exam_date'],
+    ':measurement_date' => $data['measurement_date'] ?? $data['exam_date'],
     ':academic_year' => $data['academic_year'],
     ':doctor_name' => $data['doctor_name'],
     ':student_id' => $data['student_id'],

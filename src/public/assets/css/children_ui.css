@@ -570,6 +570,28 @@ tbody td { padding: 0.8rem 1rem; vertical-align: middle; }
 .no-results-icon { font-size: 3rem; margin-bottom: 0.75rem; display: block; }
 .no-results-text { color: #718096; font-size: 0.95rem; }
 
+/* ===== Font Awesome Icon Colors ===== */
+.page-title > .fas { color: #ffd166; }
+.btn-header-outline .fa-plus { color: #86efac; }
+.btn-header-outline .fa-file-export { color: #93c5fd; }
+.btn-header-solid .fa-qrcode { color: #26648E; }
+.year-card-icon { color: #26648E; }
+.year-card-btn .fa-arrow-right { color: #bfdbfe; }
+.stat-card.s-all .stat-icon { color: #26648E; }
+.stat-card.s-medium .stat-icon { color: #d97706; }
+.stat-card.s-big .stat-icon { color: #16a34a; }
+.stat-card.s-prep .stat-icon { color: #0891b2; }
+.search-icon { color: #26648E; }
+.search-clear:hover { color: #e53e3e; }
+.view-btn .fas { color: #718096; }
+.view-btn.active .fas { color: #26648E; }
+.group-header-bar > span:first-child { color: #26648E; }
+.card-action-btn .fa-eye,
+.action-link .fa-eye { color: #26648E; }
+.card-action-btn:hover .fa-eye,
+.action-link:hover .fa-eye { color: white; }
+.no-results-icon { color: #a0aec0; }
+
 /* ===== Highlight ===== */
 mark.highlight {
     background: #fefcbf;

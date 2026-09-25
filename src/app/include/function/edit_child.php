@@ -32,6 +32,27 @@ function handleEmptyValue($value, $default = null) {
     return (empty(trim($value)) || $value === '-') ? $default : $value;
 }
 
+// ลบเฉพาะไฟล์รูปเดิมที่อยู่ในโฟลเดอร์โปรไฟล์ของระบบเท่านั้น
+function deleteStoredProfileImage($imagePath, $uploadDir) {
+    if (empty($imagePath) || strpos($imagePath, 'data:') === 0) {
+        return;
+    }
+
+    $realUploadDir = realpath($uploadDir);
+    if (!$realUploadDir) {
+        return;
+    }
+
+    $path = parse_url($imagePath, PHP_URL_PATH);
+    $fileName = basename($path ?: $imagePath);
+    $realImagePath = realpath($realUploadDir . DIRECTORY_SEPARATOR . $fileName);
+
+    // ป้องกันการลบไฟล์นอกโฟลเดอร์ profiles
+    if ($realImagePath && dirname($realImagePath) === $realUploadDir && is_file($realImagePath)) {
+        @unlink($realImagePath);
+    }
+}
+
 try {
     // ตรวจสอบสิทธิ์ - อนุญาตให้ admin, teacher, student ใช้งานได้
     if (!isset($_SESSION['user_id'])) {
@@ -573,10 +594,19 @@ try {
             ];
 
             // จัดการรูปโปรไฟล์ของเด็ก
+            $profileUploadDir = __DIR__ . '/../../../public/uploads/profiles/';
+            $oldProfileImage = $existingData['profile_image'] ?? null;
+            $newProfileImageUploaded = false;
+            $parentUploadDir = __DIR__ . '/../../../public/uploads/parents/';
+            $oldFatherImage = $existingData['father_image'] ?? null;
+            $oldMotherImage = $existingData['mother_image'] ?? null;
+            $newFatherImageUploaded = false;
+            $newMotherImageUploaded = false;
+
             if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
     
                 // 1. กำหนดไดเรกทอรีอัปโหลดอย่างปลอดภัย (ใช้พาธสมบูรณ์)
-                $uploadDir = __DIR__ . '/../../../public/uploads/profiles/';
+                $uploadDir = $profileUploadDir;
                 
                 // ตรวจสอบว่าไดเรกทอรีมีอยู่และเขียนได้
                 if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
@@ -591,7 +621,7 @@ try {
                 $fileExtension = preg_replace('/[^a-zA-Z0-9]/', '', $fileExtension);
                 
                 // จำกัดนามสกุลไฟล์ที่อนุญาต
-                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
                 if (!in_array(strtolower($fileExtension), $allowedExtensions)) {
                     die('File extension not allowed.');
                 }
@@ -612,14 +642,16 @@ try {
                 }
                 
                 
-                $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
                 if (!in_array($_FILES['profile_image']['type'], $allowedMimeTypes)) {
                     die('File type not allowed.');
                 }
                 
                 // 6. ทำการย้ายไฟล์
                 if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $uploadFile)) {
-                    $updateData['profile_image'] = '/public/uploads/profiles/' . $fileName;
+                    // ใช้พาธแบบเดียวกับรูปที่สร้างจากหน้าลงทะเบียน เพื่อให้ view_child.php เรียกใช้ได้
+                    $updateData['profile_image'] = '../../../public/uploads/profiles/' . $fileName;
+                    $newProfileImageUploaded = true;
                     echo 'File uploaded successfully.';
                 } else {
                     echo 'Failed to upload file.';
@@ -633,7 +665,7 @@ try {
             // จัดการรูปภาพพ่อ
             if (isset($_FILES['father_image']) && $_FILES['father_image']['error'] === UPLOAD_ERR_OK) {
                 // กำหนดไดเรกทอรีอัปโหลดอย่างปลอดภัย (ใช้พาธสมบูรณ์)
-                $uploadDir = __DIR__ . '/../../../public/uploads/parents/';
+                $uploadDir = $parentUploadDir;
 
                 // ตรวจสอบว่าไดเรกทอรีมีอยู่และเขียนได้
                 if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
@@ -648,7 +680,7 @@ try {
                 $fileExtension = preg_replace('/[^a-zA-Z0-9]/', '', $fileExtension);
 
                 // จำกัดนามสกุลไฟล์ที่อนุญาต
-                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
                 if (!in_array(strtolower($fileExtension), $allowedExtensions)) {
                     die('File extension not allowed.');
                 }
@@ -668,14 +700,15 @@ try {
                     die('Security violation: Invalid file path.');
                 }
 
-                $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
                 if (!in_array($_FILES['father_image']['type'], $allowedMimeTypes)) {
                     die('File type not allowed.');
                 }
 
                 // ทำการย้ายไฟล์
                 if (move_uploaded_file($_FILES['father_image']['tmp_name'], $uploadFile)) {
-                    $updateData['father_image'] = '/public/uploads/parents/' . $fileName;
+                    $updateData['father_image'] = '../../../public/uploads/parents/' . $fileName;
+                    $newFatherImageUploaded = true;
                     echo 'File uploaded successfully.';
                 } else {
                     echo 'Failed to upload file.';
@@ -688,7 +721,7 @@ try {
             // จัดการรูปภาพแม่
             if (isset($_FILES['mother_image']) && $_FILES['mother_image']['error'] === UPLOAD_ERR_OK) {
                 // กำหนดไดเรกทอรีอัปโหลดอย่างปลอดภัย (ใช้พาธสมบูรณ์)
-                $uploadDir = __DIR__ . '/../../../public/uploads/parents/';
+                $uploadDir = $parentUploadDir;
 
                 // ตรวจสอบว่าไดเรกทอรีมีอยู่และเขียนได้
                 if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
@@ -703,7 +736,7 @@ try {
                 $fileExtension = preg_replace('/[^a-zA-Z0-9]/', '', $fileExtension);
 
                 // จำกัดนามสกุลไฟล์ที่อนุญาต
-                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
                 if (!in_array(strtolower($fileExtension), $allowedExtensions)) {
                     die('File extension not allowed.');
                 }
@@ -723,14 +756,15 @@ try {
                     die('Security violation: Invalid file path.');
                 }
 
-                $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
                 if (!in_array($_FILES['mother_image']['type'], $allowedMimeTypes)) {
                     die('File type not allowed.');
                 }
 
                 // ทำการย้ายไฟล์
                 if (move_uploaded_file($_FILES['mother_image']['tmp_name'], $uploadFile)) {
-                    $updateData['mother_image'] = '/public/uploads/parents/' . $fileName;
+                    $updateData['mother_image'] = '../../../public/uploads/parents/' . $fileName;
+                    $newMotherImageUploaded = true;
                 } else {
                     echo 'Failed to upload mother image.';
                 }
@@ -739,7 +773,7 @@ try {
                 $updateData['mother_image'] = $existingData['mother_image'] ?? null;
             }
 
-            // จัดการรูปภาพญาติ
+            // จัดการรูปภาพผู้ปกครอง/ผู้ดูแล
             if (isset($_FILES['relative_image']) && $_FILES['relative_image']['error'] === UPLOAD_ERR_OK) {
                 // กำหนดไดเรกทอรีอัปโหลดอย่างปลอดภัย (ใช้พาธสมบูรณ์)
                 $uploadDir = __DIR__ . '/../../../public/uploads/parents/';
@@ -902,6 +936,16 @@ try {
 
             // updateChildById คืนค่า array เมื่อสำเร็จ
             if ($result !== false) {
+                // ลบรูปเดิมหลังจากรูปใหม่ถูกบันทึกลงฐานข้อมูลสำเร็จแล้ว
+                if ($newProfileImageUploaded) {
+                    deleteStoredProfileImage($oldProfileImage, $profileUploadDir);
+                }
+                if ($newFatherImageUploaded) {
+                    deleteStoredProfileImage($oldFatherImage, $parentUploadDir);
+                }
+                if ($newMotherImageUploaded) {
+                    deleteStoredProfileImage($oldMotherImage, $parentUploadDir);
+                }
                 sendJsonResponse('success', 'บันทึกข้อมูลสำเร็จ');
             } else {
                 throw new Exception("ไม่สามารถบันทึกข้อมูลได้");

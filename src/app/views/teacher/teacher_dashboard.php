@@ -255,7 +255,7 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
             <!-- Quick Actions Section -->
             <div class="quick-actions">
                 <a href="daily_checklist.php" class="quick-action-btn text-decoration-none text-dark">
-                    <i class="bi bi-clipboard2-check"></i>
+                    <i class="fa-solid fa-stethoscope"></i>
                     บันทึกการตรวจร่างกาย
                 </a>
                 <a href="nutrition_child.php" class="quick-action-btn text-decoration-none text-dark">

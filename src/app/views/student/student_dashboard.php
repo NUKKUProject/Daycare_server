@@ -6,551 +6,357 @@
 <?php require_once __DIR__ . '/../../include/function/child_functions.php'; ?>
 <?php include __DIR__ . '/../../include/auth/auth_dashboard.php'; ?>
 <?php
-$children = getChildrenData();
+$studentid = $_SESSION['username'] ?? '';
+$child = $studentid !== '' ? getChildById($studentid) : false;
 
-// เพิ่มการเรียกใช้ฟังก์ชันที่จำเป็น
-require_once __DIR__ . '/../../include/function/dashboard_functions.php';
-
-// ดึงข้อมูลสำหรับ Dashboard
-$totalStudents = getTotalStudents() ?? 0;
-$totalStaff = getTotalStaff() ?? 0;
-$attendanceRate = getAttendanceRate() ?? 0;
-$totalActivities = getTotalActivities() ?? 0;
-
-// ดึงข้อมูลสำหรับกราฟ
-$monthlyAttendance = getMonthlyAttendance() ?? [];
-$studentsByGroup = getStudentsByGroup() ?? [];
-$staffByPosition = getStaffByPosition() ?? [];
+$viewTabs = [
+    [
+        'id' => 'profile',
+        'icon' => 'bi bi-person-badge',
+        'title' => 'ประวัติประจำตัว',
+        'description' => 'ข้อมูลส่วนตัว ผู้ปกครอง และที่อยู่',
+        'color' => 'blue',
+    ],
+    [
+        'id' => 'vaccine',
+        'icon' => 'fa-solid fa-syringe',
+        'title' => 'วัคซีน',
+        'description' => 'ประวัติการรับวัคซีนของเด็ก',
+        'color' => 'green',
+    ],
+    [
+        'id' => 'attendance',
+        'icon' => 'bi bi-calendar-check',
+        'title' => 'การมาเรียน',
+        'description' => 'ตรวจสอบประวัติการมาเรียน',
+        'color' => 'orange',
+    ],
+    [
+        'id' => 'health',
+        'icon' => 'fa-solid fa-stethoscope',
+        'title' => 'ตรวจร่างกาย',
+        'description' => 'ผลการตรวจสุขภาพและการแพ้',
+        'color' => 'red',
+    ],
+    [
+        'id' => 'growth',
+        'icon' => 'bi bi-graph-up',
+        'title' => 'การเจริญเติบโต',
+        'description' => 'ติดตามส่วนสูง น้ำหนัก และพัฒนาการ',
+        'color' => 'purple',
+    ],
+];
 ?>
 
 <style>
-    .nav-tabs .nav-link {
-    color: #495057;
-    border: none;
-    border-bottom: 2px solid transparent;
-}
+    .student-dashboard-toggle {
+        background: #26648E;
+        border: 0;
+        color: #fff;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+    }
 
-.nav-tabs .nav-link.active {
-    color: #26648E;
-    border-bottom: 2px solid #26648E;
-    background: none;
-}
+    .student-dashboard-toggle:hover,
+    .student-dashboard-toggle:focus-visible {
+        background: #1E4F6F;
+        color: #fff;
+        transform: translateY(-1px);
+    }
 
-.nav-pills .nav-link {
-    color: #495057;
-    border-radius: 20px;
-    padding: 8px 20px;
-    margin: 0 5px;
-}
+    .student-dashboard {
+        --student-primary: #26648E;
+        --student-primary-dark: #1E4F6F;
+        --student-primary-soft: #ebf4fb;
+        --student-text: #2c3e50;
+        --student-muted: #64748b;
+        --student-border: #d9e6ee;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 2rem 1.75rem 3.5rem;
+    }
 
-.nav-pills .nav-link.active {
-    background-color: #26648E;
-    color: white;
-}
+    .student-dashboard-header {
+        background:
+            radial-gradient(circle at 92% 15%, rgba(255,255,255,0.22) 0 8%, transparent 8.5%),
+            radial-gradient(circle at 78% 95%, rgba(255,255,255,0.12) 0 12%, transparent 12.5%),
+            linear-gradient(120deg, #1E4F6F 0%, #26648E 58%, #4f88aa 100%);
+        border-radius: 1.75rem;
+        box-shadow: 0 18px 40px rgba(38, 100, 142, 0.2);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        padding: 2.25rem 2.5rem;
+        position: relative;
+    }
 
-.card {
-    border: none;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    border-radius: 10px;
-    transition: transform 0.3s ease;
-}
+    .student-dashboard-header h1 {
+        color: #fff;
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.5rem;
+        position: relative;
+    }
 
-.card:hover {
-    transform: translateY(-5px);
-}
+    .student-dashboard-header p {
+        color: rgba(255,255,255,0.82);
+        margin: 0;
+        position: relative;
+    }
 
-.card-title {
-    font-weight: 600;
-}
-.card-title-graph {
-    color: rgba(31, 102, 153, 0.91);
-    font-weight: 600;
-}
+    .student-dashboard-header h1::before {
+        align-items: center;
+        background: rgba(255,255,255,0.16);
+        border: 1px solid rgba(255,255,255,0.25);
+        border-radius: 0.8rem;
+        content: '\F425';
+        display: inline-flex;
+        font-family: bootstrap-icons;
+        font-size: 1.2rem;
+        height: 42px;
+        justify-content: center;
+        margin-right: 0.75rem;
+        vertical-align: -0.4rem;
+        width: 42px;
+    }
 
-canvas {
-    max-height: 300px;
-}
+    .student-summary {
+        align-items: center;
+        background: #fff;
+        border: 1px solid var(--student-border);
+        border-left: 4px solid var(--student-primary);
+        border-radius: 1.25rem;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1.25rem;
+        position: relative;
+    }
+
+    .student-summary img {
+        border: 4px solid #fff;
+        border-radius: 1rem;
+        box-shadow: 0 5px 14px rgba(38, 100, 142, 0.2);
+        height: 84px;
+        object-fit: cover;
+        width: 84px;
+    }
+
+    .student-summary h2 {
+        color: var(--student-primary-dark);
+        font-size: 1.25rem;
+        margin: 0 0 0.35rem;
+    }
+
+    .student-summary p {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .student-summary .student-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem 0.75rem;
+        margin-top: 0.5rem;
+    }
+
+    .student-meta span {
+        background: var(--student-primary-soft);
+        border: 1px solid #cfe0eb;
+        border-radius: 999px;
+        color: #34566c;
+        font-size: 0.82rem;
+        padding: 0.28rem 0.65rem;
+    }
+
+    .student-meta i {
+        color: var(--student-primary);
+        margin-right: 0.2rem;
+    }
+
+    .student-section-title {
+        color: var(--student-primary-dark);
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .student-section-title::after {
+        background: linear-gradient(90deg, var(--student-primary), #73a6c2);
+        border-radius: 999px;
+        content: '';
+        display: block;
+        height: 4px;
+        margin-top: 0.6rem;
+        width: 48px;
+    }
+
+    .student-tab-grid {
+        display: grid;
+        gap: 1.15rem;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .student-tab-button {
+        align-items: flex-start;
+        background: linear-gradient(145deg, #fff 0%, #f8fbfd 100%);
+        border: 1px solid var(--student-border);
+        border-radius: 1.25rem;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+        color: var(--student-text);
+        display: flex;
+        flex-direction: column;
+        min-height: 178px;
+        overflow: hidden;
+        padding: 1.25rem;
+        position: relative;
+        text-decoration: none;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+
+    .student-tab-button::before {
+        background: var(--tab-accent, var(--student-primary));
+        content: '';
+        height: 4px;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+    }
+
+    .student-tab-button::after {
+        color: #8aa0ad;
+        content: '\F138';
+        font-family: bootstrap-icons;
+        font-size: 1.1rem;
+        position: absolute;
+        right: 1.15rem;
+        top: 1.25rem;
+        transition: transform 0.25s ease, color 0.25s ease;
+    }
+
+    .student-tab-button:hover,
+    .student-tab-button:focus-visible {
+        border-color: #7da8bf;
+        box-shadow: 0 16px 28px rgba(38, 100, 142, 0.15);
+        color: var(--student-primary-dark);
+        outline: none;
+        transform: translateY(-5px);
+    }
+
+    .student-tab-button:hover::after,
+    .student-tab-button:focus-visible::after {
+        color: var(--student-primary);
+        transform: translateX(3px);
+    }
+
+    .student-tab-icon {
+        align-items: center;
+        border-radius: 0.75rem;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4);
+        display: inline-flex;
+        font-size: 1.35rem;
+        height: 44px;
+        justify-content: center;
+        margin-bottom: 0.8rem;
+        width: 44px;
+    }
+
+    .student-tab-button.blue { --tab-accent: #26648E; }
+    .student-tab-button.green { --tab-accent: #4b8c75; }
+    .student-tab-button.orange { --tab-accent: #b97b36; }
+    .student-tab-button.red { --tab-accent: #bd5a5a; }
+    .student-tab-button.purple { --tab-accent: #687ba8; }
+
+    .student-tab-icon.blue { background: #dcebf3; color: #26648E; }
+    .student-tab-icon.green { background: #e1f0ea; color: #39755f; }
+    .student-tab-icon.orange { background: #f5eadb; color: #9d6528; }
+    .student-tab-icon.red { background: #f5e2e2; color: #a94949; }
+    .student-tab-icon.purple { background: #e6e9f3; color: #586b98; }
+
+    .student-tab-button strong {
+        font-size: 0.98rem;
+        margin-bottom: 0.35rem;
+        padding-right: 1.5rem;
+    }
+
+    .student-tab-button small {
+        color: var(--student-muted);
+        line-height: 1.45;
+    }
+
+    .student-empty {
+        background: #fff;
+        border: 1px solid #fecaca;
+        border-radius: 1rem;
+        color: #991b1b;
+        padding: 1.25rem;
+    }
+
+    @media (max-width: 992px) {
+        .student-tab-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 576px) {
+        .student-dashboard { padding: 1.25rem 1rem 2rem; }
+        .student-dashboard-header { border-radius: 1.25rem; padding: 1.5rem; }
+        .student-dashboard-header h1::before { height: 36px; width: 36px; }
+        .student-summary { align-items: flex-start; }
+        .student-summary img { height: 64px; width: 64px; }
+        .student-tab-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .student-tab-button { min-height: 155px; padding: 1rem; }
+    }
 </style>
 
-        <!-- Toggle Button for mobile -->
-        <button class="btn btn-dark d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
-            <i class="bi bi-list"></i>
-        </button>
-        
-        <main class="main-content">
-            <div class="container-fluid px-4">
+<button class="btn student-dashboard-toggle d-md-none m-3" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu"
+        aria-controls="sidebarMenu" aria-label="เปิดเมนู">
+    <i class="bi bi-list"></i>
+</button>
 
-           
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">แดชบอร์ดข้อมูล</h1>
+<main class="main-content">
+    <div class="student-dashboard">
+        <div class="student-dashboard-header">
+            <h1>แดชบอร์ดข้อมูลเด็ก</h1>
+            <p>เลือกหัวข้อที่ต้องการดูข้อมูลจากปุ่มด้านล่าง</p>
+        </div>
+
+        <?php if (!$child): ?>
+            <div class="student-empty">
+                <i class="bi bi-exclamation-circle me-2"></i>
+                ไม่พบข้อมูลเด็กของบัญชีนี้ กรุณาติดต่อผู้ดูแลระบบ
             </div>
-
-            <!-- แท็บหลัก -->
-            <ul class="nav nav-tabs dashboard-tabs mb-4" id="mainTab" role="tablist">
-                <li class="nav-item">
-                    <a class="nav-link active" id="overview-tab" data-bs-toggle="tab" href="#overview" role="tab">ภาพรวมทั้งหมด</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" id="students-tab" data-bs-toggle="tab" href="#students" role="tab">นักเรียน</a>
-                </li>
-            </ul>
-
-            <!-- เนื้อหาแท็บ -->
-            <div class="tab-content" id="mainTabContent">
-                <!-- แท็บภาพรวม -->
-                <div class="tab-pane fade show active" id="overview" role="tabpanel">
-                    <div class="row">
-                        <!-- การ์ดสรุปข้อมูล -->
-                        <div class="col-md-4 mb-4">
-                            <div class="card dashboard-card bg-primary text-white">
-                                <div class="card-body">
-                                    <h5 class="card-title">จำนวนนักเรียนทั้งหมด</h5>
-                                    <h2 class="card-text"><?= $totalStudents ?> คน</h2>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-4">
-                            <div class="card dashboard-card bg-info text-white">
-                                <div class="card-body">
-                                    <h5 class="card-title">จำนวนห้องเรียน</h5>
-                                    <h2 class="card-text"><?= count($studentsByGroup) ?> ห้อง</h2>
-                                </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- กราฟแสดงภาพรวม -->
-                    <div class="col-12 mb-4">
-                            <div class="card">
-                                <div class="card-body">
-                                <h5 class="card-title-graph">สัดส่วนนักเรียนแต่ละระดับชั้น</h5>
-                                    <canvas id="studentsPieChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- แท็บบุคลากร -->
-                <div class="tab-pane fade" id="staff" role="tabpanel">
-                    <!-- แท็บย่อยของบุคลากร -->
-                    <ul class="nav nav-pills dashboard-pills mb-3" id="staffSubTab" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" id="staff-info-tab" data-bs-toggle="pill" href="#staff-info" role="tab">ข้อมูลทั่วไป</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="staff-performance-tab" data-bs-toggle="pill" href="#staff-performance" role="tab">ประสิทธิภาพการทำงาน</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="staff-attendance-tab" data-bs-toggle="pill" href="#staff-attendance" role="tab">การลงเวลาทำงาน</a>
-                        </li>
-                    </ul>
-
-                    <div class="tab-content" id="staffSubTabContent">
-                        <!-- เนื้อหาแท็บย่อยบุคลากร -->
-                        <div class="tab-pane fade show active" id="staff-info" role="tabpanel">
-                            <div class="row">
-                                <div class="col-md-6 mb-4">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h5 class="card-title">สัดส่วนตำแหน่งบุคลากร</h5>
-                                            <canvas id="staffPositionChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-4">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h5 class="card-title">อายุการทำงานเฉลี่ย</h5>
-                                            <canvas id="staffExperienceChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- เพิ่มเนื้อหาแท็บย่อยอื่นๆ ของบุคลากร -->
-                    </div>
-                </div>
-                <!-- แท็บนักเรียน -->
-                <div class="tab-pane fade" id="students" role="tabpanel">
-                    <!-- แท็บย่อยของนักเรียน -->
-                    <ul class="nav nav-pills dashboard-pills mb-3" id="studentsSubTab" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" id="students-info-tab" data-bs-toggle="pill" href="#students-info" role="tab">ข้อมูลทั่วไป</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="students-attendance-tab" data-bs-toggle="pill" href="#students-attendance" role="tab">การมาเรียน</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="students-activities-tab" data-bs-toggle="pill" href="#students-activities" role="tab">กิจกรรม</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="students-nutrition-tab" data-bs-toggle="pill" href="#students-nutrition" role="tab">โภชนาการ</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="students-health-tab" data-bs-toggle="pill" href="#students-health" role="tab">สุขภาพร่างกาย</a>
-                        </li>
-                    </ul>
-
-                    <div class="tab-content" id="studentsSubTabContent">
-                        <!-- เนื้อหาแท็บย่อยนักเรียนข้อมูลทั่วไป -->
-                        <div class="tab-pane fade show active" id="students-info" role="tabpanel">
-                            <div class="row">
-                                <div class="col-md-6 mb-4">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h5 class="card-title">จำนวนนักเรียนแยกตามอายุ</h5>
-                                            <canvas id="studentsAgeChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-4">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h5 class="card-title">สถิติการเข้าร่วมกิจกรรม</h5>
-                                            <canvas id="studentsActivityChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                        <!-- เนื้อหาแท็บย่อยนักเรียนการมาเรียน -->
-                    <div class="tab-pane fade" id="students-attendance" role="tabpanel">
-                        <div class="row">
-                            <div class="col-12 mb-4">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h5 class="card-title-graph">อัตราการมาเรียน</h5>
-                                            <div class="d-flex gap-2 align-items-center">
-                                                <select class="form-select form-select-sm" id="viewType" style="width: auto;">
-                                                    <option value="month">รายเดือน</option>
-                                                    <option value="week">รายสัปดาห์</option>
-                                                </select>
-                                            <input type="month" class="form-control form-control-sm" id="attendanceMonth" 
-                                                   value="<?= date('Y-m') ?>" 
-                                                   max="<?= date('Y-m') ?>"
-                                                   style="width: auto;">
-                                            <select class="form-select form-select-sm" id="weekSelect" style="width: auto; display: none;">
-                                                <option value="">เลือกสัปดาห์</option>
-                                            </select>
-                                            <button class="btn btn-primary btn-sm" id="fetchDataBtn">
-                                                <i class="bi bi-search"></i> ดูข้อมูล
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div id="attendanceStatsContainer">
-                                        <div class="row g-3 mb-3">
-                                            <div class="col-md-3">
-                                                <div class="card bg-primary text-white">
-                                                    <div class="card-body">
-                                                        <h6 class="card-subtitle mb-2">จำนวนวันเรียนทั้งหมด</h6>
-                                                        <h3 class="card-title mb-0" id="totalDays">0</h3>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="card bg-success text-white">
-                                                    <div class="card-body">
-                                                        <h6 class="card-subtitle mb-2">มาเรียน</h6>
-                                                        <h3 class="card-title mb-0" id="presentCount">0</h3>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="card bg-danger text-white">
-                                                    <div class="card-body">
-                                                        <h6 class="card-subtitle mb-2">ขาดเรียน</h6>
-                                                        <h3 class="card-title mb-0" id="absentCount">0</h3>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="card bg-warning text-white">
-                                                    <div class="card-body">
-                                                        <h6 class="card-subtitle mb-2">ลา</h6>
-                                                        <h3 class="card-title mb-0" id="leaveCount">0</h3>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="card bg-info text-white">
-                                                    <div class="card-body">
-                                                        <h6 class="card-subtitle mb-2">อัตราการมาเรียน</h6>
-                                                        <h3 class="card-title mb-0" id="attendanceRate">0%</h3>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <canvas id="attendanceChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+        <?php else: ?>
+            <div class="student-summary">
+                <img src="<?= !empty($child['profile_image']) ? htmlspecialchars($child['profile_image']) : '../../../public/assets/images/avatar.png' ?>"
+                     alt="รูปประจำตัวของ <?= htmlspecialchars(($child['firstname_th'] ?? '') . ' ' . ($child['lastname_th'] ?? '')) ?>">
+                <div>
+                    <h2><?= htmlspecialchars(($child['prefix_th'] ?? '') . ($child['firstname_th'] ?? '') . ' ' . ($child['lastname_th'] ?? '')) ?></h2>
+                    <p>ข้อมูลของเด็กที่ผูกกับบัญชีผู้ปกครอง</p>
+                    <div class="student-meta">
+                        <span><i class="bi bi-person-badge"></i><?= htmlspecialchars($child['studentid']) ?></span>
+                        <span><i class="bi bi-people"></i><?= htmlspecialchars($child['child_group'] ?? '-') ?></span>
+                        <span><i class="bi bi-door-open"></i>ห้อง <?= htmlspecialchars($child['classroom'] ?? '-') ?></span>
                     </div>
                 </div>
             </div>
+
+            <div class="student-section-title">เลือกดูข้อมูล</div>
+            <div class="student-tab-grid" aria-label="เมนูข้อมูลเด็ก">
+                <?php foreach ($viewTabs as $tab): ?>
+                    <a class="student-tab-button <?= htmlspecialchars($tab['color']) ?>"
+                       href="view_child.php?studentid=<?= rawurlencode($studentid) ?>&amp;tab=<?= rawurlencode($tab['id']) ?>">
+                        <span class="student-tab-icon <?= htmlspecialchars($tab['color']) ?>">
+                            <i class="<?= htmlspecialchars($tab['icon']) ?>" aria-hidden="true"></i>
+                        </span>
+                        <strong><?= htmlspecialchars($tab['title']) ?></strong>
+                        <small><?= htmlspecialchars($tab['description']) ?></small>
+                    </a>
+                <?php endforeach; ?>
             </div>
-        </main>
+        <?php endif; ?>
     </div>
-
-    <!-- เพิ่ม Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // ตัวแปรสำหรับกราฟทั้งหมด
-        let attendanceChart, studentsPieChart, staffPositionChart;
-        
-        // ตัวแปรสำหรับการดึงข้อมูลการมาเรียน
-        const attendanceMonthPicker = document.getElementById('attendanceMonth');
-        const viewTypeSelect = document.getElementById('viewType');
-        const weekSelect = document.getElementById('weekSelect');
-        const fetchDataBtn = document.getElementById('fetchDataBtn');
-
-        // สร้างกราฟหลัก
-        function initializeMainCharts() {
-        // กราฟวงกลมแสดงสัดส่วนนักเรียน
-            studentsPieChart = new Chart(document.getElementById('studentsPieChart'), {
-            type: 'pie',
-            data: {
-                    labels: <?= json_encode(array_keys($studentsByGroup)) ?>,
-                datasets: [{
-                        data: <?= json_encode(array_values($studentsByGroup)) ?>,
-                    backgroundColor: [
-                        'rgb(255, 99, 132)',
-                        'rgb(54, 162, 235)',
-                        'rgb(255, 205, 86)'
-                    ]
-                }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-            }
-        });
-
-        // กราฟตำแหน่งบุคลากร
-            staffPositionChart = new Chart(document.getElementById('staffPositionChart'), {
-            type: 'doughnut',
-            data: {
-                    labels: <?= json_encode(array_keys($staffByPosition)) ?>,
-                datasets: [{
-                        data: <?= json_encode(array_values($staffByPosition)) ?>,
-                    backgroundColor: [
-                        'rgb(255, 99, 132)',
-                        'rgb(54, 162, 235)',
-                        'rgb(255, 205, 86)',
-                        'rgb(75, 192, 192)'
-                    ]
-                }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-        }
-
-        // ฟังก์ชันสร้างตัวเลือกสัปดาห์
-        function generateWeekOptions(yearMonth) {
-            const [year, month] = yearMonth.split('-');
-            const date = new Date(year, month - 1, 1);
-            const weeks = [];
-            
-            while (date.getMonth() === month - 1) {
-                const weekStart = new Date(date);
-                const weekEnd = new Date(date);
-                weekEnd.setDate(weekEnd.getDate() + 6);
-                
-                weeks.push({
-                    start: new Date(weekStart),
-                    end: new Date(weekEnd),
-                    value: `${weekStart.toISOString().split('T')[0]}`,
-                    label: `สัปดาห์ที่ ${weeks.length + 1} (${weekStart.getDate()}-${
-                        weekEnd.getMonth() === weekStart.getMonth() ? 
-                        weekEnd.getDate() : 
-                        weekEnd.getDate() + '/' + (weekEnd.getMonth() + 1)
-                    })`
-                });
-                
-                date.setDate(date.getDate() + 7);
-            }
-            
-            weekSelect.innerHTML = '<option value="">เลือกสัปดาห์</option>' + 
-                weeks.map(week => `<option value="${week.value}">${week.label}</option>`).join('');
-        }
-
-        // ฟังก์ชันดึงข้อมูล
-        async function fetchAttendanceData() {
-            const params = {
-                view: viewTypeSelect.value
-            };
-
-            if (viewTypeSelect.value === 'week' && !weekSelect.value) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'กรุณาเลือกสัปดาห์',
-                    confirmButtonText: 'ตกลง'
-                });
-                return;
-            }
-
-            params[viewTypeSelect.value === 'week' ? 'week_start' : 'month'] = 
-                viewTypeSelect.value === 'week' ? weekSelect.value : attendanceMonthPicker.value;
-
-            try {
-                const queryString = new URLSearchParams(params).toString();
-                const response = await fetch(`../../include/function/get_attendance_stats.php?${queryString}`);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                const data = await response.json();
-                updateAttendanceStats(data);
-            } catch (error) {
-                console.error('Error fetching attendance data:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถดึงข้อมูลได้',
-                    confirmButtonText: 'ตกลง'
-                });
-            }
-        }
-
-        // ฟังก์ชันอัพเดทการแสดงผลข้อมูล
-        function updateAttendanceStats(data) {
-            try {
-                // อัพเดทตัวเลขสถิติ
-                document.getElementById('totalDays').textContent = data.total_days || 0;
-                document.getElementById('presentCount').textContent = data.present_count || 0;
-                document.getElementById('absentCount').textContent = data.absent_count || 0;
-                document.getElementById('attendanceRate').textContent = `${data.attendance_rate || 0}%`;
-
-                const chartCanvas = document.getElementById('attendanceChart');
-                const noDataDiv = document.getElementById('noDataMessage') || (() => {
-                    const div = document.createElement('div');
-                    div.id = 'noDataMessage';
-                    div.className = 'alert alert-info text-center';
-                    document.getElementById('attendanceStatsContainer').appendChild(div);
-                    return div;
-                })();
-
-                // ถ้าไม่มีข้อมูล
-                if (data.no_data) {
-                    chartCanvas.style.display = 'none';
-                    noDataDiv.style.display = 'block';
-                    noDataDiv.textContent = data.message;
-                    return;
-                }
-
-                // มีข้อมูล
-                chartCanvas.style.display = 'block';
-                noDataDiv.style.display = 'none';
-
-                // อัพเดทกราฟ
-                if (attendanceChart) {
-                    attendanceChart.destroy();
-                }
-
-                attendanceChart = new Chart(chartCanvas, {
-                    type: 'bar',
-                    data: {
-                        labels: data.daily_stats.map(item => {
-                            const date = new Date(item.date);
-                            return date.toLocaleDateString('th-TH', {
-                                day: 'numeric',
-                                month: 'short'
-                            });
-                        }),
-                        datasets: [{
-                            label: 'มาเรียน',
-                            data: data.daily_stats.map(item => item.present_count),
-                            backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                            borderColor: 'rgb(75, 192, 192)',
-                            borderWidth: 1
-                        }, {
-                            label: 'ขาดเรียน',
-                            data: data.daily_stats.map(item => item.absent_count),
-                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                            borderColor: 'rgb(255, 99, 132)',
-                            borderWidth: 1
-                        }, {
-                            label: 'ลา',
-                            data: data.daily_stats.map(item => item.leave_count),
-                            backgroundColor: 'rgba(255, 205, 86, 0.5)',
-                            borderColor: 'rgb(255, 205, 86)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'จำนวนนักเรียน (คน)'
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'วันที่'
-                                }
-                            }
-                        },
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'สถิติการมาเรียนรายวัน'
-                            },
-                            legend: {
-                                position: 'bottom'
-                            }
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error('Error updating attendance stats:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถแสดงข้อมูลได้',
-                    confirmButtonText: 'ตกลง'
-                });
-            }
-        }
-
-        // Event listeners
-        viewTypeSelect.addEventListener('change', function() {
-            const isWeekView = this.value === 'week';
-            weekSelect.style.display = isWeekView ? 'block' : 'none';
-            if (isWeekView) {
-                generateWeekOptions(attendanceMonthPicker.value);
-            }
-        });
-
-        attendanceMonthPicker.addEventListener('change', function() {
-            if (viewTypeSelect.value === 'week') {
-                generateWeekOptions(this.value);
-            }
-        });
-
-        fetchDataBtn.addEventListener('click', fetchAttendanceData);
-
-        // เริ่มต้นสร้างกราฟหลัก
-        initializeMainCharts();
-    });
-    </script>
+</main>
 
 </body>
 </html>

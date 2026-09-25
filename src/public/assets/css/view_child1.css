@@ -216,9 +216,9 @@
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
-      padding: 7px 14px;
-      border-radius: var(--radius-sm);
-      font-size: 0.82rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 1rem;
       font-weight: 600;
       border: none;
       cursor: pointer;
@@ -260,8 +260,20 @@
     }
 
     .allergy-banner i { font-size: 1.25rem; color: #b45309; }
-    .allergy-banner strong { color: #92400e; font-size: 0.9rem; }
-    .allergy-banner span { font-size: 0.82rem; color: #78350f; }
+    .allergy-banner-content { min-width: 0; }
+    .allergy-banner strong {
+      display: block;
+      color: #92400e;
+      font-size: 0.9rem;
+      line-height: 1.35;
+      margin-bottom: 0.15rem;
+    }
+    .allergy-banner span {
+      display: block;
+      color: #78350f;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
 
     /* ===== Tab Navigation ===== */
     .tab-nav-wrap {
@@ -398,7 +410,7 @@
       font-size: 0.875rem;
       padding: 8px 12px;
       color: var(--gray-800);
-      background: #fff;
+      background-color: #fff;
       transition: var(--transition);
     }
 
@@ -410,10 +422,12 @@
 
     .form-control[readonly], .form-control:disabled,
     .form-select:disabled {
-      background: var(--gray-50);
+      background-color: var(--gray-50);
       color: var(--gray-500);
       border-color: var(--gray-200);
     }
+
+    .allergy-banner .fas { color: #d97706; }
 
     .input-group-text {
       background: var(--gray-50);
@@ -724,8 +738,7 @@
     .chart-card-body {
       padding: 1rem;
       height: 220px;
-      display: flex;
-      align-items: center;
+      position: relative;
       justify-content: center;
     }
 
@@ -893,22 +906,6 @@
       border-top: 1px solid var(--gray-100);
       padding: 1rem 1.5rem;
     }
-
-    /* ===== Edit Mode Indicator ===== */
-    .edit-mode-bar {
-      background: linear-gradient(135deg, #fef3c7, #fde68a);
-      border: 1px solid #f59e0b;
-      border-radius: var(--radius-md);
-      padding: 0.75rem 1.25rem;
-      margin-bottom: 1.25rem;
-      display: none;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .edit-mode-bar.show { display: flex; }
-    .edit-mode-bar i { color: #b45309; font-size: 1.1rem; }
-    .edit-mode-bar span { font-size: 0.85rem; color: #78350f; font-weight: 600; }
 
     /* CSS สำหรับจัดการการแพ้หลายรายการ */
 .allergy-list-container {

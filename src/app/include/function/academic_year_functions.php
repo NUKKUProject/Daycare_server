@@ -131,8 +131,10 @@ function deleteAcademicYear($id) {
     }
 }
 
-// จัดการการเรียกใช้ API
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// จัดการการเรียกใช้ API (ทำงานเฉพาะเมื่อเรียกไฟล์นี้โดยตรง)
+$isDirectAccess = (basename($_SERVER['SCRIPT_FILENAME']) === basename(__FILE__));
+
+if ($isDirectAccess && $_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
     
     // รับข้อมูล JSON จาก request
@@ -197,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // ถ้าเป็นการเรียก GET ให้ส่งข้อมูลปีการศึกษาทั้งหมด
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+if ($isDirectAccess && $_SERVER['REQUEST_METHOD'] === 'GET') {
     header('Content-Type: application/json');
     echo json_encode(getAcademicYears());
     exit;

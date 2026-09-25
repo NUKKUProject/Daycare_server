@@ -47,6 +47,22 @@ if ($data && isset($data['student_id'])) {
             throw new Exception("ไม่พบข้อมูลนักเรียนในระบบ");
         }
 
+        // ตรวจสอบ QR Code ว่ายังไม่หมดอายุ (ยกเว้นกรณีป้อนด้วยตนเอง)
+        if (empty($data['manual'])) {
+            $token_check = $pdo->prepare("
+                SELECT t.id FROM student_qr_tokens t
+                JOIN children c ON c.id = t.children_id
+                WHERE c.studentid = :student_id
+                  AND t.is_active = TRUE
+                  AND (t.expires_at IS NULL OR t.expires_at > NOW())
+                LIMIT 1
+            ");
+            $token_check->execute(['student_id' => $data['student_id']]);
+            if (!$token_check->fetch()) {
+                throw new Exception("QR Code หมดอายุหรือไม่ถูกต้อง กรุณาติดต่อออกบัตรใหม่");
+            }
+        }
+
 
         // ตรวจสอบว่ามีการบันทึกไปแล้วหรือไม่
         $check_stmt = $pdo->prepare("SELECT id FROM attendance WHERE student_id = :student_id AND DATE(check_date) = CURRENT_DATE");

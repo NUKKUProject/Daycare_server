@@ -793,6 +793,25 @@ SELECT pg_catalog.setval('public.vaccines_id_seq', 26, true);
 
 
 --
+-- Data for Name: card_templates; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.card_templates (id, name, description, header_color, layout_config, is_default, is_active, sort_order, created_at, updated_at) FROM stdin;
+1	บัตรมาตรฐาน	บัตรนักเรียนรูปแบบมาตรฐาน	#1E3A8A	{"show_name":true,"show_nickname":true,"show_classroom":true,"show_blood":false,"show_parent_phone":false,"show_allergy":false,"show_studentid":true}	t	t	0	2025-07-06 00:00:00	2025-07-06 00:00:00
+2	บัตรครบข้อมูล	แสดงข้อมูลนักเรียนครบทุกช่อง	#2563EB	{"show_name":true,"show_nickname":true,"show_classroom":true,"show_blood":true,"show_parent_phone":true,"show_allergy":true,"show_studentid":true}	f	t	1	2025-07-06 00:00:00	2025-07-06 00:00:00
+3	บัตรเรียบง่าย	เฉพาะชื่อ-สกุล + QR Code	#047857	{"show_name":true,"show_nickname":false,"show_classroom":false,"show_blood":false,"show_parent_phone":false,"show_allergy":false,"show_studentid":false}	f	t	2	2025-07-06 00:00:00	2025-07-06 00:00:00
+4	บัตรสีสันสดใส	ดีไซน์สีสันสดใส สำหรับเด็กเล็ก	#B91C1C	{"show_name":true,"show_nickname":true,"show_classroom":true,"show_blood":true,"show_parent_phone":false,"show_allergy":false,"show_studentid":true}	f	t	3	2025-07-06 00:00:00	2025-07-06 00:00:00
+\.
+
+
+--
+-- Name: card_templates_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.card_templates_id_seq', 4, true);
+
+
+--
 -- PostgreSQL database dump complete
 --
 

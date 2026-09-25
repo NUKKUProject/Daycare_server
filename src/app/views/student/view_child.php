@@ -12,8 +12,12 @@ $is_student = getUserRole() === 'student';
 $is_teacher = getUserRole() === 'teacher';
 // ดึงข้อมูลปีการศึกษาทั้งหมด
 $academicYears = getAcademicYears();
-// กำหนดค่า currentTab ตั้งแต่ต้น
-$currentTab = isset($_GET['tab']) ? $_GET['tab'] : 'profile';
+// กำหนดแท็บที่เปิดอยู่และป้องกันค่าที่ไม่อยู่ในรายการ
+$allowedTabs = ['profile', 'vaccine', 'attendance', 'health', 'growth'];
+$currentTab = $_GET['tab'] ?? 'profile';
+if (!in_array($currentTab, $allowedTabs, true)) {
+    $currentTab = 'profile';
+}
 
 // แก้ไขการตรวจสอบ studentid ที่ส่งมา
 $studentid = isset($_GET['studentid']) ? $_GET['studentid'] : null;
@@ -71,6 +75,320 @@ if (getUserRole() === 'student') {
 <style>
 .status-badge.status-late { background:#fef3c7;color:#d97706; }
 .status-badge.status-leave { background:#fef3c7;color:#d97706; }
+
+/* ── Detail View (checklist_history style) ── */
+.detail-container {
+    background: #FFFFFF;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+.detail-header {
+    background: linear-gradient(120deg, #2C3E50, #3498DB);
+    color: white;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+.detail-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100%;
+    background: linear-gradient(120deg, rgba(255,255,255,0.1), transparent);
+    transform: skewX(-30deg);
+}
+.detail-header h5 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: white;
+    position: relative;
+}
+.student-info p { margin-bottom: 0.35rem; font-size: 0.95rem; position: relative; z-index: 1; }
+.student-info p i { margin-right: 0.5rem; width: 1.2rem; text-align: center; }
+.detail-body { padding: 2rem; }
+.detail-section {
+    background: #F8FAFC;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #ECF0F1;
+    transition: all 0.3s ease;
+}
+.detail-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+.detail-icon {
+    color: #3498DB;
+    font-size: 1.2rem;
+    padding: 0.8rem;
+    background: rgba(52, 152, 219, 0.1);
+    border-radius: 10px;
+}
+.detail-content { flex: 1; }
+.detail-content h6 {
+    color: #2C3E50;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.detail-list { list-style: none; padding: 0; margin: 0; }
+.detail-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.5rem 0;
+    color: #34495E;
+}
+.detail-list li::before {
+    content: "•";
+    color: #3498DB;
+    font-size: 1.5rem;
+    line-height: 0;
+}
+.detail-note {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(52, 152, 219, 0.05);
+    border-left: 3px solid #3498DB;
+    border-radius: 0 10px 10px 0;
+    color: #34495E;
+    font-style: italic;
+}
+.detail-footer {
+    margin-top: 2rem;
+    padding: 2rem;
+    background: #F8FAFC;
+    border-radius: 15px;
+}
+.detail-signature {
+    text-align: right;
+    font-style: italic;
+    color: #34495E;
+}
+.detail-signature span {
+    display: inline-block;
+    padding: 0.8rem 1.5rem;
+    background: white;
+    border-radius: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+  /* ───────────────────────────────────────────
+       MODAL SHELL
+    ─────────────────────────────────────────── */
+    #healthDetailModal .modal-content {
+      border: none;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+    }
+
+    #healthDetailModal .modal-header {
+      background: linear-gradient(135deg, #1a2a4a 0%, #2563eb 100%);
+      padding: 1.4rem 1.75rem;
+      border: none;
+    }
+
+    #healthDetailModal .modal-footer {
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      padding: 1rem 1.75rem;
+    }
+
+    /* ───────────────────────────────────────────
+       SCROLLABLE BODY
+    ─────────────────────────────────────────── */
+    #healthDetailModal .modal-body {
+      padding: 0;
+      background: #f1f5f9;
+      max-height: 72vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 transparent;
+    }
+
+    #healthDetailModal .modal-body::-webkit-scrollbar { width: 6px; }
+    #healthDetailModal .modal-body::-webkit-scrollbar-track { background: transparent; }
+    #healthDetailModal .modal-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+
+    /* ───────────────────────────────────────────
+       DETAIL CONTAINER
+    ─────────────────────────────────────────── */
+    .hd-container { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+
+    /* ── Student info card ── */
+    .hd-info-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.6rem 1.25rem;
+    }
+
+    .hd-info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: #374151;
+    }
+
+    .hd-info-item i {
+      color: #2563eb;
+      font-size: 1rem;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+
+    .hd-info-item strong { color: #1e293b; }
+
+    /* ── Section wrapper ── */
+    .hd-section {
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .hd-section-title {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 1.25rem;
+      background: linear-gradient(90deg, #f0f7ff, #e8f0fe);
+      border-bottom: 1px solid #dbeafe;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #1e40af;
+      margin: 0;
+    }
+
+    .hd-section-title i { font-size: 1rem; }
+
+    /* ── Grid of check items ── */
+    .hd-items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      background: #f1f5f9;
+    }
+
+    .hd-item {
+      background: #fff;
+      padding: 1rem 1.25rem;
+      display: flex;
+      gap: 0.85rem;
+      align-items: flex-start;
+      transition: background 0.15s;
+    }
+
+    .hd-item:hover { background: #f8faff; }
+
+    /* ── Icon badge ── */
+    .hd-item-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #dbeafe, #ede9fe);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .hd-item-icon i { font-size: 1rem; color: #2563eb; }
+
+    /* ── Item body ── */
+    .hd-item-body { flex: 1; min-width: 0; }
+
+    .hd-item-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.3rem;
+    }
+
+    /* ── Tag pills for checked items ── */
+    .hd-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.4rem; }
+
+    .hd-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      border-radius: 99px;
+      padding: 0.18rem 0.65rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+
+    .hd-tag i { font-size: 0.7rem; }
+
+    .hd-tag.hd-tag-empty {
+      background: #f8fafc;
+      color: #94a3b8;
+      border-color: #e2e8f0;
+    }
+
+    /* ── Note chips ── */
+    .hd-notes { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.35rem; }
+
+    .hd-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4rem;
+      background: #fefce8;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.78rem;
+      color: #78350f;
+    }
+
+    .hd-note i { color: #d97706; font-size: 0.8rem; margin-top: 1px; flex-shrink: 0; }
+
+    /* ── Footer signature ── */
+    .hd-footer-sig {
+      background: #fff;
+      border-radius: 16px;
+      padding: 1rem 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.875rem;
+      color: #374151;
+      border-left: 4px solid #2563eb;
+    }
+
+    .hd-footer-sig i { color: #2563eb; font-size: 1.1rem; }
+
+    /* ───────────────────────────────────────────
+       RESPONSIVE TWEAKS
+    ─────────────────────────────────────────── */
+    @media (max-width: 576px) {
+      .hd-container { padding: 1rem; gap: 1rem; }
+      .hd-info-card { grid-template-columns: 1fr; }
+      .hd-items-grid { grid-template-columns: 1fr; }
+    }
 </style>
 
 <!-- ===== Page Wrapper ===== -->
@@ -115,80 +433,62 @@ if (getUserRole() === 'student') {
     </div>
 
     <!-- Profile Actions -->
-    <div class="profile-actions">
-        <?php if ($is_admin || $is_teacher): ?>
-            <button class="btn-action btn-export" id="btnExport">
-                <i class="bi bi-file-earmark-excel"></i><span>Export</span>
-            </button>
-        <?php endif; ?>
-        <?php if ($is_admin): ?>
-            <button class="btn-action btn-qr" onclick="generateQRCode('<?= htmlspecialchars($child['studentid']) ?>')">
-                <i class="bi bi-qr-code"></i><span>QR Code</span>
-            </button>
-            <button class="btn-action btn-edit" id="btnEdit">
-                <i class="bi bi-pencil"></i><span>แก้ไข</span>
-            </button>
-            <button class="btn-action btn-delete" id="btnDelete" onclick="confirmDelete('<?= htmlspecialchars($child['studentid']) ?>')">
-                <i class="bi bi-trash"></i><span>ลบ</span>
-            </button>
-        <?php endif; ?>
-    </div>
+    
 </div>
 
   <!-- Allergy Warning Banner -->
   <div class="allergy-banner" id="allergyBanner" style="display:none;">
     <i class="bi bi-exclamation-triangle-fill"></i>
-    <div>
-      <strong>⚠️ แจ้งเตือน: พบประวัติการแพ้</strong><br/>
+    <div class="allergy-banner-content">
+      <strong>แจ้งเตือน: พบประวัติการแพ้</strong>
       <span id="allergyText">กำลังโหลดข้อมูล...</span>
     </div>
   </div>
 
-  <!-- Edit Mode Bar -->
-  <div class="edit-mode-bar" id="editModeBar">
-    <i class="bi bi-pencil-square"></i>
-    <span>กำลังแก้ไขข้อมูล — กรุณาบันทึกหรือยกเลิกเมื่อเสร็จสิ้น</span>
-    <div style="margin-left:auto;display:flex;gap:0.5rem;">
-      <button class="btn-action btn-save" id="btnSave" style="padding:5px 12px;">
-        <i class="bi bi-check-lg"></i><span>บันทึก</span>
-      </button>
-      <button class="btn-action btn-cancel" id="btnCancel" style="padding:5px 12px;">
-        <i class="bi bi-x-lg"></i><span>ยกเลิก</span>
-      </button>
-    </div>
-  </div>
-
   <!-- ===== Tab Navigation ===== -->
-  <div class="tab-nav-wrap">
-    <button class="tab-btn active" data-tab="profile">
-      <i class="bi bi-person-badge"></i>
-      <span>ประวัติประจำตัว</span>
+    <div class="tab-nav-wrap">
+      <button class="tab-btn <?= $currentTab === 'profile' ? 'active' : '' ?>" data-tab="profile">
+        <i class="bi bi-person-badge"></i>
+        <span>ประวัติประจำตัว</span>
     </button>
-    <button class="tab-btn" data-tab="vaccine">
-      <i class="bi bi-shield-check"></i>
+    <button class="tab-btn <?= $currentTab === 'vaccine' ? 'active' : '' ?>" data-tab="vaccine">
+      <i class="fa-solid fa-syringe"></i>
       <span>วัคซีน</span>
     </button>
-    <button class="tab-btn" data-tab="attendance">
+    <button class="tab-btn <?= $currentTab === 'attendance' ? 'active' : '' ?>" data-tab="attendance">
       <i class="bi bi-calendar-check"></i>
       <span>การมาเรียน</span>
     </button>
-    <button class="tab-btn" data-tab="health">
-      <i class="bi bi-heart-pulse"></i>
+    <button class="tab-btn <?= $currentTab === 'health' ? 'active' : '' ?>" data-tab="health">
+      <i class="fa-solid fa-stethoscope"></i>
       <span>ตรวจร่างกาย</span>
     </button>
-    <button class="tab-btn" data-tab="growth">
+    <button class="tab-btn <?= $currentTab === 'growth' ? 'active' : '' ?>" data-tab="growth">
       <i class="bi bi-graph-up"></i>
       <span>การเจริญเติบโต</span>
     </button>
   </div>
 
   <!-- ===== TAB: PROFILE ===== -->
-  <div id="tab-profile" class="tab-content-pane">
+  <div id="tab-profile" class="tab-content-pane" style="<?= $currentTab === 'profile' ? '' : 'display:none;' ?>">
     <div class="content-card">
       <div class="content-card-header">
         <div class="section-title">
           <i class="bi bi-person-circle icon-primary" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;"></i>
           ข้อมูลประวัติประจำตัว
+        </div>
+        <div class="profile-actions">
+        <?php if ($is_admin || $is_teacher): ?>
+            <button class="btn-action btn-edit" id="btnEdit">
+                <i class="bi bi-pencil"></i><span>แก้ไข</span>
+            </button>
+            <button class="btn-action btn-save" id="btnSave" style="display:none;">
+                <i class="bi bi-check-lg"></i><span>บันทึก</span>
+            </button>
+            <button class="btn-action btn-cancel" id="btnCancel" style="display:none;">
+                <i class="bi bi-x-lg"></i><span>ยกเลิก</span>
+            </button>      
+        <?php endif; ?>
         </div>
       </div>
       <div class="content-card-body">
@@ -206,13 +506,22 @@ if (getUserRole() === 'student') {
             <img id="profilePreview"
               src="<?= !empty($child['profile_image']) ? htmlspecialchars($child['profile_image']) : '../../../public/assets/images/avatar.png' ?>"
               class="rounded-3 mb-2"
-              style="width:100%;max-width:120px;height:120px;object-fit:cover;border:2px solid var(--gray-200);"
+              style="width:100%;max-width:200px;height:20กดคำ0px;object-fit:cover;border:2px solid var(--gray-200);"
               alt="Profile" />
             <div id="imageUploadWrap" style="display:none;">
-              <label class="btn-action btn-cancel w-100 justify-content-center" style="cursor:pointer;font-size:0.75rem;padding:5px 8px;">
-                <i class="bi bi-camera"></i> เปลี่ยนรูป
-                <input type="file" name="profile_image" accept="image/*" style="display:none;" id="profileImageInput" />
-              </label>
+              <div class="d-flex gap-2 justify-content-center flex-wrap">
+                <button type="button" class="btn-action btn-cancel" id="takeProfilePhoto"
+                        style="font-size:0.75rem;padding:5px 8px;">
+                  <i class="bi bi-camera-fill"></i> ถ่ายรูป
+                </button>
+                <button type="button" class="btn-action btn-cancel" id="uploadProfilePhoto"
+                        style="font-size:0.75rem;padding:5px 8px;">
+                  <i class="bi bi-upload"></i> อัปโหลดรูป
+                </button>
+              </div>
+              <input type="file" name="profile_image" accept="image/*" style="display:none;"
+                     id="profileImageInput" />
+              <small class="d-block text-muted mt-1">รองรับ JPG, PNG, GIF, WEBP ขนาดไม่เกิน 5MB</small>
             </div>
           </div>
 
@@ -225,7 +534,7 @@ if (getUserRole() === 'student') {
               </div>
               <div class="col-md-3">
                 <label class="form-label">ปีการศึกษา</label>
-                <select class="form-select" name="academic_year" id="academic_year" <?= !$is_admin ? 'disabled' : '' ?>>
+                <select class="form-select" name="academic_year" id="academic_year" disabled>
                   <?php foreach ($academicYears as $year): ?>
                     <option value="<?= htmlspecialchars($year['name']) ?>" <?= ($child['academic_year'] ?? '') == $year['name'] ? 'selected' : '' ?>>
                       <?= htmlspecialchars($year['name']) ?>
@@ -235,7 +544,7 @@ if (getUserRole() === 'student') {
               </div>
               <div class="col-md-3">
                 <label class="form-label">กลุ่มเด็ก</label>
-                <select class="form-select" name="child_group" id="child_group" <?= !$is_admin ? 'disabled' : '' ?>>
+                <select class="form-select" name="child_group" id="child_group" disabled>
                   <option value="เด็กกลาง" <?= ($child['child_group'] ?? '') === 'เด็กกลาง' ? 'selected' : '' ?>>เด็กกลาง</option>
                   <option value="เด็กโต" <?= ($child['child_group'] ?? '') === 'เด็กโต' ? 'selected' : '' ?>>เด็กโต</option>
                   <option value="เตรียมอนุบาล" <?= ($child['child_group'] ?? '') === 'เตรียมอนุบาล' ? 'selected' : '' ?>>เตรียมอนุบาล</option>
@@ -243,7 +552,7 @@ if (getUserRole() === 'student') {
               </div>
               <div class="col-md-3">
                 <label class="form-label">ห้องเรียน</label>
-                <select class="form-select" name="classroom" id="classroom" <?= !$is_admin ? 'disabled' : '' ?>>
+                <select class="form-select" name="classroom" id="classroom" disabled>
                   <option value="<?= htmlspecialchars($child['classroom']) ?>" selected>
                     <?= htmlspecialchars($child['classroom']) ?>
                   </option>
@@ -303,7 +612,7 @@ if (getUserRole() === 'student') {
           </div>
            <div class="col-md-2">
              <label class="form-label">เพศ</label>
-             <select class="form-select" name="sex" readonly>
+             <select class="form-select" name="sex" disabled>
                <option value="ชาย" <?= ($child['sex'] ?? '') === 'ชาย' ? 'selected' : '' ?>>ชาย</option>
                <option value="หญิง" <?= ($child['sex'] ?? '') === 'หญิง' ? 'selected' : '' ?>>หญิง</option>
                <option value="อื่นๆ" <?= ($child['sex'] ?? '') === 'อื่นๆ' ? 'selected' : '' ?>>อื่นๆ</option>
@@ -323,7 +632,7 @@ if (getUserRole() === 'student') {
           </div>
            <div class="col-md-2">
              <label class="form-label">กรุ๊ปเลือด</label>
-             <select class="form-select" name="blood_type" readonly>
+             <select class="form-select" name="blood_type" disabled>
                <option value="">เลือกกรุ๊ปเลือด</option>
                <option value="A" <?= ($child['blood_type'] ?? '') === 'A' ? 'selected' : '' ?>>A</option>
                <option value="B" <?= ($child['blood_type'] ?? '') === 'B' ? 'selected' : '' ?>>B</option>
@@ -362,7 +671,14 @@ if (getUserRole() === 'student') {
           <div class="col-md-4">
             <div class="parent-card">
               <div class="parent-card-header">
-                <img src="<?= !empty($child['father_image']) ? htmlspecialchars($child['father_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Father" class="parent-avatar" />
+                <div class="parent-photo-editor text-center">
+                  <img id="fatherImagePreview" src="<?= !empty($child['father_image']) ? htmlspecialchars($child['father_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Father" class="parent-avatar" style="width:80px;height:80px;" />
+                  <div id="fatherImageUploadWrap" class="mt-1" style="display:none;">
+                    <button type="button" class="btn-action btn-cancel" data-parent-camera="father" style="font-size:0.7rem;padding:3px 6px;" title="ถ่ายรูปบิดา"><i class="bi bi-camera-fill"></i> ถ่ายรูป</button>
+                    <button type="button" class="btn-action btn-cancel" data-parent-upload="father" style="font-size:0.7rem;padding:3px 6px;" title="อัปโหลดรูปบิดา"><i class="bi bi-upload"></i> อัปโหลด</button>
+                    <input type="file" name="father_image" id="fatherImageInput" accept="image/*" style="display:none;">
+                  </div>
+                </div>
                 <div>
                   <div class="parent-card-title"><i class="bi bi-person me-1"></i>บิดา</div>
                   <div class="parent-card-subtitle">Father</div>
@@ -395,7 +711,14 @@ if (getUserRole() === 'student') {
           <div class="col-md-4">
             <div class="parent-card">
               <div class="parent-card-header">
-                <img src="<?= !empty($child['mother_image']) ? htmlspecialchars($child['mother_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Mother" class="parent-avatar" />
+                <div class="parent-photo-editor text-center">
+                  <img id="motherImagePreview" src="<?= !empty($child['mother_image']) ? htmlspecialchars($child['mother_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Mother" class="parent-avatar" style="width:80px;height:80px;" />
+                  <div id="motherImageUploadWrap" class="mt-1" style="display:none;">
+                    <button type="button" class="btn-action btn-cancel" data-parent-camera="mother" style="font-size:0.7rem;padding:3px 6px;" title="ถ่ายรูปมารดา"><i class="bi bi-camera-fill"></i> ถ่ายรูป</button>
+                    <button type="button" class="btn-action btn-cancel" data-parent-upload="mother" style="font-size:0.7rem;padding:3px 6px;" title="อัปโหลดรูปมารดา"><i class="bi bi-upload"></i> อัปโหลด</button>
+                    <input type="file" name="mother_image" id="motherImageInput" accept="image/*" style="display:none;">
+                  </div>
+                </div>
                 <div>
                   <div class="parent-card-title"><i class="bi bi-person me-1"></i>มารดา</div>
                   <div class="parent-card-subtitle">Mother</div>
@@ -424,14 +747,14 @@ if (getUserRole() === 'student') {
             </div>
           </div>
 
-          <!-- ญาติ -->
+          <!-- ผู้ปกครอง/ผู้ดูแล -->
           <div class="col-md-4">
             <div class="parent-card">
               <div class="parent-card-header">
-                <img src="<?= !empty($child['relative_image']) ? htmlspecialchars($child['relative_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Relative" class="parent-avatar" />
+                <img src="<?= !empty($child['relative_image']) ? htmlspecialchars($child['relative_image']) : '../../../public/assets/images/avatar.png' ?>" alt="ผู้ปกครอง/ผู้ดูแล" class="parent-avatar" style="width:80px;height:80px;" />
                 <div>
-                  <div class="parent-card-title"><i class="bi bi-person me-1"></i>ญาติ</div>
-                  <div class="parent-card-subtitle">Relative</div>
+                  <div class="parent-card-title"><i class="bi bi-person me-1"></i>ผู้ปกครอง/ผู้ดูแล</div>
+                  <div class="parent-card-subtitle">Guardian</div>
                 </div>
               </div>
               <div class="parent-card-body">
@@ -460,7 +783,7 @@ if (getUserRole() === 'student') {
 
         <!-- ข้อมูลสุขภาพ / การแพ้ -->
         <div class="section-divider">
-          <span class="section-divider-title"><i class="bi bi-heart-pulse me-1"></i>ข้อมูลสุขภาพและการแพ้</span>
+          <span class="section-divider-title"><i class="fa-solid fa-stethoscope me-1"></i>ข้อมูลสุขภาพและการแพ้</span>
           <div class="section-divider-line"></div>
         </div>
 
@@ -548,20 +871,68 @@ if (getUserRole() === 'student') {
           </div>
         </div>
 
-        </form>
+        <!-- Bottom Profile Actions -->
+        </form> <div class="profile-actions-bottom" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-200); text-align: center;">
+          <?php if ($is_admin || $is_teacher): ?>
+              <button class="btn-action btn-edit" id="btnEditBottom">
+                  <i class="bi bi-pencil"></i><span>แก้ไข</span>
+              </button>
+              <button class="btn-action btn-save" id="btnSaveBottom" style="display:none;">
+                  <i class="bi bi-check-lg"></i><span>บันทึก</span>
+              </button>
+              <button class="btn-action btn-cancel" id="btnCancelBottom" style="display:none;">
+                  <i class="bi bi-x-lg"></i><span>ยกเลิก</span>
+              </button>      
+          <?php endif; ?>
+        </div>
       </div><!-- end card-body -->
     </div><!-- end content-card -->
   </div>
 
+  <!-- Modal ถ่ายรูปโปรไฟล์ด้วยกล้องจริง -->
+  <div class="modal fade" id="profileCameraModal" tabindex="-1" aria-labelledby="profileCameraModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="profileCameraModalLabel">
+            <i class="bi bi-camera-fill me-2"></i>ถ่ายรูปนักเรียน
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="ปิด"></button>
+        </div>
+          <div class="modal-body text-center">
+            <video id="profileCameraVideo" class="w-100 rounded-3 bg-dark" autoplay playsinline
+                   style="max-height:55vh;object-fit:cover;"></video>
+            <canvas id="profileCameraCanvas" class="d-none"></canvas>
+            <div id="profileCameraError" class="alert alert-warning mt-3 mb-0" style="display:none;"></div>
+            <div id="profileCameraZoomWrap" class="mt-3" style="display:none;">
+              <label for="profileCameraZoom" class="form-label mb-1">
+                <i class="bi bi-zoom-in me-1"></i>ซูม <span id="profileCameraZoomValue">1.0x</span>
+              </label>
+              <input type="range" class="form-range" id="profileCameraZoom" step="0.1">
+            </div>
+            <div class="small text-muted mt-2">กรุณาอนุญาตให้เว็บไซต์เข้าถึงกล้อง</div>
+          </div>
+        <div class="modal-footer justify-content-center">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+          <button type="button" class="btn btn-outline-primary" id="switchProfileCamera">
+            <i class="bi bi-arrow-repeat me-1"></i>สลับกล้อง
+          </button>
+          <button type="button" class="btn btn-primary" id="captureProfilePhoto">
+            <i class="bi bi-camera-fill me-1"></i>ถ่ายภาพ
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   
 
   <!-- ===== TAB: VACCINE ===== -->
-  <div id="tab-vaccine" class="tab-content-pane" style="display:none;">
+  <div id="tab-vaccine" class="tab-content-pane" style="<?= $currentTab === 'vaccine' ? '' : 'display:none;' ?>">
     <div class="content-card">
       <div class="content-card-header">
         <div class="section-title">
-          <i class="bi bi-shield-check icon-success" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;"></i>
+          <i class="fa-solid fa-syringe icon-success" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;"></i>
           ประวัติการฉีดวัคซีน
         </div>
         <?php if ($is_admin): ?>
@@ -643,7 +1014,7 @@ if (getUserRole() === 'student') {
 
               <div class="mb-4">
                 <label class="form-label fw-bold">
-                  <i class="bi bi-shield-fill-check me-2"></i>ชื่อวัคซีน
+                  <i class="fa-solid fa-syringe me-2"></i>ชื่อวัคซีน
                 </label>
                 <div class="input-group input-group-lg shadow-sm">
                   <span class="input-group-text bg-light">
@@ -745,7 +1116,7 @@ if (getUserRole() === 'student') {
         <div class="modal-content">
           <div class="modal-header bg-primary text-white">
             <h5 class="modal-title" id="vaccineModalLabel">
-              <i class="bi bi-shield-fill-check me-2"></i>บันทึกการฉีดวัคซีน
+              <i class="fa-solid fa-syringe me-2"></i>บันทึกการฉีดวัคซีน
             </h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
@@ -932,7 +1303,7 @@ if (getUserRole() === 'student') {
   </div>
 
   <!-- ===== TAB: ATTENDANCE ===== -->
-  <div id="tab-attendance" class="tab-content-pane" style="display:none;">
+  <div id="tab-attendance" class="tab-content-pane" style="<?= $currentTab === 'attendance' ? '' : 'display:none;' ?>">
     <div class="content-card">
       <div class="content-card-header">
         <div class="section-title">
@@ -998,11 +1369,11 @@ if (getUserRole() === 'student') {
   </div>
 
   <!-- ===== TAB: HEALTH ===== -->
-  <div id="tab-health" class="tab-content-pane" style="display:none;">
+  <div id="tab-health" class="tab-content-pane" style="<?= $currentTab === 'health' ? '' : 'display:none;' ?>">
     <div class="content-card">
       <div class="content-card-header">
         <div class="section-title">
-          <i class="bi bi-heart-pulse icon-danger" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;"></i>
+          <i class="fa-solid fa-stethoscope icon-danger" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;"></i>
           ประวัติการตรวจร่างกาย
         </div>
       </div>
@@ -1018,23 +1389,8 @@ if (getUserRole() === 'student') {
                 <th>จัดการ</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td style="font-size:0.82rem;color:var(--gray-600);">3 มิ.ย. 2567 08:00 น.</td>
-                <td>
-                  <div class="d-flex flex-wrap gap-1">
-                    <span class="status-badge" style="background:#dcfce7;color:#15803d;"><i class="bi bi-check"></i> ผม/ศีรษะ: สะอาด</span>
-                    <span class="status-badge" style="background:#dcfce7;color:#15803d;"><i class="bi bi-check"></i> ตา: ปกติ</span>
-                    <span class="status-badge" style="background:#fee2e2;color:#b91c1c;"><i class="bi bi-exclamation"></i> จมูก: มีน้ำมูก</span>
-                  </div>
-                </td>
-                <td style="font-size:0.85rem;">ครูสมหวัง</td>
-                <td>
-                  <div class="d-flex gap-1">
-                    <button class="icon-btn icon-btn-view" title="ดูรายละเอียด"><i class="bi bi-eye"></i></button>
-                  </div>
-                </td>
-              </tr>
+            <tbody id="healthTableBody">
+              <tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-hourglass-split me-2"></i>คลิกแท็บเพื่อโหลดข้อมูล</td></tr>
             </tbody>
           </table>
         </div>
@@ -1043,33 +1399,33 @@ if (getUserRole() === 'student') {
   </div>
 
   <!-- ===== TAB: GROWTH ===== -->
-  <div id="tab-growth" class="tab-content-pane" style="display:none;">
+  <div id="tab-growth" class="tab-content-pane" style="<?= $currentTab === 'growth' ? '' : 'display:none;' ?>">
 
     <!-- Growth Stats -->
     <div class="growth-stats">
       <div class="growth-stat-card">
-        <div class="growth-stat-value"><?= htmlspecialchars($child['weight'] ?? '0') ?></div>
+        <div class="growth-stat-value" id="growth-weight-val">-</div>
         <div class="growth-stat-unit">กก.</div>
         <div class="growth-stat-label">น้ำหนัก</div>
-        <span class="growth-stat-status" style="background:#dcfce7;color:#15803d;">สมส่วน</span>
+        <span class="growth-stat-status" id="growth-weight-status">รอข้อมูล</span>
       </div>
       <div class="growth-stat-card">
-        <div class="growth-stat-value"><?= htmlspecialchars($child['height'] ?? '0') ?></div>
+        <div class="growth-stat-value" id="growth-height-val">-</div>
         <div class="growth-stat-unit">ซม.</div>
         <div class="growth-stat-label">ส่วนสูง</div>
-        <span class="growth-stat-status" style="background:#dcfce7;color:#15803d;">ตามเกณฑ์</span>
+        <span class="growth-stat-status" id="growth-height-status">รอข้อมูล</span>
       </div>
       <div class="growth-stat-card">
-        <div class="growth-stat-value">50.2</div>
+        <div class="growth-stat-value" id="growth-head-val">-</div>
         <div class="growth-stat-unit">ซม.</div>
         <div class="growth-stat-label">เส้นรอบศีรษะ</div>
-        <span class="growth-stat-status" style="background:#dcfce7;color:#15803d;">ปกติ</span>
+        <span class="growth-stat-status" id="growth-head-status">รอข้อมูล</span>
       </div>
       <div class="growth-stat-card">
-        <div class="growth-stat-value">15.9</div>
+        <div class="growth-stat-value" id="growth-bmi-val">-</div>
         <div class="growth-stat-unit">BMI</div>
         <div class="growth-stat-label">ดัชนีมวลกาย</div>
-        <span class="growth-stat-status" style="background:#dcfce7;color:#15803d;">ปกติ</span>
+        <span class="growth-stat-status" id="growth-bmi-status">รอข้อมูล</span>
       </div>
     </div>
 
@@ -1090,32 +1446,8 @@ if (getUserRole() === 'student') {
               <th>หมายเหตุ</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td><i class="bi bi-person-walking me-2" style="color:var(--primary);"></i>การเคลื่อนไหว (GM)</td>
-              <td><span class="dev-pass"><i class="bi bi-check-circle-fill me-1"></i>ผ่าน</span></td>
-              <td style="font-size:0.78rem;color:var(--gray-400);">-</td>
-            </tr>
-            <tr>
-              <td><i class="bi bi-hand-index me-2" style="color:var(--info);"></i>กล้ามเนื้อมัดเล็กและสติปัญญา (FM)</td>
-              <td><span class="dev-pass"><i class="bi bi-check-circle-fill me-1"></i>ผ่าน</span></td>
-              <td style="font-size:0.78rem;color:var(--gray-400);">-</td>
-            </tr>
-            <tr>
-              <td><i class="bi bi-ear me-2" style="color:var(--success);"></i>การเข้าใจภาษา (RL)</td>
-              <td><span class="dev-delay"><i class="bi bi-exclamation-triangle-fill me-1"></i>สงสัยล่าช้า</span></td>
-              <td style="font-size:0.78rem;color:var(--warning);">ข้อที่ 3</td>
-            </tr>
-            <tr>
-              <td><i class="bi bi-chat-dots me-2" style="color:var(--warning);"></i>การใช้ภาษา (EL)</td>
-              <td><span class="dev-pass"><i class="bi bi-check-circle-fill me-1"></i>ผ่าน</span></td>
-              <td style="font-size:0.78rem;color:var(--gray-400);">-</td>
-            </tr>
-            <tr>
-              <td><i class="bi bi-people me-2" style="color:var(--danger);"></i>การช่วยเหลือตัวเองและสังคม (PS)</td>
-              <td><span class="dev-pass"><i class="bi bi-check-circle-fill me-1"></i>ผ่าน</span></td>
-              <td style="font-size:0.78rem;color:var(--gray-400);">-</td>
-            </tr>
+          <tbody id="growth-dev-body">
+            <tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-hourglass-split me-2"></i>รอข้อมูล</td></tr>
           </tbody>
         </table>
       </div>
@@ -1135,33 +1467,17 @@ if (getUserRole() === 'student') {
           <table class="data-table">
             <thead>
               <tr>
-                <th>วันที่บันทึก</th>
+                <th>วันที่ตรวจ</th>
                 <th>อายุ</th>
                 <th>น้ำหนัก</th>
                 <th>ส่วนสูง</th>
                 <th>เส้นรอบศีรษะ</th>
+                <th>BMI</th>
                 <th>ผลประเมิน</th>
-                <th>จัดการ</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td style="font-size:0.82rem;color:var(--gray-600);">3 มิ.ย. 2567</td>
-                <td style="font-size:0.82rem;">4 ปี 2 เดือน</td>
-                <td><strong><?= htmlspecialchars($child['weight'] ?? '-') ?></strong> <span style="font-size:0.75rem;color:var(--gray-400);">กก.</span></td>
-                <td><strong><?= htmlspecialchars($child['height'] ?? '-') ?></strong> <span style="font-size:0.75rem;color:var(--gray-400);">ซม.</span></td>
-                <td><strong>50.2</strong> <span style="font-size:0.75rem;color:var(--gray-400);">ซม.</span></td>
-                <td>
-                  <button class="btn-action btn-save" style="padding:4px 10px;font-size:0.75rem;" onclick="showGrowthDetailModal()">
-                    <i class="bi bi-bar-chart"></i><span>ดูผล</span>
-                  </button>
-                </td>
-                <td>
-                  <div class="d-flex gap-1">
-                    <button class="icon-btn icon-btn-edit" title="แก้ไข"><i class="bi bi-pencil"></i></button>
-                  </div>
-                </td>
-              </tr>
+            <tbody id="growth-history-body">
+              <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-hourglass-split me-2"></i>คลิกแท็บเพื่อโหลดข้อมูล</td></tr>
             </tbody>
           </table>
         </div>
@@ -1173,7 +1489,6 @@ if (getUserRole() === 'student') {
       <div class="chart-card">
         <div class="chart-card-header">
           <div class="chart-card-title"><i class="bi bi-bar-chart me-1"></i>น้ำหนักตามเกณฑ์อายุ</div>
-          <button class="icon-btn icon-btn-view" title="ขยาย"><i class="bi bi-arrows-fullscreen"></i></button>
         </div>
         <div class="chart-card-body">
           <canvas id="chartWeight"></canvas>
@@ -1182,10 +1497,17 @@ if (getUserRole() === 'student') {
       <div class="chart-card">
         <div class="chart-card-header">
           <div class="chart-card-title"><i class="bi bi-bar-chart me-1"></i>ส่วนสูงตามเกณฑ์อายุ</div>
-          <button class="icon-btn icon-btn-view" title="ขยาย"><i class="bi bi-arrows-fullscreen"></i></button>
         </div>
         <div class="chart-card-body">
           <canvas id="chartHeight"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div class="chart-card-title"><i class="bi bi-bar-chart me-1"></i>BMI ตามเกณฑ์อายุ</div>
+        </div>
+        <div class="chart-card-body">
+          <canvas id="chartBMI"></canvas>
         </div>
       </div>
     </div>
@@ -1276,7 +1598,7 @@ if (getUserRole() === 'student') {
 <div class="modal fade" id="attendanceDetailModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0" style="border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-      <div class="modal-header border-0" style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);padding:1.25rem 1.75rem;">
+      <div class="modal-header border-0" style="background:linear-gradient(135deg,#0f2460 0%,#1a3a8f 60%,#1e4db7 100%);padding:1.25rem 1.75rem;">
         <h5 class="modal-title text-white fw-bold"><i class="bi bi-calendar-check me-2"></i>รายละเอียดการมาเรียน</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
@@ -1379,7 +1701,7 @@ if (getUserRole() === 'student') {
         </div>
       </div>
       <div class="modal-footer border-0" style="background:#f0f2f5;padding:1rem 1.75rem;">
-        <button type="button" class="btn px-4 fw-semibold" style="border-radius:8px;background:#1a1a2e;color:#fff;border:none;" data-bs-dismiss="modal">
+        <button type="button" class="btn px-4 fw-semibold" style="border-radius:8px;background:linear-gradient(135deg,#0f2460 0%,#1a3a8f 60%,#1e4db7 100%);color:#fff;border:none;" data-bs-dismiss="modal">
           <i class="bi bi-x-circle me-2"></i>ปิด
         </button>
       </div>
@@ -1395,54 +1717,8 @@ if (getUserRole() === 'student') {
         <h5 class="modal-title"><i class="bi bi-graph-up me-2 text-primary"></i>รายละเอียดการเจริญเติบโต</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <div style="background:var(--gray-50);border-radius:var(--radius-md);padding:1rem;">
-              <div style="font-size:0.8rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;margin-bottom:0.75rem;">ข้อมูลการวัด</div>
-              <div class="info-row">
-                <div class="info-row-icon"><i class="bi bi-calendar3"></i></div>
-                <div class="info-row-label">วันที่บันทึก</div>
-                <div class="info-row-value">3 มิถุนายน 2567</div>
-              </div>
-              <div class="info-row">
-                <div class="info-row-icon"><i class="bi bi-clock"></i></div>
-                <div class="info-row-label">อายุ</div>
-                <div class="info-row-value">4 ปี 2 เดือน 18 วัน</div>
-              </div>
-              <div class="info-row">
-                <div class="info-row-icon"><i class="bi bi-arrow-up-circle"></i></div>
-                <div class="info-row-label">น้ำหนัก</div>
-                <div class="info-row-value"><?= htmlspecialchars($child['weight'] ?? '-') ?> กก.</div>
-              </div>
-              <div class="info-row">
-                <div class="info-row-icon"><i class="bi bi-arrow-up"></i></div>
-                <div class="info-row-label">ส่วนสูง</div>
-                <div class="info-row-value"><?= htmlspecialchars($child['height'] ?? '-') ?> ซม.</div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div style="background:var(--gray-50);border-radius:var(--radius-md);padding:1rem;">
-              <div style="font-size:0.8rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;margin-bottom:0.75rem;">ผลการประเมิน</div>
-              <div class="info-row">
-                <div class="info-row-icon"><i class="bi bi-clipboard-check"></i></div>
-                <div class="info-row-label">น้ำหนักตามอายุ</div>
-                <div class="info-row-value" style="color:var(--success);font-weight:700;">สมส่วน</div>
-              </div>
-              <div class="info-row">
-                <div class="info-row-icon"><i class="bi bi-clipboard-check"></i></div>
-                <div class="info-row-label">ส่วนสูงตามอายุ</div>
-                <div class="info-row-value" style="color:var(--success);font-weight:700;">ตามเกณฑ์</div>
-              </div>
-              <div class="info-row">
-                <div class="info-row-icon"><i class="bi bi-clipboard-check"></i></div>
-                <div class="info-row-label">เส้นรอบศีรษะ</div>
-                <div class="info-row-value" style="color:var(--success);font-weight:700;">ปกติ</div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="modal-body" id="growthDetailContent">
+        <div style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-hourglass-split me-2"></i>กำลังโหลด...</div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-action btn-cancel" data-bs-dismiss="modal">
@@ -1453,15 +1729,105 @@ if (getUserRole() === 'student') {
   </div>
 </div>
 
+<!-- ===== Modal: Health Detail ===== -->
+<div class="modal fade" id="healthDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-white fw-bold d-flex align-items-center gap-2">
+          <i class="fa-solid fa-stethoscope"></i> รายละเอียดการตรวจร่างกาย
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div id="healthDetailContent"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button"
+          class="btn px-4 fw-semibold"
+          style="border-radius:10px;background:linear-gradient(135deg,#1a2a4a,#2563eb);color:#fff;border:none;"
+          data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-2"></i>ปิด
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- Scripts -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD" crossorigin="anonymous"></script>
 
 <script>
 (function () {
   'use strict';
 
   const studentId = '<?= addslashes(htmlspecialchars($studentid)) ?>';
+
+  /* ── Child group / classroom ── */
+  const childGroupSelect = document.getElementById('child_group');
+  const classroomSelect = document.getElementById('classroom');
+  let classroomRequestId = 0;
+  let profileEditMode = false;
+
+  async function loadClassroomsByGroup() {
+    if (!childGroupSelect || !classroomSelect) return;
+
+    const childGroup = childGroupSelect.value;
+    const requestId = ++classroomRequestId;
+    const previouslySelected = classroomSelect.value;
+
+    classroomSelect.innerHTML = '<option value="">กำลังโหลดห้องเรียน...</option>';
+    classroomSelect.disabled = true;
+
+    try {
+      const response = await fetch(
+        `../../include/function/get_classrooms.php?child_group=${encodeURIComponent(childGroup)}`
+      );
+      if (!response.ok) {
+        throw new Error('ไม่สามารถโหลดข้อมูลห้องเรียนได้');
+      }
+
+      const classrooms = await response.json();
+      // ป้องกันผลลัพธ์จาก request เก่าทับข้อมูล เมื่อเปลี่ยนกลุ่มอย่างรวดเร็ว
+      if (requestId !== classroomRequestId) return;
+      if (!Array.isArray(classrooms)) {
+        throw new Error('รูปแบบข้อมูลห้องเรียนไม่ถูกต้อง');
+      }
+
+      classroomSelect.innerHTML = '';
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = classrooms.length ? '-- เลือกห้องเรียน --' : '-- ไม่พบห้องเรียน --';
+      classroomSelect.appendChild(placeholder);
+
+      classrooms.forEach((classroom) => {
+        const option = document.createElement('option');
+        option.value = classroom.classroom_name;
+        option.textContent = classroom.classroom_name;
+        if (classroom.classroom_name === previouslySelected) {
+          option.selected = true;
+        }
+        classroomSelect.appendChild(option);
+      });
+      classroomSelect.disabled = !profileEditMode;
+    } catch (error) {
+      if (requestId !== classroomRequestId) return;
+      classroomSelect.innerHTML = '<option value="">-- โหลดห้องเรียนไม่สำเร็จ --</option>';
+      classroomSelect.disabled = !profileEditMode;
+      console.error('Failed to load classrooms:', error);
+      if (typeof showToast === 'function') {
+        showToast('error', error.message || 'ไม่สามารถโหลดห้องเรียนได้');
+      }
+    }
+  }
+
+  if (childGroupSelect) {
+    childGroupSelect.addEventListener('change', loadClassroomsByGroup);
+  }
 
   /* ── Tab Switching ── */
   const tabBtns = document.querySelectorAll('.tab-btn');
@@ -1486,8 +1852,14 @@ if (getUserRole() === 'student') {
   const btnEdit   = document.getElementById('btnEdit');
   const btnSave   = document.getElementById('btnSave');
   const btnCancel = document.getElementById('btnCancel');
-  const editBar   = document.getElementById('editModeBar');
+  const btnEditBottom   = document.getElementById('btnEditBottom');
+  const btnSaveBottom   = document.getElementById('btnSaveBottom');
+  const btnCancelBottom = document.getElementById('btnCancelBottom');
   const imageWrap = document.getElementById('imageUploadWrap');
+  const parentImageWraps = [
+    document.getElementById('fatherImageUploadWrap'),
+    document.getElementById('motherImageUploadWrap')
+  ];
   const editAllergyBtns = [
     document.getElementById('btnEditDrugAllergy'),
     document.getElementById('btnEditFoodAllergy')
@@ -1500,18 +1872,32 @@ if (getUserRole() === 'student') {
   }
 
   function enterEditMode() {
+    profileEditMode = true;
     getEditableFields().forEach(el => {
       el.removeAttribute('readonly');
       el.removeAttribute('disabled');
     });
-    editBar.classList.add('show');
     imageWrap.style.display = 'block';
+    parentImageWraps.forEach(wrap => { if (wrap) wrap.style.display = 'block'; });
     editAllergyBtns.forEach(b => { if (b) b.style.display = 'flex'; });
-    btnEdit.style.display = 'none';
+    
+    // Hide top edit buttons, show top save/cancel
+    if (btnEdit) btnEdit.style.display = 'none';
+    if (btnSave) btnSave.style.display = 'inline-flex';
+    if (btnCancel) btnCancel.style.display = 'inline-flex';
+    
+    // Hide bottom edit buttons, show bottom save/cancel
+    if (btnEditBottom) btnEditBottom.style.display = 'none';
+    if (btnSaveBottom) btnSaveBottom.style.display = 'inline-flex';
+    if (btnCancelBottom) btnCancelBottom.style.display = 'inline-flex';
+    
     showToast('info', 'โหมดแก้ไขเปิดใช้งานแล้ว');
   }
 
   function exitEditMode(save) {
+    profileEditMode = false;
+    // ทำให้ผลลัพธ์จากการโหลดห้องเรียนที่ค้างอยู่ไม่ปลดล็อกช่องภายหลัง
+    classroomRequestId++;
     // ถ้าบันทึก ให้เรียก saveProfileData ก่อน แล้วค่อยปิด edit mode
     if (save) {
       saveProfileData();
@@ -1524,12 +1910,35 @@ if (getUserRole() === 'student') {
         el.setAttribute('readonly', true);
       }
     });
-    editBar.classList.remove('show');
     imageWrap.style.display = 'none';
+    parentImageWraps.forEach(wrap => { if (wrap) wrap.style.display = 'none'; });
     editAllergyBtns.forEach(b => { if (b) b.style.display = 'none'; });
-    btnEdit.style.display = 'inline-flex';
+    
+    // Show top edit buttons, hide top save/cancel
+    if (btnEdit) btnEdit.style.display = 'inline-flex';
+    if (btnSave) btnSave.style.display = 'none';
+    if (btnCancel) btnCancel.style.display = 'none';
+    
+    // Show bottom edit buttons, hide bottom save/cancel
+    if (btnEditBottom) btnEditBottom.style.display = 'inline-flex';
+    if (btnSaveBottom) btnSaveBottom.style.display = 'none';
+    if (btnCancelBottom) btnCancelBottom.style.display = 'none';
     
     if (!save) {
+      const preview = document.getElementById('profilePreview');
+      const imageInput = document.getElementById('profileImageInput');
+      if (preview && preview.dataset.originalSrc) {
+        preview.src = preview.dataset.originalSrc;
+      }
+      if (imageInput) imageInput.value = '';
+      ['father', 'mother'].forEach(type => {
+        const parentPreview = document.getElementById(type + 'ImagePreview');
+        const parentInput = document.getElementById(type + 'ImageInput');
+        if (parentPreview && parentPreview.dataset.originalSrc) {
+          parentPreview.src = parentPreview.dataset.originalSrc;
+        }
+        if (parentInput) parentInput.value = '';
+      });
       showToast('warning', 'ยกเลิกการแก้ไขแล้ว');
     }
   }
@@ -1680,10 +2089,15 @@ if (getUserRole() === 'student') {
     console.log('Data:', data);
     console.log('==========================');
     
+    // ใช้ FormData เพื่อส่งไฟล์รูปไปพร้อมกับข้อมูลฟอร์ม
+    const profileForm = document.getElementById('profileForm');
+    const formData = new FormData(profileForm);
+    // ฟอร์มใช้ชื่อ studentid เพื่อแสดงผล แต่ endpoint รับ student_id
+    formData.set('student_id', studentid);
+
     fetch('../../include/function/edit_child.php', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: formData
     })
     .then(r => {
       if (!r.ok) {
@@ -1719,42 +2133,262 @@ if (getUserRole() === 'student') {
   if (btnEdit)   btnEdit.addEventListener('click', enterEditMode);
   if (btnSave)   btnSave.addEventListener('click', () => exitEditMode(true));
   if (btnCancel) btnCancel.addEventListener('click', () => exitEditMode(false));
+  
+  if (btnEditBottom)   btnEditBottom.addEventListener('click', enterEditMode);
+  if (btnSaveBottom)   btnSaveBottom.addEventListener('click', () => exitEditMode(true));
+  if (btnCancelBottom) btnCancelBottom.addEventListener('click', () => exitEditMode(false));
 
   /* ── Profile Image Preview ── */
   const profileImageInput = document.getElementById('profileImageInput');
-  if (profileImageInput) {
-    profileImageInput.addEventListener('change', function () {
-      const file = this.files[0];
-      if (!file) return;
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('error', 'ขนาดไฟล์ต้องไม่เกิน 5MB');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = e => {
-        document.getElementById('profilePreview').src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
+  const profilePreview = document.getElementById('profilePreview');
+  const takeProfilePhoto = document.getElementById('takeProfilePhoto');
+  const uploadProfilePhoto = document.getElementById('uploadProfilePhoto');
+  const parentImageTargets = {};
+  ['father', 'mother'].forEach(type => {
+    const preview = document.getElementById(type + 'ImagePreview');
+    const input = document.getElementById(type + 'ImageInput');
+    if (preview) preview.dataset.originalSrc = preview.src;
+    if (preview && input) parentImageTargets[type] = { preview, input };
+  });
+
+  if (profilePreview) {
+    profilePreview.dataset.originalSrc = profilePreview.src;
   }
 
-  /* ── Delete Confirmation ── */
-  function confirmDelete(studentId) {
-    if (confirm('คุณต้องการลบข้อมูลนักเรียนคนนี้หรือไม่?\nการลบจะไม่สามารถกู้คืนได้')) {
-      showToast('success', 'ลบข้อมูลเรียบร้อยแล้ว (demo)');
+  const cameraModalElement = document.getElementById('profileCameraModal');
+  const cameraVideo = document.getElementById('profileCameraVideo');
+  const cameraCanvas = document.getElementById('profileCameraCanvas');
+  const cameraError = document.getElementById('profileCameraError');
+  const captureProfilePhoto = document.getElementById('captureProfilePhoto');
+  const switchProfileCamera = document.getElementById('switchProfileCamera');
+  const cameraZoomWrap = document.getElementById('profileCameraZoomWrap');
+  const cameraZoom = document.getElementById('profileCameraZoom');
+  const cameraZoomValue = document.getElementById('profileCameraZoomValue');
+  const cameraModal = cameraModalElement && window.bootstrap
+    ? bootstrap.Modal.getOrCreateInstance(cameraModalElement)
+    : null;
+  let profileCameraStream = null;
+  let profileCameraTrack = null;
+  let profileCameraFacing = 'user';
+  let activeCameraTarget = { preview: profilePreview, input: profileImageInput, type: 'profile' };
+
+  function showProfileImagePreview(file, previewElement) {
+    if (!file) return false;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      showToast('error', 'กรุณาเลือกไฟล์รูปภาพ JPG, PNG, GIF หรือ WEBP');
+      return false;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('error', 'ขนาดไฟล์ต้องไม่เกิน 5MB');
+      return false;
+    }
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      if (previewElement) previewElement.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    return true;
+  }
+
+  function stopProfileCamera() {
+    if (profileCameraStream) {
+      profileCameraStream.getTracks().forEach(track => track.stop());
+      profileCameraStream = null;
+    }
+    profileCameraTrack = null;
+    if (cameraVideo) cameraVideo.srcObject = null;
+    if (cameraZoomWrap) cameraZoomWrap.style.display = 'none';
+    if (switchProfileCamera) switchProfileCamera.disabled = true;
+  }
+
+  function configureProfileCameraZoom() {
+    if (!profileCameraTrack || !cameraZoom || !cameraZoomWrap) return;
+
+    const capabilities = typeof profileCameraTrack.getCapabilities === 'function'
+      ? profileCameraTrack.getCapabilities()
+      : {};
+    const zoom = capabilities.zoom;
+
+    // แสดงเฉพาะกล้องที่รองรับการซูมจริง
+    if (!zoom || Number(zoom.max) <= Number(zoom.min)) {
+      cameraZoomWrap.style.display = 'none';
+      return;
+    }
+
+    const settings = typeof profileCameraTrack.getSettings === 'function'
+      ? profileCameraTrack.getSettings()
+      : {};
+    cameraZoom.min = zoom.min;
+    cameraZoom.max = zoom.max;
+    cameraZoom.step = zoom.step || 0.1;
+    cameraZoom.value = settings.zoom || zoom.min;
+    if (cameraZoomValue) {
+      cameraZoomValue.textContent = Number(cameraZoom.value).toFixed(1) + 'x';
+    }
+    cameraZoomWrap.style.display = 'block';
+  }
+
+  async function startProfileCamera() {
+    if (!cameraVideo || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('เบราว์เซอร์นี้ไม่รองรับการเปิดกล้อง หรือเว็บไซต์ไม่ได้เปิดผ่าน HTTPS');
+    }
+
+    profileCameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: profileCameraFacing } },
+      audio: false
+    });
+    profileCameraTrack = profileCameraStream.getVideoTracks()[0] || null;
+    cameraVideo.srcObject = profileCameraStream;
+    await cameraVideo.play();
+    configureProfileCameraZoom();
+    if (switchProfileCamera) switchProfileCamera.disabled = false;
+  }
+
+  // เปิดกล้องจริงผ่าน getUserMedia แทนการเปิดตัวเลือกไฟล์
+  async function openCameraForImage(target) {
+    if (!cameraModal || !target || !target.input) {
+      showToast('error', 'ไม่สามารถเปิดหน้าต่างกล้องได้');
+      return;
+    }
+
+    activeCameraTarget = target;
+    if (cameraError) {
+      cameraError.style.display = 'none';
+      cameraError.textContent = '';
+    }
+    if (captureProfilePhoto) captureProfilePhoto.disabled = true;
+    if (switchProfileCamera) switchProfileCamera.disabled = true;
+    cameraModal.show();
+
+    try {
+      await startProfileCamera();
+      if (captureProfilePhoto) captureProfilePhoto.disabled = false;
+    } catch (error) {
+      if (cameraError) {
+        cameraError.textContent = window.isSecureContext
+          ? 'ไม่สามารถเปิดกล้องได้ กรุณาตรวจสอบสิทธิ์การใช้งานกล้อง'
+          : 'การใช้กล้องต้องเปิดเว็บไซต์ผ่าน HTTPS หรือ localhost';
+        cameraError.style.display = 'block';
+      }
+      stopProfileCamera();
     }
   }
 
-  /* ── QR Code ── */
-  function generateQRCode(studentId) {
-    showToast('info', 'กำลังสร้าง QR Code...');
+  if (takeProfilePhoto && profileImageInput) {
+    takeProfilePhoto.addEventListener('click', () => {
+      openCameraForImage({ preview: profilePreview, input: profileImageInput, type: 'profile' });
+    });
   }
 
-  /* ── Growth Detail Modal ── */
-  window.showGrowthDetailModal = function () {
-    const modal = new bootstrap.Modal(document.getElementById('growthDetailModal'));
-    modal.show();
-  };
+  document.querySelectorAll('[data-parent-camera]').forEach(button => {
+    button.addEventListener('click', () => {
+      const target = parentImageTargets[button.dataset.parentCamera];
+      openCameraForImage({ ...target, type: button.dataset.parentCamera });
+    });
+  });
+
+  if (switchProfileCamera && profileImageInput) {
+    switchProfileCamera.addEventListener('click', async () => {
+      const previousFacing = profileCameraFacing;
+      profileCameraFacing = previousFacing === 'user' ? 'environment' : 'user';
+      switchProfileCamera.disabled = true;
+      stopProfileCamera();
+
+      try {
+        await startProfileCamera();
+      } catch (error) {
+        profileCameraFacing = previousFacing;
+        try {
+          await startProfileCamera();
+        } catch (restoreError) {
+          if (cameraError) {
+            cameraError.textContent = 'ไม่สามารถสลับกล้องได้ กรุณาตรวจสอบว่ามีกล้องอีกตัวและอนุญาตสิทธิ์แล้ว';
+            cameraError.style.display = 'block';
+          }
+        }
+      }
+    });
+  }
+
+  if (cameraZoom) {
+    cameraZoom.addEventListener('input', async () => {
+      if (!profileCameraTrack || typeof profileCameraTrack.applyConstraints !== 'function') return;
+      const value = Number(cameraZoom.value);
+      if (cameraZoomValue) cameraZoomValue.textContent = value.toFixed(1) + 'x';
+      try {
+        await profileCameraTrack.applyConstraints({ advanced: [{ zoom: value }] });
+      } catch (error) {
+        showToast('warning', 'กล้องไม่รองรับระดับซูมนี้');
+      }
+    });
+  }
+
+  if (captureProfilePhoto) {
+    captureProfilePhoto.addEventListener('click', () => {
+      if (!cameraVideo || !cameraCanvas || !cameraVideo.videoWidth || !activeCameraTarget.input) return;
+
+      cameraCanvas.width = cameraVideo.videoWidth;
+      cameraCanvas.height = cameraVideo.videoHeight;
+      cameraCanvas.getContext('2d').drawImage(
+        cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height
+      );
+
+      cameraCanvas.toBlob(blob => {
+        if (!blob) return;
+        const fileName = activeCameraTarget.type + '_camera.jpg';
+        const file = new File([blob], fileName, { type: 'image/jpeg' });
+        if (showProfileImagePreview(file, activeCameraTarget.preview)) {
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          activeCameraTarget.input.files = dataTransfer.files;
+          cameraModal?.hide();
+        }
+      }, 'image/jpeg', 0.9);
+    });
+  }
+
+  if (cameraModalElement) {
+    cameraModalElement.addEventListener('hidden.bs.modal', stopProfileCamera);
+  }
+
+  if (uploadProfilePhoto && profileImageInput) {
+    uploadProfilePhoto.addEventListener('click', () => {
+      profileImageInput.removeAttribute('capture');
+      profileImageInput.click();
+    });
+  }
+
+  document.querySelectorAll('[data-parent-upload]').forEach(button => {
+    button.addEventListener('click', () => {
+      const target = parentImageTargets[button.dataset.parentUpload];
+      if (target && target.input) target.input.click();
+    });
+  });
+
+  if (profileImageInput) {
+    profileImageInput.addEventListener('change', function () {
+      const file = this.files[0];
+      if (!showProfileImagePreview(file, profilePreview)) this.value = '';
+    });
+  }
+
+  Object.values(parentImageTargets).forEach(target => {
+    target.input.addEventListener('change', function () {
+      const file = this.files[0];
+      if (!showProfileImagePreview(file, target.preview)) this.value = '';
+    });
+  });
+
+  /* ── Delete Confirmation ── */
+  // function confirmDelete(studentId) {
+  //   if (confirm('คุณต้องการลบข้อมูลนักเรียนคนนี้หรือไม่?\nการลบจะไม่สามารถกู้คืนได้')) {
+  //     showToast('success', 'ลบข้อมูลเรียบร้อยแล้ว (demo)');
+  //   }
+  // }
 
   /* ── Toast Notification ── */
   window.showToast = function (type, message) {
@@ -2179,6 +2813,8 @@ if (getUserRole() === 'student') {
     .then(([drugData, foodData]) => {
       const drugAllergies = drugData.status === 'success' && Array.isArray(drugData.data) ? drugData.data : [];
       const foodAllergies = foodData.status === 'success' && Array.isArray(foodData.data) ? foodData.data : [];
+      const allergyBanner = document.getElementById('allergyBanner');
+      const allergyText = document.getElementById('allergyText');
 
       const drugContent = document.getElementById('drugAllergyContent');
       if (drugAllergies.length > 0) {
@@ -2193,8 +2829,6 @@ if (getUserRole() === 'student') {
             </div>
           `).join('')}
         `;
-        document.getElementById('allergyBanner').style.display = 'flex';
-        document.getElementById('allergyText').textContent = `มีประวัติการแพ้ยา ${drugAllergies.length} รายการ`;
       } else {
         drugContent.innerHTML = '<div style="font-size:0.85rem;color:var(--success);font-weight:600;"><i class="bi bi-check-circle me-1"></i>ไม่มีประวัติการแพ้ยา</div>';
       }
@@ -2239,9 +2873,30 @@ if (getUserRole() === 'student') {
             `;
           }).join('')}
         `;
-        document.getElementById('allergyBanner').style.display = 'flex';
       } else {
         foodContent.innerHTML = '<div style="font-size:0.85rem;color:var(--success);font-weight:600;"><i class="bi bi-check-circle me-1"></i>ไม่มีประวัติการแพ้อาหาร</div>';
+      }
+
+      const allergyMessages = [];
+      if (drugAllergies.length > 0) {
+        allergyMessages.push(`มีประวัติการแพ้ยา ${drugAllergies.length} รายการ`);
+      }
+      if (foodAllergies.length > 0) {
+        allergyMessages.push(`มีประวัติการแพ้อาหาร ${foodAllergies.length} รายการ`);
+      }
+
+      if (allergyMessages.length > 0) {
+        allergyText.textContent = allergyMessages.join(' • ');
+        allergyBanner.style.display = 'flex';
+      } else {
+        allergyText.textContent = '';
+        allergyBanner.style.display = 'none';
+      }
+
+      const foodCard = document.getElementById('foodAllergyCard');
+      if (foodCard) {
+        foodCard.classList.toggle('allergy-card-food', foodAllergies.length > 0);
+        foodCard.classList.toggle('allergy-card-none', foodAllergies.length === 0);
       }
     })
     .catch(error => {
@@ -2841,6 +3496,39 @@ if (getUserRole() === 'student') {
     });
   }
 
+  /* ── Tab Switching - Load health when tab is clicked ── */
+  let healthDataLoaded = false;
+  const healthTabBtn = document.querySelector('[data-tab="health"]');
+  if (healthTabBtn) {
+    healthTabBtn.addEventListener('click', function() {
+      if (!healthDataLoaded) {
+        loadHealthData();
+        healthDataLoaded = true;
+      }
+    });
+  }
+
+  /* ── Tab Switching - Load growth when tab is clicked ── */
+  let growthDataLoaded = false;
+  const growthTabBtn = document.querySelector('[data-tab="growth"]');
+  if (growthTabBtn) {
+    growthTabBtn.addEventListener('click', function() {
+      if (!growthDataLoaded) {
+        loadGrowthData();
+        growthDataLoaded = true;
+      }
+    });
+  }
+
+  // เปิดแท็บที่ส่งมาจาก Dashboard และโหลดข้อมูลของแท็บนั้นทันที
+  const initialTab = <?= json_encode($currentTab) ?>;
+  if (initialTab !== 'profile') {
+    const initialTabBtn = document.querySelector(`[data-tab="${initialTab}"]`);
+    if (initialTabBtn) {
+      initialTabBtn.click();
+    }
+  }
+
   /* ── Load Attendance Data ── */
   function loadAttendanceData() {
     const tbody = document.getElementById('attendanceTableBody');
@@ -2867,6 +3555,106 @@ if (getUserRole() === 'student') {
     document.getElementById('att-stat-absent').textContent = summary.absent;
     document.getElementById('att-stat-leave').textContent = summary.leave;
     document.getElementById('att-stat-rate').textContent = summary.rate + '%';
+  }
+
+  /* ── Load Health Data ── */
+  function loadHealthData() {
+    const tbody = document.getElementById('healthTableBody');
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-hourglass-split me-2"></i>กำลังโหลดข้อมูล...</td></tr>';
+
+    fetch('../../include/function/get_student_health.php?studentid=' + encodeURIComponent(studentId))
+      .then(r => r.json())
+      .then(result => {
+        if (!result || result.error) {
+          throw new Error(result.message || 'ไม่สามารถโหลดข้อมูลได้');
+        }
+        renderHealthTable(result);
+      })
+      .catch(error => {
+        console.error('Error loading health:', error);
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--danger);"><i class="bi bi-exclamation-triangle me-2"></i>' + error.message + '</td></tr>';
+      });
+  }
+
+  function renderHealthTable(records) {
+    const tbody = document.getElementById('healthTableBody');
+    if (!records || records.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-info-circle me-2"></i>ไม่มีข้อมูลการตรวจร่างกาย</td></tr>';
+      return;
+    }
+
+    const bodyPartLabels = {
+      hair: 'ผม/ศีรษะ', eye: 'ตา', mouth: 'ช่องปากและคอ', teeth: 'ฟัน',
+      ears: 'หู', nose: 'จมูก', nails: 'เล็บมือ', skin: 'ผิวหนัง',
+      hands_feet: 'ฝ่ามือและฝ่าเท้า', arms_legs: 'แขนและขา', body: 'ลำตัวและหลัง',
+      symptoms: 'อาการผิดปกติ', medicine: 'มียา'
+    };
+    const normalValues = ['สะอาด', 'ปกติ', 'ไม่มี'];
+    const dateFields = ['hair', 'eye', 'mouth', 'teeth', 'ears', 'nose', 'nails', 'skin', 'hands_feet', 'arms_legs', 'body', 'symptoms', 'medicine'];
+
+    let html = '';
+    records.forEach(r => {
+      const dateStr = r.created_at || '';
+      const parts = dateStr.split(' ');
+      const datePart = parts[0] || '';
+      const timePart = parts[1] || '00:00:00';
+      const [y, m, d] = datePart.split('-').map(Number);
+      const [h, min] = timePart.split(':').map(Number);
+      const monthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      const dayNames = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+      const dateObj = new Date(y, m - 1, d);
+      const thaiYear = y + 543;
+      const formattedDate = dayNames[dateObj.getDay()] + ' ' + d + ' ' + monthNames[m - 1] + ' ' + thaiYear + ' ' + String(h).padStart(2, '0') + ':' + String(min).padStart(2, '0') + ' น.';
+
+      // Build summary badges
+      const MAX_BADGES = 3;
+      let badgeItems = [];
+      dateFields.forEach(field => {
+        let data;
+        try {
+          data = typeof r[field] === 'string' ? JSON.parse(r[field]) : r[field];
+        } catch (e) {
+          return;
+        }
+        if (!data || !data.checked || data.checked.length === 0) return;
+
+        const label = bodyPartLabels[field] || field;
+        const hasIssue = data.checked.some(v => !normalValues.includes(v));
+        if (hasIssue) {
+          data.checked.forEach(v => {
+            if (!normalValues.includes(v)) {
+              badgeItems.push('<span class="status-badge" style="background:#fee2e2;color:#b91c1c;"><i class="bi bi-exclamation"></i> ' + label + ': ' + v + '</span>');
+            }
+          });
+        } else {
+          badgeItems.push('<span class="status-badge" style="background:#dcfce7;color:#15803d;"><i class="bi bi-check"></i> ' + label + ': ปกติ</span>');
+        }
+      });
+
+      let badgesHtml = '';
+      if (badgeItems.length === 0) {
+        badgesHtml = '<span style="font-size:0.82rem;color:var(--gray-400);">ไม่มีข้อมูล</span>';
+      } else {
+        const visible = badgeItems.slice(0, MAX_BADGES);
+        const remaining = badgeItems.length - MAX_BADGES;
+        badgesHtml = visible.join('');
+        if (remaining > 0) {
+          badgesHtml += '<span class="status-badge" style="background:#e5e7eb;color:#374151;font-size:0.75rem;cursor:pointer;" title="คลิกดูรายละเอียด">+' + remaining + '</span>';
+        }
+      }
+
+      const teacher = r.teacher_signature || '-';
+      const detailBtn = '<button class="icon-btn icon-btn-view" title="ดูรายละเอียด" onclick="viewHealthDetail(' + r.id + ')"><i class="bi bi-eye"></i></button>';
+
+      html += '<tr>' +
+        '<td style="font-size:0.82rem;color:var(--gray-600);">' + formattedDate + '</td>' +
+        '<td><div class="d-flex flex-wrap gap-1">' + badgesHtml + '</div></td>' +
+        '<td style="font-size:0.85rem;">' + teacher + '</td>' +
+        '<td><div class="d-flex gap-1">' + detailBtn + '</div></td>' +
+        '</tr>';
+    });
+
+    tbody.innerHTML = html;
   }
 
   function renderAttendanceTable(records) {
@@ -3000,6 +3788,172 @@ if (getUserRole() === 'student') {
       });
   };
 
+  /* ── View Health Detail ── */
+ function renderTags(field, d) {
+      if (!d[field] || !d[field].checked) return emptyTag();
+      const items = d[field].checked;
+      if (!items || items.length === 0) return emptyTag();
+      return '<div class="hd-tags">' +
+        items.map(function (item) {
+          return '<span class="hd-tag"><i class="bi bi-check-circle-fill"></i>' + item + '</span>';
+        }).join('') +
+        '</div>';
+    }
+
+    function emptyTag() {
+      return '<div class="hd-tags"><span class="hd-tag hd-tag-empty"><i class="bi bi-dash-circle"></i>ไม่พบข้อมูล</span></div>';
+    }
+
+    /**
+     * Renders a note row with a label and value.
+     * Returns empty string when value is falsy.
+     */
+    function renderNote(label, value) {
+      if (!value) return '';
+      return '<div class="hd-note"><i class="bi bi-info-circle-fill"></i><span><strong>' + label + ':</strong> ' + value + '</span></div>';
+    }
+
+    /**
+     * Builds a single check-item card.
+     */
+    function renderItem(iconClass, title, tagsHtml, notesHtml) {
+      return [
+        '<div class="hd-item">',
+          '<div class="hd-item-icon"><i class="bi ' + iconClass + '"></i></div>',
+          '<div class="hd-item-body">',
+            '<div class="hd-item-title">' + title + '</div>',
+            tagsHtml,
+            notesHtml ? '<div class="hd-notes">' + notesHtml + '</div>' : '',
+          '</div>',
+        '</div>'
+      ].join('');
+    }
+
+    /* ─────────────────────────────────────────
+       MAIN BUILD FUNCTION
+    ───────────────────────────────────────── */
+    function buildModal(d) {
+      var html = '<div class="hd-container">';
+
+      /* ── Student info card ── */
+      html += '<div class="hd-info-card">';
+      html += '<div class="hd-info-item"><i class="bi bi-person-badge"></i><span><strong>รหัสนักเรียน:</strong> ' + (d.student_id || '-') + '</span></div>';
+      html += '<div class="hd-info-item"><i class="bi bi-person-vcard"></i><span><strong>ชื่อ-นามสกุล:</strong> ' + [(d.prefix_th || ''), (d.first_name_th || ''), (d.last_name_th || '')].join(' ').trim() + '</span></div>';
+      html += '<div class="hd-info-item"><i class="bi bi-people"></i><span><strong>กลุ่มเรียน:</strong> ' + (d.child_group || '-') + '</span></div>';
+      html += '<div class="hd-info-item"><i class="bi bi-door-open"></i><span><strong>ห้องเรียน:</strong> ' + (d.classroom || '-') + '</span></div>';
+      html += '<div class="hd-info-item"><i class="bi bi-calendar-check"></i><span><strong>วันที่ตรวจ:</strong> ' + (d.formatted_date || '-') + '</span></div>';
+      html += '<div class="hd-info-item"><i class="bi bi-person-check"></i><span><strong>ครูผู้ตรวจ:</strong> ' + (d.teacher_signature || '-') + '</span></div>';
+      html += '</div>';
+
+      /* ── Physical examination section ── */
+      html += '<div class="hd-section">';
+      html += '<h6 class="hd-section-title"><i class="fa-solid fa-stethoscope"></i> ผลการตรวจร่างกาย</h6>';
+      html += '<div class="hd-items-grid">';
+
+      html += renderItem('bi-person-lines-fill', 'ผม / ศีรษะ',
+        renderTags('hair', d),
+        renderNote('รายละเอียดอื่นๆ', d.hair_reason)
+      );
+
+      html += renderItem('bi-eye', 'ตา',
+        renderTags('eye', d),
+        renderNote('ลักษณะขี้ตา', d.eye_condition) +
+        renderNote('รายละเอียดอื่นๆ', d.eye_reason)
+      );
+
+      html += renderItem('bi-emoji-smile', 'ปากและคอ',
+        renderTags('mouth', d),
+        ''
+      );
+
+      html += renderItem('bi-emoji-smile', 'ฟัน',
+        renderTags('teeth', d),
+        renderNote('จำนวนฟันผุ', d.teeth_count)
+      );
+
+      html += renderItem('bi-ear', 'หู',
+        renderTags('ears', d),
+        ''
+      );
+
+      html += renderItem('bi-emoji-neutral', 'จมูก',
+        renderTags('nose', d),
+        renderNote('ลักษณะน้ำมูก', d.nose_condition) +
+        renderNote('รายละเอียดอื่นๆ', d.nose_reason)
+      );
+
+      html += renderItem('bi-hand-index', 'เล็บ',
+        renderTags('nails', d),
+        ''
+      );
+
+      html += renderItem('bi-bandaid', 'ผิวหนัง',
+        renderTags('skin', d),
+        renderNote('รายละเอียดแผล', d.skin_wound_detail) +
+        renderNote('รายละเอียดผื่น', d.skin_rash_detail)
+      );
+
+      html += renderItem('bi-thermometer-half', 'อาการผิดปกติ',
+        renderTags('symptoms', d),
+        renderNote('อุณหภูมิ', d.fever_temp ? d.fever_temp + ' °C' : '') +
+        renderNote('ลักษณะการไอ', d.cough_type) +
+        renderNote('รายละเอียดอื่นๆ', d.symptoms_reason)
+      );
+
+      html += renderItem('bi-capsule', 'การใช้ยา',
+        renderTags('medicine', d),
+        renderNote('รายละเอียดยา', d.medicine_detail) +
+        renderNote('รายละเอียดอื่นๆ', d.medicine_reason)
+      );
+
+      html += '</div></div>'; /* close hd-items-grid + hd-section */
+
+      /* ── Additional notes section (only when data exists) ── */
+      var hasExtra = d.illness_reason || d.accident_reason || d.teacher_note;
+      if (hasExtra) {
+        html += '<div class="hd-section">';
+        html += '<h6 class="hd-section-title"><i class="bi bi-journal-text"></i> บันทึกเพิ่มเติม</h6>';
+        html += '<div class="hd-items-grid">';
+
+        if (d.illness_reason) {
+          html += renderItem('bi-hospital', 'การเจ็บป่วย', '', renderNote('รายละเอียด', d.illness_reason));
+        }
+        if (d.accident_reason) {
+          html += renderItem('bi-bandaid', 'อุบัติเหตุ / แมลงกัดต่อย', '', renderNote('รายละเอียด', d.accident_reason));
+        }
+        if (d.teacher_note) {
+          html += renderItem('bi-pencil-square', 'บันทึกของครู', '', renderNote('บันทึก', d.teacher_note));
+        }
+
+        html += '</div></div>';
+      }
+
+      /* ── Signature footer ── */
+      html += '<div class="hd-footer-sig">';
+      html += '<i class="bi bi-person-check-fill"></i>';
+      html += '<span><strong>ลงชื่อครูผู้ตรวจ:</strong> ' + (d.teacher_signature || '-') + '</span>';
+      html += '</div>';
+
+      html += '</div>'; /* close hd-container */
+      return html;
+    }
+
+     window.viewHealthDetail = function (id) {
+      fetch('../../include/function/get_health_detail.php?id=' + id)
+        .then(function (r) { return r.json(); })
+        .then(function (result) {
+          if (result.status !== 'success') {
+            showToast('error', result.message || 'ไม่สามารถโหลดข้อมูลได้');
+            return;
+          }
+          document.getElementById('healthDetailContent').innerHTML = buildModal(result.data);
+          new bootstrap.Modal(document.getElementById('healthDetailModal')).show();
+        })
+        .catch(function (error) {
+          showToast('error', 'เกิดข้อผิดพลาด: ' + error.message);
+        });
+    };
+
   /* ── Add Vaccine List Button ── */
   const btnAddVaccineList = document.getElementById('btnAddVaccineList');
   if (btnAddVaccineList) {
@@ -3029,6 +3983,505 @@ if (getUserRole() === 'student') {
       });
     }
   });
+
+  /* ── Load Growth Data ── */
+  let growthCharts = { weight: null, height: null };
+
+  function loadGrowthData() {
+    const tbody = document.getElementById('growth-history-body');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-hourglass-split me-2"></i>กำลังโหลดข้อมูล...</td></tr>';
+    }
+
+    fetch('../../include/function/get_student_growth_external.php?student_id=' + encodeURIComponent(studentId))
+      .then(r => r.json())
+      .then(result => {
+        if (result.status !== 'success') {
+          throw new Error(result.message || 'ไม่สามารถโหลดข้อมูลได้');
+        }
+        renderGrowthData(result);
+      })
+      .catch(error => {
+        console.error('Error loading growth:', error);
+        const tbody2 = document.getElementById('growth-history-body');
+        if (tbody2) {
+          tbody2.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--danger);"><i class="bi bi-exclamation-triangle me-2"></i>' + error.message + '</td></tr>';
+        }
+        const devBody = document.getElementById('growth-dev-body');
+        if (devBody) {
+          devBody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:1rem;color:var(--danger);"><i class="bi bi-exclamation-triangle me-2"></i>' + error.message + '</td></tr>';
+        }
+      });
+  }
+
+  function renderGrowthData(result) {
+    const current = result.current_record;
+    const records = result.all_records || [];
+
+    const studentSex = current ? (current.sex === 'ชาย' ? 'M' : 'F') : 'M';
+    renderGrowthStats(current);
+    renderGrowthDev(current);
+    renderGrowthHistory(records);
+    renderGrowthCharts(records, studentSex);
+  }
+
+  function renderGrowthStats(record) {
+    if (!record) {
+      ['weight', 'height', 'head', 'bmi'].forEach(id => {
+        const el = document.getElementById('growth-' + id + '-val');
+        if (el) el.textContent = '-';
+        const st = document.getElementById('growth-' + id + '-status');
+        if (st) { st.textContent = 'ไม่มีข้อมูล'; st.style.background = '#f3f4f6'; st.style.color = '#9ca3af'; }
+      });
+      return;
+    }
+
+    const measures = record.physical_measures || {};
+
+    // Water weight
+    const weight = measures.weight || '-';
+    setGrowthStat('weight', weight + '', 'กก.', measures.weight_for_age || []);
+
+    // Height
+    const height = measures.height || '-';
+    setGrowthStat('height', height + '', 'ซม.', measures.height_for_age || []);
+
+    // Head circumference
+    const headCirc = measures.head_circ || '-';
+    setGrowthStat('head', headCirc + '', 'ซม.', measures.head_percentile || []);
+
+    // BMI
+    const bmi = record.bmi || '-';
+    const bmiStatus = measures.weight_for_height || [];
+    setGrowthStat('bmi', bmi + '', 'BMI', bmiStatus);
+  }
+
+  function setGrowthStat(id, value, unit, statusArr) {
+    const valEl = document.getElementById('growth-' + id + '-val');
+    const statusEl = document.getElementById('growth-' + id + '-status');
+    if (valEl) valEl.textContent = value;
+    if (statusEl) {
+      if (statusArr && statusArr.length > 0) {
+        const label = statusArr.join(', ');
+        statusEl.textContent = label;
+        const isGood = label.includes('สมส่วน') || label.includes('ตามเกณฑ์') || label.includes('ปกติ');
+        statusEl.style.background = isGood ? '#dcfce7' : '#fef3c7';
+        statusEl.style.color = isGood ? '#15803d' : '#d97706';
+      } else {
+        statusEl.textContent = 'ไม่มีข้อมูล';
+        statusEl.style.background = '#f3f4f6';
+        statusEl.style.color = '#9ca3af';
+      }
+    }
+  }
+
+  function renderGrowthDev(record) {
+    const tbody = document.getElementById('growth-dev-body');
+    if (!tbody) return;
+
+    if (!record || !record.development_assessment) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-info-circle me-2"></i>ไม่มีข้อมูลการประเมินพัฒนาการ</td></tr>';
+      return;
+    }
+
+    const dev = record.development_assessment;
+    const devItems = [
+      { code: 'gm', label: 'การเคลื่อนไหว (GM)', icon: 'bi-person-walking', color: 'var(--primary)' },
+      { code: 'fm', label: 'กล้ามเนื้อมัดเล็กและสติปัญญา (FM)', icon: 'bi-hand-index', color: 'var(--info)' },
+      { code: 'rl', label: 'การเข้าใจภาษา (RL)', icon: 'bi-ear', color: 'var(--success)' },
+      { code: 'el', label: 'การใช้ภาษา (EL)', icon: 'bi-chat-dots', color: 'var(--warning)' },
+      { code: 'ps', label: 'การช่วยเหลือตัวเองและสังคม (PS)', icon: 'bi-people', color: 'var(--danger)' }
+    ];
+
+    let html = '';
+    devItems.forEach(item => {
+      const data = dev[item.code] || {};
+      const status = data.status || '';
+      const score = data.score || '';
+      let statusHtml = '';
+      let noteHtml = '-';
+
+      if (status === 'pass') {
+        statusHtml = '<span class="dev-pass"><i class="bi bi-check-circle-fill me-1"></i>ผ่าน</span>';
+        if (score) noteHtml = 'ข้อที่ ' + score;
+      } else if (status === 'fail') {
+        statusHtml = '<span class="dev-delay"><i class="bi bi-exclamation-triangle-fill me-1"></i>สงสัยล่าช้า</span>';
+        if (score) noteHtml = 'ข้อที่ ' + score;
+      } else {
+        statusHtml = '<span style="color:var(--gray-400);">-</span>';
+      }
+
+      html += '<tr>' +
+        '<td><i class="bi ' + item.icon + ' me-2" style="color:' + item.color + ';"></i>' + item.label + '</td>' +
+        '<td>' + statusHtml + '</td>' +
+        '<td style="font-size:0.78rem;color:var(--gray-400);">' + noteHtml + '</td>' +
+      '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  function renderGrowthHistory(records) {
+    const tbody = document.getElementById('growth-history-body');
+    if (!tbody) return;
+
+    if (!records || records.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-info-circle me-2"></i>ไม่มีประวัติการบันทึกการเจริญเติบโต</td></tr>';
+      return;
+    }
+
+    let html = '';
+    records.forEach((r, idx) => {
+      const measures = r.physical_measures || {};
+      const examDate = r.exam_date || '';
+      const dateStr = formatThaiDateShort(examDate);
+      const ageStr = formatAge(r.age_year, r.age_month, r.age_day);
+      const weight = measures.weight || '-';
+      const height = measures.height || '-';
+      const headCirc = measures.head_circ || '-';
+      const bmi = r.bmi || '-';
+
+      // Build status labels
+      let statusParts = [];
+      if (measures.weight_for_age && measures.weight_for_age.length > 0)
+        statusParts.push('นน.' + measures.weight_for_age.join('/'));
+      if (measures.height_for_age && measures.height_for_age.length > 0)
+        statusParts.push('สส.' + measures.height_for_age.join('/'));
+      if (measures.weight_for_height && measures.weight_for_height.length > 0)
+        statusParts.push('นน/สส.' + measures.weight_for_height.join('/'));
+      const statusHtml = statusParts.length > 0
+        ? statusParts.join('<br>')
+        : '<span style="color:var(--gray-400);">-</span>';
+
+      html += '<tr>' +
+        '<td style="font-size:0.82rem;color:var(--gray-600);">' + dateStr + '</td>' +
+        '<td style="font-size:0.82rem;">' + ageStr + '</td>' +
+        '<td><strong>' + weight + '</strong> <span style="font-size:0.75rem;color:var(--gray-400);">กก.</span></td>' +
+        '<td><strong>' + height + '</strong> <span style="font-size:0.75rem;color:var(--gray-400);">ซม.</span></td>' +
+        '<td><strong>' + headCirc + '</strong> <span style="font-size:0.75rem;color:var(--gray-400);">ซม.</span></td>' +
+        '<td><strong>' + bmi + '</strong></td>' +
+        '<td>' +
+          '<button class="btn-action btn-save" style="padding:4px 10px;font-size:0.75rem;" onclick="showGrowthDetailModal(' + idx + ')">' +
+            '<i class="bi bi-bar-chart"></i><span>ดูผล</span>' +
+          '</button>' +
+        '</td>' +
+      '</tr>';
+    });
+    tbody.innerHTML = html;
+
+    // Store records data for modal access
+    window._growthRecords = records;
+  }
+
+  function renderGrowthCharts(records, sex) {
+    if (!records || records.length < 1) return;
+
+    // Destroy existing charts
+    Object.values(growthCharts).forEach(c => { if (c) { c.destroy(); } });
+    growthCharts = { weight: null, height: null, bmi: null };
+
+    // Build child data series (age in months)
+    const childDataWeight = records
+      .filter(r => r.physical_measures && r.physical_measures.weight)
+      .map(r => ({
+        x: (r.age_year || 0) * 12 + (r.age_month || 0),
+        y: parseFloat(r.physical_measures.weight)
+      }));
+
+    const childDataHeight = records
+      .filter(r => r.physical_measures && r.physical_measures.height)
+      .map(r => ({
+        x: (r.age_year || 0) * 12 + (r.age_month || 0),
+        y: parseFloat(r.physical_measures.height)
+      }));
+
+    const childDataBMI = records
+      .filter(r => r.bmi)
+      .map(r => ({
+        x: (r.age_year || 0) * 12 + (r.age_month || 0),
+        y: parseFloat(r.bmi)
+      }));
+
+    // Fetch reference data and build charts
+    fetchRefData('weight', sex, chartData => buildChart('chartWeight', 'น้ำหนักตามเกณฑ์อายุ', 'น้ำหนัก (กก.)', chartData, childDataWeight, '#3b82f6', 2.5, 35));
+    fetchRefData('height', sex, chartData => buildChart('chartHeight', 'ส่วนสูงตามเกณฑ์อายุ', 'ส่วนสูง (ซม.)', chartData, childDataHeight, '#22c55e', 40, 130));
+    fetchRefData('bmi', sex, chartData => buildChart('chartBMI', 'BMI ตามเกณฑ์อายุ', 'BMI (กก./ม.²)', chartData, childDataBMI, '#f59e0b', 10, 25));
+  }
+
+  function fetchRefData(indicator, sex, callback) {
+    fetch('../../include/function/get_growth_reference.php?indicator=' + indicator + '&sex=' + sex)
+      .then(r => r.json())
+      .then(result => {
+        if (result.status === 'success') {
+          callback(result);
+        }
+      })
+      .catch(error => console.error('Failed to load growth reference data (' + indicator + '):', error));
+  }
+
+  function buildChart(canvasId, title, yLabel, refData, childPoints, childColor, yMin, yMax) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+
+    // Build reference datasets
+    const refDatasets = [
+      {
+        label: '+2 SD',
+        data: refData.ages.map((age, i) => ({ x: age, y: refData.plus2sd[i] })),
+        borderColor: 'rgba(239,68,68,0.6)',
+        borderDash: [6, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: '+1',
+        backgroundColor: 'rgba(239,68,68,0.05)'
+      },
+      {
+        label: '+1 SD',
+        data: refData.ages.map((age, i) => ({ x: age, y: refData.plus1sd[i] })),
+        borderColor: 'rgba(249,115,22,0.6)',
+        borderDash: [6, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: '+1',
+        backgroundColor: 'rgba(249,115,22,0.05)'
+      },
+      {
+        label: 'Median',
+        data: refData.ages.map((age, i) => ({ x: age, y: refData.median[i] })),
+        borderColor: 'rgba(34,197,94,0.7)',
+        borderDash: [6, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: '+1',
+        backgroundColor: 'rgba(34,197,94,0.08)'
+      },
+      {
+        label: '-1 SD',
+        data: refData.ages.map((age, i) => ({ x: age, y: refData.minus1sd[i] })),
+        borderColor: 'rgba(249,115,22,0.6)',
+        borderDash: [6, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: '+1',
+        backgroundColor: 'rgba(249,115,22,0.05)'
+      },
+      {
+        label: '-2 SD',
+        data: refData.ages.map((age, i) => ({ x: age, y: refData.minus2sd[i] })),
+        borderColor: 'rgba(239,68,68,0.6)',
+        borderDash: [6, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: false,
+        backgroundColor: 'rgba(239,68,68,0.05)'
+      },
+      // Child data
+      {
+        label: 'ข้อมูลของเด็ก',
+        data: childPoints,
+        borderColor: childColor,
+        backgroundColor: childColor,
+        borderWidth: 2.5,
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        pointBackgroundColor: childColor,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        fill: false,
+        tension: 0.3,
+        order: 1
+      }
+    ];
+
+    growthCharts[canvasId.replace('chart', '').toLowerCase()] = new Chart(ctx, {
+      type: 'line',
+      data: { datasets: refDatasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { intersect: false, mode: 'nearest' },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 14, padding: 12, font: { size: 11 } }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + (canvasId === 'chartBMI' ? '' : '');
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            title: { display: true, text: 'อายุ (เดือน)' },
+            min: 0,
+            max: 60,
+            ticks: { stepSize: 6 }
+          },
+          y: {
+            title: { display: true, text: yLabel },
+            min: yMin,
+            max: yMax
+          }
+        }
+      }
+    });
+  }
+
+  function formatThaiDateShort(dateStr) {
+    if (!dateStr) return '-';
+    const monthsThai = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return parseInt(d) + ' ' + monthsThai[m - 1] + ' ' + (y + 543);
+  }
+
+  function formatThaiDateLong(dateStr) {
+    if (!dateStr) return '-';
+    const monthsThai = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                        'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return parseInt(d) + ' ' + monthsThai[m - 1] + ' ' + (y + 543);
+  }
+
+  function formatAge(year, month, day) {
+    let parts = [];
+    if (year) parts.push(year + ' ปี');
+    if (month) parts.push(month + ' เดือน');
+    if (day) parts.push(day + ' วัน');
+    return parts.length > 0 ? parts.join(' ') : '-';
+  }
+
+  /* ── Growth Detail Modal ── */
+  window.showGrowthDetailModal = function (index) {
+    const records = window._growthRecords || [];
+    const record = records[index];
+    if (!record) {
+      document.getElementById('growthDetailContent').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray-400);">ไม่พบข้อมูล</div>';
+      new bootstrap.Modal(document.getElementById('growthDetailModal')).show();
+      return;
+    }
+
+    const measures = record.physical_measures || {};
+    const dev = record.development_assessment || {};
+    const examDate = record.exam_date || '';
+    const ageStr = formatAge(record.age_year, record.age_month, record.age_day);
+
+    const weight = measures.weight || '-';
+    const height = measures.height || '-';
+    const headCirc = measures.head_circ || '-';
+    const bmi = record.bmi || '-';
+
+    function statusBadge(arr) {
+      if (!arr || arr.length === 0) return '<span style="color:var(--gray-400);">-</span>';
+      const label = arr.join(', ');
+      const isGood = label.includes('สมส่วน') || label.includes('ตามเกณฑ์') || label.includes('ปกติ');
+      return '<span style="color:' + (isGood ? 'var(--success)' : 'var(--warning)') + ';font-weight:700;">' + label + '</span>';
+    }
+
+    function devStatusHtml(status) {
+      if (status === 'pass') return '<span style="color:var(--success);font-weight:700;">ผ่าน</span>';
+      if (status === 'fail') return '<span style="color:var(--danger);font-weight:700;">สงสัยล่าช้า</span>';
+      return '<span style="color:var(--gray-400);">-</span>';
+    }
+
+    const content = `
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div style="background:var(--gray-50);border-radius:var(--radius-md);padding:1rem;">
+            <div style="font-size:0.8rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;margin-bottom:0.75rem;">ข้อมูลการวัด</div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-calendar3"></i></div>
+              <div class="info-row-label">วันที่ตรวจ</div>
+              <div class="info-row-value">${formatThaiDateLong(examDate)}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-clock"></i></div>
+              <div class="info-row-label">อายุ</div>
+              <div class="info-row-value">${ageStr}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-arrow-up-circle"></i></div>
+              <div class="info-row-label">น้ำหนัก</div>
+              <div class="info-row-value">${weight} กก.</div>
+            </div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-arrow-up"></i></div>
+              <div class="info-row-label">ส่วนสูง</div>
+              <div class="info-row-value">${height} ซม.</div>
+            </div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-activity"></i></div>
+              <div class="info-row-label">เส้นรอบศีรษะ</div>
+              <div class="info-row-value">${headCirc} ซม.</div>
+            </div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-calculator"></i></div>
+              <div class="info-row-label">BMI</div>
+              <div class="info-row-value">${bmi}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div style="background:var(--gray-50);border-radius:var(--radius-md);padding:1rem;">
+            <div style="font-size:0.8rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;margin-bottom:0.75rem;">ผลการประเมิน</div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-clipboard-check"></i></div>
+              <div class="info-row-label">น้ำหนักตามอายุ</div>
+              <div class="info-row-value">${statusBadge(measures.weight_for_age)}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-clipboard-check"></i></div>
+              <div class="info-row-label">ส่วนสูงตามอายุ</div>
+              <div class="info-row-value">${statusBadge(measures.height_for_age)}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-clipboard-check"></i></div>
+              <div class="info-row-label">น้ำหนักตามส่วนสูง</div>
+              <div class="info-row-value">${statusBadge(measures.weight_for_height)}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-clipboard-check"></i></div>
+              <div class="info-row-label">เส้นรอบศีรษะ</div>
+              <div class="info-row-value">${statusBadge(measures.head_percentile)}</div>
+            </div>
+            <hr style="margin:0.75rem 0;">
+            <div style="font-size:0.8rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;margin-bottom:0.5rem;">พัฒนาการ</div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-person-walking"></i></div>
+              <div class="info-row-label">GM</div>
+              <div class="info-row-value">${devStatusHtml((dev.gm || {}).status)}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-hand-index"></i></div>
+              <div class="info-row-label">FM</div>
+              <div class="info-row-value">${devStatusHtml((dev.fm || {}).status)}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-ear"></i></div>
+              <div class="info-row-label">RL</div>
+              <div class="info-row-value">${devStatusHtml((dev.rl || {}).status)}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-chat-dots"></i></div>
+              <div class="info-row-label">EL</div>
+              <div class="info-row-value">${devStatusHtml((dev.el || {}).status)}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-row-icon"><i class="bi bi-people"></i></div>
+              <div class="info-row-label">PS</div>
+              <div class="info-row-value">${devStatusHtml((dev.ps || {}).status)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      ${record.recommendation ? '<div class="row g-3 mt-2"><div class="col-12"><div style="background:#fef3c7;border-radius:var(--radius-md);padding:0.75rem 1rem;"><strong>คำแนะนำ:</strong> ' + record.recommendation + '</div></div></div>' : ''}
+    `;
+
+    document.getElementById('growthDetailContent').innerHTML = content;
+    new bootstrap.Modal(document.getElementById('growthDetailModal')).show();
+  };
 
   /* ── Initialize ── */
   loadAllergiesData();

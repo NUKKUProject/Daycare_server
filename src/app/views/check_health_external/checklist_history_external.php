@@ -447,28 +447,9 @@ if (isset($_SESSION['user_id'])) {
                                         <input type="number" class="form-control measurement-input" step="0.1" placeholder="36.5">
                                         <span class="input-group-text">°C</span>
                                     </div>
-                                    <small class="text-muted">อุณหภูมิร่างกาย</small>
+                                    <small class="text-muted">อุณหภูมิร่างกาย (ก่อนตรวจ)</small>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-activity"></i></span>
-                                        <input type="number" class="form-control measurement-input" placeholder="80">
-                                        <span class="input-group-text">ครั้ง/นาที</span>
-                                    </div>
-                                    <small class="text-muted">ชีพจร</small>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-lungs"></i></span>
-                                        <input type="number" class="form-control measurement-input" placeholder="20">
-                                        <span class="input-group-text">ครั้ง/นาที</span>
-                                    </div>
-                                    <small class="text-muted">อัตราการหายใจ</small>
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mt-2">
-                                <div class="col-md-6">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-heart"></i></span>
                                         <input type="text" class="form-control measurement-input" placeholder="120/80">
@@ -476,7 +457,7 @@ if (isset($_SESSION['user_id'])) {
                                     </div>
                                     <small class="text-muted">ความดันโลหิต</small>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label class="form-label fw-bold">วันที่ตรวจ</label>
                                     <input type="date" class="form-control">
                                 </div>
@@ -1087,7 +1068,7 @@ if (isset($_SESSION['user_id'])) {
     </main>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 
     <script>
         // Calculate BMI automatically

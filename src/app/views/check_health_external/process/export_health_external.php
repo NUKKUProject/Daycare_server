@@ -126,6 +126,7 @@ foreach ($data as $index => $row) {
 
     // ข้อมูลทั่วไป
     $examDate = (!empty($row['exam_date'])) ? thaiMonth(($row['exam_date'])) : '-';
+    $measurementDate = (!empty($row['measurement_date'])) ? thaiMonth($row['measurement_date']) : '-';
     $academicYear = $row['academic_year'] ?? '-';
     $fullName = "{$row['prefix_th']} {$row['first_name']} {$row['last_name_th']}";
     $nickname = $row['nickname'] ?? '-';
@@ -195,30 +196,22 @@ foreach ($data as $index => $row) {
 
     $pdf->Ln(2);
 
-    $pdf->SetFont('sara', 'B', 14); // ขีดเส้นใต้
+    $pdf->SetFont('sara', 'B', 14);
     $pdf->Cell(20, 8, iconv('UTF-8', 'cp874', 'สัญญาณชีพ'), 0, 1, 'L');
-    $pdf->SetFont('sara', '', 14); // ขีดเส้นใต้
+    $pdf->SetFont('sara', '', 14);
 
+    // สัญญาณชีพเรียงแนวนอน: อุณหภูมิ + ความดันโลหิต (บรรทัดเดียว)
     $pdf->Cell(26, 8, iconv('UTF-8', 'cp874', 'อุณหภูมิร่างกาย'), 0, 0, 'L');
-    drawDottedUnderlineTextFull($pdf, ($vitalSigns['temperature'] ?? '-') . " C" ?? 'C', 30, 14, 0);
-
-    $pdf->Cell(20, 8, iconv('UTF-8', 'cp874', '(ก่อนตรวจ)'), 0, 1, 'C');
-
-    $pdf->Cell(10, 8, iconv('UTF-8', 'cp874', 'วันที่'), 0, 0, 'L');
-    drawDottedUnderlineTextFull($pdf, ($bpDate ?? '-') ?? '-', 35, 14, 1);
-
+    drawDottedUnderlineTextFull($pdf, ($vitalSigns['temperature'] ?? '-') . " C", 18, 14, 0);
+    $pdf->Cell(20, 8, iconv('UTF-8', 'cp874', '(ก่อนตรวจ)'), 0, 0, 'C');
 
     $pdf->Cell(27, 8, iconv('UTF-8', 'cp874', 'ความดันโลหิต ='), 0, 0, 'L');
     drawDottedUnderlineTextFull($pdf, ($vitalSigns['bp'] ?? '-') ?? '-', 25, 14, 0);
+    $pdf->Cell(15, 8, iconv('UTF-8', 'cp874', ' mmHg'), 0, 1, 'C');
 
-    $pdf->Cell(18, 8, iconv('UTF-8', 'cp874', 'ครั้ง/นาที'), 0, 0, 'C');
-    $pdf->Cell(18, 8, iconv('UTF-8', 'cp874', 'ชีพจร ='), 0, 0, 'C');
-    drawDottedUnderlineTextFull($pdf, ($vitalSigns['pulse'] ?? '-') ?? '-', 18, 14, 0);
-
-    $pdf->Cell(18, 8, iconv('UTF-8', 'cp874', 'ครั้ง/นาที'), 0, 0, 'C');
-    $pdf->Cell(30, 8, iconv('UTF-8', 'cp874', 'อัตราการหายใจ ='), 0, 0, 'C');
-    drawDottedUnderlineTextFull($pdf, ($vitalSigns['respiration'] ?? '-') ?? '-', 18, 14, 0);
-    $pdf->Cell(18, 8, iconv('UTF-8', 'cp874', 'ครั้ง/นาที'), 0, 1, 'C');
+    // บรรทัดที่ 2: วันที่ตรวจความดัน
+    $pdf->Cell(30, 8, iconv('UTF-8', 'cp874', 'วันที่ตรวจความดัน'), 0, 0, 'L');
+    drawDottedUnderlineTextFull($pdf, ($bpDate ?? '-') ?? '-', 35, 14, 1);
 
     $pdf->Ln(2);
 
@@ -320,7 +313,9 @@ foreach ($data as $index => $row) {
     $pdf->Cell(20, 8, iconv('UTF-8', 'cp874', "เซนติเมตร"), 0, 0);
     $pdf->Cell(10, 8, iconv('UTF-8', 'cp874', "น้ำหนัก:"), 0, 0);
     drawDottedUnderlineTextFull($pdf, $physicalMeasures['weight'] ?? '-', 20, 14, 0);
-    $pdf->Cell(20, 8, iconv('UTF-8', 'cp874', "กิโลกรัม"), 0, 1);
+    $pdf->Cell(20, 8, iconv('UTF-8', 'cp874', "กิโลกรัม"), 0, 0);
+    $pdf->Cell(25, 8, iconv('UTF-8', 'cp874', "วันที่ชั่ง/วัด"), 0, 0, 'C');
+    drawDottedUnderlineTextFull($pdf, $measurementDate, 40, 14, 1);
 
 
     // แถวหัวตาราง

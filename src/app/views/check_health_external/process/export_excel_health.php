@@ -1,6 +1,12 @@
 <?php
+require_once(__DIR__ . '/../../../../../vendor/autoload.php');
+require_once(__DIR__ . '/../../../../../src/config/database.php');
 
-require_once(__DIR__ . '../../../../../config/database.php');
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 // รับค่าจาก POST
 $export_type = $_POST['export_type'] ?? 'academic_year';
@@ -24,12 +30,10 @@ if ($export_type === 'exam_date' && empty($exam_date)) {
 }
 
 try {
-    // เชื่อมต่อฐานข้อมูล
     $pdo = getDatabaseConnection();
-    
-    // Query ข้อมูลตามประเภทที่เลือก (เฉพาะข้อมูลที่มี doctor_name ไม่เป็นค่าว่าง)
+
+    // Query ข้อมูล
     if ($export_type === 'exam_date') {
-        // Export ตามวันที่ตรวจ
         $sql = "SELECT * FROM health_data_external 
                 WHERE exam_date = :exam_date 
                 AND doctor_name IS NOT NULL 
@@ -38,7 +42,6 @@ try {
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':exam_date' => $exam_date]);
     } else {
-        // Export ตามปีการศึกษา
         $sql = "SELECT * FROM health_data_external 
                 WHERE academic_year = :year 
                 AND doctor_name IS NOT NULL 
@@ -47,165 +50,128 @@ try {
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':year' => $academic_year]);
     }
-    
+
     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // ตรวจสอบว่ามีข้อมูลหรือไม่
+
     if (empty($data)) {
         http_response_code(404);
         header('Content-Type: text/plain; charset=utf-8');
         echo 'ไม่พบข้อมูลสำหรับ export';
         exit;
     }
-    
-    // กำหนดชื่อไฟล์
-    if ($export_type === 'exam_date') {
-        $dateFormatted = date('Y-m-d', strtotime($exam_date));
-        $filename = "รายงานผลตรวจสุขภาพ_วันที่_" . $dateFormatted . ".csv";
-    } else {
-        $filename = "รายงานผลตรวจสุขภาพ_ปีการศึกษา_" . $academic_year . ".csv";
-    }
-    
-    // ส่ง headers
-    header('Content-Type: text/csv; charset=utf-8');
-    header("Content-Disposition: attachment; filename*=UTF-8''" . rawurlencode($filename));
-    header('Cache-Control: no-cache, no-store, must-revalidate');
-    header('Pragma: no-cache');
-    header('Expires: 0');
-    
-    // เปิด output stream
-    $output = fopen('php://output', 'w');
-    
-    // เขียน UTF-8 BOM เพื่อให้ Excel อ่านภาษาไทยได้ถูกต้อง
-    fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
-    
-    // กำหนด headers ของตาราง
+
+    // ── สร้าง Spreadsheet ──
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('รายงานผลตรวจสุขภาพ');
+
+    // หัวตาราง
     $headers = [
-        'รหัสนักเรียน',
-        'คำนำหน้า',
-        'ชื่อ',
-        'นามสกุล',
-        'ชื่อเล่น',
-        'กลุ่มเรียน',
-        'ห้องเรียน',
-        'วันเกิด',
-        'อายุ (ปี)',
-        'อายุ (เดือน)',
-        'อายุ (วัน)',
-        'วันที่ตรวจ',
-        'ปีการศึกษา',
-        'ตรวจรอบที่',
-        'แพทย์ผู้ตรวจ',
-        'อุณหภูมิร่างกาย',
-        'ความดันโลหิต',
-        'ชีพจร',
-        'อัตราการหายใจ',
-        'ส่วนสูง (cm)',
-        'น้ำหนัก (kg)',
-        'เส้นรอบศีรษะ (cm)',
-        'น้ำหนักตามเกณฑ์อายุ',
-        'ส่วนสูงตามเกณฑ์อายุ',
-        'น้ำหนักตามเกณฑ์ส่วนสูง',
-        'เปอร์เซ็นไทล์ศีรษะ',
-        'สถานะพฤติกรรม',
-        'รายละเอียดพฤติกรรม',
-        'สภาพทั่วไป',
-        'ผิวหนัง',
-        'ศีรษะ',
-        'ใบหน้า',
-        'ตา',
-        'หูและการได้ยิน',
-        'จมูก',
-        'ปากและช่องปาก',
-        'คอ',
-        'ทรวงอกและปอด',
-        'การหายใจ',
-        'ปอด',
-        'หัวใจ',
-        'เสียงหัวใจ',
-        'ชีพจร (ร่างกาย)',
-        'ช่องท้อง',
-        'อื่นๆ',
-        'ปฏิกิริยารีเฟล็กซ์',
-        'การเคลื่อนไหว',
-        'รายละเอียดปฏิกิริยา',
-        'รายละเอียดการเคลื่อนไหว',
-        'การเคลื่อนไหว (GM)',
-        'มัดเล็กและสติปัญญา (FM)',
-        'เข้าใจภาษา (RL)',
-        'ใช้ภาษา (EL)',
-        'ช่วยเหลือตนเองและสังคม (PS)',
-        'คำแนะนำ'
+        'รหัสนักเรียน', 'คำนำหน้า', 'ชื่อ', 'นามสกุล', 'ชื่อเล่น',
+        'กลุ่มเรียน', 'ห้องเรียน', 'วันเกิด', 'อายุ (ปี)', 'อายุ (เดือน)', 'อายุ (วัน)',
+        'วันที่ตรวจ', 'ปีการศึกษา', 'ตรวจรอบที่', 'แพทย์ผู้ตรวจ',
+        'อุณหภูมิร่างกาย (ก่อนตรวจ)', 'ความดันโลหิต',
+        'ส่วนสูง (cm)', 'น้ำหนัก (kg)', 'เส้นรอบศีรษะ (cm)',
+        'น้ำหนักตามเกณฑ์อายุ', 'ส่วนสูงตามเกณฑ์อายุ', 'น้ำหนักตามเกณฑ์ส่วนสูง', 'เปอร์เซ็นไทล์ศีรษะ',
+        'สถานะพฤติกรรม', 'รายละเอียดพฤติกรรม',
+        'สภาพทั่วไป', 'ผิวหนัง', 'ศีรษะ', 'ใบหน้า', 'ตา',
+        'หูและการได้ยิน', 'จมูก', 'ปากและช่องปาก', 'คอ',
+        'ทรวงอกและปอด', 'การหายใจ', 'ปอด', 'หัวใจ',
+        'เสียงหัวใจ', 'ชีพจร (ร่างกาย)', 'ช่องท้อง', 'อื่นๆ',
+        'ปฏิกิริยารีเฟล็กซ์', 'การเคลื่อนไหว',
+        'รายละเอียดปฏิกิริยา', 'รายละเอียดการเคลื่อนไหว',
+        'การเคลื่อนไหว (GM)', 'มัดเล็กและสติปัญญา (FM)',
+        'เข้าใจภาษา (RL)', 'ใช้ภาษา (EL)', 'ช่วยเหลือตนเองและสังคม (PS)',
+        'คำแนะนำ',
     ];
-    
-    // เขียน headers
-    fputcsv($output, $headers, ',', '"', "\\");
-    
-    // ฟังก์ชันช่วยดึงค่าจาก JSON
+
+    // เขียนหัวตาราง
+    foreach ($headers as $colIdx => $header) {
+        $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1);
+        $sheet->setCellValue($colLetter . '1', $header);
+    }
+
+    $headerRange = 'A1:' . \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers)) . '1';
+
+    $sheet->getStyle($headerRange)->applyFromArray([
+        'font' => [
+            'bold' => true,
+            'size' => 10,
+            'color' => ['rgb' => 'FFFFFF'],
+        ],
+        'fill' => [
+            'fillType' => Fill::FILL_SOLID,
+            'startColor' => ['rgb' => '2F5496'],
+        ],
+        'alignment' => [
+            'horizontal' => Alignment::HORIZONTAL_CENTER,
+            'vertical' => Alignment::VERTICAL_CENTER,
+            'wrapText' => true,
+        ],
+        'borders' => [
+            'allBorders' => [
+                'borderStyle' => Border::BORDER_THIN,
+            ],
+        ],
+    ]);
+
+    $sheet->getRowDimension('1')->setRowHeight(30);
+
+    // ฟังก์ชันช่วย
     function getValue($jsonData, $key, $default = '-') {
         if (empty($jsonData)) return $default;
         $data = json_decode($jsonData, true);
         if (json_last_error() !== JSON_ERROR_NONE) return $default;
         return $data[$key] ?? $default;
     }
-    
-    // ฟังก์ชันแปลง array เป็น string
+
     function flattenArray($jsonData, $key, $separator = ', ') {
         if (empty($jsonData)) return '-';
         $data = json_decode($jsonData, true);
         if (json_last_error() !== JSON_ERROR_NONE) return '-';
-        
+
         $value = $data[$key] ?? null;
-        
-        // แปลงค่าอังกฤษเป็นไทย
-        $map = [
-            'normal' => 'ปกติ',
-            'abnormal' => 'ผิดปกติ',
-            'has' => 'มี',
-            'none' => 'ไม่มี'
-        ];
-        
-        // รายการที่มี detail
         $detailKeys = [
-            'general', 'skin', 'head', 'face', 'eyes', 'ears', 'nose', 'mouth', 
-            'neck', 'breast', 'breathe', 'lungs', 'heart', 'heart_sound', 
+            'general', 'skin', 'head', 'face', 'eyes', 'ears', 'nose', 'mouth',
+            'neck', 'breast', 'breathe', 'lungs', 'heart', 'heart_sound',
             'pulse', 'abdomen', 'others'
         ];
-        
         $detailKey = in_array($key, $detailKeys) ? $key . '_detail' : null;
-        $detail = $detailKey ? getValue($jsonData, $detailKey, '') : '';
-        
+        $detailValue = $detailKey ? getValue($jsonData, $detailKey, '') : '';
+
         if (is_array($value)) {
-            $mapped = array_map(function($v) use ($map, $detail) {
-                if ($v === 'abnormal' && !empty($detail)) {
-                    return 'ผิดปกติ - ' . $detail;
+            $parts = [];
+            foreach ($value as $v) {
+                if ($v === 'abnormal') {
+                    $parts[] = 'ผิดปกติ' . ($detailValue ? ' - ' . $detailValue : '');
+                } elseif ($v === 'normal') {
+                    $parts[] = 'ปกติ';
+                } else {
+                    $parts[] = $v;
                 }
-                return $map[$v] ?? $v;
-            }, $value);
-            return implode($separator, $mapped);
-        } else {
-            if ($value === 'abnormal' && !empty($detail)) {
-                return 'ผิดปกติ - ' . $detail;
             }
-            return $map[$value] ?? ($value ?: '-');
+            return implode($separator, $parts);
+        } else {
+            if ($value === 'abnormal') {
+                return 'ผิดปกติ' . ($detailValue ? ' - ' . $detailValue : '');
+            } elseif ($value === 'normal') {
+                return 'ปกติ';
+            }
+            return $value ?: '-';
         }
     }
-    
-    // ฟังก์ชันสำหรับ development_assessment
+
     function getDev($dev) {
         if (!is_array($dev) || empty($dev)) return '-';
         if (!isset($dev['status']) || $dev['status'] === '' || is_null($dev['status'])) return 'ผ่าน';
-        if ($dev['status'] === 'pass') {
-            return 'ผ่าน';
-        } elseif ($dev['status'] === 'delay') {
+        if ($dev['status'] === 'pass') return 'ผ่าน';
+        if ($dev['status'] === 'delay') {
             $score = $dev['score'] ?? '-';
             return 'สงสัยล่าช้า (ข้อที่ ' . $score . ')';
-        } else {
-            return $dev['status'] . (isset($dev['score']) ? ' (' . $dev['score'] . ')' : '');
         }
+        return $dev['status'] . (isset($dev['score']) ? ' (' . $dev['score'] . ')' : '');
     }
-    
-    // ฟังก์ชันแปลงวันที่เป็นภาษาไทย
+
     function formatDateThai($dateStr) {
         if (empty($dateStr)) return '-';
         $months = [
@@ -220,30 +186,24 @@ try {
         $year = (int)date_format($date, 'Y') + 543;
         return $day . ' ' . $month . ' ' . $year;
     }
-    
-    // Loop เขียนข้อมูล
+
+    // เขียนข้อมูล
+    $rowIdx = 2;
     foreach ($data as $student) {
-        // แปลง JSON
         $vitalSigns = !empty($student['vital_signs']) ? json_decode($student['vital_signs'], true) : [];
         $measures = !empty($student['physical_measures']) ? json_decode($student['physical_measures'], true) : [];
         $behavior = !empty($student['behavior']) ? json_decode($student['behavior'], true) : [];
         $physicalExam = !empty($student['physical_exam']) ? json_decode($student['physical_exam'], true) : [];
         $neurological = !empty($student['neurological']) ? json_decode($student['neurological'], true) : [];
         $development = !empty($student['development_assessment']) ? json_decode($student['development_assessment'], true) : [];
-        
-        // สถานะพฤติกรรม
+
         $behaviorStatus = '-';
         if (isset($behavior['status'])) {
-            if ($behavior['status'] === 'has') {
-                $behaviorStatus = 'มีพฤติกรรมผิดปกติ';
-            } elseif ($behavior['status'] === 'none') {
-                $behaviorStatus = 'ไม่มีพฤติกรรมผิดปกติ';
-            } elseif ($behavior['status'] === 'normal') {
-                $behaviorStatus = 'ปกติ';
-            }
+            if ($behavior['status'] === 'has') $behaviorStatus = 'มีพฤติกรรมผิดปกติ';
+            elseif ($behavior['status'] === 'none') $behaviorStatus = 'ไม่มีพฤติกรรมผิดปกติ';
+            elseif ($behavior['status'] === 'normal') $behaviorStatus = 'ปกติ';
         }
-        
-        // เขียนแถวข้อมูล
+
         $row = [
             $student['student_id'] ?? '-',
             $student['prefix_th'] ?? '-',
@@ -262,8 +222,6 @@ try {
             $student['doctor_name'] ?? '-',
             ($vitalSigns['temperature'] ?? '-') . ' °C',
             $vitalSigns['bp'] ?? '-',
-            $vitalSigns['pulse'] ?? '-',
-            $vitalSigns['respiration'] ?? '-',
             $measures['height'] ?? '-',
             $measures['weight'] ?? '-',
             $measures['head_circ'] ?? '-',
@@ -299,15 +257,41 @@ try {
             getDev($development['rl'] ?? []),
             getDev($development['el'] ?? []),
             getDev($development['ps'] ?? []),
-            $student['recommendation'] ?? '-'
+            $student['recommendation'] ?? '-',
         ];
-        
-        // เขียนข้อมูลลง CSV
-        fputcsv($output, $row, ',', '"', "\\");
+
+        foreach ($row as $colIdx => $value) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1);
+            $sheet->setCellValue($colLetter . $rowIdx, $value);
+        }
+
+        $rowIdx++;
     }
-    
-    fclose($output);
-    
+
+    // Auto-size columns (limit width)
+    foreach ($headers as $colIdx => $header) {
+        $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1);
+        $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+    }
+
+    // Freeze top row
+    $sheet->freezePane('A2');
+
+    // กำหนดชื่อไฟล์
+    if ($export_type === 'exam_date') {
+        $dateFormatted = date('Y-m-d', strtotime($exam_date));
+        $filename = "รายงานผลตรวจสุขภาพ_วันที่_{$dateFormatted}.xlsx";
+    } else {
+        $filename = "รายงานผลตรวจสุขภาพ_ปีการศึกษา_{$academic_year}.xlsx";
+    }
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename*=UTF-8\'\'' . rawurlencode($filename));
+    header('Cache-Control: max-age=0');
+
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
+
 } catch (PDOException $e) {
     error_log('Database error in export_excel_health.php: ' . $e->getMessage());
     if (!headers_sent()) {
@@ -324,4 +308,3 @@ try {
     }
 }
 exit;
-?>

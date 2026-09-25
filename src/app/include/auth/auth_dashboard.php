@@ -11,6 +11,8 @@ function isCurrentPage($path)
             return true;
         } else if (getUserRole() === 'teacher' && strpos($current_url, 'teacher_dashboard.php') !== false) {
             return true;
+        } else if (getUserRole() === 'doctor' && strpos($current_url, 'doctor_dashboard.php') !== false) {
+            return true;
         }
         return false;
     }
@@ -91,6 +93,13 @@ function isCurrentPage($path)
                             </a>
                         </li>
 
+                        <li class="nav-item <?php echo isCurrentPage('qr_codes_list.php') ? 'active' : ''; ?>">
+                            <a class="nav-link" href="/app/views/admin/qr_codes_list.php">
+                                <i class="bi bi-qr-code" style="font-size: 23px;"></i>
+                                จัดการ QR Code
+                            </a>
+                        </li>
+
                         <li class="nav-item <?php echo isCurrentPage('attendance_history.php') ? 'active' : ''; ?>">
                             <a class="nav-link" href="/app/views/attendance_history.php">
                                 <i class="bi bi-archive-fill" style="font-size: 23px;"></i>
@@ -100,7 +109,7 @@ function isCurrentPage($path)
 
                         <li class="nav-item <?php echo isCurrentPage('checklist_history.php') ? 'active' : ''; ?>">
                             <a class="nav-link" href="/app/views/checklist_history.php">
-                                <i class="bi bi-person-arms-up" style="font-size: 23px;"></i>
+                                <i class="fa-solid fa-stethoscope" style="font-size: 23px;"></i>
                                 บันทึกประวัติการตรวจร่างกายประจำวัน
                             </a>
                         </li>
@@ -165,6 +174,13 @@ function isCurrentPage($path)
                             </a>
                         </li>
 
+                        <li class="nav-item <?php echo isCurrentPage('qr_codes_list.php') ? 'active' : ''; ?>">
+                            <a class="nav-link" href="/app/views/admin/qr_codes_list.php">
+                                <i class="bi bi-qr-code" style="font-size: 23px;"></i>
+                                จัดการ QR Code
+                            </a>
+                        </li>
+
                         <li class="nav-item">
                             <a class="nav-link <?php echo isCurrentPage('attendance_history.php') ? 'active' : ''; ?>"
                                 href="/app/views/attendance_history.php">
@@ -176,7 +192,7 @@ function isCurrentPage($path)
                         <li class="nav-item">
                             <a class="nav-link <?php echo isCurrentPage('checklist_history.php') ? 'active' : ''; ?>"
                                 href="/app/views/checklist_history.php">
-                                <i class="bi bi-person-arms-up" style="font-size: 23px;"></i>
+                                <i class="fa-solid fa-stethoscope" style="font-size: 23px;"></i>
                                 บันทึกประวัติการตรวจร่างกาย
                             </a>
                         </li>
@@ -204,13 +220,13 @@ function isCurrentPage($path)
                     <?php endif; ?>
 
                     <?php if (getUserRole() === 'doctor'): ?>
-                        <li class="nav-item <?php echo isCurrentPage('checklist_history.php') ? 'active' : ''; ?>">
+                        <li class="nav-item <?php echo isCurrentPage('check_health_external/checklist_name.php') ? 'active' : ''; ?>">
                             <a class="nav-link" href="/app/views/check_health_external/checklist_name.php">
                                 <i class="fa-solid fa-user-doctor" style="font-size: 23px;"></i>
                                 บันทึกประวัติการตรวจสุขภาพ
                             </a>
                         </li>
-                        <li class="nav-item <?php echo isCurrentPage('checklist_history.php') ? 'active' : ''; ?>">
+                        <li class="nav-item <?php echo isCurrentPage('check_health_tooth/checklist_name.php') ? 'active' : ''; ?>">
                             <a class="nav-link" href="/app/views/check_health_tooth/checklist_name.php">
                                 <i class="fa-solid fa-tooth" style="font-size: 23px;"></i>
                                 บันทึกการตรวจสุขภาพช่องปาก
@@ -243,7 +259,7 @@ function isCurrentPage($path)
 
                         <li class="nav-item">
                             <a class="nav-link" href="/app/views/checklist_history.php">
-                                <i class="bi bi-person-arms-up" style="font-size: 23px;"></i>
+                                <i class="fa-solid fa-stethoscope" style="font-size: 23px;"></i>
                                 ประวัติการตรวจร่างกาย
                             </a>
                         </li>

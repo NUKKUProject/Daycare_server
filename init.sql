@@ -754,6 +754,122 @@ ALTER TABLE ONLY public.vaccines
 
 
 --
--- PostgreSQL database dump complete
+-- Name: student_qr_tokens; Type: TABLE; Schema: public; Owner: postgres
 --
 
+CREATE TABLE public.student_qr_tokens (
+    id integer NOT NULL,
+    children_id integer NOT NULL,
+    token character varying(64) NOT NULL,
+    qr_type character varying(20) DEFAULT 'student_card'::character varying,
+    is_active smallint DEFAULT 1,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    expires_at timestamp without time zone,
+    revoked_at timestamp without time zone,
+    revoked_reason character varying(100)
+);
+
+
+ALTER TABLE public.student_qr_tokens OWNER TO postgres;
+
+CREATE SEQUENCE public.student_qr_tokens_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.student_qr_tokens_id_seq OWNED BY public.student_qr_tokens.id;
+
+ALTER TABLE ONLY public.student_qr_tokens ALTER COLUMN id SET DEFAULT nextval('public.student_qr_tokens_id_seq'::regclass);
+
+ALTER TABLE ONLY public.student_qr_tokens
+    ADD CONSTRAINT student_qr_tokens_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.student_qr_tokens
+    ADD CONSTRAINT student_qr_tokens_token_key UNIQUE (token);
+
+CREATE INDEX idx_student_qr_tokens_children_id ON public.student_qr_tokens USING btree (children_id);
+CREATE INDEX idx_student_qr_tokens_token ON public.student_qr_tokens USING btree (token);
+CREATE INDEX idx_student_qr_tokens_active ON public.student_qr_tokens USING btree (is_active);
+
+ALTER TABLE ONLY public.student_qr_tokens
+    ADD CONSTRAINT student_qr_tokens_children_id_fkey FOREIGN KEY (children_id) REFERENCES public.children(id) ON DELETE CASCADE;
+
+
+--
+-- Name: card_templates; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.card_templates (
+    id integer NOT NULL,
+    name character varying(100) NOT NULL,
+    description character varying(255),
+    header_color character varying(7) DEFAULT '#1E3A8A'::character varying,
+    layout_config json NOT NULL,
+    is_default boolean DEFAULT false,
+    is_active boolean DEFAULT true,
+    sort_order integer DEFAULT 0,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.card_templates OWNER TO postgres;
+
+CREATE SEQUENCE public.card_templates_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.card_templates_id_seq OWNED BY public.card_templates.id;
+
+ALTER TABLE ONLY public.card_templates ALTER COLUMN id SET DEFAULT nextval('public.card_templates_id_seq'::regclass);
+
+ALTER TABLE ONLY public.card_templates
+    ADD CONSTRAINT card_templates_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: print_logs; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.print_logs (
+    id integer NOT NULL,
+    printed_by character varying(100) NOT NULL,
+    template_id integer,
+    children_ids json NOT NULL,
+    print_type character varying(20) NOT NULL,
+    total_cards integer DEFAULT 0,
+    printed_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.print_logs OWNER TO postgres;
+
+CREATE SEQUENCE public.print_logs_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.print_logs_id_seq OWNED BY public.print_logs.id;
+
+ALTER TABLE ONLY public.print_logs ALTER COLUMN id SET DEFAULT nextval('public.print_logs_id_seq'::regclass);
+
+ALTER TABLE ONLY public.print_logs
+    ADD CONSTRAINT print_logs_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.print_logs
+    ADD CONSTRAINT print_logs_template_id_fkey FOREIGN KEY (template_id) REFERENCES public.card_templates(id) ON DELETE SET NULL;
+
+
+--
+-- PostgreSQL database dump complete
+--

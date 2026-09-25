@@ -9,54 +9,49 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
     <!-- <link rel="stylesheet" href="/css/styleHome.css" /> -->
     <link rel="icon" type="image/x-icon" href="/pic/apple-touch-icon.png" />
     <title>ศูนย์ความเป็นเลิศในการพัฒนาเด็กปฐมวัย คณะพยาบาลศาสตร์ มข.</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" integrity="sha384-Gu3KVV2H9d+yA4QDpVB7VcOyhJlAVrcXd0thEjr4KznfaFPLe0xQJyonVxONa4ZC" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" integrity="sha384-EvBWSlnoFgZlXJvpzS+MAUEjvN7+gcCwH+qh7GRFOGgZO0PuwOFro7qPOJnLfe7l" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet" integrity="sha384-EvBWSlnoFgZlXJvpzS+MAUEjvN7+gcCwH+qh7GRFOGgZO0PuwOFro7qPOJnLfe7l" crossorigin="anonymous">
     <link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/dashboard/">
     <!-- Favicons -->
     <meta name="theme-color" content="#7952b3">
     <!-- Custom styles for this template -->
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
-        rel="stylesheet">
+    <!-- ใช้ fallback font ในเครื่อง เพื่อลด third-party resource ที่ไม่มี SRI -->
     <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.min.js"
         integrity="sha384-uO3SXW5IuS1ZpFPKugNNWqTZRRglnUJK6UAZ/gxOX80nxEkN9NcGZTftn6RzhGWE"
         crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"
         integrity="sha384-zNy6FEbO50N+Cg5wap8IKA4M/ZnLJgzc6w2NqACZaK0u0FXfOWRRJOnQtpZun8ha"
         crossorigin="anonymous"></script>
     <!-- <script src="dashboard.js"></script> -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.3/dist/sweetalert2.min.js" integrity="sha384-9GynVk5jPocYbuypwpDEOLV5SC9mGDlWn1YMabUKSQlG7DK/zmn+MX0gtHLGjXRa" crossorigin="anonymous"></script>
     <!-- Bootstrap JS (Popper.js รวมอยู่ด้วย) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha384-Yv5O+t3uE3hunW8uyrbpPW3iw6/5/Y7HitWJBLgqfMoA36NogMmy+8wWZMpn3HWc" crossorigin="anonymous">
     </script>
 
     <!-- ในส่วน head ให้เรียงลำดับการโหลด scripts ดังนี้ -->
     <!-- jQuery (if needed) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK" crossorigin="anonymous"></script>
 
     <!-- Popper.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3" crossorigin="anonymous"></script>
 
     <!-- Bootstrap Bundle (includes Popper) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
 
 
     <link href="../../../public/assets/css/navbar.css" rel="stylesheet">
     <link rel="stylesheet" href="../../../public/assets/css/common.css">
 
     <!-- เพิ่มบรรทัดนี้หลัง Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha384-t1nt8BQoYMLFN5p42tRAtuAAFQaCQODekUVeKKZrEnEyp4H2R0RHFz0KWpmj7i8g" crossorigin="anonymous">
 
 </head>
 
@@ -92,7 +87,7 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                             <!-- ปุ่มเลือกวิธีการเข้าสู่ระบบ -->
                             <div class="login-method-buttons mb-4">
                                 <button type="button" class="btn btn-light w-100 py-2 mb-3" id="normalLoginBtn">
-                                    <i class="bi bi-person-fill me-2"></i>เข้าสู่ระบบด้วยบัญชีทั่วไป
+                                    <i class="bi bi-person-fill me-2"></i>เข้าสู่ระบบสำหรับผู้ปกครอง
                                 </button>
                                 <a class="btn btn-success w-100 py-2 mb-3" href="https://ssonext.kku.ac.th/login?app=0198bb3e-beab-7004-95c1-864db39d9e85">
                                     <i class="bi bi-shield-lock-fill me-2"></i>เข้าสู่ระบบด้วย KKU SSO
@@ -107,20 +102,15 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                                 <input type="hidden" name="login_method" value="normal">
                                 <div class="form-floating mb-3">
                                     <input type="text" class="form-control" id="username" name="username" placeholder="ชื่อผู้ใช้" required>
-                                    <label for="username">ชื่อผู้ใช้</label>
+                                    <label for="username">รหัสประจำตัวผู้เรียน</label>
                                 </div>
                                 <div class="form-floating mb-4">
                                     <input type="password" class="form-control" id="password" name="password" placeholder="รหัสผ่าน" required>
-                                    <label for="password">รหัสผ่าน</label>
+                                    <label for="password">เลขบัตรประชาชนผู้เรียน</label>
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100 py-2 mb-3">
                                     <i class="bi bi-box-arrow-in-right me-2"></i>เข้าสู่ระบบ
-                                </button>
-                                <div class="text-center">
-                                    <a href="#" class="text-white-50 text-decoration-none small">ลืมรหัสผ่าน?</a>
-                                    <span class="text-white-50 mx-2">•</span>
-                                    <a href="register" class="text-white-50 text-decoration-none small">ลงทะเบียนใหม่</a>
-                                </div>
+                                </button>                             
                             </form>
 
                         </div>

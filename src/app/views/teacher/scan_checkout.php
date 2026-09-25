@@ -33,6 +33,23 @@ $data = getChildrenGroupedByTab($currentTab);
         padding: 1rem;
     }
 
+    .scanner-inline-panel {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        background: #f8f9fa;
+    }
+
+    .scanner-inline-panel .zoom-controls {
+        margin: 0 auto 1rem;
+    }
+
     #video-container {
         display: flex;
         justify-content: center;
@@ -50,7 +67,7 @@ $data = getChildrenGroupedByTab($currentTab);
         display: flex;
         width: 100% !important;
         height: auto !important;
-        min-height: 300px !important;
+        min-height: 350px !important;
         border: none !important;
     }
 
@@ -69,7 +86,7 @@ $data = getChildrenGroupedByTab($currentTab);
         align-items: center;
         background: #000;
         border-radius: 10px;
-        min-height: 300px;
+        min-height: 350px;
     }
 
     /* Zoom Controls */
@@ -860,7 +877,7 @@ tbody tr:hover {
 
            
             <div id="scanner-container"> 
-                <h3 class="text-center">บันทึกการเช็คชื่อกลับบ้าน วันที่ <?php echo date('d/m/Y'); ?></h3>
+                <h5 class="text-center text-primary">บันทึกการเช็คชื่อกลับบ้าน วันที่ <?php echo date('d/m/Y'); ?></h5>
 
                  <div class="manual-attendance-form">
                     <label for="manualStudentId" class="form-label">
@@ -875,32 +892,20 @@ tbody tr:hover {
                 </div>
 
                 <script>
-                    // Function to check existing checkout record
-                    function checkExistingCheckout(studentId) {
-                        // The checkout-check script resides in include/attendance relative to this view
-                        return fetch(`../../include/attendance/checkout-check.php?student_id=${studentId}`)
-                            .then(res => {
-                                // Some endpoints may return empty body; handle gracefully
-                                if (!res.ok) return {};
-                                return res.text().then(text => {
-                                    try {
-                                        return JSON.parse(text);
-                                    } catch (e) {
-                                        // Not valid JSON – treat as empty result
-                                        return {};
-                                    }
-                                });
-                            })
-                            .then(data => {
-                                if (data && data.status === 'success') {
-                                    Swal.fire({
-                                        icon: 'info',
-                                        title: 'ข้อมูลการกลับบ้าน',
-                                        html: `นักเรียนนี้ได้บันทึกการกลับบ้านแล้ว เวลา: <b>${data.time}</b>`
-                                    });
-                                }
-                            })
-                            .catch(err => console.error('Error checking checkout:', err));
+                    // Function to check attendance check-in & checkout status
+                    async function checkExistingCheckout(studentId) {
+                        try {
+                            const res = await fetch(`../../include/attendance/check_existing_checkout.php?student_id=${studentId}`);
+                            const data = await res.json();
+                            return {
+                                has_checkin: data.has_checkin || false,
+                                has_checkout: data.has_checkout || false,
+                                checkout_time: data.checkout_time || null
+                            };
+                        } catch (e) {
+                            console.error('Error checking checkout:', e);
+                            return { has_checkin: false, has_checkout: false, checkout_time: null };
+                        }
                     }
 
                     document.getElementById('manualAttendanceBtn').addEventListener('click', async function() {
@@ -909,8 +914,22 @@ tbody tr:hover {
                             Swal.fire({icon: 'warning', title: 'กรุณากรอกเลขประจำตัว'});
                             return;
                         }
-                        // Check existing checkout first
-                        await checkExistingCheckout(studentId);
+                        // ตรวจสอบข้อมูลการเช็คชื่อเข้าและออก
+                        const checkResult = await checkExistingCheckout(studentId);
+                        if (checkResult.has_checkout) {
+                            const time = checkResult.checkout_time
+                                ? checkResult.checkout_time.substring(0, 5) + ' น.'
+                                : '';
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'บันทึกการกลับบ้านแล้ว',
+                                html: `นักเรียนนี้ได้บันทึกการกลับบ้านไปแล้ว<br>เวลา: <b>${time}</b>`,
+                                confirmButtonColor: '#1e4db7',
+                                confirmButtonText: 'รับทราบ'
+                            });
+                            document.getElementById('manualStudentId').value = '';
+                            return;
+                        }
                         // Fetch guardian data
                         try {
                             const res = await fetch(`../../include/attendance/get_student_guardians.php?student_id=${studentId}`);
@@ -937,12 +956,8 @@ tbody tr:hover {
                     });
                 </script>
 
-
-                <div id="video-container">
-                    <div id="reader"></div>
-                </div>
-
-                <!-- ปุ่มซูมกล้อง -->
+                <div class="scanner-inline-panel">
+ <!-- ปุ่มซูมกล้อง -->
                 <div class="zoom-controls" id="zoomControls">
                     <span id="zoomStatusMsg" style="font-size:0.85rem;color:#6c757d;">
                         <i class="bi bi-search"></i> กำลังตรวจสอบกล้อง...
@@ -954,6 +969,26 @@ tbody tr:hover {
                         <span class="zoom-value" id="zoomValueDisplay">1.0x</span>
                     </div>
                 </div>
+                <div id="video-container">
+                    <div id="reader"></div>
+                </div>
+
+                <div class="d-flex justify-content-center mt-2">
+                    <button type="button" class="btn btn-outline-primary" id="switchScannerCamera">
+                        <i class="bi bi-arrow-repeat me-1"></i>สลับกล้อง
+                    </button>
+                </div>
+                <div class="mt-3" style="width:100%;max-width:420px;">
+                    <label for="scannerCameraSelect" class="form-label mb-1">
+                        <i class="bi bi-camera-video me-1"></i>เลือกกล้อง
+                    </label>
+                    <select id="scannerCameraSelect" class="form-select" disabled>
+                        <option value="">กำลังค้นหากล้อง...</option>
+                    </select>
+                </div>
+                </div>
+
+               
 
                 <div class="table-responsive" style="width:100% ; max-height: 400px; overflow: scroll; ">
                     <table class="table table-striped" >
@@ -1117,7 +1152,7 @@ tbody tr:hover {
                     <i class="bi bi-person-check"></i> เลือกผู้รับเด็กกลับบ้าน
                 </div>
 
-                <!-- Father / Mother / Relative -->
+                <!-- Father / Mother / Guardian -->
                 <div class="guardian-grid mb-3">
 
                     <label class="guardian-select-card">
@@ -1143,8 +1178,8 @@ tbody tr:hover {
                     <label class="guardian-select-card">
                     <input type="radio" name="guardian" value="relative" id="relativeRadio">
                     <div class="guardian-card-inner">
-                        <img id="relativeImg" src="" alt="รูปญาติ" class="g-avatar" onerror="this.src=defaultAvatar">
-                        <span class="g-label">ญาติ</span>
+                        <img id="relativeImg" src="" alt="รูปผู้ปกครอง/ผู้ดูแล" class="g-avatar" onerror="this.src=defaultAvatar">
+                        <span class="g-label">ผู้ปกครอง/ผู้ดูแล</span>
                         <span class="g-name" id="relativeName">-</span>
                         <div class="check-mark"><i class="bi bi-check"></i></div>
                     </div>
@@ -1189,8 +1224,7 @@ tbody tr:hover {
         </div>
     </div>
     <!-- script สำหรับแสกน qrcode เช็คชื่อ -->
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+" crossorigin="anonymous"></script>
     <script>
          // เริ่มต้นการสแกน
 
@@ -1252,10 +1286,23 @@ tbody tr:hover {
                         });
                         return;
                     }
-                    // ตรวจสอบการเช็คเอาท์ที่บันทึกไว้แล้ว
-                    await checkExistingCheckout(studentData.student_id);
+                    // ตรวจสอบข้อมูลการเช็คชื่อเข้าและออก
+                    const checkResult = await checkExistingCheckout(studentData.student_id);
+                    if (checkResult.has_checkout) {
+                        const time = checkResult.checkout_time
+                            ? checkResult.checkout_time.substring(0, 5) + ' น.'
+                            : '';
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'บันทึกการกลับบ้านแล้ว',
+                            html: `นักเรียนนี้ได้บันทึกการกลับบ้านไปแล้ว<br>เวลา: <b>${time}</b>`,
+                            confirmButtonColor: '#1e4db7',
+                            confirmButtonText: 'รับทราบ'
+                        });
+                        return;
+                    }
                     // แสดง modal ให้เลือกผู้รับเด็ก
-                    showPickupModal(guardians, studentData);
+                    showPickupModal(guardians, result.data);
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -1276,6 +1323,13 @@ tbody tr:hover {
         // เริ่มต้นการสแกน
         const html5QrCode = new Html5Qrcode("reader");
         const readerElem = document.getElementById('reader');
+        const switchScannerCamera = document.getElementById('switchScannerCamera');
+        const scannerCameraSelect = document.getElementById('scannerCameraSelect');
+        let scannerFacingMode = 'environment';
+        let scannerCameras = [];
+        let scannerCameraIndex = null;
+        let scannerState = 'idle';
+        let scannerRestarting = false;
 
         // ฟังก์ชันคำนวณขนาด qrbox ตามหน้าจอ
         function calculateQrBoxSize() {
@@ -1302,6 +1356,46 @@ tbody tr:hover {
             return Math.max(160, qrBoxSize); // ขนาดต่ำสุด 160px
         }
 
+        async function getScannerCameraConfig() {
+            if (typeof Html5Qrcode.getCameras !== 'function') {
+                return { facingMode: scannerFacingMode };
+            }
+
+            try {
+                scannerCameras = await Html5Qrcode.getCameras();
+            } catch (error) {
+                console.warn('ไม่สามารถค้นหารายการกล้อง ใช้ facingMode แทน:', error);
+                return { facingMode: scannerFacingMode };
+            }
+
+            if (!scannerCameras.length) {
+                throw new Error('ไม่พบกล้องในอุปกรณ์นี้');
+            }
+
+            if (scannerCameraIndex === null || scannerCameraIndex >= scannerCameras.length) {
+                const keyword = scannerFacingMode === 'environment'
+                    ? /back|rear|environment|หลัง/i
+                    : /front|user|หน้า/i;
+                const preferredIndex = scannerCameras.findIndex(camera => keyword.test(camera.label || ''));
+                scannerCameraIndex = preferredIndex >= 0
+                    ? preferredIndex
+                    : (scannerFacingMode === 'environment' ? scannerCameras.length - 1 : 0);
+            }
+
+            scannerCameraSelect.innerHTML = '';
+            scannerCameras.forEach((camera, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = camera.label || `กล้อง ${index + 1}`;
+                scannerCameraSelect.appendChild(option);
+            });
+            scannerCameraSelect.value = String(scannerCameraIndex === null ? 0 : scannerCameraIndex);
+            scannerCameraSelect.disabled = scannerCameras.length <= 1;
+            switchScannerCamera.disabled = scannerCameras.length <= 1;
+
+            return { deviceId: { exact: scannerCameras[scannerCameraIndex].id } };
+        }
+
         const qrBoxSize = calculateQrBoxSize();
 
         const config = {
@@ -1312,26 +1406,46 @@ tbody tr:hover {
             }
         };
 
-        // Start the QR scanner. When the scanner has successfully started we can safely
-        // initialise the zoom controls because the video element and its MediaStream are
-        // now available. This avoids the race condition where `initZoomControl` runs
-        // before the camera permission is granted or before the video track is attached,
-        // which caused the zoom UI to remain hidden intermittently.
-        html5QrCode.start({
-                facingMode: "environment"
-            },
-            config,
-            onScanSuccess
-        ).then(() => {
-            // Initialise zoom controls only after the scanner is ready.
+        async function startScannerWithConfig(scannerConfig) {
+            if (scannerState === 'starting' || scannerState === 'running') return;
+            scannerState = 'starting';
             try {
+                const cameraConfig = await getScannerCameraConfig();
+                await html5QrCode.start(cameraConfig, scannerConfig, onScanSuccess);
+                scannerState = 'running';
                 initZoomControl();
-            } catch (e) {
-                console.warn('Zoom init error (non-blocking):', e);
+            } catch (error) {
+                scannerState = 'idle';
+                console.error('Error starting QR scanner:', error);
             }
-        }).catch(err => {
-            console.error('Error starting QR scanner:', err);
-        });
+        }
+
+        async function stopScannerForRestart() {
+            if (scannerState === 'idle') return;
+            scannerState = 'stopping';
+            try {
+                await html5QrCode.stop();
+            } catch (error) {
+                console.warn('หยุดกล้อง:', error);
+            }
+            try {
+                html5QrCode.clear();
+            } catch (error) {
+                console.warn('ล้างตัวสแกน:', error);
+            }
+            scannerState = 'idle';
+        }
+
+        async function restartScanner(scannerConfig) {
+            if (scannerRestarting) return;
+            scannerRestarting = true;
+            try {
+                await stopScannerForRestart();
+                await startScannerWithConfig(scannerConfig);
+            } finally {
+                scannerRestarting = false;
+            }
+        }
 
         // --- Zoom Control Logic ---
         let currentZoom = 1;
@@ -1454,20 +1568,10 @@ tbody tr:hover {
                 function updateQrScannerSize() {
                     const newQrBoxSize = calculateQrBoxSize();
                     // Stop current scanner, then restart with new size and re‑init zoom controls
-                    html5QrCode.stop()
-                        .then(() => {
-                            const newConfig = {
-                                fps: 25,
-                                qrbox: { width: newQrBoxSize, height: newQrBoxSize }
-                            };
-                            return html5QrCode.start({ facingMode: "environment" }, newConfig, onScanSuccess);
-                        })
-                        .then(() => {
-                            try { initZoomControl(); } catch (e) { console.warn('Zoom init after resize error (non‑blocking):', e); }
-                        })
-                        .catch(err => {
-                            console.error('Error (re)starting QR scanner:', err);
-                        });
+                    restartScanner({
+                        fps: 25,
+                        qrbox: { width: newQrBoxSize, height: newQrBoxSize }
+                    });
                 }
 
                 // Listen for viewport size changes – debounce to avoid rapid restarts
@@ -1490,11 +1594,7 @@ tbody tr:hover {
                             fps: 25,
                             qrbox: { width: currentQrBoxSize, height: currentQrBoxSize }
                         };
-                        html5QrCode.start({ facingMode: "environment" }, restartConfig, onScanSuccess)
-                            .then(() => {
-                                try { initZoomControl(); } catch (e) { console.warn('Zoom init after scroll error:', e); }
-                            })
-                            .catch(err => console.error('Error restarting QR scanner on scroll:', err));
+                        startScannerWithConfig(restartConfig);
                     }
                 }
                 let scrollTimer;
@@ -1504,6 +1604,32 @@ tbody tr:hover {
                         ensureScannerRunning();
                     }, 200);
                 });
+
+        switchScannerCamera.addEventListener('click', async () => {
+            if (scannerState !== 'running' || scannerCameras.length < 2) return;
+            scannerFacingMode = scannerFacingMode === 'environment' ? 'user' : 'environment';
+            scannerCameraIndex = (scannerCameraIndex + 1) % scannerCameras.length;
+            await restartScanner(config);
+        });
+
+        scannerCameraSelect.addEventListener('change', async () => {
+            const selectedIndex = Number(scannerCameraSelect.value);
+            if (!Number.isInteger(selectedIndex) || !scannerCameras[selectedIndex]) return;
+            if (selectedIndex === scannerCameraIndex) return;
+            scannerCameraIndex = selectedIndex;
+            await restartScanner(config);
+        });
+
+        // เริ่มกล้องครั้งเดียวบนหน้า และไม่ restart เมื่อ scroll หรือ resize
+        startScannerWithConfig(config);
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopScannerForRestart();
+            } else if (scannerState === 'idle') {
+                startScannerWithConfig(config);
+            }
+        });
+        window.addEventListener('pagehide', () => stopScannerForRestart());
 
          // ฟังก์ชันเปิด Modal พร้อมข้อมูล
     function openGuardianModal(studentData, guardianData, timeStr) {
@@ -1631,6 +1757,15 @@ tbody tr:hover {
 
     document.addEventListener('DOMContentLoaded', () => {
     console.log('guardian.js loaded'); // debug
+
+    // Toggle other details textarea when "อื่นๆ" is selected
+    document.querySelectorAll('input[name="guardian"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const otherDetails = document.getElementById('otherDetails');
+            otherDetails.style.display = this.value === 'other' ? 'block' : 'none';
+        });
+    });
+
     const btnSave = document.getElementById('guardianBtnSave');
     if (!btnSave) {
         console.error('guardianBtnSave not found');
@@ -1671,7 +1806,7 @@ tbody tr:hover {
                     guardianName = document.getElementById('relativeName')?.textContent.trim() || '';
                     break;
                 case 'other':
-                    guardianName = document.getElementById('otherGuardianDetails')?.value.trim() || '';
+                    guardianName = '';
                     break;
                 default:
                     guardianName = '';

@@ -79,6 +79,26 @@ $position = $data['profile']['positionName'];
 $workline = $data['profile']['workline'];
 $faculty_name = $data['profile']['facultyName'];
 
+// ใช้คำนำหน้าวิชาชีพสำหรับแพทย์ โดยอ้างอิงเพศ/คำนำหน้าจากข้อมูล SSO
+$profile_gender = strtolower(trim((string) ($data['profile']['gender'] ?? $data['profile']['sex'] ?? '')));
+$profile_title_th = trim((string) $title_th);
+$profile_title_eng = strtolower(trim((string) ($data['profile']['titleEng'] ?? '')));
+$doctor_title_th = $title_th;
+
+if (
+    in_array($profile_gender, ['ชาย', 'เพศชาย', 'male', 'm'], true) ||
+    in_array($profile_title_th, ['นาย', 'นายแพทย์'], true) ||
+    in_array($profile_title_eng, ['mr', 'mr.'], true)
+) {
+    $doctor_title_th = 'นพ.';
+} elseif (
+    in_array($profile_gender, ['หญิง', 'เพศหญิง', 'female', 'f'], true) ||
+    in_array($profile_title_th, ['นาง', 'นางสาว', 'แพทย์หญิง'], true) ||
+    in_array($profile_title_eng, ['ms', 'ms.', 'mrs', 'mrs.', 'miss'], true)
+) {
+    $doctor_title_th = 'พญ.';
+}
+
 // $mail = "adisai@kku.ac.th"; // ตัวอย่างอีเมล
 // $citizen_id = "1234567890124";
 // $title_th = "นาย";
@@ -108,8 +128,22 @@ if ($meeting_id ) {
     
     // 4. หลังจากบันทึกเสร็จ ให้ลบ Cookie ทิ้ง
     $domain = (strpos($_SERVER['HTTP_HOST'], 'kku.ac.th') !== false) ? ".kku.ac.th" : "";
-    setcookie("checkin_id", "", time() - 3600, "/", $domain);
-    setcookie('user_profile_data', $profile_json, time() + 3600, '/', '.kku.ac.th', true, false);
+    setcookie('checkin_id', '', [
+        'expires' => time() - 3600,
+        'path' => '/',
+        'domain' => $domain,
+        'secure' => true,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    setcookie('user_profile_data', $profile_json, [
+        'expires' => time() + 3600,
+        'path' => '/',
+        'domain' => '.kku.ac.th',
+        'secure' => true,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
 
     // 5. Redirect ไปหน้า Success พร้อมส่ง ID ไปแสดงผล
     header("Location: /checkin-system/checkin/" . $meeting_id);
@@ -140,17 +174,27 @@ try {
                 $stmt->execute();
                 $user_doctor = $stmt->fetch();
                 if ($user_doctor) {
+                    // อัปเดตชื่อให้ใช้คำนำหน้าวิชาชีพตามเพศจาก SSO
+                    $name = $doctor_title_th . $firstname_th . ' ' . $lastname_th;
+                    if ($user_doctor['username'] !== $name) {
+                        $update_doctor_stmt = $pdo->prepare("UPDATE doctors_user SET username = :username WHERE id = :id");
+                        $update_doctor_stmt->execute([
+                            ':username' => $name,
+                            ':id' => $user_doctor['id'],
+                        ]);
+                    }
+
                     // เริ่ม Session เมื่อ Login สำเร็จ
                     session_regenerate_id(true); // ป้องกัน Session Fixation Attack
                     $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['username'] = $user_doctor['username'];
+                    $_SESSION['username'] = $name;
                     $_SESSION['role'] = $role;
                     $_SESSION['email'] = $mail;
                     $_SESSION['last_activity'] = time(); // เพิ่มบรรทัดนี้
               
                     redirectByRole($role);
                 } else {
-                    $name = $title_th . $firstname_th . ' ' . $lastname_th;
+                    $name = $doctor_title_th . $firstname_th . ' ' . $lastname_th;
                     // ไม่มีข้อมูล ให้เพิ่มใหม่
                     $insert_teacher_sql = "INSERT INTO doctors_user (email, username, role, user_id) VALUES (:email, :username, 'doctor', :user_id)";
                     $insert_teacher_stmt = $pdo->prepare($insert_teacher_sql);

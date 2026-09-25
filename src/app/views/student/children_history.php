@@ -49,6 +49,7 @@ $selectedClassroom = $_GET['classroom'] ?? null;
 
 <link href="../../../public/assets/css/children_style.css" rel="stylesheet">
 <link href="../../../public/assets/css/children_ui.css" rel="stylesheet">
+<link href="../../../public/assets/css/view_child1.css" rel="stylesheet">
 
 <style>
 
@@ -61,7 +62,7 @@ $selectedClassroom = $_GET['classroom'] ?? null;
     <div class="page-header">
         <div class="page-header-inner">
             <div>
-                <div class="page-title">📋 ข้อมูลเด็กในระบบ</div>
+                <div class="page-title"><i class="fas fa-clipboard-list me-2" aria-hidden="true"></i>ข้อมูลเด็กในระบบ</div>
                 <div class="page-subtitle">
                     <?php if ($currentAcademicYear): ?>
                         ปีการศึกษา <?= htmlspecialchars($currentAcademicYear) ?> · จัดการและค้นหาข้อมูลเด็กทั้งหมด
@@ -73,15 +74,12 @@ $selectedClassroom = $_GET['classroom'] ?? null;
             <div class="header-actions">
                 <button class="btn-header btn-header-outline"
                         data-bs-toggle="modal" data-bs-target="#addChildModal">
-                    ➕ เพิ่มข้อมูลเด็ก
+                    <i class="fas fa-plus me-1" aria-hidden="true"></i>เพิ่มข้อมูลเด็ก
                 </button>
                 <button class="btn-header btn-header-outline"
                         data-bs-toggle="modal" data-bs-target="#exportModal">
-                    📊 Export CSV
+                    <i class="fas fa-file-export me-1" aria-hidden="true"></i>Export CSV
                 </button>
-                <a href="../admin/qr_codes_list.php" class="btn-header btn-header-solid">
-                    📷 QR Codes
-                </a>
             </div>
         </div>
     </div>
@@ -92,19 +90,19 @@ $selectedClassroom = $_GET['classroom'] ?? null;
         <?php if (!empty($academicYears)): ?>
             <?php foreach ($academicYears as $year): ?>
                 <a href="?academic_year=<?= htmlspecialchars($year['name']) ?>" class="year-card">
-                    <span class="year-card-icon">📅</span>
+                    <span class="year-card-icon"><i class="fas fa-calendar-days" aria-hidden="true"></i></span>
                     <div class="year-card-title"><?= htmlspecialchars($year['name']) ?></div>
                     <div>
                         <span class="year-badge <?= $year['is_active'] ? 'active' : 'inactive' ?>">
-                            <?= $year['is_active'] ? '✓ เปิดใช้งาน' : 'ปิดใช้งาน' ?>
+                            <?php if ($year['is_active']): ?><i class="fas fa-check me-1" aria-hidden="true"></i>เปิดใช้งาน<?php else: ?>ปิดใช้งาน<?php endif; ?>
                         </span>
                     </div>
-                    <span class="year-card-btn">เปิดดูข้อมูล →</span>
+                    <span class="year-card-btn">เปิดดูข้อมูล <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i></span>
                 </a>
             <?php endforeach; ?>
         <?php else: ?>
             <div style="grid-column:1/-1; text-align:center; padding:3rem; color:#718096;">
-                <div style="font-size:3rem; margin-bottom:1rem;">📭</div>
+                <div style="font-size:3rem; margin-bottom:1rem;"><i class="fas fa-inbox" aria-hidden="true"></i></div>
                 <div>ยังไม่มีปีการศึกษาในระบบ</div>
             </div>
         <?php endif; ?>
@@ -114,33 +112,33 @@ $selectedClassroom = $_GET['classroom'] ?? null;
     <!-- ===== Children View ===== -->
 
     <!-- Back Button -->
-    <a href="children_history.php" class="back-btn">← กลับไปหน้าปีการศึกษา</a>
+    <a href="children_history.php" class="back-btn"><i class="fas fa-arrow-left me-1" aria-hidden="true"></i>กลับไปหน้าปีการศึกษา</a>
 
     <!-- Stats Bar -->
     <div class="stats-bar">
         <div class="stat-card s-all">
-            <div class="stat-icon">👦</div>
+            <div class="stat-icon"><i class="fas fa-child" aria-hidden="true"></i></div>
             <div>
                 <div class="stat-value" id="statAll">0</div>
                 <div class="stat-label">เด็กทั้งหมด</div>
             </div>
         </div>
         <div class="stat-card s-medium">
-            <div class="stat-icon">🌟</div>
+            <div class="stat-icon"><i class="fas fa-star" aria-hidden="true"></i></div>
             <div>
                 <div class="stat-value" id="statMedium">0</div>
                 <div class="stat-label">เด็กกลาง</div>
             </div>
         </div>
         <div class="stat-card s-big">
-            <div class="stat-icon">🎒</div>
+            <div class="stat-icon"><i class="fas fa-school" aria-hidden="true"></i></div>
             <div>
                 <div class="stat-value" id="statBig">0</div>
                 <div class="stat-label">เด็กโต</div>
             </div>
         </div>
         <div class="stat-card s-prep">
-            <div class="stat-icon">🌱</div>
+            <div class="stat-icon"><i class="fas fa-seedling" aria-hidden="true"></i></div>
             <div>
                 <div class="stat-value" id="statPrep">0</div>
                 <div class="stat-label">เตรียมอนุบาล</div>
@@ -152,11 +150,11 @@ $selectedClassroom = $_GET['classroom'] ?? null;
     <div class="control-panel">
         <!-- Search -->
         <div class="search-wrapper">
-            <span class="search-icon">🔍</span>
+            <span class="search-icon"><i class="fas fa-magnifying-glass" aria-hidden="true"></i></span>
             <input type="text" class="search-input" id="searchInput"
                    placeholder="ค้นหาชื่อ, ชื่อเล่น, รหัสนักเรียน..."
                    autocomplete="off">
-            <button class="search-clear" id="searchClear">✕</button>
+            <button class="search-clear" id="searchClear" aria-label="ล้างคำค้นหา"><i class="fas fa-xmark" aria-hidden="true"></i></button>
         </div>
 
         <!-- Group Filter -->
@@ -169,16 +167,16 @@ $selectedClassroom = $_GET['classroom'] ?? null;
 
         <!-- Sort -->
         <select class="sort-select" id="sortSelect">
-            <option value="name-asc">ชื่อ ก→ฮ</option>
-            <option value="name-desc">ชื่อ ฮ→ก</option>
-            <option value="id-asc">รหัส น้อย→มาก</option>
-            <option value="id-desc">รหัส มาก→น้อย</option>
+            <option value="name-asc">ชื่อ ก-ฮ</option>
+            <option value="name-desc">ชื่อ ฮ-ก</option>
+            <option value="id-asc">รหัส น้อย-มาก</option>
+            <option value="id-desc">รหัส มาก-น้อย</option>
         </select>
 
         <!-- View Toggle -->
         <div class="view-toggle">
-            <button class="view-btn active" id="viewCard" title="Card View">⊞</button>
-            <button class="view-btn" id="viewTable" title="Table View">☰</button>
+            <button class="view-btn active" id="viewCard" title="Card View"><i class="fas fa-table-cells-large" aria-hidden="true"></i></button>
+            <button class="view-btn" id="viewTable" title="Table View"><i class="fas fa-table-list" aria-hidden="true"></i></button>
         </div>
     </div>
 
@@ -195,7 +193,7 @@ $selectedClassroom = $_GET['classroom'] ?? null;
 
     <!-- No Results -->
     <div class="no-results" id="noResults">
-        <span class="no-results-icon">🔍</span>
+        <span class="no-results-icon"><i class="fas fa-magnifying-glass" aria-hidden="true"></i></span>
         <div class="no-results-text">ไม่พบข้อมูลที่ค้นหา กรุณาลองคำค้นหาอื่น</div>
     </div>
 
@@ -208,10 +206,10 @@ $selectedClassroom = $_GET['classroom'] ?? null;
             <table id="childrenTable">
                 <thead>
                     <tr>
-                        <th data-col="id">รหัส <span class="sort-arrow">↕</span></th>
-                        <th data-col="name">ชื่อ-นามสกุล <span class="sort-arrow">↕</span></th>
-                        <th data-col="group">กลุ่ม <span class="sort-arrow">↕</span></th>
-                        <th data-col="room">ห้องเรียน <span class="sort-arrow">↕</span></th>
+                        <th data-col="id">รหัส <span class="sort-arrow"><i class="fas fa-sort" aria-hidden="true"></i></span></th>
+                        <th data-col="name">ชื่อ-นามสกุล <span class="sort-arrow"><i class="fas fa-sort" aria-hidden="true"></i></span></th>
+                        <th data-col="group">กลุ่ม <span class="sort-arrow"><i class="fas fa-sort" aria-hidden="true"></i></span></th>
+                        <th data-col="room">ห้องเรียน <span class="sort-arrow"><i class="fas fa-sort" aria-hidden="true"></i></span></th>
                         <th>จัดการ</th>
                     </tr>
                 </thead>
@@ -227,10 +225,10 @@ $selectedClassroom = $_GET['classroom'] ?? null;
 
 <!-- Modal: เพิ่มข้อมูลเด็ก -->
 <div class="modal fade" id="addChildModal" tabindex="-1" aria-labelledby="addChildModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content" style="border-radius:15px; border:none;">
-            <div class="modal-header" style="background:#26648E; color:white; border-radius:15px 15px 0 0;">
-                <h5 class="modal-title" id="addChildModalLabel">เพิ่มข้อมูลเด็ก</h5>
+    <div class="modal-dialog modal-xl modal-dialog-scrollable child-add-modal-dialog">
+        <div class="modal-content child-add-modal-content">
+            <div class="modal-header child-add-modal-header">
+                <h5 class="modal-title" id="addChildModalLabel"><i class="fas fa-user-plus me-2" aria-hidden="true"></i>เพิ่มข้อมูลเด็ก</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <?php include '../../include/form/form_addchild.php'; ?>
@@ -271,7 +269,7 @@ $selectedClassroom = $_GET['classroom'] ?? null;
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-                    <button type="submit" class="btn btn-success">📥 Export</button>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-download me-1" aria-hidden="true"></i>Export</button>
                 </div>
             </form>
         </div>
@@ -397,7 +395,7 @@ $selectedClassroom = $_GET['classroom'] ?? null;
                         <span class="tag tag-room">ห้อง ${child.room||''}</span>
                     </div>
                     <a href="view_child.php?studentid=${child.id||''}" class="card-action-btn">
-                        👁 ดูรายละเอียด
+                        <i class="fas fa-eye me-1" aria-hidden="true"></i>ดูรายละเอียด
                     </a>
                 </div>
             </div>`;
@@ -426,7 +424,7 @@ $selectedClassroom = $_GET['classroom'] ?? null;
                 <td><span class="tbl-badge tbl-badge-room">ห้อง ${child.room||''}</span></td>
                 <td>
                     <a href="view_child.php?studentid=${child.id||''}" class="action-link">
-                        👁 ดูข้อมูล
+                        <i class="fas fa-eye me-1" aria-hidden="true"></i>ดูข้อมูล
                     </a>
                 </td>
             </tr>`;
@@ -443,15 +441,15 @@ $selectedClassroom = $_GET['classroom'] ?? null;
             });
 
             const groupMeta = {
-                'เด็กกลาง':    { icon: '🌟' },
-                'เด็กโต':      { icon: '🎒' },
-                'เตรียมอนุบาล':{ icon: '🌱' },
+                'เด็กกลาง':    { icon: '<i class="fas fa-star" aria-hidden="true"></i>' },
+                'เด็กโต':      { icon: '<i class="fas fa-school" aria-hidden="true"></i>' },
+                'เตรียมอนุบาล':{ icon: '<i class="fas fa-seedling" aria-hidden="true"></i>' },
             };
 
             let html = '';
             Object.keys(structure).forEach(groupName => {
                 const rooms    = structure[groupName];
-                const meta     = groupMeta[groupName] || { icon: '👦' };
+                const meta     = groupMeta[groupName] || { icon: '<i class="fas fa-child" aria-hidden="true"></i>' };
                 const groupTotal = Object.values(rooms).reduce((s, arr) => s + arr.length, 0);
 
                 html += `
@@ -581,11 +579,13 @@ $selectedClassroom = $_GET['classroom'] ?? null;
                 document.querySelectorAll('thead th').forEach(t => {
                     t.classList.remove('sorted');
                     const arrow = t.querySelector('.sort-arrow');
-                    if (arrow) arrow.textContent = '↕';
+                    if (arrow) arrow.innerHTML = '<i class="fas fa-sort" aria-hidden="true"></i>';
                 });
                 th.classList.add('sorted');
                 const arrow = th.querySelector('.sort-arrow');
-                if (arrow) arrow.textContent = isAsc ? '↓' : '↑';
+                if (arrow) arrow.innerHTML = isAsc
+                    ? '<i class="fas fa-sort-down" aria-hidden="true"></i>'
+                    : '<i class="fas fa-sort-up" aria-hidden="true"></i>';
 
                 render();
             });

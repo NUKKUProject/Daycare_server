@@ -740,7 +740,7 @@ if (isset($_SESSION['user_id'])) {
                         <div class="detail-body">
                             <!-- ผลการตรวจร่างกาย -->
                             <div class="detail-section">
-                                <h5><i class="bi bi-heart-pulse"></i> ผลการตรวจร่างกาย</h5>
+                                <h5><i class="fa-solid fa-stethoscope"></i> ผลการตรวจร่างกาย</h5>
                                 
                                 <!-- ผม/ศีรษะ -->
                                 <div class="detail-item">

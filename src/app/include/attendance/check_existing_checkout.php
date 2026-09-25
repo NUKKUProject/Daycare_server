@@ -16,25 +16,31 @@ if (!$student_id) {
 }
 
 try {
-    // ตรวจสอบว่ามีการเช็คเอาท์ในวันนี้หรือไม่
+    // ตรวจสอบว่ามีการเช็คชื่อเข้าในวันนี้หรือไม่
     $stmt = $pdo->prepare("
         SELECT id, check_out_time, status_checkout, leave_note 
         FROM attendance 
         WHERE student_id = :student_id 
         AND DATE(check_date) = CURRENT_DATE
-        AND check_out_time IS NOT NULL
     ");
     $stmt->execute(['student_id' => $student_id]);
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($existing) {
+        $hasCheckout = $existing['check_out_time'] !== null;
         echo json_encode([
-            'status' => 'exists',
+            'status' => 'found',
+            'has_checkin' => true,
+            'has_checkout' => $hasCheckout,
+            'checkout_time' => $hasCheckout ? $existing['check_out_time'] : null,
             'data' => $existing
         ]);
     } else {
         echo json_encode([
-            'status' => 'not_exists',
+            'status' => 'not_found',
+            'has_checkin' => false,
+            'has_checkout' => false,
+            'checkout_time' => null,
             'data' => null
         ]);
     }

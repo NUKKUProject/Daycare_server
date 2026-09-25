@@ -25,7 +25,7 @@ $guardian_type = $data['guardian_type'] ?? '';
 $guardian_type_map = [
     'father' => 'พ่อ',
     'mother' => 'แม่',
-    'relative' => 'ญาติ',
+    'relative' => 'ผู้ปกครอง/ผู้ดูแล',
     'other' => 'อื่นๆ',
 ];
 $guardian_type_th = $guardian_type_map[$guardian_type] ?? $guardian_type;
@@ -36,15 +36,36 @@ $pickup_time = date('Y-m-d H:i:s');
 try {
     // ตรวจสอบว่ามี record การเช็คอินอยู่หรือไม่
     $check_stmt = $pdo->prepare("
-        SELECT id FROM attendance 
+        SELECT id, check_out_time FROM attendance 
         WHERE student_id = :student_id 
         AND DATE(check_date) = CURRENT_DATE
     ");
     $check_stmt->execute(['student_id' => $student_id]);
     $existing = $check_stmt->fetch(PDO::FETCH_ASSOC);
 
+    if ($existing && $existing['check_out_time'] !== null) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'นักเรียนคนนี้ได้บันทึกการรับเด็กกลับบ้านไปแล้ว'
+        ]);
+        exit;
+    }
+
+    // สร้าง leave_note ที่รวมข้อมูลผู้รับเด็ก
+    $leave_note = "ผู้รับเด็ก: {$guardian_name}";
+    if ($guardian_type_th) {
+        if ($guardian_name) {
+            $leave_note .= " ({$guardian_type_th})";
+        } else {
+            $leave_note = "ผู้รับเด็ก: ({$guardian_type_th})";
+        }
+    }
+    if ($other_details) {
+        $leave_note .= " - {$other_details}";
+    }
+
     if ($existing) {
-        // อัปเดตข้อมูลการเช็คเอาท์
+        // มี record เช็คอินอยู่แล้ว → อัปเดตข้อมูลการเช็คเอาท์
         $update_stmt = $pdo->prepare("
             UPDATE attendance 
             SET 
@@ -54,31 +75,13 @@ try {
                 updated_at = NOW()
             WHERE id = :id
         ");
-        
-        // สร้าง leave_note ที่รวมข้อมูลผู้รับเด็ก
-        $leave_note = "ผู้รับเด็ก: {$guardian_name}";
-        if ($guardian_type_th) {
-            $leave_note .= " ({$guardian_type_th})";
-        }
-        if ($other_details) {
-            $leave_note .= " - {$other_details}";
-        }
-        
         $update_stmt->execute([
             'check_out_time' => $pickup_time,
             'leave_note' => $leave_note,
             'id' => $existing['id']
         ]);
     } else {
-        // สร้าง record ใหม่ (กรณีเช็คเอาท์โดยไม่มีเช็คอิน)
-        $leave_note = "ผู้รับเด็ก: {$guardian_name}";
-        if ($guardian_type_th) {
-            $leave_note .= " ({$guardian_type_th})";
-        }
-        if ($other_details) {
-            $leave_note .= " - {$other_details}";
-        }
-        
+        // ไม่มี record เช็คอิน → สร้าง record ใหม่
         $insert_stmt = $pdo->prepare("
             INSERT INTO attendance 
             (student_id, check_date, status, check_out_time, status_checkout, leave_note, created_at, updated_at)

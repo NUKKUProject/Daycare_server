@@ -113,19 +113,77 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                         <button type="button" class="btn btn-danger mt-1" onclick="exportToPdf()">
                             <i class="fas fa-file-pdf"></i> Export Pdf
                         </button>
-                        <button type="button" class="btn btn-success mt-1" onclick="exportToExcel()">
+                        <!-- <button type="button" class="btn btn-success mt-1" onclick="exportToExcel()">
                             <i class="fas fa-file-excel"></i> Export Excel
+                        </button>
+                        <button type="button" class="btn btn-warning mt-1" onclick="showDownloadTemplateModal()">
+                            <i class="fas fa-download"></i> ดาวน์โหลด Template
+                        </button>
+                        <button type="button" class="btn btn-info mt-1" onclick="showImportModal()">
+                            <i class="fas fa-file-upload"></i> Import Excel
+                        </button> -->
+                        <button type="button" class="btn btn-dark mt-1" onclick="toggleBulkEdit()" id="bulkEditToggleBtn">
+                            <i class="fas fa-table"></i> แก้ไขแบบตาราง
                         </button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- ตารางแสดงผล -->
-        <div class="card shadow-sm">
+        <!-- ตารางแสดงผล (โหมดดู) -->
+        <div class="card shadow-sm" id="viewModeCard">
             <div class="card-body">
                 <div class="table-responsive" id="resultTable">
                     <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ตารางแก้ไขแบบตาราง (Bulk Edit Mode) -->
+        <div class="card shadow-sm d-none" id="bulkEditCard">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div>
+                    <h5 class="mb-0">แก้ไขข้อมูลแบบตาราง</h5>
+                    <small class="text-muted">กรอกข้อมูลหลายคนพร้อมกัน แล้วกดบันทึกทั้งหมด</small>
+                </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="bulkFillToday()">
+                            <i class="fas fa-calendar"></i> วันที่วันนี้ทั้งหมด
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="bulkToggleExamDetails()">
+                            <i class="fas fa-eye"></i> <span id="examDetailsLabel">แสดงการตรวจร่างกาย</span>
+                        </button>
+                        <button type="button" class="btn btn-success btn-lg" onclick="saveBulkEdit()" id="saveBulkBtn">
+                            <i class="fas fa-save"></i> บันทึกทั้งหมด (<span id="bulkCount">0</span>)
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="toggleBulkEdit()">
+                            <i class="fas fa-times"></i> ยกเลิก
+                        </button>
+                    </div>
+                </div>
+                <div class="border rounded bg-light p-3 mb-3">
+                    <div class="fw-semibold mb-2"><i class="fas fa-calendar-alt"></i> กำหนดวันตรวจทั้งห้อง</div>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-sm-6 col-lg-4">
+                            <label for="bulkBpDate" class="form-label mb-1">วันที่ตรวจความดัน</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="bulkBpDate">
+                                <button type="button" class="btn btn-outline-primary" onclick="applyBulkDateToAll('bp_date')">ใช้กับทั้งห้อง</button>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-5">
+                            <label for="bulkMeasurementDate" class="form-label mb-1">วันที่ชั่งน้ำหนัก/วัดส่วนสูง</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="bulkMeasurementDate">
+                                <button type="button" class="btn btn-outline-success" onclick="applyBulkDateToAll('measurement_date')">ใช้กับทั้งห้อง</button>
+                            </div>
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-2">คำสั่งนี้จะใช้เฉพาะเด็กที่ติ๊ก “รับวันความดัน” หรือ “รับวันชั่ง/วัด” ในแต่ละแถว เด็กที่ขาดเรียนจึงไม่ถูกเปลี่ยนวันโดยไม่ตั้งใจ</small>
+                </div>
+                <div class="bulk-edit-wrapper">
+                    <div id="bulkEditTable"><!-- ตารางจะถูกสร้างโดย JS --></div>
                 </div>
             </div>
         </div>
@@ -277,6 +335,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
         const hasRecord   = student.id != null;
         const status      = resolveStatus(student);
         const totalRounds = allInGroup.filter(s => s.student_id === student.student_id).length;
+        const latestRound = student.check_round || (totalRounds > 0 ? totalRounds : 0);
         const dateLabel   = formatDate(student.exam_date);
         const histId      = `hist-${student.student_id}`;
         const unrecorded  = !hasRecord ? 'unrecorded' : '';
@@ -334,7 +393,10 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                     </div>
                 </td>
                 <td>${student.academic_year}</td>
-                <td><span class="round-counter">${totalRounds} ครั้ง</span></td>
+                <td>
+                    <span class="round-counter">${totalRounds} ครั้ง</span>
+                    ${hasRecord ? `<div class="latest-round">รอบล่าสุด: <strong>ครั้งที่ ${latestRound}</strong></div>` : ''}
+                </td>
                 <td>
                     <span class="badge ${status.cls}">
                         <span class="status-dot ${status.dot}"></span>
@@ -508,6 +570,31 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     });
 
     // ฟังก์ชันช่วยแสดงสถานะการประเมินพัฒนาการหน้า view
+    function parseHealthJson(value, fallback = {}) {
+        if (value && typeof value === 'object') return value;
+        if (!value) return fallback;
+
+        try {
+            return JSON.parse(value) || fallback;
+        } catch (error) {
+            console.warn('Invalid health JSON data:', error);
+            return fallback;
+        }
+    }
+
+    function normalizeDevelopment(value) {
+        const development = parseHealthJson(value);
+        const emptyAssessment = { status: '', score: '' };
+
+        return {
+            gm: development.gm || { ...emptyAssessment },
+            fm: development.fm || { ...emptyAssessment },
+            rl: development.rl || { ...emptyAssessment },
+            el: development.el || { ...emptyAssessment },
+            ps: development.ps || { ...emptyAssessment }
+        };
+    }
+
     function getDevelopmentStatus(status, score = '') {
         if (!status || status.length === 0) return 'ไม่ได้ประเมิน';
 
@@ -528,22 +615,22 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             fetch(`./function/get_health_external_detail.php?id=${id}`)
                 .then(response => response.json())
                 .then(data => {
-                    if (!data || data.length === 0) {
+                    if (!data || data.status !== 'success' || !data.data) {
                         Swal.fire({
                             icon: 'error',
-                            title: 'ไม่พบข้อมูลการตรวจสุขภาพสำหรับนักเรียนนี้',
+                            title: data?.message || 'ไม่พบข้อมูลการตรวจสุขภาพสำหรับนักเรียนนี้',
                             confirmButtonText: 'ตกลง'
                         });
                         return;
                     }
 
                     const student      = data.data;
-                    const vitalSigns   = JSON.parse(student.vital_signs);
-                    const physicalExam = JSON.parse(student.physical_exam);
-                    const neurological = JSON.parse(student.neurological);
-                    const behavior     = JSON.parse(student.behavior);
-                    const measures     = JSON.parse(student.physical_measures);
-                    const development  = JSON.parse(student.development_assessment);
+                    const vitalSigns   = parseHealthJson(student.vital_signs);
+                    const physicalExam = parseHealthJson(student.physical_exam);
+                    const neurological = parseHealthJson(student.neurological);
+                    const behavior     = parseHealthJson(student.behavior);
+                    const measures     = parseHealthJson(student.physical_measures);
+                    const development  = normalizeDevelopment(student.development_assessment);
 
                     /* ── helper: check if any key in source is 'abnormal' ── */
                     function hasAbnormal(source, keys) {
@@ -598,7 +685,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                     }
 
                     /* ── helper: one development card ── */
-                    function devCard(code, label, obj) {
+                    function devCard(code, label, obj = {}) {
                         const cls = obj.status === 'pass' ? 'dev-pass'
                                 : obj.status === 'fail' ? 'dev-fail' : 'dev-na';
                         return `
@@ -645,22 +732,18 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                 สัญญาณชีพ
                             </div>
                             <div class="detail-section-body">
-                                <div class="detail-data-grid detail-grid-4">
+                                <div class="detail-data-grid detail-grid-3">
                                     <div class="detail-data-item">
-                                        <label>อุณหภูมิ</label>
+                                        <label>อุณหภูมิ (ก่อนตรวจ)</label>
                                         <div class="detail-value">${vitalSigns.temperature || '—'} <small style="font-weight:400;color:#64748b;">°C</small></div>
-                                    </div>
-                                    <div class="detail-data-item">
-                                        <label>ชีพจร</label>
-                                        <div class="detail-value">${vitalSigns.pulse || '—'} <small style="font-weight:400;color:#64748b;">ครั้ง/นาที</small></div>
-                                    </div>
-                                    <div class="detail-data-item">
-                                        <label>การหายใจ</label>
-                                        <div class="detail-value">${vitalSigns.respiration || '—'} <small style="font-weight:400;color:#64748b;">ครั้ง/นาที</small></div>
                                     </div>
                                     <div class="detail-data-item">
                                         <label>ความดันโลหิต</label>
                                         <div class="detail-value">${vitalSigns.bp || '—'} <small style="font-weight:400;color:#64748b;">mmHg</small></div>
+                                    </div>
+                                    <div class="detail-data-item">
+                                        <label>วันที่ตรวจความดัน</label>
+                                        <div class="detail-value">${vitalSigns.bp_date || '—'}</div>
                                     </div>
                                 </div>
                             </div>
@@ -675,6 +758,12 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                 ข้อมูลการวัด
                             </div>
                             <div class="detail-section-body">
+                                <div class="detail-data-grid detail-grid-1" style="margin-bottom:10px;">
+                                    <div class="detail-data-item">
+                                        <label>วันที่ชั่งน้ำหนัก / วัดส่วนสูง</label>
+                                        <div class="detail-value">${formatDate(student.measurement_date) || '—'}</div>
+                                    </div>
+                                </div>
                                 <div class="detail-data-grid detail-grid-3" style="margin-bottom:10px;">
                                     <div class="detail-data-item">
                                         <label>ส่วนสูง</label>
@@ -909,10 +998,9 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     //                                             ${record.doctor_name ? `หมอตรวจแล้ว (${record.doctor_name})` : 'รอแพทย์ตรวจ'}
     //                                         </span>
     //                                     </p>
-    //                                     <p><strong>อุณหภูมิ:</strong> ${vitalSigns.temperature || '-'} °C</p>
-    //                                     <p><strong>ชีพจร:</strong> ${vitalSigns.pulse || '-'} ครั้ง/นาที</p>
-    //                                     <p><strong>หายใจ:</strong> ${vitalSigns.respiration || '-'} ครั้ง/นาที</p>
-    //                                     <p><strong>ความดันโลหิต:</strong> ${vitalSigns.bp || '-'}</p>
+    //                 <p><strong>อุณหภูมิ:</strong> ${vitalSigns.temperature || '-'} °C</p>
+    //                 <p><strong>ความดันโลหิต:</strong> ${vitalSigns.bp || '-'}</p>
+    //                 <p><strong>วันที่ตรวจความดัน:</strong> ${vitalSigns.bp_date || '-'}</p>
     //                                 </div>
     //                                 <div class="col-md-6">
     //                                     <p><strong>ส่วนสูง:</strong> ${measures.height || '-'} ซม.</p>
@@ -961,6 +1049,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     //                         </div>
     //                     </div>
     //                     <div class="student-details-grid">
+
     //                         <div class="detail-item">
     //                             <span class="detail-icon"><i class="bi bi-person-badge"></i></span>
     //                             <span class="detail-label">รหัสนักเรียน</span>
@@ -1203,40 +1292,19 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                         <input type="number" name="temperature" class="form-control measurement-input text-center" step="0.1" placeholder="36.5">
                                         <span class="input-group-text">°C</span>
                                     </div>
-                                    <small class="d-block text-start text-muted">อุณหภูมิร่างกาย</small>
+                                    <small class="d-block text-start text-muted">อุณหภูมิร่างกาย (ก่อนตรวจ)</small>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-activity"></i></span>
-                                        <input type="number" name="pulse" class="form-control measurement-input text-center" placeholder="80">
-                                        <span class="input-group-text">ครั้ง/นาที</span>
-                                    </div>
-                                    <small class="d-block text-start text-muted">ชีพจร</small>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-lungs"></i></span>
-                                        <input type="number" name="respiration" class="form-control measurement-input text-center" placeholder="20">
-                                        <span class="input-group-text">ครั้ง/นาที</span>
-                                    </div>
-                                    <small class="d-block text-start text-muted">อัตราการหายใจ</small>
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mt-2">
-                                <div class="col-md-6">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-heart"></i></span>
                                         <input type="text" name="bp" class="form-control measurement-input text-center" placeholder="120/80">
-                                        <span class="input-group-text">ครั้ง/นาที</span>
+                                        <span class="input-group-text">mmHg</span>
                                     </div>
                                     <small class="d-block text-start text-muted">ความดันโลหิต</small>
                                 </div>
-                                 <div class="col-md-6">
-                                    <div class="input-group">
-                                        <input type="date" name="bp_date" class="form-control measurement-input text-center">                               
-                                    </div>
-                                    <small class="text-muted d-block text-start">วันที่ตรวจ</small>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small">วันที่ตรวจ</label>
+                                    <input type="date" name="bp_date" class="form-control measurement-input text-center">
                                 </div>
                             </div>
                         </div>
@@ -1286,7 +1354,11 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                             </div>
 
                             <div class="row g-3 mb-4">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small">วันที่ชั่งน้ำหนัก / วัดส่วนสูง</label>
+                                    <input type="date" name="measurement_date" class="form-control measurement-input text-center" value="<?php echo date('Y-m-d'); ?>" required>
+                                </div>
+                                <div class="col-md-4">
                                     <div class="input-group input-group">
                                         <span class="input-group-text"><i class="bi bi-arrow-up"></i></span>
                                         <input type="number" class="form-control measurement-input text-center" step="0.1" name="height" placeholder="120.5" id="height">
@@ -1294,7 +1366,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                     </div>
                                     <small class="form-label fw-bold mt-1 d-block text-start">ส่วนสูง</small>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="input-group input-group">
                                         <span class="input-group-text"><i class="bi bi-speedometer2"></i></span>
                                         <input type="number" name="weight" class="form-control measurement-input text-center" step="0.1" placeholder="25.5" id="weight">
@@ -1957,12 +2029,11 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             age_year: document.querySelector('[name="age_year"]')?.value || null,
             age_month: document.querySelector('[name="age_month"]')?.value || null,
             age_day: document.querySelector('[name="age_day"]')?.value || null,
+            measurement_date: document.querySelector('[name="measurement_date"]')?.value || null,
             nickname: document.querySelector('[name="nickname"]')?.value || null,
             // jsonb fields (เก็บเป็น object ก่อน แล้ว serialize ตอนส่ง)
             vital_signs: {
                 temperature: document.querySelector('[name="temperature"]')?.value || null,
-                pulse: document.querySelector('[name="pulse"]')?.value || null,
-                respiration: document.querySelector('[name="respiration"]')?.value || null,
                 bp: document.querySelector('[name="bp"]')?.value || null,
                 bp_date: document.querySelector('[name="bp_date"]')?.value || null,
             },
@@ -2292,21 +2363,21 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             fetch(`./function/get_health_external_detail.php?id=${studentId}`)
                 .then(response => response.json())
                 .then(data => {
-                    if (!data || data.length === 0) {
+                    if (!data || data.status !== 'success' || !data.data) {
                         Swal.fire({
                             icon: 'error',
-                            title: 'ไม่พบข้อมูลการตรวจสุขภาพสำหรับนักเรียนนี้',
+                            title: data?.message || 'ไม่พบข้อมูลการตรวจสุขภาพสำหรับนักเรียนนี้',
                             confirmButtonText: 'ตกลง'
                         });
                         return;
                     }
                     const studentData = data.data;
-                    const vitalSigns = JSON.parse(studentData.vital_signs);
-                    const physicalExam = JSON.parse(studentData.physical_exam);
-                    const neurological = JSON.parse(studentData.neurological);
-                    const behavior = JSON.parse(studentData.behavior);
-                    const measures = JSON.parse(studentData.physical_measures);
-                    const development = JSON.parse(studentData.development_assessment);
+                    const vitalSigns = parseHealthJson(studentData.vital_signs);
+                    const physicalExam = parseHealthJson(studentData.physical_exam);
+                    const neurological = parseHealthJson(studentData.neurological);
+                    const behavior = parseHealthJson(studentData.behavior);
+                    const measures = parseHealthJson(studentData.physical_measures);
+                    const development = normalizeDevelopment(studentData.development_assessment);
 
                     // สร้างเนื้อหา Modal
                     const modalContent = `
@@ -2434,42 +2505,20 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                         <input type="number" name="temperature" class="form-control measurement-input text-center" step="0.1" placeholder="36.5" value="${vitalSigns.temperature || ''}">
                                         <span class="input-group-text">°C</span>
                                     </div>
-                                    <small class="text-muted d-block text-start">อุณหภูมิร่างกาย</small>
+                                    <small class="text-muted d-block text-start">อุณหภูมิร่างกาย (ก่อนตรวจ)</small>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-activity"></i></span>
-                                        <input type="number" name="pulse" class="form-control measurement-input text-center" placeholder="80" value="${vitalSigns.pulse || ''}">
-                                        <span class="input-group-text">ครั้ง/นาที</span>
-                                    </div>
-                                    <small class="d-block text-start text-muted">ชีพจร</small>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-lungs"></i></span>
-                                        <input type="number" name="respiration" class="form-control measurement-input text-center" placeholder="20" value="${vitalSigns.respiration || ''}">
-                                        <span class="input-group-text">ครั้ง/นาที</span>
-                                    </div>
-                                    <small class="text-muted d-block text-start">อัตราการหายใจ</small>
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mt-2">
-                                <div class="col-md-6">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-heart"></i></span>
                                         <input type="text" name="bp" class="form-control measurement-input text-center" placeholder="120/80" value="${vitalSigns.bp || ''}">
-                                        <span class="input-group-text"ครั้ง/นาที</span>
+                                        <span class="input-group-text">mmHg</span>
                                     </div>
                                     <small class="text-muted d-block text-start">ความดันโลหิต</small>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="input-group">
-                                        <input type="date" name="bp_date" class="form-control measurement-input text-center" value="${vitalSigns.bp_date || ''}">                               
-                                    </div>
-                                    <small class="text-muted d-block text-start">วันที่ตรวจ</small>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small">วันที่ตรวจ</label>
+                                    <input type="date" name="bp_date" class="form-control measurement-input text-center" value="${vitalSigns.bp_date || ''}">
                                 </div>
-                                 
                             </div>
                         </div>
                     </div>
@@ -2518,7 +2567,11 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                             </div>
 
                             <div class="row g-3 mb-4">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small">วันที่ชั่งน้ำหนัก / วัดส่วนสูง</label>
+                                    <input type="date" name="measurement_date" class="form-control measurement-input text-center" value="${studentData.measurement_date || studentData.exam_date || ''}" required>
+                                </div>
+                                <div class="col-md-4">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-arrow-up"></i></span>
                                         <input type="number" class="form-control measurement-input text-center" step="0.1" name="height" placeholder="120.5" id="height" value="${measures.height || ''}">
@@ -2526,7 +2579,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                     </div>
                                     <small class="form-label fw-bold mt-1 d-block text-start">ส่วนสูง</small>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-speedometer2"></i></span>
                                         <input type="number" name="weight" class="form-control measurement-input text-center" step="0.1" placeholder="25.5" id="weight" value="${measures.weight || ''}">
@@ -3404,7 +3457,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                 }
                 // อ่านชื่อไฟล์จาก Content-Disposition header (รองรับ filename*=UTF-8''...)
                 const disposition = response.headers.get('Content-Disposition') || '';
-                let filename = 'health_check_data.csv';
+                let filename = 'health_check_data.xlsx';
                 // รองรับ filename*=UTF-8''...
                 let match = disposition.match(/filename\*=UTF-8''([^;\n]+)/);
                 if (match && match[1]) {
@@ -3454,6 +3507,626 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                     title: 'เกิดข้อผิดพลาด',
                     text: 'ไม่สามารถ Export ไฟล์ Excel ได้ กรุณาลองใหม่อีกครั้ง',
                 });
+            });
+    }
+
+    // ฟังก์ชันแสดง Modal ดาวน์โหลด Template
+    function showDownloadTemplateModal() {
+        const yearOptions = <?php echo json_encode($academicYears); ?>.map(y =>
+            `<option value="${y.name}">${y.name}</option>`
+        ).join('');
+
+        Swal.fire({
+            title: 'ดาวน์โหลด Template นำเข้าข้อมูล',
+            html: `
+                <form id="downloadTemplateForm" class="text-start">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">กลุ่มเรียน</label>
+                        <select id="dt_child_group" class="form-select" onchange="dtLoadClassrooms()">
+                            <option value="">-- ทั้งหมด --</option>
+                            <?php
+                            $groups = get_childgroup();
+                            foreach ($groups as $group) {
+                                if (!empty($group['child_group'])) {
+                                    echo "<option value='" . $group['child_group'] . "'>" . $group['child_group'] . "</option>";
+                                }
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ห้องเรียน</label>
+                        <select id="dt_classroom" class="form-select">
+                            <option value="">-- ทั้งหมด --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ปีการศึกษาของเด็ก</label>
+                        <select id="dt_student_year" class="form-select">
+                            <option value="">-- ทั้งหมด --</option>
+                            ${yearOptions}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">ตรวจประจำปี</label>
+                        <select id="dt_exam_year" class="form-select">
+                            ${yearOptions}
+                        </select>
+                    </div>
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Template จะถูกกรอกรหัสนักเรียน ชื่อ และปีการศึกษาที่ตรวจมาให้อัตโนมัติ
+                    </div>
+                </form>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'ดาวน์โหลด',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#0d6efd',
+            preConfirm: () => {
+                const cg = document.getElementById('dt_child_group').value;
+                const cr = document.getElementById('dt_classroom').value;
+                const sy = document.getElementById('dt_student_year').value;
+                const ey = document.getElementById('dt_exam_year').value;
+                if (!ey) {
+                    Swal.showValidationMessage('กรุณาเลือกตรวจประจำปี');
+                    return false;
+                }
+                const params = new URLSearchParams({ child_group: cg, classroom: cr, student_year: sy, exam_year: ey });
+                window.location.href = './process/download_import_template.php?' + params.toString();
+            }
+        });
+    }
+
+    // โหลดห้องเรียนใน modal ดาวน์โหลด template
+    function dtLoadClassrooms() {
+        const childGroup = document.getElementById('dt_child_group').value;
+        const classroomSelect = document.getElementById('dt_classroom');
+        classroomSelect.innerHTML = '<option value="">-- ทั้งหมด --</option>';
+        if (!childGroup) return;
+        fetch(`../../include/function/get_classrooms.php?child_group=${childGroup}`)
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(function(classroom) {
+                    const option = document.createElement('option');
+                    option.value = classroom.classroom_name;
+                    option.textContent = classroom.classroom_name;
+                    classroomSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // ฟังก์ชันแสดง Modal Import
+    function showImportModal() {
+        Swal.fire({
+            title: 'Import ข้อมูลจาก Excel',
+            html: `
+                <form id="importForm" enctype="multipart/form-data" class="text-start">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">เลือกไฟล์ Excel (.xlsx)</label>
+                        <input type="file" id="importFileInput" class="form-control" accept=".xlsx,.xls">
+                    </div>
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        กรุณาดาวน์โหลด Template และกรอกข้อมูลให้ถูกต้องก่อน Import
+                    </div>
+                </form>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Import',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#0d6efd',
+            preConfirm: () => {
+                const fileInput = document.getElementById('importFileInput');
+                if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                    Swal.showValidationMessage('กรุณาเลือกไฟล์');
+                    return false;
+                }
+                const file = fileInput.files[0];
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (!['xlsx', 'xls'].includes(ext)) {
+                    Swal.showValidationMessage('รองรับเฉพาะไฟล์ .xlsx และ .xls เท่านั้น');
+                    return false;
+                }
+                return file;
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                importExcel(result.value);
+            }
+        });
+    }
+
+    // ฟังก์ชัน Import Excel
+    function importExcel(file) {
+        Swal.fire({
+            title: 'กำลัง Import...',
+            html: 'กรุณารอสักครู่ ระบบกำลังประมวลผลไฟล์',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        const formData = new FormData();
+        formData.append('import_file', file);
+
+        fetch('./process/import_health_excel.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                let errorHtml = '';
+                if (data.error_rows && data.error_rows.length > 0) {
+                    errorHtml = `
+                        <div class="mt-3 text-start">
+                            <p class="text-danger fw-bold">รายการที่ไม่สำเร็จ (${data.error_count} รายการ):</p>
+                            <ul class="text-danger" style="font-size:13px;max-height:200px;overflow-y:auto;">
+                                ${data.error_rows.map(e => `<li>${e}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Import สำเร็จ',
+                    html: `
+                        <p>นำเข้าข้อมูลสำเร็จ <strong>${data.success_count}</strong> จาก <strong>${data.total_rows}</strong> รายการ</p>
+                        ${errorHtml}
+                    `,
+                    confirmButtonText: 'ตกลง'
+                });
+                loadResults();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Import ไม่สำเร็จ',
+                    text: data.message || 'เกิดข้อผิดพลาดในการ Import',
+                    confirmButtonText: 'ตกลง'
+                });
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: 'ไม่สามารถ Import ไฟล์ได้ กรุณาลองใหม่อีกครั้ง',
+            });
+        });
+    }
+
+    // ============================================================
+    // Bulk Edit Mode (ตารางแก้ไขแบบ Excel)
+    // ============================================================
+    let bulkData = [];
+    let showExamDetails = false;
+
+    function toggleBulkEdit() {
+        const viewCard = document.getElementById('viewModeCard');
+        const bulkCard = document.getElementById('bulkEditCard');
+        const isBulk = !bulkCard.classList.contains('d-none');
+
+        if (isBulk) {
+            // กลับไปโหมดดู
+            bulkCard.classList.add('d-none');
+            viewCard.classList.remove('d-none');
+            document.getElementById('bulkEditToggleBtn').innerHTML = '<i class="fas fa-table"></i> แก้ไขแบบตาราง';
+        } else {
+        // เข้าโหมดแก้ไข
+        const formData = new FormData(document.getElementById('searchForm'));
+        const childGroup = formData.get('child_group') || '';
+        const classroom = formData.get('classroom') || '';
+        const academicYear = formData.get('academic_year') || '';
+        const studentYear = formData.get('student_year') || '';
+
+        // ถ้าเลือก "ทั้งหมด" (all) ให้ถือว่าไม่ได้กรองตามปีของเด็ก
+        const effectiveStudentYear = (studentYear && studentYear !== 'all') ? studentYear : '';
+
+        // ต้องเลือกกลุ่มเรียนหรือห้องเรียนอย่างน้อยหนึ่งอย่าง
+        if (!childGroup && !classroom) {
+            Swal.fire('กรุณาเลือกกลุ่มเรียนหรือห้องเรียนก่อน', '', 'info');
+            return;
+        }
+
+        const params = new URLSearchParams({
+            child_group: childGroup,
+            classroom: classroom,
+            academic_year: academicYear
+        });
+        if (effectiveStudentYear) {
+            params.append('student_year', effectiveStudentYear);
+        }
+
+            Swal.fire({ title: 'กำลังโหลด...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            fetch(`./function/get_bulk_edit_data.php?${params.toString()}`)
+                .then(r => r.json())
+                .then(res => {
+                    Swal.close();
+                    if (res.status !== 'success' || !res.data.length) {
+                        Swal.fire('ไม่พบข้อมูลเด็ก', 'กรุณาตรวจสอบการค้นหา', 'info');
+                        return;
+                    }
+                    bulkData = res.data;
+                    viewCard.classList.add('d-none');
+                    bulkCard.classList.remove('d-none');
+                    document.getElementById('bulkEditToggleBtn').innerHTML = '<i class="fas fa-list"></i> โหมดดูปกติ';
+                    renderBulkTable();
+                })
+                .catch(err => {
+                    Swal.close();
+                    Swal.fire('เกิดข้อผิดพลาด', err.message, 'error');
+                });
+        }
+    }
+
+    function renderBulkTable() {
+        const container = document.getElementById('bulkEditTable');
+        if (!bulkData.length) {
+            container.innerHTML = '<div class="alert alert-info">ไม่พบข้อมูลเด็ก</div>';
+            return;
+        }
+
+        // ใช้เป็นค่าเริ่มต้นของแถบกำหนดวันทั้งห้องเท่านั้น ไม่เปลี่ยนวันที่รายบุคคล
+        // เพื่อให้การเปิดตารางมาแก้ไขข้อมูลเดิมไม่ถูกทับโดยอัตโนมัติ
+        const today = new Date().toISOString().split('T')[0];
+        const bulkBpDate = document.getElementById('bulkBpDate');
+        const bulkMeasurementDate = document.getElementById('bulkMeasurementDate');
+        if (bulkBpDate && !bulkBpDate.value) bulkBpDate.value = today;
+        if (bulkMeasurementDate && !bulkMeasurementDate.value) bulkMeasurementDate.value = today;
+
+        const examCols = [
+            ['general','สภาพทั่วไป'], ['skin','ผิวหนัง'], ['head','ศีรษะ'], ['face','ใบหน้า'],
+            ['eyes','ตา'], ['ears','หู'], ['nose','จมูก'], ['mouth','ปาก'], ['neck','คอ'],
+            ['breast','ทรวงอก/ปอด'], ['breathe','การหายใจ'], ['lungs','ปอด'], ['heart','หัวใจ'],
+            ['heart_sound','เสียงหัวใจ'], ['pulse','ชีพจร'], ['abdomen','ท้อง'], ['others','อื่นๆ'],
+            ['neuro','ระบบประสาท'], ['movement','การเคลื่อนไหว']
+        ];
+
+        let rows = bulkData.map((s, i) => {
+            const d = s.existing_data || {};
+            const vs = d.vital_signs || {};
+            const ms = d.physical_measures || {};
+            const bh = d.behavior || {};
+            const dv = d.development_assessment || {};
+            const pe = d.physical_exam || {};
+            const nl = d.neurological || {};
+            const fullName = `${s.prefix_th} ${s.first_name_th} ${s.last_name_th}`;
+            const isExisting = s.existing_id ? 'bulk-existing' : 'bulk-new';
+
+            const examCells = examCols.map(([key, label]) => {
+                const val = pe[key] ? (pe[key][0] || '') : (nl[key] ? (nl[key][0] || '') : '');
+                const detail = pe[key + '_detail'] || nl[key + '_detail'] || '';
+                return `
+                    <td class="bulk-exam-cell" ${showExamDetails ? '' : 'style="display:none;"'}>
+                        <select class="bulk-select" data-i="${i}" data-f="exam" data-k="${key}">
+                            <option value=""></option>
+                            <option value="normal" ${val==='normal'?'selected':''}>normal</option>
+                            <option value="abnormal" ${val==='abnormal'?'selected':''}>abnormal</option>
+                        </select>
+                        <input type="text" class="bulk-input-sm" placeholder="รายละเอียด" data-i="${i}" data-f="exam_detail" data-k="${key}" value="${detail}">
+                    </td>`;
+            }).join('');
+
+            return `
+            <tr class="${isExisting}">
+                <td class="bulk-fixed">
+                    <div class="bulk-name">${fullName}</div>
+                    <div class="bulk-meta"><span class="id-badge">${s.student_id}</span></div>
+                    <div class="mt-2 small text-nowrap">
+                        <label class="me-2"><input type="checkbox" data-i="${i}" data-f="apply_bp_date" checked> รับวันความดัน</label>
+                        <label><input type="checkbox" data-i="${i}" data-f="apply_measurement_date" checked> รับวันชั่ง/วัด</label>
+                    </div>
+                    <input type="hidden" data-i="${i}" data-f="student_id" value="${s.student_id}">
+                    <input type="hidden" data-i="${i}" data-f="academic_year" value="${s.academic_year}">
+                    <input type="hidden" data-i="${i}" data-f="existing_id" value="${s.existing_id || ''}">
+                    <input type="hidden" data-i="${i}" data-f="check_round" value="${s.check_round}">
+                </td>
+                <td><input type="date" class="bulk-input" data-i="${i}" data-f="birth_date" value="${s.birth_date || s.birthday || ''}"></td>
+                <td><input type="number" min="0" max="20" class="bulk-input-sm" data-i="${i}" data-f="age_year" value="${s.age_year !== null && s.age_year !== undefined ? s.age_year : ''}" placeholder="ปี"></td>
+                <td><input type="number" min="0" max="11" class="bulk-input-sm" data-i="${i}" data-f="age_month" value="${s.age_month !== null && s.age_month !== undefined ? s.age_month : ''}" placeholder="เดือน"></td>
+                <td><input type="number" min="0" max="31" class="bulk-input-sm" data-i="${i}" data-f="age_day" value="${s.age_day !== null && s.age_day !== undefined ? s.age_day : ''}" placeholder="วัน"></td>
+                <td>
+                    <select class="bulk-select" data-i="${i}" data-f="weight_for_age">
+                        <option value=""></option>
+                        <option value="น้อยกว่าเกณฑ์" ${(ms.weight_for_age && ms.weight_for_age.includes('น้อยกว่าเกณฑ์'))?'selected':''}>น้อยกว่าเกณฑ์</option>
+                        <option value="ค่อนข้างน้อย" ${(ms.weight_for_age && ms.weight_for_age.includes('ค่อนข้างน้อย'))?'selected':''}>ค่อนข้างน้อย</option>
+                        <option value="ตามเกณฑ์" ${(ms.weight_for_age && ms.weight_for_age.includes('ตามเกณฑ์'))?'selected':''}>ตามเกณฑ์</option>
+                        <option value="ค่อนข้างมาก" ${(ms.weight_for_age && ms.weight_for_age.includes('ค่อนข้างมาก'))?'selected':''}>ค่อนข้างมาก</option>
+                        <option value="มากกว่าเกณฑ์" ${(ms.weight_for_age && ms.weight_for_age.includes('มากกว่าเกณฑ์'))?'selected':''}>มากกว่าเกณฑ์</option>
+                    </select>
+                </td>
+                <td>
+                    <select class="bulk-select" data-i="${i}" data-f="height_for_age">
+                        <option value=""></option>
+                        <option value="เตี้ย" ${(ms.height_for_age && ms.height_for_age.includes('เตี้ย'))?'selected':''}>เตี้ย</option>
+                        <option value="ค่อนข้างเตี้ย" ${(ms.height_for_age && ms.height_for_age.includes('ค่อนข้างเตี้ย'))?'selected':''}>ค่อนข้างเตี้ย</option>
+                        <option value="ตามเกณฑ์" ${(ms.height_for_age && ms.height_for_age.includes('ตามเกณฑ์'))?'selected':''}>ตามเกณฑ์</option>
+                        <option value="ค่อนข้างสูง" ${(ms.height_for_age && ms.height_for_age.includes('ค่อนข้างสูง'))?'selected':''}>ค่อนข้างสูง</option>
+                        <option value="สูง" ${(ms.height_for_age && ms.height_for_age.includes('สูง'))?'selected':''}>สูง</option>
+                    </select>
+                </td>
+                <td>
+                    <select class="bulk-select" data-i="${i}" data-f="weight_for_height">
+                        <option value=""></option>
+                        <option value="ผอม" ${(ms.weight_for_height && ms.weight_for_height.includes('ผอม'))?'selected':''}>ผอม</option>
+                        <option value="ค่อนข้างผอม" ${(ms.weight_for_height && ms.weight_for_height.includes('ค่อนข้างผอม'))?'selected':''}>ค่อนข้างผอม</option>
+                        <option value="สมส่วน" ${(ms.weight_for_height && ms.weight_for_height.includes('สมส่วน'))?'selected':''}>สมส่วน</option>
+                        <option value="ท้วม" ${(ms.weight_for_height && ms.weight_for_height.includes('ท้วม'))?'selected':''}>ท้วม</option>
+                        <option value="เริ่มอ้วน" ${(ms.weight_for_height && ms.weight_for_height.includes('เริ่มอ้วน'))?'selected':''}>เริ่มอ้วน</option>
+                        <option value="อ้วน" ${(ms.weight_for_height && ms.weight_for_height.includes('อ้วน'))?'selected':''}>อ้วน</option>
+                    </select>
+                </td>
+                <td><input type="date" class="bulk-input" data-i="${i}" data-f="bp_date" value="${vs.bp_date || ''}"></td>
+                <td class="text-center"><span class="badge ${s.existing_id ? 'badge-warning' : 'badge-secondary'}">${s.check_round}</span></td>
+                <td><input type="number" step="0.1" class="bulk-input-sm" data-i="${i}" data-f="temperature" value="${vs.temperature || ''}" placeholder="37.0"></td>
+                <td><input type="text" class="bulk-input-sm" data-i="${i}" data-f="bp" value="${vs.bp || ''}" placeholder="120/80"></td>
+                <td><input type="date" class="bulk-input" data-i="${i}" data-f="measurement_date" value="${s.measurement_date || s.exam_date || ''}"></td>
+                <td><input type="number" step="0.1" class="bulk-input-sm" data-i="${i}" data-f="height" value="${ms.height || ''}" placeholder="120"></td>
+                <td><input type="number" step="0.1" class="bulk-input-sm" data-i="${i}" data-f="weight" value="${ms.weight || ''}" placeholder="25"></td>
+                <td>
+                    <select class="bulk-select" data-i="${i}" data-f="behavior">
+                        <option value=""></option>
+                        <option value="none" ${bh.status==='none'?'selected':''}>none</option>
+                        <option value="has" ${bh.status==='has'?'selected':''}>has</option>
+                    </select>
+                </td>
+                ${['gm','fm','rl','el','ps'].map(f => `
+                    <td>
+                        <select class="bulk-select" data-i="${i}" data-f="dev" data-k="${f}">
+                            <option value=""></option>
+                            <option value="pass" ${(dv[f]&&dv[f].status==='pass')?'selected':''}>pass</option>
+                            <option value="delay" ${(dv[f]&&dv[f].status==='delay')?'selected':''}>delay</option>
+                        </select>
+                        <input type="text" class="bulk-input-sm" placeholder="ข้อที่" data-i="${i}" data-f="dev_score" data-k="${f}" value="${dv[f]?dv[f].score||'':''}">
+                    </td>
+                `).join('')}
+                ${examCells}
+                <td><input type="text" class="bulk-input" data-i="${i}" data-f="recommendation" value="${d.recommendation || ''}" placeholder="คำแนะนำ"></td>
+            </tr>`;
+        }).join('');
+
+        container.innerHTML = `
+            <table class="bulk-edit-table">
+                <thead>
+                    <tr>
+                        <th class="bulk-fixed">ชื่อ-นามสกุล / รหัส</th>
+                        <th>วัน/เดือน/ปีเกิด</th>
+                        <th>อายุ(ปี)</th>
+                        <th>อายุ(เดือน)</th>
+                        <th>อายุ(วัน)</th>
+                        <th>น้ำหนักตามอายุ</th>
+                        <th>ส่วนสูงตามอายุ</th>
+                        <th>น้ำหนักตามส่วนสูง</th>
+                        <th>วันที่ตรวจความดัน</th>
+                        <th>รอบที่</th>
+                        <th>อุณหภูมิ</th>
+                        <th>BP</th>
+                        <th>วันที่ชั่งน้ำหนัก/วัดส่วนสูง</th>
+                        <th>ส่วนสูง</th>
+                        <th>น้ำหนัก</th>
+                        <th>พฤติกรรม</th>
+                        <th>GM</th><th>FM</th><th>RL</th><th>EL</th><th>PS</th>
+                        ${examCols.map(([k,l]) => `<th class="bulk-exam-head" ${showExamDetails?'':'style="display:none;"'}>${l}</th>`).join('')}
+                        <th>คำแนะนำ</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+
+        updateBulkCount();
+        document.querySelectorAll('[data-f="birth_date"], [data-f="bp_date"]').forEach((input) => {
+            input.addEventListener('change', () => bulkUpdateAge(input.dataset.i));
+        });
+    }
+
+    function updateBulkCount() {
+        document.getElementById('bulkCount').textContent = bulkData.length;
+    }
+
+    function bulkFillToday() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('bulkBpDate').value = today;
+        document.getElementById('bulkMeasurementDate').value = today;
+        const selectedBpInputs = [...document.querySelectorAll('[data-f="bp_date"]')].filter((el) =>
+            document.querySelector(`[data-i="${el.dataset.i}"][data-f="apply_bp_date"]`)?.checked
+        );
+        const selectedMeasurementInputs = [...document.querySelectorAll('[data-f="measurement_date"]')].filter((el) =>
+            document.querySelector(`[data-i="${el.dataset.i}"][data-f="apply_measurement_date"]`)?.checked
+        );
+
+        if (!selectedBpInputs.length && !selectedMeasurementInputs.length) {
+            Swal.fire('กรุณาติ๊กเด็กที่ต้องการตั้งวันอย่างน้อย 1 คน', '', 'info');
+            return;
+        }
+
+        selectedBpInputs.forEach((el) => {
+            el.value = today;
+        });
+        selectedMeasurementInputs.forEach((el) => {
+            el.value = today;
+        });
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'ตั้งวันที่วันนี้ให้เด็กที่เลือกแล้ว', showConfirmButton: false, timer: 1500 });
+    }
+
+    function applyBulkDateToAll(field) {
+        const config = field === 'bp_date'
+            ? {
+                inputId: 'bulkBpDate',
+                label: 'วันที่ตรวจความดัน',
+            }
+            : {
+                inputId: 'bulkMeasurementDate',
+                label: 'วันที่ชั่งน้ำหนัก/วัดส่วนสูง',
+            };
+        const date = document.getElementById(config.inputId).value;
+
+        if (!date) {
+            Swal.fire('กรุณาเลือก' + config.label, '', 'info');
+            return;
+        }
+
+        const checkboxField = field === 'bp_date' ? 'apply_bp_date' : 'apply_measurement_date';
+        const selectedInputs = [...document.querySelectorAll(`[data-f="${field}"]`)].filter((input) => {
+            const checkbox = document.querySelector(`[data-i="${input.dataset.i}"][data-f="${checkboxField}"]`);
+            return checkbox && checkbox.checked;
+        });
+
+        if (!selectedInputs.length) {
+            Swal.fire('กรุณาติ๊กเด็กที่ต้องการตั้งวันอย่างน้อย 1 คน', '', 'info');
+            return;
+        }
+
+        selectedInputs.forEach((input) => {
+            input.value = date;
+        });
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: `กำหนด${config.label}ให้เด็กทั้งห้องแล้ว`,
+            showConfirmButton: false,
+            timer: 1500,
+        });
+    }
+
+    function bulkUpdateAge(index) {
+        const birthDateField = document.querySelector(`[data-i="${index}"][data-f="birth_date"]`);
+        const examDateField = document.querySelector(`[data-i="${index}"][data-f="bp_date"]`);
+        const birthDate = birthDateField ? birthDateField.value : '';
+        const examDate = examDateField ? examDateField.value : '';
+        if (!birthDate || !examDate) return;
+
+        const birth = new Date(`${birthDate}T00:00:00`);
+        const exam = new Date(`${examDate}T00:00:00`);
+        if (Number.isNaN(birth.valueOf()) || Number.isNaN(exam.valueOf()) || exam < birth) return;
+
+        let years = exam.getFullYear() - birth.getFullYear();
+        let months = exam.getMonth() - birth.getMonth();
+        let days = exam.getDate() - birth.getDate();
+        if (days < 0) {
+            months -= 1;
+            days += new Date(exam.getFullYear(), exam.getMonth(), 0).getDate();
+        }
+        if (months < 0) {
+            years -= 1;
+            months += 12;
+        }
+        document.querySelector(`[data-i="${index}"][data-f="age_year"]`).value = years;
+        document.querySelector(`[data-i="${index}"][data-f="age_month"]`).value = months;
+        document.querySelector(`[data-i="${index}"][data-f="age_day"]`).value = days;
+    }
+
+    function bulkToggleExamDetails() {
+        showExamDetails = !showExamDetails;
+        document.getElementById('examDetailsLabel').textContent = showExamDetails ? 'ซ่อนการตรวจร่างกาย' : 'แสดงการตรวจร่างกาย';
+        document.querySelectorAll('.bulk-exam-cell').forEach(c => c.style.display = showExamDetails ? '' : 'none');
+        document.querySelectorAll('.bulk-exam-head').forEach(c => c.style.display = showExamDetails ? '' : 'none');
+    }
+
+    function saveBulkEdit() {
+        if (!bulkData.length) return;
+
+        const records = bulkData.map((s, i) => {
+            const value = (field) => {
+                const input = document.querySelector(`[data-i="${i}"][data-f="${field}"]`);
+                return input ? input.value.trim() : '';
+            };
+            const valueByKey = (field, key) => {
+                const input = document.querySelector(`[data-i="${i}"][data-f="${field}"][data-k="${key}"]`);
+                return input ? input.value.trim() : '';
+            };
+            const existing = s.existing_data || {};
+            const physicalExam = {};
+            const neurological = {};
+
+            ['general', 'skin', 'head', 'face', 'eyes', 'ears', 'nose', 'mouth', 'neck', 'breast', 'breathe', 'lungs', 'heart', 'heart_sound', 'pulse', 'abdomen', 'others', 'neuro', 'movement'].forEach((key) => {
+                const status = valueByKey('exam', key);
+                const detail = valueByKey('exam_detail', key);
+                const target = ['neuro', 'movement'].includes(key) ? neurological : physicalExam;
+                if (status) target[key] = [status];
+                if (detail) target[`${key}_detail`] = detail;
+            });
+
+            const development = {};
+            ['gm', 'fm', 'rl', 'el', 'ps'].forEach((key) => {
+                const status = valueByKey('dev', key);
+                const score = valueByKey('dev_score', key);
+                if (status || score) development[key] = { status, score };
+            });
+
+            const bpDate = value('bp_date');
+            return {
+                student_id: s.student_id,
+                academic_year: value('academic_year') || s.academic_year,
+                existing_id: value('existing_id') || null,
+                check_round: value('check_round') || s.check_round || 1,
+                // วันที่ตรวจเป็นฟิลด์บังคับของตาราง health_data_external
+                exam_date: bpDate || s.exam_date || new Date().toISOString().slice(0, 10),
+                measurement_date: value('measurement_date') || bpDate || s.exam_date || new Date().toISOString().slice(0, 10),
+                birth_date: value('birth_date') || s.birth_date || s.birthday || null,
+                age_year: value('age_year') || null,
+                age_month: value('age_month') || null,
+                age_day: value('age_day') || null,
+                vital_signs: {
+                    temperature: value('temperature'),
+                    bp: value('bp'),
+                    bp_date: bpDate,
+                },
+                behavior: { status: value('behavior') },
+                physical_measures: {
+                    height: value('height'),
+                    weight: value('weight'),
+                    weight_for_age: value('weight_for_age'),
+                    height_for_age: value('height_for_age'),
+                    weight_for_height: value('weight_for_height'),
+                },
+                development_assessment: development,
+                physical_exam: physicalExam,
+                neurological,
+                recommendation: value('recommendation'),
+            };
+        });
+
+        const saveButton = document.getElementById('saveBulkBtn');
+        saveButton.disabled = true;
+        Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        fetch('./process/save_bulk_health.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(records),
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                Swal.close();
+                if (result.status !== 'success') {
+                    throw new Error(result.message || 'ไม่สามารถบันทึกข้อมูลได้');
+                }
+                const errors = result.errors || [];
+                const errorText = errors.length
+                    ? `<br><small class="text-danger">ไม่สำเร็จ ${errors.length} รายการ: ${errors.map((e) => `${e.student_id} ${e.message}`).join(', ')}</small>`
+                    : '';
+                Swal.fire({
+                    icon: errors.length ? 'warning' : 'success',
+                    title: 'บันทึกข้อมูลเรียบร้อย',
+                    html: `บันทึกสำเร็จ ${result.success_count} จาก ${result.total} รายการ${errorText}`,
+                });
+                if (!errors.length) {
+                    toggleBulkEdit();
+                    loadResults();
+                }
+            })
+            .catch((error) => {
+                Swal.close();
+                Swal.fire('บันทึกไม่สำเร็จ', error.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
+            })
+            .finally(() => {
+                saveButton.disabled = false;
             });
     }
 </script>

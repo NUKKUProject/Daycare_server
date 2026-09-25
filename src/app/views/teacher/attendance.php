@@ -32,6 +32,23 @@ $data = getChildrenGroupedByTab($currentTab);
         padding: 1rem;
     }
 
+    .scanner-inline-panel {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        background: #f8f9fa;
+    }
+
+    .scanner-inline-panel .zoom-controls {
+        margin: 0 auto 1rem;
+    }
+
     #video-container {
         display: flex;
         justify-content: center;
@@ -870,10 +887,10 @@ $data = getChildrenGroupedByTab($currentTab);
 
 <body>
     <main class="main-content">
-        <div class="container-fluid mt-4">           
+        <div class="container-fluid">           
 
             <div id="scanner-container">
-                <h3 class="text-center">บันทึกการเช็คชื่อมาเรียน วันที่ <?php echo date('d/m/Y'); ?></h3>
+                <h5 class="text-center text-primary">บันทึกการเช็คชื่อมาเรียน วันที่ <?php echo date('d/m/Y'); ?></h5>
                 <div class="manual-attendance-form">
                     <label for="manualStudentId" class="form-label">
                         <i class="bi bi-keyboard"></i> กรอกเลขประจำตัวนักเรียนกรณีไม่มี QR Code
@@ -887,12 +904,8 @@ $data = getChildrenGroupedByTab($currentTab);
                 </div>
 
                 <!-- กล้องพร้อมกรอบ -->
-
-                <div id="video-container">
-                    <div id="reader"></div>
-                </div>
-
-                <!-- ปุ่มซูมกล้อง -->
+                <div class="scanner-inline-panel">
+<!-- ปุ่มซูมกล้อง -->
                 <div class="zoom-controls" id="zoomControls">
                     <span id="zoomStatusMsg" style="font-size:0.85rem;color:#6c757d;">
                         <i class="bi bi-search"></i> กำลังตรวจสอบกล้อง...
@@ -904,6 +917,26 @@ $data = getChildrenGroupedByTab($currentTab);
                         <span class="zoom-value" id="zoomValueDisplay">1.0x</span>
                     </div>
                 </div>
+                <div id="video-container">
+                    <div id="reader"></div>
+                </div>
+
+                <div class="d-flex justify-content-center mt-2">
+                    <button type="button" class="btn btn-outline-primary" id="switchScannerCamera">
+                        <i class="bi bi-arrow-repeat me-1"></i>สลับกล้อง
+                    </button>
+                </div>
+                <div class="mt-3" style="width:100%;max-width:420px;">
+                    <label for="scannerCameraSelect" class="form-label mb-1">
+                        <i class="bi bi-camera-video me-1"></i>เลือกกล้อง
+                    </label>
+                    <select id="scannerCameraSelect" class="form-select" disabled>
+                        <option value="">กำลังค้นหากล้อง...</option>
+                    </select>
+                </div>
+                </div>
+
+                
                 
                 <!-- ตารางแสดงข้อมูลเช็คชื่อ -->
                 <div class="table-responsive" style="width:100% ; max-height: 400px; overflow: scroll; ">
@@ -1185,8 +1218,7 @@ $data = getChildrenGroupedByTab($currentTab);
     </div>
 
     <!-- script สำหรับแสกน qrcode เช็คชื่อ -->
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+" crossorigin="anonymous"></script>
     <script>
         const attendanceTableBody = document.getElementById('attendance-table-body');
         const manualStudentIdInput = document.getElementById('manualStudentId');
@@ -1383,7 +1415,7 @@ $data = getChildrenGroupedByTab($currentTab);
                 .finally(() => {
                     setTimeout(() => {
                         isScanning = false;
-                    }, 3000);
+                    }, 500);
                 });
         }
 
@@ -1407,7 +1439,8 @@ $data = getChildrenGroupedByTab($currentTab);
             lastScannedData = studentId;
 
             submitAttendanceData({
-                student_id: studentId
+                student_id: studentId,
+                manual: true
             });
         }
 
@@ -1421,7 +1454,7 @@ $data = getChildrenGroupedByTab($currentTab);
 
         // ====== Scan QR Code Handler ======
         const onScanSuccess = (decodedText, decodedResult) => {
-            if (isScanning || decodedText === lastScannedData) return;
+            if (isScanning) return;
 
             isScanning = true;
             lastScannedData = decodedText;
@@ -1500,6 +1533,13 @@ $data = getChildrenGroupedByTab($currentTab);
         // เริ่มต้นการสแกน
         const html5QrCode = new Html5Qrcode("reader");
         const readerElem = document.getElementById('reader');
+        const switchScannerCamera = document.getElementById('switchScannerCamera');
+        const scannerCameraSelect = document.getElementById('scannerCameraSelect');
+        let scannerFacingMode = 'environment';
+        let scannerCameras = [];
+        let scannerCameraIndex = null;
+        let scannerState = 'idle';
+        let scannerRestarting = false;
 
         // ฟังก์ชันคำนวณขนาด qrbox ตามหน้าจอ
         function calculateQrBoxSize() {
@@ -1526,6 +1566,46 @@ $data = getChildrenGroupedByTab($currentTab);
             return Math.max(160, qrBoxSize); // ขนาดต่ำสุด 160px
         }
 
+        async function getScannerCameraConfig() {
+            if (typeof Html5Qrcode.getCameras !== 'function') {
+                return { facingMode: scannerFacingMode };
+            }
+
+            try {
+                scannerCameras = await Html5Qrcode.getCameras();
+            } catch (error) {
+                console.warn('ไม่สามารถค้นหารายการกล้อง ใช้ facingMode แทน:', error);
+                return { facingMode: scannerFacingMode };
+            }
+
+            if (!scannerCameras.length) {
+                throw new Error('ไม่พบกล้องในอุปกรณ์นี้');
+            }
+
+            if (scannerCameraIndex === null || scannerCameraIndex >= scannerCameras.length) {
+                const keyword = scannerFacingMode === 'environment'
+                    ? /back|rear|environment|หลัง/i
+                    : /front|user|หน้า/i;
+                const preferredIndex = scannerCameras.findIndex(camera => keyword.test(camera.label || ''));
+                scannerCameraIndex = preferredIndex >= 0
+                    ? preferredIndex
+                    : (scannerFacingMode === 'environment' ? scannerCameras.length - 1 : 0);
+            }
+
+            scannerCameraSelect.innerHTML = '';
+            scannerCameras.forEach((camera, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = camera.label || `กล้อง ${index + 1}`;
+                scannerCameraSelect.appendChild(option);
+            });
+            scannerCameraSelect.value = String(scannerCameraIndex === null ? 0 : scannerCameraIndex);
+            scannerCameraSelect.disabled = scannerCameras.length <= 1;
+            switchScannerCamera.disabled = scannerCameras.length <= 1;
+
+            return { deviceId: { exact: scannerCameras[scannerCameraIndex].id } };
+        }
+
         const qrBoxSize = calculateQrBoxSize();
 
         const config = {
@@ -1536,57 +1616,46 @@ $data = getChildrenGroupedByTab($currentTab);
             }
         };
 
-        // Start the QR scanner first. Once it has successfully started we initialise the zoom controls.
-        // This prevents a race condition where `initZoomControl` runs before the video stream is ready,
-        // which caused the zoom UI to be hidden intermittently.
-        html5QrCode.start({
-                facingMode: "environment",
-            },
-            config,
-            onScanSuccess
-        ).then(() => {
+        async function startScannerWithConfig(scannerConfig) {
+            if (scannerState === 'starting' || scannerState === 'running') return;
+            scannerState = 'starting';
             try {
+                const cameraConfig = await getScannerCameraConfig();
+                await html5QrCode.start(cameraConfig, scannerConfig, onScanSuccess);
+                scannerState = 'running';
                 initZoomControl();
-            } catch (e) {
-                console.warn('Zoom init error (non-blocking):', e);
-            }
-        }).catch(err => {
-            console.error('Error starting QR scanner:', err);
-        });
-
-        // -----------------------------------------------------------------
-        // Re‑initialize scanner on page scroll
-        // -----------------------------------------------------------------
-        // Some mobile browsers pause or detach the video element when the
-        // page is scrolled, causing the camera feed to disappear.  We listen
-        // for scroll events and, if the <video> element inside #reader is no
-        // longer present, we restart the scanner with the current QR‑box
-        // size and re‑apply the zoom controls.
-        function ensureScannerRunning() {
-            const videoElem = document.querySelector('#reader video');
-            if (!videoElem) {
-                // Video element missing – restart scanner
-                const currentQrBoxSize = calculateQrBoxSize();
-                const restartConfig = {
-                    fps: 25,
-                    qrbox: { width: currentQrBoxSize, height: currentQrBoxSize }
-                };
-                html5QrCode.start({ facingMode: "environment" }, restartConfig, onScanSuccess)
-                    .then(() => {
-                        try { initZoomControl(); } catch (e) { console.warn('Zoom init after scroll error:', e); }
-                    })
-                    .catch(err => console.error('Error restarting QR scanner on scroll:', err));
+            } catch (error) {
+                scannerState = 'idle';
+                console.error('Error starting QR scanner:', error);
             }
         }
 
-        // Debounce scroll handling to avoid excessive restarts.
-        let scrollTimer;
-        window.addEventListener('scroll', () => {
-            clearTimeout(scrollTimer);
-            scrollTimer = setTimeout(() => {
-                ensureScannerRunning();
-            }, 200);
-        });
+        async function stopScannerForRestart() {
+            if (scannerState === 'idle') return;
+            scannerState = 'stopping';
+            try {
+                await html5QrCode.stop();
+            } catch (error) {
+                console.warn('หยุดกล้อง:', error);
+            }
+            try {
+                html5QrCode.clear();
+            } catch (error) {
+                console.warn('ล้างตัวสแกน:', error);
+            }
+            scannerState = 'idle';
+        }
+
+        async function restartScanner(scannerConfig) {
+            if (scannerRestarting) return;
+            scannerRestarting = true;
+            try {
+                await stopScannerForRestart();
+                await startScannerWithConfig(scannerConfig);
+            } finally {
+                scannerRestarting = false;
+            }
+        }
 
         // --- Zoom Control Logic ---
         let currentZoom = 1;
@@ -1715,45 +1784,31 @@ $data = getChildrenGroupedByTab($currentTab);
         }
         // --- End Zoom Control Logic ---
 
-        // ฟังก์ชันปรับขนาด qrbox เมื่อขนาดหน้าจอเปลี่ยน
-        function updateQrScannerSize() {
-            const newQrBoxSize = calculateQrBoxSize();
-            // Stop the current scanner, then restart with the new qrbox size.
-            // After restarting we must re‑initialise the zoom controls because the
-            // underlying <video> element (and its MediaStreamTrack) is recreated.
-            html5QrCode.stop()
-                .then(() => {
-                    const newConfig = {
-                        fps: 25,
-                        qrbox: {
-                            width: newQrBoxSize,
-                            height: newQrBoxSize
-                        }
-                    };
-                    return html5QrCode.start({ facingMode: "environment" }, newConfig, onScanSuccess);
-                })
-                .then(() => {
-                    // Re‑attach zoom controls to the new video track.
-                    try {
-                        initZoomControl();
-                    } catch (e) {
-                        console.warn('Zoom init after resize error (non‑blocking):', e);
-                    }
-                })
-                .catch(err => {
-                    console.error('Error (re)starting QR scanner:', err);
-                });
-        }
-
-        // Listen for viewport size changes and adjust the QR scanner + zoom.
-        // Debounce to avoid rapid restarts during continuous resize.
-        let resizeTimer;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                updateQrScannerSize();
-            }, 300);
+        switchScannerCamera.addEventListener('click', async () => {
+            if (scannerState !== 'running' || scannerCameras.length < 2) return;
+            scannerFacingMode = scannerFacingMode === 'environment' ? 'user' : 'environment';
+            scannerCameraIndex = (scannerCameraIndex + 1) % scannerCameras.length;
+            await restartScanner(config);
         });
+
+        scannerCameraSelect.addEventListener('change', async () => {
+            const selectedIndex = Number(scannerCameraSelect.value);
+            if (!Number.isInteger(selectedIndex) || !scannerCameras[selectedIndex]) return;
+            if (selectedIndex === scannerCameraIndex) return;
+            scannerCameraIndex = selectedIndex;
+            await restartScanner(config);
+        });
+
+        // เริ่มกล้องครั้งเดียวบนหน้า และไม่ restart เมื่อ scroll หรือ resize
+        startScannerWithConfig(config);
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopScannerForRestart();
+            } else if (scannerState === 'idle') {
+                startScannerWithConfig(config);
+            }
+        });
+        window.addEventListener('pagehide', () => stopScannerForRestart());
         
 
         // อัพเดทตารางเมื่อโหลดหน้าเว็บ

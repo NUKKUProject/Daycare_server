@@ -413,28 +413,9 @@
                             <input type="number" name="temperature" class="form-control measurement-input" step="0.1" placeholder="36.5">
                             <span class="input-group-text">°C</span>
                         </div>
-                        <small class="text-muted">อุณหภูมิร่างกาย</small>
+                        <small class="text-muted">อุณหภูมิร่างกาย (ก่อนตรวจ)</small>
                     </div>
                     <div class="col-md-4">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-activity"></i></span>
-                            <input type="number" name="pulse" class="form-control measurement-input" placeholder="80">
-                            <span class="input-group-text">ครั้ง/นาที</span>
-                        </div>
-                        <small class="text-muted">ชีพจร</small>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-lungs"></i></span>
-                            <input type="number" name="respiration" class="form-control measurement-input" placeholder="20">
-                            <span class="input-group-text">ครั้ง/นาที</span>
-                        </div>
-                        <small class="text-muted">อัตราการหายใจ</small>
-                    </div>
-                </div>
-
-                <div class="row g-3 mt-2">
-                    <div class="col-md-6">
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-heart"></i></span>
                             <input type="text" name="bp" class="form-control measurement-input" placeholder="120/80">
@@ -442,8 +423,8 @@
                         </div>
                         <small class="text-muted">ความดันโลหิต</small>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">วันที่ตรวจ</label>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold small">วันที่ตรวจ</label>
                         <input type="date" name="bp_date" class="form-control">
                     </div>
                 </div>
