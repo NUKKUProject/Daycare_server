@@ -113,24 +113,73 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
     /* ===== รายละเอียดใน SweetAlert modal ===== */
     .eh-detail { text-align: left; }
 
-    .eh-detail-section {
-        background: #f8fbfd;
+    .eh-detail-banner {
+        align-items: center;
+        background: linear-gradient(135deg, #0f2460 0%, #1e4db7 100%);
         border-radius: 0.9rem;
+        color: #fff;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 0.8rem;
+        margin-bottom: 1rem;
+        padding: 0.9rem 1.1rem;
+    }
+
+    .eh-banner-date {
+        font-size: 1rem;
+        font-weight: 700;
+        width: 100%;
+    }
+
+    .eh-banner-chip {
+        background: rgba(255,255,255,0.15);
+        border-radius: 999px;
+        font-size: 0.78rem;
+        padding: 0.25rem 0.7rem;
+    }
+
+    .eh-detail-section {
+        background: #fff;
+        border: 1px solid #eef2f7;
+        border-left: 4px solid var(--eh-accent, var(--eh-primary));
+        border-radius: 0.9rem;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
         margin-bottom: 0.85rem;
         padding: 0.9rem 1.1rem;
     }
 
     .eh-detail-section h6 {
+        align-items: center;
         color: var(--eh-primary-dark);
-        font-size: 0.85rem;
+        display: flex;
+        font-size: 0.88rem;
         font-weight: 700;
-        margin-bottom: 0.6rem;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .eh-detail-section h6 .eh-icon {
+        align-items: center;
+        background: var(--eh-accent-soft, #ebf4fb);
+        border-radius: 0.6rem;
+        color: var(--eh-accent, var(--eh-primary));
+        display: inline-flex;
+        font-size: 0.85rem;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
     }
 
     .eh-detail-grid {
         display: grid;
         gap: 0.6rem;
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+
+    .eh-detail-item {
+        background: #f8fbfd;
+        border-radius: 0.65rem;
+        padding: 0.5rem 0.7rem;
     }
 
     .eh-detail-item label {
@@ -141,21 +190,43 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
 
     .eh-detail-item div {
         color: var(--eh-primary-dark);
-        font-size: 0.92rem;
-        font-weight: 600;
+        font-size: 0.95rem;
+        font-weight: 700;
     }
 
     .eh-pill {
+        align-items: center;
         border-radius: 999px;
-        display: inline-block;
+        display: inline-flex;
         font-size: 0.78rem;
         font-weight: 600;
-        padding: 0.15rem 0.6rem;
+        gap: 0.3rem;
+        padding: 0.2rem 0.65rem;
+    }
+
+    .eh-pill::before {
+        border-radius: 50%;
+        content: '';
+        height: 6px;
+        width: 6px;
     }
 
     .eh-pill.normal { background: #e6f7ec; color: #1e7e42; }
+    .eh-pill.normal::before { background: #22c55e; }
     .eh-pill.abnormal { background: #fdecec; color: #c0392b; }
-    .eh-pill.na { background: #eef1f4; color: #64748b; }
+    .eh-pill.abnormal::before { background: #ef4444; }
+    .eh-pill.na { background: #eef1f4; color: #94a3b8; }
+    .eh-pill.na::before { background: #cbd5e1; }
+
+    .eh-exam-columns {
+        display: grid;
+        gap: 0 1.2rem;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    @media (max-width: 576px) {
+        .eh-exam-columns { grid-template-columns: 1fr; }
+    }
 
     .eh-exam-row {
         align-items: center;
@@ -163,7 +234,7 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
         display: flex;
         font-size: 0.85rem;
         justify-content: space-between;
-        padding: 0.35rem 0;
+        padding: 0.45rem 0;
     }
 
     .eh-exam-row:last-child { border-bottom: none; }
@@ -176,7 +247,7 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
 
     .eh-dev-item {
         border-radius: 0.75rem;
-        padding: 0.6rem;
+        padding: 0.7rem 0.6rem;
         text-align: center;
     }
 
@@ -184,8 +255,17 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
     .eh-dev-item.fail { background: #fdecec; }
     .eh-dev-item.na { background: #eef1f4; }
 
-    .eh-dev-item strong { display: block; font-size: 0.9rem; }
+    .eh-dev-item strong { display: block; font-size: 0.95rem; }
     .eh-dev-item span { color: #64748b; font-size: 0.75rem; }
+
+    .eh-reco-box {
+        background: #fff9e6;
+        border: 1px solid #fde68a;
+        border-radius: 0.65rem;
+        color: #92702c;
+        font-size: 0.9rem;
+        padding: 0.7rem 0.9rem;
+    }
 </style>
 
 <body>
@@ -270,10 +350,18 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
             const dev = ehParseJson(r.development_assessment);
             const behaviorNormal = behavior.status === 'none';
 
+            const checked = !!r.doctor_name;
+
             const html = `
                 <div class="eh-detail">
-                    <div class="eh-detail-section">
-                        <h6><i class="bi bi-heart-pulse me-1"></i>สัญญาณชีพ</h6>
+                    <div class="eh-detail-banner">
+                        <div class="eh-banner-date"><i class="bi bi-calendar3 me-1"></i>${ehFormatDate(r.exam_date)}</div>
+                        <span class="eh-banner-chip"><i class="bi bi-mortarboard me-1"></i>ปีการศึกษา ${ehEscapeHtml(r.academic_year || '-')}</span>
+                        <span class="eh-banner-chip">${checked ? '<i class="bi bi-person-badge me-1"></i>แพทย์: ' + ehEscapeHtml(r.doctor_name) : '<i class="bi bi-hourglass-split me-1"></i>รอแพทย์ตรวจ'}</span>
+                    </div>
+
+                    <div class="eh-detail-section" style="--eh-accent:#e0455f;--eh-accent-soft:#fdecef;">
+                        <h6><span class="eh-icon"><i class="bi bi-heart-pulse"></i></span>สัญญาณชีพ</h6>
                         <div class="eh-detail-grid">
                             <div class="eh-detail-item"><label>อุณหภูมิ</label><div>${ehEscapeHtml(vital.temperature || '-')} °C</div></div>
                             <div class="eh-detail-item"><label>ความดันโลหิต</label><div>${ehEscapeHtml(vital.bp || '-')} mmHg</div></div>
@@ -281,8 +369,8 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
                         </div>
                     </div>
 
-                    <div class="eh-detail-section">
-                        <h6><i class="bi bi-rulers me-1"></i>ข้อมูลการวัด (${ehFormatDate(r.measurement_date)})</h6>
+                    <div class="eh-detail-section" style="--eh-accent:#2f8f83;--eh-accent-soft:#e6f5f3;">
+                        <h6><span class="eh-icon"><i class="bi bi-rulers"></i></span>ข้อมูลการวัด <small style="font-weight:400;color:#94a3b8;margin-left:4px;">(${ehFormatDate(r.measurement_date)})</small></h6>
                         <div class="eh-detail-grid">
                             <div class="eh-detail-item"><label>ส่วนสูง</label><div>${ehEscapeHtml(measures.height || '-')} ซม.</div></div>
                             <div class="eh-detail-item"><label>น้ำหนัก</label><div>${ehEscapeHtml(measures.weight || '-')} กก.</div></div>
@@ -293,14 +381,14 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
                         </div>
                     </div>
 
-                    <div class="eh-detail-section">
-                        <h6><i class="bi bi-emoji-smile me-1"></i>พฤติกรรม</h6>
+                    <div class="eh-detail-section" style="--eh-accent:#7c5cbf;--eh-accent-soft:#f1ecfb;">
+                        <h6><span class="eh-icon"><i class="bi bi-emoji-smile"></i></span>พฤติกรรม</h6>
                         <span class="eh-pill ${behaviorNormal ? 'normal' : 'abnormal'}">${behaviorNormal ? 'ปกติ' : 'มีพฤติกรรมผิดปกติ'}</span>
-                        ${!behaviorNormal && behavior.detail ? '<div style="margin-top:0.4rem;color:#64748b;font-size:0.85rem;">' + ehEscapeHtml(behavior.detail) + '</div>' : ''}
+                        ${!behaviorNormal && behavior.detail ? '<div style="margin-top:0.5rem;color:#64748b;font-size:0.85rem;">' + ehEscapeHtml(behavior.detail) + '</div>' : ''}
                     </div>
 
-                    <div class="eh-detail-section">
-                        <h6><i class="bi bi-graph-up me-1"></i>การประเมินพัฒนาการ 5 ด้าน</h6>
+                    <div class="eh-detail-section" style="--eh-accent:#c07a1e;--eh-accent-soft:#fdf1de;">
+                        <h6><span class="eh-icon"><i class="bi bi-graph-up"></i></span>การประเมินพัฒนาการ 5 ด้าน</h6>
                         <div class="eh-dev-grid">
                             ${ehDevItem('GM', 'การเคลื่อนไหว', dev.gm)}
                             ${ehDevItem('FM', 'มัดเล็ก/สติปัญญา', dev.fm)}
@@ -310,36 +398,42 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
                         </div>
                     </div>
 
-                    <div class="eh-detail-section">
-                        <h6><i class="fa-solid fa-stethoscope me-1"></i>การตรวจร่างกาย</h6>
-                        ${ehExamRow('สภาพทั่วไป', 'general', physical)}
-                        ${ehExamRow('ผิวหนัง', 'skin', physical)}
-                        ${ehExamRow('ศีรษะ', 'head', physical)}
-                        ${ehExamRow('ใบหน้า', 'face', physical)}
-                        ${ehExamRow('ตา', 'eyes', physical)}
-                        ${ehExamRow('หูและการได้ยิน', 'ears', physical)}
-                        ${ehExamRow('จมูก', 'nose', physical)}
-                        ${ehExamRow('ปากและช่องปาก', 'mouth', physical)}
-                        ${ehExamRow('คอ', 'neck', physical)}
-                        ${ehExamRow('ทรวงอกและปอด', 'breast', physical)}
-                        ${ehExamRow('การหายใจ', 'breathe', physical)}
-                        ${ehExamRow('ปอด', 'lungs', physical)}
-                        ${ehExamRow('หัวใจ', 'heart', physical)}
-                        ${ehExamRow('เสียงหัวใจ', 'heart_sound', physical)}
-                        ${ehExamRow('ชีพจร', 'pulse', physical)}
-                        ${ehExamRow('ท้อง', 'abdomen', physical)}
-                        ${ehExamRow('อื่นๆ', 'others', physical)}
+                    <div class="eh-detail-section" style="--eh-accent:#26648E;--eh-accent-soft:#ebf4fb;">
+                        <h6><span class="eh-icon"><i class="fa-solid fa-stethoscope"></i></span>การตรวจร่างกาย</h6>
+                        <div class="eh-exam-columns">
+                            <div>
+                                ${ehExamRow('สภาพทั่วไป', 'general', physical)}
+                                ${ehExamRow('ผิวหนัง', 'skin', physical)}
+                                ${ehExamRow('ศีรษะ', 'head', physical)}
+                                ${ehExamRow('ใบหน้า', 'face', physical)}
+                                ${ehExamRow('ตา', 'eyes', physical)}
+                                ${ehExamRow('หูและการได้ยิน', 'ears', physical)}
+                                ${ehExamRow('จมูก', 'nose', physical)}
+                                ${ehExamRow('ปากและช่องปาก', 'mouth', physical)}
+                                ${ehExamRow('คอ', 'neck', physical)}
+                            </div>
+                            <div>
+                                ${ehExamRow('ทรวงอกและปอด', 'breast', physical)}
+                                ${ehExamRow('การหายใจ', 'breathe', physical)}
+                                ${ehExamRow('ปอด', 'lungs', physical)}
+                                ${ehExamRow('หัวใจ', 'heart', physical)}
+                                ${ehExamRow('เสียงหัวใจ', 'heart_sound', physical)}
+                                ${ehExamRow('ชีพจร', 'pulse', physical)}
+                                ${ehExamRow('ท้อง', 'abdomen', physical)}
+                                ${ehExamRow('อื่นๆ', 'others', physical)}
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="eh-detail-section">
-                        <h6><i class="fa-solid fa-brain me-1"></i>ระบบประสาท</h6>
+                    <div class="eh-detail-section" style="--eh-accent:#4c51bf;--eh-accent-soft:#eceefc;">
+                        <h6><span class="eh-icon"><i class="fa-solid fa-brain"></i></span>ระบบประสาท</h6>
                         ${ehExamRow('ปฏิกิริยาขั้นพื้นฐาน', 'neuro', neuro)}
                         ${ehExamRow('การเคลื่อนไหว', 'movement', neuro)}
                     </div>
 
-                    <div class="eh-detail-section" style="margin-bottom:0;">
-                        <h6><i class="bi bi-clipboard-check me-1"></i>คำแนะนำ</h6>
-                        <div style="color:#334155;font-size:0.9rem;">${r.recommendation ? ehEscapeHtml(r.recommendation) : 'ไม่มีคำแนะนำ'}</div>
+                    <div class="eh-detail-section" style="--eh-accent:#c99a2e;--eh-accent-soft:#fff9e6;margin-bottom:0;">
+                        <h6><span class="eh-icon"><i class="bi bi-clipboard-check"></i></span>คำแนะนำจากแพทย์</h6>
+                        <div class="eh-reco-box">${r.recommendation ? ehEscapeHtml(r.recommendation) : 'ไม่มีคำแนะนำ'}</div>
                     </div>
                 </div>
             `;
@@ -347,7 +441,7 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
             Swal.fire({
                 title: 'รายละเอียดการตรวจสุขภาพ',
                 html: html,
-                width: window.innerWidth < 768 ? '95%' : '650px',
+                width: window.innerWidth < 768 ? '95%' : '700px',
                 showCloseButton: true,
                 showConfirmButton: false,
                 heightAuto: false
@@ -366,7 +460,7 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
                 return `
                     <div class="eh-record-card">
                         <div class="eh-record-top">
-                            <span class="eh-record-title">ครั้งที่ ${ehEscapeHtml(r.check_round || 1)} — ${ehFormatDate(r.exam_date)}</span>
+                            <span class="eh-record-title"><i class="bi bi-calendar3 me-1"></i>${ehFormatDate(r.exam_date)}</span>
                             <span class="eh-badge ${checked ? 'checked' : 'pending'}">${checked ? 'หมอตรวจแล้ว' : 'รอแพทย์ตรวจ'}</span>
                         </div>
                         <div class="eh-record-meta">
