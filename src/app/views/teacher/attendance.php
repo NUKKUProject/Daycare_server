@@ -569,7 +569,7 @@ $data = getChildrenGroupedByTab($currentTab);
     border-radius: 16px;
     padding: 1.1rem 1.4rem;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
     margin-bottom: 1.25rem;
     box-shadow: 0 4px 16px rgba(15, 36, 96, 0.1);
