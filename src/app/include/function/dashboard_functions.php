@@ -67,10 +67,11 @@ function getStudentsByGroup() {
     try {
         $pdo = getDatabaseConnection();
         $stmt = $pdo->query("
-            SELECT 
+            SELECT
                 child_group,
                 COUNT(*) as count
-            FROM children 
+            FROM children
+            WHERE status = 'กำลังศึกษา'
             GROUP BY child_group
             ORDER BY child_group
         ");
@@ -103,6 +104,7 @@ function getStudentAttendanceTodayByGroup(){
             JOIN children c ON a.student_id = c.studentid
             WHERE DATE(a.check_date) = CURRENT_DATE
               AND a.status IN ('present','late')
+              AND c.status = 'กำลังศึกษา'
             GROUP BY c.child_group
         ");
         return $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
@@ -116,10 +118,12 @@ function attendanceTodayCount(){
     try {
         $pdo = getDatabaseConnection();
         $stmt = $pdo->query("
-            SELECT COUNT(DISTINCT student_id)
-            FROM attendance
-            WHERE DATE(check_date) = CURRENT_DATE
-              AND status IN ('present','late')
+            SELECT COUNT(DISTINCT a.student_id)
+            FROM attendance a
+            JOIN children c ON a.student_id = c.studentid
+            WHERE DATE(a.check_date) = CURRENT_DATE
+              AND a.status IN ('present','late')
+              AND c.status = 'กำลังศึกษา'
         ");
         return (int)$stmt->fetchColumn();
     } catch (PDOException $e) {

@@ -35,7 +35,7 @@ if ($child) {
     if ($classroom !== '') {
         $pdo = getDatabaseConnection();
 
-        $totalStmt = $pdo->prepare("SELECT COUNT(*) FROM children WHERE classroom = :classroom");
+        $totalStmt = $pdo->prepare("SELECT COUNT(*) FROM children WHERE classroom = :classroom AND status = 'กำลังศึกษา'");
         $totalStmt->execute(['classroom' => $classroom]);
         $classroomTotal = (int) $totalStmt->fetchColumn();
 
@@ -46,6 +46,7 @@ if ($child) {
             WHERE DATE(a.check_date) = CURRENT_DATE
               AND a.status IN ('present','late')
               AND c.classroom = :classroom
+              AND c.status = 'กำลังศึกษา'
         ");
         $presentStmt->execute(['classroom' => $classroom]);
         $classroomPresent = (int) $presentStmt->fetchColumn();
