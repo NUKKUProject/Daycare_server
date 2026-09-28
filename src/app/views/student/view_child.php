@@ -13,7 +13,7 @@ $is_teacher = getUserRole() === 'teacher';
 // ดึงข้อมูลปีการศึกษาทั้งหมด
 $academicYears = getAcademicYears();
 // กำหนดแท็บที่เปิดอยู่และป้องกันค่าที่ไม่อยู่ในรายการ
-$allowedTabs = ['profile', 'vaccine', 'attendance', 'health', 'growth', 'health_external'];
+$allowedTabs = ['profile', 'vaccine', 'attendance', 'health', 'growth', 'health_external', 'health_tooth'];
 $currentTab = $_GET['tab'] ?? 'profile';
 if (!in_array($currentTab, $allowedTabs, true)) {
     $currentTab = 'profile';
@@ -564,6 +564,168 @@ if (getUserRole() === 'student') {
         font-size: 0.9rem;
         padding: 0.7rem 0.9rem;
     }
+
+    /* ───────────────────────────────────────────
+       TAB: HEALTH TOOTH (ทันตแพทย์)
+    ─────────────────────────────────────────── */
+    .th-record-card {
+        background: #fff;
+        border: 1px solid #d9e6ee;
+        border-left: 5px solid #26648E;
+        border-radius: 1.1rem;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+        margin-bottom: 1rem;
+        padding: 1.1rem 1.4rem;
+    }
+
+    .th-record-top {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        justify-content: space-between;
+    }
+
+    .th-record-title { color: #1E4F6F; font-weight: 700; }
+
+    .th-badge {
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 0.25rem 0.7rem;
+    }
+
+    .th-badge.checked { background: #e6f7ec; color: #1e7e42; }
+    .th-badge.pending { background: #fff4e0; color: #a15c00; }
+
+    .th-record-meta { color: #64748b; font-size: 0.85rem; margin-top: 0.5rem; }
+    .th-record-actions { margin-top: 0.8rem; }
+
+    .th-btn-view {
+        background: #26648E;
+        border: none;
+        border-radius: 0.65rem;
+        color: #fff;
+        font-size: 0.85rem;
+        padding: 0.45rem 0.9rem;
+    }
+
+    .th-btn-view:hover { background: #1E4F6F; }
+
+    .th-empty {
+        background: #fff;
+        border: 1px solid #d9e6ee;
+        border-radius: 1rem;
+        color: #64748b;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .th-detail { text-align: left; }
+
+    .th-detail-banner {
+        align-items: center;
+        background: linear-gradient(135deg, #0e5c68 0%, #1f8fa3 100%);
+        border-radius: 0.9rem;
+        color: #fff;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 0.8rem;
+        margin-bottom: 1rem;
+        padding: 0.9rem 1.1rem;
+    }
+
+    .th-banner-title { font-size: 1rem; font-weight: 700; width: 100%; }
+
+    .th-banner-chip {
+        background: rgba(255,255,255,0.15);
+        border-radius: 999px;
+        font-size: 0.78rem;
+        padding: 0.25rem 0.7rem;
+    }
+
+    .th-detail-section {
+        background: #fff;
+        border: 1px solid #eef2f7;
+        border-left: 4px solid var(--th-accent, #26648E);
+        border-radius: 0.9rem;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+        margin-bottom: 0.85rem;
+        padding: 0.9rem 1.1rem;
+    }
+
+    .th-detail-section h6 {
+        align-items: center;
+        color: #1E4F6F;
+        display: flex;
+        font-size: 0.88rem;
+        font-weight: 700;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .th-detail-section h6 .th-icon {
+        align-items: center;
+        background: var(--th-accent-soft, #ebf4fb);
+        border-radius: 0.6rem;
+        color: var(--th-accent, #26648E);
+        display: inline-flex;
+        font-size: 0.85rem;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+    }
+
+    .th-detail-grid {
+        display: grid;
+        gap: 0.6rem;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+
+    .th-detail-item { background: #f8fbfd; border-radius: 0.65rem; padding: 0.5rem 0.7rem; }
+    .th-detail-item label { color: #94a3b8; display: block; font-size: 0.72rem; }
+    .th-detail-item div { color: #1E4F6F; font-size: 0.95rem; font-weight: 700; }
+
+    .th-pill {
+        align-items: center;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 0.78rem;
+        font-weight: 600;
+        gap: 0.3rem;
+        padding: 0.2rem 0.65rem;
+    }
+
+    .th-pill::before { border-radius: 50%; content: ''; height: 6px; width: 6px; }
+    .th-pill.good { background: #e6f7ec; color: #1e7e42; }
+    .th-pill.good::before { background: #22c55e; }
+    .th-pill.warn { background: #fdecec; color: #c0392b; }
+    .th-pill.warn::before { background: #ef4444; }
+    .th-pill.info { background: #e6f4fb; color: #1e6ea3; }
+    .th-pill.info::before { background: #3b9fd4; }
+
+    .th-position-grid {
+        display: grid;
+        gap: 0.6rem;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    }
+
+    .th-position-item { border-radius: 0.75rem; padding: 0.6rem; text-align: center; }
+    .th-position-item.decayed { background: #fdecec; }
+    .th-position-item.clean { background: #e6f7ec; }
+    .th-position-item strong { display: block; font-size: 0.95rem; }
+    .th-position-item span { color: #64748b; font-size: 0.75rem; }
+
+    .th-treatment-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+    .th-treatment-chip {
+        background: #e6f4fb;
+        border-radius: 999px;
+        color: #1e6ea3;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.25rem 0.7rem;
+    }
 </style>
 
 <!-- ===== Page Wrapper ===== -->
@@ -645,6 +807,10 @@ if (getUserRole() === 'student') {
     <button class="tab-btn <?= $currentTab === 'health_external' ? 'active' : '' ?>" data-tab="health_external">
       <i class="fa-solid fa-user-doctor"></i>
       <span>ตรวจร่างกายจากกุมารแพทย์</span>
+    </button>
+    <button class="tab-btn <?= $currentTab === 'health_tooth' ? 'active' : '' ?>" data-tab="health_tooth">
+      <i class="fa-solid fa-tooth"></i>
+      <span>ตรวจสุขภาพช่องปาก</span>
     </button>
   </div>
 
@@ -1703,6 +1869,23 @@ if (getUserRole() === 'student') {
       </div>
       <div class="content-card-body">
         <div id="healthExternalList">
+          <div style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-hourglass-split me-2"></i>คลิกแท็บเพื่อโหลดข้อมูล</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: HEALTH TOOTH (ทันตแพทย์) ===== -->
+  <div id="tab-health_tooth" class="tab-content-pane" style="<?= $currentTab === 'health_tooth' ? '' : 'display:none;' ?>">
+    <div class="content-card">
+      <div class="content-card-header">
+        <div class="section-title">
+          <i class="fa-solid fa-tooth icon-danger" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;"></i>
+          ประวัติการตรวจสุขภาพช่องปากจากทันตแพทย์
+        </div>
+      </div>
+      <div class="content-card-body">
+        <div id="healthToothList">
           <div style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-hourglass-split me-2"></i>คลิกแท็บเพื่อโหลดข้อมูล</div>
         </div>
       </div>
@@ -3728,6 +3911,18 @@ if (getUserRole() === 'student') {
     });
   }
 
+  /* ── Tab Switching - Load health_tooth when tab is clicked ── */
+  let healthToothDataLoaded = false;
+  const healthToothTabBtn = document.querySelector('[data-tab="health_tooth"]');
+  if (healthToothTabBtn) {
+    healthToothTabBtn.addEventListener('click', function() {
+      if (!healthToothDataLoaded) {
+        loadHealthToothData();
+        healthToothDataLoaded = true;
+      }
+    });
+  }
+
   // เปิดแท็บที่ส่งมาจาก Dashboard และโหลดข้อมูลของแท็บนั้นทันที
   const initialTab = <?= json_encode($currentTab) ?>;
   if (initialTab !== 'profile') {
@@ -3974,6 +4169,176 @@ if (getUserRole() === 'student') {
       .catch(error => {
         console.error('Error loading health external:', error);
         container.innerHTML = '<div class="eh-empty" style="color:var(--danger);"><i class="bi bi-exclamation-triangle me-2"></i>' + ehEscapeHtml(error.message) + '</div>';
+      });
+  }
+
+  /* ══════════════════════════════════════════
+     TAB: HEALTH TOOTH (ตรวจสุขภาพช่องปากจากทันตแพทย์)
+  ══════════════════════════════════════════ */
+  let thRecords = [];
+
+  const thTreatmentLabels = {
+    filling: 'อุดฟัน',
+    fluoride: 'เคลือบฟลูออไรด์',
+    root_canal: 'รักษาคลองรากฟัน',
+    fluoride_molar: 'เคลือบหลุมร่องฟันที่ฟันกราม',
+    crown: 'ครอบฟัน',
+    extraction: 'ถอนฟัน',
+    other: 'อื่นๆ'
+  };
+
+  const thPositionLabels = {
+    upper_front_teeth: 'ฟันหน้าบน',
+    upper_right_molar: 'ฟันกรามบนขวา',
+    upper_left_molar: 'ฟันกรามบนซ้าย',
+    lower_front_teeth: 'ฟันหน้าล่าง',
+    lower_right_molar: 'ฟันกรามล่างขวา',
+    lower_left_molar: 'ฟันกรามล่างซ้าย'
+  };
+
+  function thEscapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function thParseJson(value, fallback) {
+    fallback = fallback || {};
+    if (value && typeof value === 'object') return value;
+    if (!value) return fallback;
+    try { return JSON.parse(value) || fallback; } catch (e) { return fallback; }
+  }
+
+  function thUrgencyPill(urgency) {
+    if (urgency === 'urgent') return '<span class="th-pill warn">ควรได้รับการรักษาโดยด่วน</span>';
+    if (urgency === 'not_urgent') return '<span class="th-pill good">ไม่เร่งด่วน</span>';
+    if (urgency === 'preventable') return '<span class="th-pill info">ป้องกันได้</span>';
+    return '<span class="th-pill info">ไม่ระบุ</span>';
+  }
+
+  window.thShowDetail = function(index) {
+    const r = thRecords[index];
+    const positions = thParseJson(r.decayed_teeth_positions);
+    const treatments = thParseJson(r.treatments, []);
+    const hasDecay = r.teeth_status === 'abnormal';
+    const age = `${r.age_year || 0} ปี ${r.age_month || 0} เดือน ${r.age_day || 0} วัน`;
+
+    const positionsHtml = Object.keys(thPositionLabels).map(key => {
+      const count = positions[key] || 0;
+      return `
+        <div class="th-position-item ${count > 0 ? 'decayed' : 'clean'}">
+          <strong>${count > 0 ? count + ' ซี่' : 'ไม่มี'}</strong>
+          <span>${thPositionLabels[key]}</span>
+        </div>`;
+    }).join('');
+
+    const treatmentsHtml = Array.isArray(treatments) && treatments.length > 0
+      ? '<div class="th-treatment-list">' + treatments.map(t =>
+          `<span class="th-treatment-chip">${thEscapeHtml(thTreatmentLabels[t] || t)}</span>`
+        ).join('') + '</div>'
+      : '<div style="color:#94a3b8;font-size:0.85rem;">ไม่มีรายการรักษาที่จำเป็น</div>';
+
+    const html = `
+      <div class="th-detail">
+        <div class="th-detail-banner">
+          <div class="th-banner-title"><i class="bi bi-mortarboard me-1"></i>ปีการศึกษา ${thEscapeHtml(r.academic_year || '-')}</div>
+          <span class="th-banner-chip"><i class="bi bi-person-arms-up me-1"></i>อายุ ${thEscapeHtml(age)}</span>
+          <span class="th-banner-chip">${r.doctor_name ? '<i class="bi bi-person-badge me-1"></i>ทันตแพทย์: ' + thEscapeHtml(r.doctor_name) : '<i class="bi bi-hourglass-split me-1"></i>รอทันตแพทย์ตรวจ'}</span>
+        </div>
+
+        <div class="th-detail-section" style="--th-accent:#1f8fa3;--th-accent-soft:#e6f4fb;">
+          <h6><span class="th-icon"><i class="fa-solid fa-tooth"></i></span>สภาพฟันโดยรวม</h6>
+          <div class="th-detail-grid">
+            <div class="th-detail-item"><label>จำนวนฟันทั้งหมด</label><div>${thEscapeHtml(r.total_teeth ?? '-')} ซี่</div></div>
+            <div class="th-detail-item"><label>จำนวนฟันผุ</label><div>${thEscapeHtml(r.decayed_teeth ?? '-')} ซี่</div></div>
+          </div>
+          <div style="margin-top:0.7rem;">
+            <span class="th-pill ${hasDecay ? 'warn' : 'good'}">${hasDecay ? 'มีฟันผุ' : 'ยังไม่มีฟันผุ'}</span>
+            ${r.missing_teeth_detail ? '<div style="margin-top:0.5rem;color:#64748b;font-size:0.85rem;">' + thEscapeHtml(r.missing_teeth_detail) + '</div>' : ''}
+          </div>
+        </div>
+
+        ${hasDecay ? `
+        <div class="th-detail-section" style="--th-accent:#c0392b;--th-accent-soft:#fdecec;">
+          <h6><span class="th-icon"><i class="bi bi-geo-alt"></i></span>ตำแหน่งฟันผุ</h6>
+          <div class="th-position-grid">${positionsHtml}</div>
+        </div>` : ''}
+
+        ${r.oral_components ? `
+        <div class="th-detail-section" style="--th-accent:#7c5cbf;--th-accent-soft:#f1ecfb;">
+          <h6><span class="th-icon"><i class="bi bi-droplet-half"></i></span>ส่วนประกอบของช่องปาก (เหงือก/ลิ้น/เพดาน)</h6>
+          <div style="color:#334155;font-size:0.9rem;">${thEscapeHtml(r.oral_components)}</div>
+        </div>` : ''}
+
+        <div class="th-detail-section" style="--th-accent:#26648E;--th-accent-soft:#ebf4fb;">
+          <h6><span class="th-icon"><i class="bi bi-tools"></i></span>การรักษาที่จำเป็น</h6>
+          ${treatmentsHtml}
+          ${r.other_treatment_detail ? '<div style="margin-top:0.5rem;color:#64748b;font-size:0.85rem;">อื่นๆ: ' + thEscapeHtml(r.other_treatment_detail) + '</div>' : ''}
+        </div>
+
+        <div class="th-detail-section" style="--th-accent:#c99a2e;--th-accent-soft:#fff9e6;margin-bottom:0;">
+          <h6><span class="th-icon"><i class="bi bi-clock"></i></span>ความเร่งด่วนในการรักษา</h6>
+          ${thUrgencyPill(r.urgency)}
+        </div>
+      </div>
+    `;
+
+    Swal.fire({
+      title: 'รายละเอียดการตรวจสุขภาพช่องปาก',
+      html: html,
+      width: window.innerWidth < 768 ? '95%' : '650px',
+      showCloseButton: true,
+      showConfirmButton: false,
+      heightAuto: false
+    });
+  }
+
+  function thRenderList(records) {
+    const container = document.getElementById('healthToothList');
+    if (!records || records.length === 0) {
+      container.innerHTML = '<div class="th-empty"><i class="bi bi-info-circle me-2"></i>ยังไม่มีประวัติการตรวจสุขภาพช่องปากจากทันตแพทย์</div>';
+      return;
+    }
+
+    container.innerHTML = records.map((r, index) => {
+      const checked = !!r.doctor_name;
+      const hasDecay = r.teeth_status === 'abnormal';
+      return `
+        <div class="th-record-card">
+          <div class="th-record-top">
+            <span class="th-record-title"><i class="bi bi-mortarboard me-1"></i>ปีการศึกษา ${thEscapeHtml(r.academic_year || '-')}</span>
+            <span class="th-badge ${checked ? 'checked' : 'pending'}">${checked ? 'ทันตแพทย์ตรวจแล้ว' : 'รอทันตแพทย์ตรวจ'}</span>
+          </div>
+          <div class="th-record-meta">
+            <i class="bi bi-${hasDecay ? 'exclamation-triangle text-danger' : 'check-circle text-success'} me-1"></i>${hasDecay ? 'มีฟันผุ' : 'ยังไม่มีฟันผุ'}
+            ${checked ? ' &nbsp;•&nbsp; <i class="bi bi-person-badge me-1"></i>ทันตแพทย์: ' + thEscapeHtml(r.doctor_name) : ''}
+          </div>
+          <div class="th-record-actions">
+            <button type="button" class="th-btn-view" onclick="thShowDetail(${index})">
+              <i class="bi bi-eye me-1"></i>ดูรายละเอียด
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function loadHealthToothData() {
+    const container = document.getElementById('healthToothList');
+    container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-hourglass-split me-2"></i>กำลังโหลดข้อมูล...</div>';
+
+    fetch('../../include/function/get_health_tooth_history.php?studentid=' + encodeURIComponent(studentId))
+      .then(r => r.json())
+      .then(result => {
+        if (result.status !== 'success') {
+          throw new Error(result.message || 'ไม่สามารถโหลดข้อมูลได้');
+        }
+        thRecords = result.data;
+        thRenderList(thRecords);
+      })
+      .catch(error => {
+        console.error('Error loading health tooth:', error);
+        container.innerHTML = '<div class="th-empty" style="color:var(--danger);"><i class="bi bi-exclamation-triangle me-2"></i>' + thEscapeHtml(error.message) + '</div>';
       });
   }
 

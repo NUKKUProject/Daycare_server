@@ -103,6 +103,14 @@ $viewTabs = [
         'color' => 'teal',
         'href' => 'health_external_history.php',
     ],
+    [
+        'id' => 'health_tooth',
+        'icon' => 'fa-solid fa-tooth',
+        'title' => 'ตรวจสุขภาพช่องปากจากทันตแพทย์',
+        'description' => 'ประวัติการตรวจฟันและสุขภาพช่องปากทั้งหมด',
+        'color' => 'cyan',
+        'href' => 'health_tooth_history.php',
+    ],
 ];
 ?>
 
@@ -400,6 +408,7 @@ $viewTabs = [
     .student-tab-button.red { --tab-accent: #bd5a5a; }
     .student-tab-button.purple { --tab-accent: #687ba8; }
     .student-tab-button.teal { --tab-accent: #2f8f83; }
+    .student-tab-button.cyan { --tab-accent: #2a8fb0; }
 
     .student-tab-icon.blue { background: #dcebf3; color: #26648E; }
     .student-tab-icon.green { background: #e1f0ea; color: #39755f; }
@@ -407,6 +416,7 @@ $viewTabs = [
     .student-tab-icon.red { background: #f5e2e2; color: #a94949; }
     .student-tab-icon.purple { background: #e6e9f3; color: #586b98; }
     .student-tab-icon.teal { background: #dcf3f0; color: #2f8f83; }
+    .student-tab-icon.cyan { background: #dcf0f7; color: #2a8fb0; }
 
     .student-tab-button strong {
         font-size: 0.98rem;
