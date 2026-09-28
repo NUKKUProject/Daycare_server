@@ -3,7 +3,7 @@ require_once(__DIR__ . '/../../../config/database.php');
 session_start();
 
 // ตรวจสอบสิทธิ์
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'teacher'])) {
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'teacher', 'student'])) {
     http_response_code(403);
     echo json_encode(['status' => 'error', 'message' => 'ไม่มีสิทธิ์ในการดำเนินการ']);
     exit;
@@ -18,6 +18,20 @@ try {
     // ตรวจสอบข้อมูลที่จำเป็น - ใช้ empty() เพื่อตรวจสอบค่าว่างด้วย
     if (empty($data['vaccine_list_id']) || empty($data['vaccine_date']) || empty($student_id)) {
         throw new Exception('ข้อมูลไม่ครบถ้วน กรุณากรอกรหัสวัคซีน วันที่ฉีด และรหัสนักเรียน');
+    }
+
+    // ผู้ปกครอง (student) บันทึกรายการใหม่ได้เฉพาะของเด็กตัวเอง และแก้ไขรายการเดิมไม่ได้
+    if ($_SESSION['role'] === 'student') {
+        if ($student_id !== ($_SESSION['username'] ?? '')) {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'ไม่มีสิทธิ์ในการดำเนินการ']);
+            exit;
+        }
+        if (!empty($data['id'])) {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'ไม่มีสิทธิ์แก้ไขรายการที่บันทึกแล้ว']);
+            exit;
+        }
     }
 
     $pdo = getDatabaseConnection();
