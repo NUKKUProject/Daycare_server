@@ -654,9 +654,32 @@ $data = getChildrenGroupedByTab($currentTab);
     color: #1e4db7;
   }
 
-  .health-history-item.allergy {
+  .health-allergy-alert {
+    margin-top: 4px;
     background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+
+  .health-allergy-alert-title {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #b91c1c;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .health-allergy-alert-item {
+    font-size: 0.78rem;
+    font-weight: 600;
     color: #dc2626;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
   }
 
   /* ===== Section Label ===== */
@@ -1292,17 +1315,36 @@ $data = getChildrenGroupedByTab($currentTab);
             const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (c) => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
             }[c]));
-            const historyItems = [
-                { value: studentData.congenital_disease, icon: 'bi-clipboard2-pulse', label: 'โรคประจำตัว', type: 'disease' },
-                { value: studentData.allergic_medicine, icon: 'bi-capsule', label: 'แพ้ยา', type: 'allergy' },
-                { value: studentData.allergic_food, icon: 'bi-egg-fried', label: 'แพ้อาหาร', type: 'allergy' }
+
+            let historyHtml = '';
+
+            if (!isEmpty(studentData.congenital_disease)) {
+                historyHtml += `
+                    <div class="health-history-item disease">
+                        <i class="bi bi-file-medical-fill"></i> โรคประจำตัว: ${escapeHtml(studentData.congenital_disease)}
+                    </div>
+                `;
+            }
+
+            const allergyItems = [
+                { value: studentData.allergic_medicine, icon: 'bi-shield-fill-exclamation', label: 'แพ้ยา' },
+                { value: studentData.allergic_food, icon: 'bi-basket2-fill', label: 'แพ้อาหาร' }
             ].filter(item => !isEmpty(item.value));
 
-            historyList.innerHTML = historyItems.map(item => `
-                <div class="health-history-item ${item.type}">
-                    <i class="bi ${item.icon}"></i> ${item.label}: ${escapeHtml(item.value)}
-                </div>
-            `).join('');
+            if (allergyItems.length > 0) {
+                historyHtml += `
+                    <div class="health-allergy-alert">
+                        <div class="health-allergy-alert-title"><i class="bi bi-exclamation-triangle-fill"></i> ข้อควรระวังด้านสุขภาพ</div>
+                        ${allergyItems.map(item => `
+                            <div class="health-allergy-alert-item">
+                                <i class="bi ${item.icon}"></i> ${item.label}: ${escapeHtml(item.value)}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            historyList.innerHTML = historyHtml;
 
             // Reset form fields
             document.getElementById('healthTemperature').value = '';
