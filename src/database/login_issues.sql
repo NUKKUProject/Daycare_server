@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS login_issues (
   student_id VARCHAR(50),
   contact_name VARCHAR(100) NOT NULL,
   contact_info VARCHAR(100) NOT NULL,
-  login_method VARCHAR(10) NOT NULL DEFAULT 'normal' CHECK (login_method IN ('normal', 'sso')),
   description TEXT NOT NULL,
   status VARCHAR(10) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'resolved')),
   ip_address VARCHAR(45),

@@ -447,10 +447,6 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                     <input type="text" id="issueStudentId" class="swal2-input" placeholder="รหัสประจำตัวผู้เรียน (ถ้ามี)" maxlength="50">
                     <input type="text" id="issueName" class="swal2-input" placeholder="ชื่อผู้แจ้ง *" maxlength="100">
                     <input type="text" id="issueContact" class="swal2-input" placeholder="เบอร์โทร / อีเมล *" maxlength="100">
-                    <select id="issueMethod" class="swal2-select" style="display:flex;width:auto;margin:1em auto;">
-                        <option value="normal">เข้าสู่ระบบสำหรับผู้ปกครอง</option>
-                        <option value="sso">KKU SSO</option>
-                    </select>
                     <textarea id="issueDesc" class="swal2-textarea" placeholder="รายละเอียดปัญหา * (อย่าใส่เลขบัตรประชาชนหรือรหัสผ่าน)" maxlength="1000"></textarea>
                     <input type="text" id="issueWebsite" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true">
                 `,
@@ -465,7 +461,6 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                     data.append('student_id', document.getElementById('issueStudentId').value.trim());
                     data.append('contact_name', document.getElementById('issueName').value.trim());
                     data.append('contact_info', document.getElementById('issueContact').value.trim());
-                    data.append('login_method', document.getElementById('issueMethod').value);
                     data.append('description', document.getElementById('issueDesc').value.trim());
                     data.append('website', document.getElementById('issueWebsite').value);
 

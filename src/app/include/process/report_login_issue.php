@@ -20,7 +20,6 @@ if (!empty($_POST['website'] ?? '')) {
 $studentId = trim($_POST['student_id'] ?? '');
 $name = trim($_POST['contact_name'] ?? '');
 $contact = trim($_POST['contact_info'] ?? '');
-$method = ($_POST['login_method'] ?? 'normal') === 'sso' ? 'sso' : 'normal';
 $description = trim($_POST['description'] ?? '');
 
 if ($name === '' || $contact === '' || $description === '') {
@@ -53,14 +52,13 @@ try {
     }
 
     $insert = $pdo->prepare(
-        "INSERT INTO login_issues (student_id, contact_name, contact_info, login_method, description, ip_address)
-         VALUES (:student_id, :contact_name, :contact_info, :login_method, :description, :ip)"
+        "INSERT INTO login_issues (student_id, contact_name, contact_info, description, ip_address)
+         VALUES (:student_id, :contact_name, :contact_info, :description, :ip)"
     );
     $insert->execute([
         'student_id' => $studentId !== '' ? $studentId : null,
         'contact_name' => $name,
         'contact_info' => $contact,
-        'login_method' => $method,
         'description' => $description,
         'ip' => $ip,
     ]);

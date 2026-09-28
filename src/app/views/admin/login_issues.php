@@ -28,7 +28,6 @@ $issues = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <th>รหัสนักเรียน</th>
                             <th>ผู้แจ้ง</th>
                             <th>ติดต่อ</th>
-                            <th>วิธี login</th>
                             <th>รายละเอียด</th>
                             <th>สถานะ</th>
                             <th></th>
@@ -43,7 +42,6 @@ $issues = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td><?= htmlspecialchars($issue['student_id'] ?? '-') ?></td>
                                 <td><?= htmlspecialchars($issue['contact_name']) ?></td>
                                 <td><?= htmlspecialchars($issue['contact_info']) ?></td>
-                                <td><?= $issue['login_method'] === 'sso' ? 'KKU SSO' : 'ผู้ปกครอง' ?></td>
                                 <td style="white-space: pre-wrap; min-width: 250px;"><?= htmlspecialchars($issue['description']) ?></td>
                                 <td>
                                     <?php if ($issue['status'] === 'open'): ?>
