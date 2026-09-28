@@ -3822,7 +3822,7 @@ if (getUserRole() === 'student') {
       </div>`;
   }
 
-  function ehShowDetail(index) {
+  window.ehShowDetail = function(index) {
     const r = ehRecords[index];
     const vital = ehParseJson(r.vital_signs);
     const measures = ehParseJson(r.physical_measures);
