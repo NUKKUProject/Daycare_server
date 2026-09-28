@@ -123,10 +123,14 @@ try {
         $age_months,
         $age_days,
         $has_drug_allergy_history,
-        $has_food_allergy_history
+        $has_food_allergy_history,
+        $original_student_id = null
     ) {
         try {
             $pdo = getDatabaseConnection();
+            if ($original_student_id === null || $original_student_id === '') {
+                $original_student_id = $student_id;
+            }
             
             // Debug log เพิ่มเติม
             error_log("Starting updateChildById with data:");
@@ -138,14 +142,25 @@ try {
             // เปิดใช้ PDO exceptions
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            // ตรวจสอบว่าเด็กมีอยู่ในฐานข้อมูลแล้วหรือไม่
-            $query = "SELECT COUNT(*) FROM children WHERE studentid = :studentid";
+            // ตรวจสอบว่าเด็กมีอยู่ในฐานข้อมูลแล้วหรือไม่ (อ้างอิงจากเลขประจำตัวเดิม เผื่อกรณีแก้ไขเลขประจำตัว)
+            $query = "SELECT COUNT(*) FROM children WHERE studentid = :original_studentid";
             $stmt = $pdo->prepare($query);
-            $stmt->bindParam(':studentid', $student_id, PDO::PARAM_STR);
+            $stmt->bindParam(':original_studentid', $original_student_id, PDO::PARAM_STR);
             $stmt->execute();
             $exists = $stmt->fetchColumn();
-            
+
             error_log("Student exists check: " . ($exists ? "Yes" : "No"));
+
+            // ถ้าเปลี่ยนเลขประจำตัว ต้องตรวจสอบว่าเลขใหม่ซ้ำกับเด็กคนอื่นหรือไม่
+            if ($exists > 0 && $student_id !== $original_student_id) {
+                $dupCheck = $pdo->prepare("SELECT COUNT(*) FROM children WHERE studentid = :new_studentid AND studentid != :original_studentid");
+                $dupCheck->bindParam(':new_studentid', $student_id, PDO::PARAM_STR);
+                $dupCheck->bindParam(':original_studentid', $original_student_id, PDO::PARAM_STR);
+                $dupCheck->execute();
+                if ($dupCheck->fetchColumn() > 0) {
+                    throw new Exception('เลขประจำตัวนี้มีผู้ใช้งานอยู่แล้ว กรุณาใช้เลขอื่น');
+                }
+            }
 
             // สร้าง query
             if ($exists > 0) {
@@ -208,7 +223,7 @@ try {
                         has_drug_allergy_history = :has_drug_allergy_history,
                         has_food_allergy_history = :has_food_allergy_history,
                         updated_at = CURRENT_TIMESTAMP
-                    WHERE studentid = :studentid";
+                    WHERE studentid = :original_studentid";
                 
                 error_log("Using UPDATE query");
             } else {
@@ -312,7 +327,11 @@ try {
 
             // Bind parameters
             $stmt->bindValue(':studentid', $student_id, PDO::PARAM_STR);
-            $stmt->bindValue(':academic_year', 
+            if ($exists > 0) {
+                // UPDATE query ใช้เลขประจำตัวเดิมเป็นเงื่อนไข WHERE เผื่อกรณีแก้ไขเลขประจำตัวใหม่
+                $stmt->bindValue(':original_studentid', $original_student_id, PDO::PARAM_STR);
+            }
+            $stmt->bindValue(':academic_year',
                 $academic_year !== null ? (int)$academic_year : null, 
                 $academic_year !== null ? PDO::PARAM_INT : PDO::PARAM_NULL
             );
@@ -540,11 +559,13 @@ try {
             if (!$student_id) {
                 throw new Exception("ไม่พบรหัสนักเรียน");
             }
+            // เลขประจำตัวเดิมก่อนแก้ไข (ใช้หาเรคคอร์ดเดิม เผื่อ admin แก้เลขประจำตัวใหม่)
+            $originalStudentId = !empty($inputData['original_student_id']) ? $inputData['original_student_id'] : $student_id;
 
             // ดึงข้อมูลเดิมจากฐานข้อมูล
             $pdo = getDatabaseConnection();
             $stmt = $pdo->prepare("SELECT * FROM children WHERE studentid = ?");
-            $stmt->execute([$student_id]);
+            $stmt->execute([$originalStudentId]);
             $existingData = $stmt->fetch(PDO::FETCH_ASSOC);
 
             // รับค่าจากฟอร์มหรือใช้ค่าเดิมถ้าไม่มีการส่งค่ามา
@@ -931,7 +952,8 @@ try {
                 $updateData['age_months'],
                 $updateData['age_days'],
                 $updateData['has_drug_allergy_history'],
-                $updateData['has_food_allergy_history']
+                $updateData['has_food_allergy_history'],
+                $originalStudentId
             );
 
             // updateChildById คืนค่า array เมื่อสำเร็จ

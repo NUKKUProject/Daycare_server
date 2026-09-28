@@ -876,6 +876,7 @@ if (getUserRole() === 'student') {
               <div class="col-md-3">
                 <label class="form-label">รหัสนักเรียน</label>
                 <input type="text" class="form-control" name="studentid" value="<?= htmlspecialchars($child['studentid']) ?>" readonly />
+                <input type="hidden" name="original_student_id" value="<?= htmlspecialchars($child['studentid']) ?>" />
               </div>
               <div class="col-md-3">
                 <label class="form-label">ปีการศึกษา</label>
@@ -2244,9 +2245,12 @@ if (getUserRole() === 'student') {
     document.getElementById('btnEditFoodAllergy')
   ];
 
+  const isAdminUser = <?= $is_admin ? 'true' : 'false' ?>;
+
   function getEditableFields() {
+    const studentidExclusion = isAdminUser ? '' : ':not([name="studentid"])';
     return document.querySelectorAll(
-      '#tab-profile input:not([type="file"]):not([name="studentid"]), #tab-profile select, #tab-profile textarea'
+      '#tab-profile input:not([type="file"])' + studentidExclusion + ', #tab-profile select, #tab-profile textarea'
     );
   }
 
@@ -2443,6 +2447,13 @@ if (getUserRole() === 'student') {
       }
     }
     
+    // Validation: ตรวจสอบรหัสนักเรียน (แก้ไขได้เฉพาะ admin)
+    if (isAdminUser && !data.student_id.trim()) {
+      showToast('error', 'กรุณากรอกรหัสนักเรียน');
+      document.querySelector('[name="studentid"]')?.focus();
+      return false;
+    }
+
     // Validation: ตรวจสอบเลขบัตรประชาชน
     if (data.id_card && !/^[0-9]{13}$/.test(data.id_card)) {
       showToast('error', 'กรุณากรอกเลขบัตรประชาชนให้ถูกต้อง (13 หลัก)');
