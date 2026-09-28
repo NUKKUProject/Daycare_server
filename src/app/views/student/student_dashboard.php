@@ -25,7 +25,7 @@ if ($child) {
     $presentByGroup = getStudentAttendanceTodayByGroup();
     $totalByGroup = getStudentsByGroup();
 
-    foreach (['เด็กเล็ก' => 'เตรียมอนุบาล', 'เด็กกลาง' => 'เด็กกลาง', 'เด็กโต' => 'เด็กโต'] as $label => $groupKey) {
+    foreach (['เตรียมอนุบาล' => 'เตรียมอนุบาล','เด็กกลาง' => 'เด็กกลาง', 'เด็กโต' => 'เด็กโต'] as $label => $groupKey) {
         $groupSummary[] = [
             'label' => $label,
             'present' => (int) ($presentByGroup[$groupKey] ?? 0),
