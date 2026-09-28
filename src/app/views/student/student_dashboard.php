@@ -15,10 +15,8 @@ $attendanceTodayTotal = 0;
 $childrenTotal = 0;
 $groupSummary = [];
 $classroomSummary = null;
-$childGroups = [];
 
 if ($child) {
-    $childGroups = get_childgroup() ?: [];
     $attendanceTodayTotal = (int) attendanceTodayCount();
     $childrenTotal = (int) getTotalStudents();
 
@@ -312,6 +310,11 @@ $viewTabs = [
         font-weight: 700;
     }
 
+    .attendance-doughnut-wrap {
+        margin: 1.25rem auto 0;
+        max-width: 340px;
+    }
+
     @media (max-width: 768px) {
         .attendance-summary-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
@@ -510,39 +513,9 @@ $viewTabs = [
                         </div>
                     <?php endif; ?>
                 </div>
-            </div>
 
-            <div class="student-section-title">อัตราการมาเรียน</div>
-            <div class="attendance-summary">
-                <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-                    <select class="form-select form-select-sm" id="attViewType" style="width: auto;">
-                        <option value="month">รายเดือน</option>
-                        <option value="week">รายสัปดาห์</option>
-                    </select>
-                    <input type="month" class="form-control form-control-sm" id="attMonth"
-                           value="<?= date('Y-m') ?>" max="<?= date('Y-m') ?>" style="width: auto;">
-                    <select class="form-select form-select-sm" id="attWeek" style="width: auto; display: none;">
-                        <option value="">เลือกสัปดาห์</option>
-                    </select>
-                    <select class="form-select form-select-sm" id="attChildGroup" style="width: auto;">
-                        <option value="">กลุ่มเรียนทั้งหมด</option>
-                        <?php foreach ($childGroups as $group): ?>
-                            <?php if (!empty($group['child_group'])): ?>
-                                <option value="<?= htmlspecialchars($group['child_group']) ?>"><?= htmlspecialchars($group['child_group']) ?></option>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </select>
-                    <select class="form-select form-select-sm" id="attClassroom" style="width: auto;">
-                        <option value="">ห้องเรียนทั้งหมด</option>
-                    </select>
-                    <button type="button" class="btn btn-primary btn-sm" id="attFetchBtn">
-                        <i class="bi bi-search"></i> ดูข้อมูล
-                    </button>
-                </div>
-
-                <div id="attStatsContainer">
-                    <canvas id="attChart"></canvas>
-                    <div id="attNoData" class="alert alert-info text-center mt-3" style="display: none;"></div>
+                <div class="attendance-doughnut-wrap">
+                    <canvas id="attTodayDoughnut"></canvas>
                 </div>
             </div>
 
@@ -568,157 +541,24 @@ $viewTabs = [
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    let attChart;
-
-    const viewTypeSelect = document.getElementById('attViewType');
-    const monthPicker = document.getElementById('attMonth');
-    const weekSelect = document.getElementById('attWeek');
-    const childGroupSelect = document.getElementById('attChildGroup');
-    const classroomSelect = document.getElementById('attClassroom');
-    const fetchBtn = document.getElementById('attFetchBtn');
-
-    function pad(n) { return String(n).padStart(2, '0'); }
-    function localDateStr(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
-
-    function generateWeekOptions(yearMonth) {
-        const [year, month] = yearMonth.split('-').map(Number);
-        const date = new Date(year, month - 1, 1);
-        const weeks = [];
-
-        while (date.getMonth() === month - 1) {
-            const weekStart = new Date(date);
-            const weekEnd = new Date(date);
-            weekEnd.setDate(weekEnd.getDate() + 6);
-
-            const endLabel = weekEnd.getMonth() === weekStart.getMonth()
-                ? weekEnd.getDate()
-                : weekEnd.getDate() + '/' + (weekEnd.getMonth() + 1);
-
-            weeks.push({
-                value: localDateStr(weekStart),
-                label: 'สัปดาห์ที่ ' + (weeks.length + 1) + ' (' + weekStart.getDate() + '-' + endLabel + ')'
-            });
-
-            date.setDate(date.getDate() + 7);
-        }
-
-        weekSelect.innerHTML = '<option value="">เลือกสัปดาห์</option>' +
-            weeks.map(w => '<option value="' + w.value + '">' + w.label + '</option>').join('');
-    }
-
-    async function loadClassrooms() {
-        classroomSelect.innerHTML = '<option value="">ห้องเรียนทั้งหมด</option>';
-        if (!childGroupSelect.value) return;
-
-        try {
-            const response = await fetch('../../include/function/get_classrooms.php?child_group=' + encodeURIComponent(childGroupSelect.value));
-            const classrooms = await response.json();
-            classrooms.forEach(c => {
-                const option = document.createElement('option');
-                option.value = c.classroom_name;
-                option.textContent = c.classroom_name;
-                classroomSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading classrooms:', error);
-        }
-    }
-
-    async function fetchAttendanceData() {
-        const params = { view: viewTypeSelect.value };
-
-        if (viewTypeSelect.value === 'week' && !weekSelect.value) {
-            Swal.fire({ icon: 'warning', title: 'กรุณาเลือกสัปดาห์', confirmButtonText: 'ตกลง', heightAuto: false });
-            return;
-        }
-
-        if (childGroupSelect.value) params.child_group = childGroupSelect.value;
-        if (classroomSelect.value) params.classroom = classroomSelect.value;
-
-        params[viewTypeSelect.value === 'week' ? 'week_start' : 'month'] =
-            viewTypeSelect.value === 'week' ? weekSelect.value : monthPicker.value;
-
-        try {
-            const response = await fetch('../../include/function/get_attendance_stats.php?' + new URLSearchParams(params).toString());
-            if (!response.ok) throw new Error('Network response was not ok');
-            updateAttendanceStats(await response.json());
-        } catch (error) {
-            console.error('Error fetching attendance data:', error);
-            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'ไม่สามารถดึงข้อมูลได้', confirmButtonText: 'ตกลง', heightAuto: false });
-        }
-    }
-
-    function updateAttendanceStats(data) {
-        const chartCanvas = document.getElementById('attChart');
-        const noDataDiv = document.getElementById('attNoData');
-
-        if (attChart) {
-            attChart.destroy();
-            attChart = null;
-        }
-
-        if (data.no_data) {
-            chartCanvas.style.display = 'none';
-            noDataDiv.style.display = 'block';
-            noDataDiv.textContent = data.message;
-            return;
-        }
-
-        chartCanvas.style.display = 'block';
-        noDataDiv.style.display = 'none';
-
-        attChart = new Chart(chartCanvas, {
-            type: 'bar',
-            data: {
-                labels: data.daily_stats.map(item => new Date(item.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })),
-                datasets: [{
-                    label: 'มาเรียน',
-                    data: data.daily_stats.map(item => item.present_count),
-                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                    borderColor: 'rgb(75, 192, 192)',
-                    borderWidth: 1
-                }, {
-                    label: 'ขาดเรียน',
-                    data: data.daily_stats.map(item => item.absent_count),
-                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                    borderColor: 'rgb(255, 99, 132)',
-                    borderWidth: 1
-                }, {
-                    label: 'ลา',
-                    data: data.daily_stats.map(item => item.leave_count),
-                    backgroundColor: 'rgba(255, 205, 86, 0.5)',
-                    borderColor: 'rgb(255, 205, 86)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: { beginAtZero: true, title: { display: true, text: 'จำนวนนักเรียน (คน)' } },
-                    x: { title: { display: true, text: 'วันที่' } }
-                },
-                plugins: {
-                    title: { display: true, text: 'สถิติการมาเรียนรายวัน' },
-                    legend: { position: 'bottom' }
-                }
+    const todayGroups = <?= json_encode($groupSummary, JSON_UNESCAPED_UNICODE) ?>;
+    new Chart(document.getElementById('attTodayDoughnut'), {
+        type: 'doughnut',
+        data: {
+            labels: todayGroups.map(g => g.label),
+            datasets: [{
+                data: todayGroups.map(g => g.present),
+                backgroundColor: ['rgb(255, 205, 86)', 'rgb(255, 99, 132)', 'rgb(54, 162, 235)']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: { display: true, text: 'สัดส่วนการมาเรียนวันนี้ตามระดับชั้น' },
+                legend: { position: 'bottom' }
             }
-        });
-    }
-
-    viewTypeSelect.addEventListener('change', function () {
-        const isWeekView = this.value === 'week';
-        weekSelect.style.display = isWeekView ? 'block' : 'none';
-        if (isWeekView) generateWeekOptions(monthPicker.value);
+        }
     });
-
-    monthPicker.addEventListener('change', function () {
-        if (viewTypeSelect.value === 'week') generateWeekOptions(this.value);
-    });
-
-    childGroupSelect.addEventListener('change', loadClassrooms);
-    fetchBtn.addEventListener('click', fetchAttendanceData);
-
-    fetchAttendanceData();
 });
 </script>
 <?php endif; ?>
