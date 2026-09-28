@@ -2499,9 +2499,13 @@ if (getUserRole() === 'student') {
       console.log('Save response:', result);
       if (result.status === 'success') {
         showToast('success', 'บันทึกข้อมูลเรียบร้อยแล้ว');
-        // รีเฟรชหน้าเพื่อแสดงข้อมูลที่อัพเดท
+        // รีเฟรชหน้าเพื่อแสดงข้อมูลที่อัพเดท - ถ้ามีการแก้เลขประจำตัว ต้องไปที่ URL ใหม่ ไม่ใช่ reload URL เดิม (เลขเก่าจะหาไม่เจอแล้ว)
         setTimeout(() => {
-          window.location.reload();
+          if (studentid !== studentId) {
+            window.location.href = 'view_child.php?studentid=' + encodeURIComponent(studentid) + '&tab=profile';
+          } else {
+            window.location.reload();
+          }
         }, 1000);
       } else {
         showToast('error', result.message || 'ไม่สามารถบันทึกข้อมูลได้');
