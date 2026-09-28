@@ -34,8 +34,8 @@ $viewTabs = [
     [
         'id' => 'health',
         'icon' => 'fa-solid fa-stethoscope',
-        'title' => 'ตรวจร่างกาย',
-        'description' => 'ผลการตรวจสุขภาพและการแพ้',
+        'title' => 'ตรวจร่างกายประจำวัน',
+        'description' => 'ผลการตรวจร่างกายประจำวันของเด็ก',
         'color' => 'red',
     ],
     [

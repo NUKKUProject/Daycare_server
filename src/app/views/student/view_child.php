@@ -461,7 +461,7 @@ if (getUserRole() === 'student') {
     </button>
     <button class="tab-btn <?= $currentTab === 'health' ? 'active' : '' ?>" data-tab="health">
       <i class="fa-solid fa-stethoscope"></i>
-      <span>ตรวจร่างกาย</span>
+      <span>ตรวจร่างกายประจำวัน</span>
     </button>
     <button class="tab-btn <?= $currentTab === 'growth' ? 'active' : '' ?>" data-tab="growth">
       <i class="bi bi-graph-up"></i>
@@ -1374,7 +1374,7 @@ if (getUserRole() === 'student') {
       <div class="content-card-header">
         <div class="section-title">
           <i class="fa-solid fa-stethoscope icon-danger" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;"></i>
-          ประวัติการตรวจร่างกาย
+          ประวัติการตรวจร่างกายประจำวัน
         </div>
       </div>
 
