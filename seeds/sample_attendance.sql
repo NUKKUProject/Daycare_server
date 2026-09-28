@@ -1,6 +1,6 @@
--- ตัวอย่างข้อมูลประวัติการมาเรียน 10 รายการ (วันทำการล่าสุด 10 วัน) ของเด็ก 1 คน
--- ใช้เด็กคนแรกที่มีสถานะ 'กำลังศึกษา' ถ้าต้องการระบุคนเอง ให้แก้ค่าใน CTE "target" เป็น
---   SELECT '68010201'::varchar AS studentid
+-- ตัวอย่างข้อมูลประวัติการมาเรียน 10 รายการ (วันทำการล่าสุด 10 วัน) ของเด็กรหัส 'test'
+-- ถ้าต้องการใช้เด็กคนอื่น ให้แก้รหัสใน CTE "target" (ต้องมีเด็กรหัสนี้ในตาราง children ก่อน
+-- ไม่เช่นนั้นจะไม่แทรกอะไร)
 -- รันซ้ำได้ ข้ามวันที่เด็กคนนั้นมีบันทึกอยู่แล้ว
 --
 -- รัน: docker exec -i postgres psql -U postgres -d nu_daycare < seeds/sample_attendance.sql
@@ -8,9 +8,7 @@
 WITH target AS (
     SELECT studentid
     FROM children
-    WHERE status = 'กำลังศึกษา'
-    ORDER BY id
-    LIMIT 1
+    WHERE studentid = 'test'
 ),
 days AS (
     SELECT day, row_number() OVER (ORDER BY day DESC) AS n
