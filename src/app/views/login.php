@@ -94,7 +94,7 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                                     <i class="bi bi-shield-lock-fill me-2"></i>เข้าสู่ระบบด้วย KKU SSO
                                 </a>
                                 <button type="button" class="btn btn-link text-white w-100" onclick="reportLoginIssue()">
-                                    <i class="bi bi-exclamation-circle me-1"></i>เข้าสู่ระบบไม่ได้? แจ้งปัญหา
+                                    <i class="bi bi-exclamation-circle me-1"></i>แจ้งปัญหาการเข้าสู่ระบบ
                                 </button>
                                 <!-- <button type="button" class="btn btn-success w-100 py-2" onclick="docterLogin()">
                                     <i class="fa-solid fa-stethoscope"></i> เข้าสู่ระบบสำหรับแพทย์
@@ -443,7 +443,7 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
         }
 
         .issue-header {
-            background: linear-gradient(135deg, #26648E, #1E4F6F);
+            background: linear-gradient(135deg, #F97316, #EA580C);
             color: #fff;
             text-align: center;
             padding: 1.75rem 1.5rem 1.5rem;
