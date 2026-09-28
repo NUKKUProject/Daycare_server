@@ -1023,6 +1023,7 @@
       .profile-hero { flex-direction: column; gap: 1rem; }
       .profile-actions { margin-left: 0; width: 100%; }
       .btn-action span { display: none; }
+      .btn-action .btn-label-keep { display: inline; }
       .tab-btn span { display: none; }
       .info-row-label { width: 90px; }
       .growth-stats { grid-template-columns: repeat(2, 1fr); }
