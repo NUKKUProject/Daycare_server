@@ -74,7 +74,7 @@ if ($data && isset($data['student_id'])) {
         $status = isLate($current_time) ? 'late' : 'present';
 
         // ดึงข้อมูลนักเรียนเพิ่มเติม (เพื่อให้ข้อมูลตอบกลับครบถ้วน)
-        $student_info_stmt = $pdo->prepare("SELECT prefix_th, firstname_th, lastname_th, nickname, classroom, congenital_disease FROM children WHERE studentid = :student_id");
+        $student_info_stmt = $pdo->prepare("SELECT prefix_th, firstname_th, lastname_th, nickname, classroom, congenital_disease, profile_image FROM children WHERE studentid = :student_id");
         $student_info_stmt->execute(['student_id' => $data['student_id']]);
         $student_info = $student_info_stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -91,12 +91,14 @@ if ($data && isset($data['student_id'])) {
         $classroom = '';
         $nickname = '';
         $congenital_disease = '';
+        $profile_image = '';
         if ($student_info) {
             $full_name = trim(($student_info['prefix_th'] ?? '') . ' ' . ($student_info['firstname_th'] ?? '') . ' ' . ($student_info['lastname_th'] ?? ''));
             $classroom = $student_info['classroom'] ?? '';
             $nickname = $student_info['nickname'] ?? '';
             $first_name = $student_info['firstname_th'] ?? '';
             $congenital_disease = $student_info['congenital_disease'] ?? '';
+            $profile_image = $student_info['profile_image'] ?? '';
         }
 
         if ($existing) {
@@ -111,6 +113,7 @@ if ($data && isset($data['student_id'])) {
                     'nickname' => $nickname,
                     'classroom' => $classroom,
                     'congenital_disease' => $congenital_disease,
+                    'profile_image' => $profile_image,
                     'allergic_medicine' => $allergic_medicine,
                     'allergic_food' => $allergic_food,
                     'attendance_status' => $status,
@@ -130,6 +133,7 @@ if ($data && isset($data['student_id'])) {
                     'nickname' => $nickname,
                     'classroom' => $classroom,
                     'congenital_disease' => $congenital_disease,
+                    'profile_image' => $profile_image,
                     'allergic_medicine' => $allergic_medicine,
                     'allergic_food' => $allergic_food,
                     'attendance_status' => $status,

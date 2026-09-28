@@ -591,18 +591,25 @@ $data = getChildrenGroupedByTab($currentTab);
   }
 
   .health-student-card .avatar {
-    width: 52px;
-    height: 52px;
+    width: 64px;
+    height: 64px;
     border-radius: 14px;
     background: linear-gradient(135deg, #0f2460, #1e4db7);
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
     color: #fff;
     font-size: 1.3rem;
     font-weight: 700;
     flex-shrink: 0;
     box-shadow: 0 6px 16px rgba(30, 77, 183, 0.35);
+  }
+
+  .health-student-card .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .health-student-card .info h4 {
@@ -1306,12 +1313,25 @@ $data = getChildrenGroupedByTab($currentTab);
             document.getElementById('healthStudentName').textContent = name;
             document.getElementById('healthStudentId').textContent = studentData.student_id;
             document.getElementById('healthStudentClassroom').textContent = studentData.classroom || '-';
-            const firstChar = (studentData.first_name || name).charAt(0).toUpperCase();
-            document.getElementById('healthStudentAvatar').textContent = firstChar;
+
+            const isEmpty = (val) => !val || val === '-' || val.trim() === '';
+            const avatarEl = document.getElementById('healthStudentAvatar');
+            avatarEl.innerHTML = '';
+            if (!isEmpty(studentData.profile_image)) {
+                const img = document.createElement('img');
+                img.src = studentData.profile_image;
+                img.alt = 'รูปนักเรียน';
+                img.onerror = () => {
+                    avatarEl.innerHTML = '';
+                    avatarEl.textContent = (studentData.first_name || name).charAt(0).toUpperCase();
+                };
+                avatarEl.appendChild(img);
+            } else {
+                avatarEl.textContent = (studentData.first_name || name).charAt(0).toUpperCase();
+            }
 
             // ประวัติโรคประจำตัว / แพ้ยา / แพ้อาหาร
             const historyList = document.getElementById('healthHistoryList');
-            const isEmpty = (val) => !val || val === '-' || val.trim() === '';
             const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (c) => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
             }[c]));
