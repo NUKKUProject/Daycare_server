@@ -23,7 +23,7 @@ if ($child) {
     $presentByGroup = getStudentAttendanceTodayByGroup();
     $totalByGroup = getStudentsByGroup();
 
-    foreach (['เตรียมอนุบาล' => 'เตรียมอนุบาล','เด็กกลาง' => 'เด็กกลาง', 'เด็กโต' => 'เด็กโต'] as $label => $groupKey) {
+    foreach (['เด็กกลาง' => 'เด็กกลาง', 'เด็กโต' => 'เด็กโต', 'เตรียมอนุบาล' => 'เตรียมอนุบาล'] as $label => $groupKey) {
         $groupSummary[] = [
             'label' => $label,
             'present' => (int) ($presentByGroup[$groupKey] ?? 0),
@@ -317,10 +317,13 @@ $viewTabs = [
         margin-top: 1.25rem;
     }
 
-    .attendance-chart-item {
-        margin: 0 auto;
-        max-width: 340px;
-        width: 100%;
+    .card-title-graph {
+        color: rgba(31, 102, 153, 0.91);
+        font-weight: 600;
+    }
+
+    .attendance-charts canvas {
+        max-height: 300px;
     }
 
     @media (max-width: 768px) {
@@ -524,11 +527,17 @@ $viewTabs = [
                 </div>
 
                 <div class="attendance-charts">
-                    <div class="attendance-chart-item">
-                        <canvas id="studentsPieChart"></canvas>
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title-graph">สัดส่วนนักเรียนแต่ละระดับชั้น</h5>
+                            <canvas id="studentsPieChart"></canvas>
+                        </div>
                     </div>
-                    <div class="attendance-chart-item">
-                        <canvas id="attTodayDoughnut"></canvas>
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title-graph">สัดส่วนการมาเรียนตามระดับชั้น</h5>
+                            <canvas id="attTodayDoughnut"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -556,7 +565,7 @@ $viewTabs = [
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const todayGroups = <?= json_encode($groupSummary, JSON_UNESCAPED_UNICODE) ?>;
-    const groupColors = ['rgb(255, 205, 86)', 'rgb(255, 99, 132)', 'rgb(54, 162, 235)'];
+    const groupColors = ['rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 205, 86)'];
 
     new Chart(document.getElementById('studentsPieChart'), {
         type: 'pie',
@@ -570,7 +579,6 @@ document.addEventListener('DOMContentLoaded', function () {
         options: {
             responsive: true,
             plugins: {
-                title: { display: true, text: 'สัดส่วนนักเรียนแต่ละระดับชั้น' },
                 legend: { position: 'bottom' }
             }
         }
@@ -588,7 +596,6 @@ document.addEventListener('DOMContentLoaded', function () {
         options: {
             responsive: true,
             plugins: {
-                title: { display: true, text: 'สัดส่วนการมาเรียนวันนี้ตามระดับชั้น' },
                 legend: { position: 'bottom' }
             }
         }
