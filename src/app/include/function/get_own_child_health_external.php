@@ -18,6 +18,7 @@ try {
                recommendation, measurement_date, created_at
         FROM health_data_external
         WHERE student_id = :student_id
+          AND doctor_name IS NOT NULL AND TRIM(doctor_name) <> ''
         ORDER BY exam_date DESC, check_round DESC
     ");
     $stmt->execute(['student_id' => $studentid]);

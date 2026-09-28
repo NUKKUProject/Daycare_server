@@ -18,6 +18,7 @@ try {
                other_treatment_detail, urgency, updated_at, created_at
         FROM health_tooth_external
         WHERE student_id = :student_id
+          AND doctor_name IS NOT NULL AND TRIM(doctor_name) <> ''
         ORDER BY academic_year DESC, created_at DESC
     ");
     $stmt->execute(['student_id' => $studentid]);

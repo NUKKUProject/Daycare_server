@@ -8,6 +8,14 @@ try {
         throw new Exception('ไม่พบรหัสนักเรียน');
     }
 
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    // ผู้ปกครอง (student) เห็นเฉพาะรายการที่แพทย์ตรวจแล้ว (มีชื่อแพทย์)
+    $doctorFilter = (($_SESSION['role'] ?? '') === 'student')
+        ? "AND doctor_name IS NOT NULL AND TRIM(doctor_name) <> ''"
+        : '';
+
     $pdo = getDatabaseConnection();
     $stmt = $pdo->prepare("
         SELECT id, academic_year, doctor_name, age_year, age_month, age_day,
@@ -16,6 +24,7 @@ try {
                other_treatment_detail, urgency, updated_at, created_at
         FROM health_tooth_external
         WHERE student_id = :student_id
+          $doctorFilter
         ORDER BY academic_year DESC, created_at DESC
     ");
     $stmt->execute(['student_id' => $studentid]);
