@@ -541,50 +541,6 @@ $viewTabs = [
                 </div>
 
                 <div id="attStatsContainer">
-                    <div class="row g-3 mb-3">
-                        <div class="col-6 col-md-3">
-                            <div class="card bg-primary text-white h-100">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2">จำนวนวันเรียนทั้งหมด</h6>
-                                    <h3 class="card-title mb-0" id="attTotalDays">0</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="card bg-success text-white h-100">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2">มาเรียน</h6>
-                                    <div class="d-flex align-items-baseline">
-                                        <h3 class="card-title mb-0" id="attPresentCount">0</h3>/<p class="card-title mb-0 ms-1" id="attPresentTotal">0</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="card bg-danger text-white h-100">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2">ขาดเรียน</h6>
-                                    <h3 class="card-title mb-0" id="attAbsentCount">0</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="card bg-warning text-white h-100">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2">ลา</h6>
-                                    <h3 class="card-title mb-0" id="attLeaveCount">0</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="card bg-info text-white h-100">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2">อัตราการมาเรียน</h6>
-                                    <h3 class="card-title mb-0" id="attRate">0%</h3>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     <canvas id="attChart"></canvas>
                     <div id="attNoData" class="alert alert-info text-center mt-3" style="display: none;"></div>
                 </div>
@@ -693,13 +649,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateAttendanceStats(data) {
-        document.getElementById('attTotalDays').textContent = data.total_days || 0;
-        document.getElementById('attPresentTotal').textContent = data.expected_attendance || 0;
-        document.getElementById('attPresentCount').textContent = data.present_total || 0;
-        document.getElementById('attAbsentCount').textContent = data.absent_total || 0;
-        document.getElementById('attLeaveCount').textContent = data.leave_total || 0;
-        document.getElementById('attRate').textContent = (data.attendance_rate || 0) + '%';
-
         const chartCanvas = document.getElementById('attChart');
         const noDataDiv = document.getElementById('attNoData');
 
