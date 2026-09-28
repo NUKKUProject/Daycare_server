@@ -4,10 +4,59 @@
 <?php include __DIR__ . '/../../include/auth/auth_navbar.php'; ?>
 <?php require_once __DIR__ . '/../../include/function/pages_referen.php'; ?>
 <?php require_once __DIR__ . '/../../include/function/child_functions.php'; ?>
+<?php require_once __DIR__ . '/../../include/function/dashboard_functions.php'; ?>
 <?php include __DIR__ . '/../../include/auth/auth_dashboard.php'; ?>
 <?php
 $studentid = $_SESSION['username'] ?? '';
 $child = $studentid !== '' ? getChildById($studentid) : false;
+
+// สรุปยอดมาเรียนวันนี้ ทั้งศูนย์ / แยกตามกลุ่ม / ห้องของตัวเอง
+$attendanceTodayTotal = 0;
+$childrenTotal = 0;
+$groupSummary = [];
+$classroomSummary = null;
+
+if ($child) {
+    $attendanceTodayTotal = (int) attendanceTodayCount();
+    $childrenTotal = (int) getTotalStudents();
+
+    $presentByGroup = getStudentAttendanceTodayByGroup();
+    $totalByGroup = getStudentsByGroup();
+
+    foreach (['เด็กเล็ก' => 'เตรียมอนุบาล', 'เด็กกลาง' => 'เด็กกลาง', 'เด็กโต' => 'เด็กโต'] as $label => $groupKey) {
+        $groupSummary[] = [
+            'label' => $label,
+            'present' => (int) ($presentByGroup[$groupKey] ?? 0),
+            'total' => (int) ($totalByGroup[$groupKey] ?? 0),
+        ];
+    }
+
+    $classroom = $child['classroom'] ?? '';
+    if ($classroom !== '') {
+        $pdo = getDatabaseConnection();
+
+        $totalStmt = $pdo->prepare("SELECT COUNT(*) FROM children WHERE classroom = :classroom");
+        $totalStmt->execute(['classroom' => $classroom]);
+        $classroomTotal = (int) $totalStmt->fetchColumn();
+
+        $presentStmt = $pdo->prepare("
+            SELECT COUNT(DISTINCT a.student_id)
+            FROM attendance a
+            JOIN children c ON a.student_id = c.studentid
+            WHERE DATE(a.check_date) = CURRENT_DATE
+              AND a.status IN ('present','late')
+              AND c.classroom = :classroom
+        ");
+        $presentStmt->execute(['classroom' => $classroom]);
+        $classroomPresent = (int) $presentStmt->fetchColumn();
+
+        $classroomSummary = [
+            'classroom' => $classroom,
+            'present' => $classroomPresent,
+            'total' => $classroomTotal,
+        ];
+    }
+}
 
 $viewTabs = [
     [
@@ -175,6 +224,79 @@ $viewTabs = [
         margin-right: 0.2rem;
     }
 
+    .attendance-summary {
+        background: #fff;
+        border: 1px solid var(--student-border);
+        border-radius: 1.25rem;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        margin-bottom: 2rem;
+        padding: 1.25rem;
+    }
+
+    .attendance-summary-total {
+        align-items: center;
+        display: flex;
+        gap: 0.85rem;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--student-border);
+    }
+
+    .attendance-summary-total i {
+        background: var(--student-primary-soft);
+        border-radius: 0.85rem;
+        color: var(--student-primary);
+        font-size: 1.4rem;
+        padding: 0.7rem;
+    }
+
+    .attendance-summary-total strong {
+        color: var(--student-primary-dark);
+        display: block;
+        font-size: 1.35rem;
+    }
+
+    .attendance-summary-total span {
+        color: var(--student-muted);
+        font-size: 0.85rem;
+    }
+
+    .attendance-summary-groups {
+        display: grid;
+        gap: 0.85rem;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .attendance-summary-card {
+        background: var(--student-primary-soft);
+        border-radius: 1rem;
+        padding: 0.85rem;
+        text-align: center;
+    }
+
+    .attendance-summary-card.highlight {
+        background: #fff7e6;
+        border: 1px solid #f3d9a3;
+    }
+
+    .attendance-summary-card-label {
+        color: var(--student-text);
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+    }
+
+    .attendance-summary-card-value {
+        color: var(--student-primary-dark);
+        font-size: 1.15rem;
+        font-weight: 700;
+    }
+
+    @media (max-width: 768px) {
+        .attendance-summary-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
     .student-section-title {
         color: var(--student-primary-dark);
         font-size: 1.2rem;
@@ -332,12 +454,38 @@ $viewTabs = [
                      alt="รูปประจำตัวของ <?= htmlspecialchars(($child['firstname_th'] ?? '') . ' ' . ($child['lastname_th'] ?? '')) ?>">
                 <div>
                     <h2><?= htmlspecialchars(($child['prefix_th'] ?? '') . ($child['firstname_th'] ?? '') . ' ' . ($child['lastname_th'] ?? '')) ?></h2>
-                    <p>ข้อมูลของเด็กที่ผูกกับบัญชีผู้ปกครอง</p>
                     <div class="student-meta">
                         <span><i class="bi bi-person-badge"></i><?= htmlspecialchars($child['studentid']) ?></span>
                         <span><i class="bi bi-people"></i><?= htmlspecialchars($child['child_group'] ?? '-') ?></span>
                         <span><i class="bi bi-door-open"></i>ห้อง <?= htmlspecialchars($child['classroom'] ?? '-') ?></span>
                     </div>
+                </div>
+            </div>
+
+            <div class="student-section-title">จำนวนเด็กมาเรียนวันนี้</div>
+            <div class="attendance-summary">
+                <div class="attendance-summary-total">
+                    <i class="bi bi-people-fill"></i>
+                    <div>
+                        <strong><?= $attendanceTodayTotal ?> / <?= $childrenTotal ?></strong>
+                        <span>มาเรียนวันนี้ทั้งศูนย์</span>
+                    </div>
+                </div>
+
+                <div class="attendance-summary-groups">
+                    <?php foreach ($groupSummary as $group): ?>
+                        <div class="attendance-summary-card">
+                            <span class="attendance-summary-card-label"><?= htmlspecialchars($group['label']) ?></span>
+                            <span class="attendance-summary-card-value"><?= $group['present'] ?> / <?= $group['total'] ?></span>
+                        </div>
+                    <?php endforeach; ?>
+
+                    <?php if ($classroomSummary): ?>
+                        <div class="attendance-summary-card highlight">
+                            <span class="attendance-summary-card-label"><i class="bi bi-door-open"></i> ห้องของคุณ (<?= htmlspecialchars($classroomSummary['classroom']) ?>)</span>
+                            <span class="attendance-summary-card-value"><?= $classroomSummary['present'] ?> / <?= $classroomSummary['total'] ?></span>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
