@@ -95,6 +95,14 @@ $viewTabs = [
         'description' => 'ติดตามส่วนสูง น้ำหนัก และพัฒนาการ',
         'color' => 'purple',
     ],
+    [
+        'id' => 'health_external',
+        'icon' => 'fa-solid fa-user-doctor',
+        'title' => 'ตรวจร่างกายจากกุมารแพทย์',
+        'description' => 'ประวัติการตรวจสุขภาพโดยกุมารแพทย์ทั้งหมด',
+        'color' => 'teal',
+        'href' => 'health_external_history.php',
+    ],
 ];
 ?>
 
@@ -318,7 +326,7 @@ $viewTabs = [
     .student-tab-grid {
         display: grid;
         gap: 1.15rem;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .student-tab-button {
@@ -391,12 +399,14 @@ $viewTabs = [
     .student-tab-button.orange { --tab-accent: #b97b36; }
     .student-tab-button.red { --tab-accent: #bd5a5a; }
     .student-tab-button.purple { --tab-accent: #687ba8; }
+    .student-tab-button.teal { --tab-accent: #2f8f83; }
 
     .student-tab-icon.blue { background: #dcebf3; color: #26648E; }
     .student-tab-icon.green { background: #e1f0ea; color: #39755f; }
     .student-tab-icon.orange { background: #f5eadb; color: #9d6528; }
     .student-tab-icon.red { background: #f5e2e2; color: #a94949; }
     .student-tab-icon.purple { background: #e6e9f3; color: #586b98; }
+    .student-tab-icon.teal { background: #dcf3f0; color: #2f8f83; }
 
     .student-tab-button strong {
         font-size: 0.98rem;
@@ -493,8 +503,9 @@ $viewTabs = [
             <div class="student-section-title">เลือกดูข้อมูล</div>
             <div class="student-tab-grid" aria-label="เมนูข้อมูลเด็ก">
                 <?php foreach ($viewTabs as $tab): ?>
+                    <?php $tabHref = $tab['href'] ?? ('view_child.php?studentid=' . rawurlencode($studentid) . '&tab=' . rawurlencode($tab['id'])); ?>
                     <a class="student-tab-button <?= htmlspecialchars($tab['color']) ?>"
-                       href="view_child.php?studentid=<?= rawurlencode($studentid) ?>&amp;tab=<?= rawurlencode($tab['id']) ?>">
+                       href="<?= htmlspecialchars($tabHref) ?>">
                         <span class="student-tab-icon <?= htmlspecialchars($tab['color']) ?>">
                             <i class="<?= htmlspecialchars($tab['icon']) ?>" aria-hidden="true"></i>
                         </span>
