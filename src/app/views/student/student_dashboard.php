@@ -310,13 +310,22 @@ $viewTabs = [
         font-weight: 700;
     }
 
-    .attendance-doughnut-wrap {
-        margin: 1.25rem auto 0;
+    .attendance-charts {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 1.25rem;
+    }
+
+    .attendance-chart-item {
+        margin: 0 auto;
         max-width: 340px;
+        width: 100%;
     }
 
     @media (max-width: 768px) {
         .attendance-summary-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .attendance-charts { grid-template-columns: minmax(0, 1fr); }
     }
 
     .student-section-title {
@@ -514,8 +523,13 @@ $viewTabs = [
                     <?php endif; ?>
                 </div>
 
-                <div class="attendance-doughnut-wrap">
-                    <canvas id="attTodayDoughnut"></canvas>
+                <div class="attendance-charts">
+                    <div class="attendance-chart-item">
+                        <canvas id="studentsPieChart"></canvas>
+                    </div>
+                    <div class="attendance-chart-item">
+                        <canvas id="attTodayDoughnut"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -542,13 +556,33 @@ $viewTabs = [
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const todayGroups = <?= json_encode($groupSummary, JSON_UNESCAPED_UNICODE) ?>;
+    const groupColors = ['rgb(255, 205, 86)', 'rgb(255, 99, 132)', 'rgb(54, 162, 235)'];
+
+    new Chart(document.getElementById('studentsPieChart'), {
+        type: 'pie',
+        data: {
+            labels: todayGroups.map(g => g.label),
+            datasets: [{
+                data: todayGroups.map(g => g.total),
+                backgroundColor: groupColors
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: { display: true, text: 'สัดส่วนนักเรียนแต่ละระดับชั้น' },
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
     new Chart(document.getElementById('attTodayDoughnut'), {
         type: 'doughnut',
         data: {
             labels: todayGroups.map(g => g.label),
             datasets: [{
                 data: todayGroups.map(g => g.present),
-                backgroundColor: ['rgb(255, 205, 86)', 'rgb(255, 99, 132)', 'rgb(54, 162, 235)']
+                backgroundColor: groupColors
             }]
         },
         options: {
