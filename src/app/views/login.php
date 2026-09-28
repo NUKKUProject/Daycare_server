@@ -424,6 +424,193 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                 font-size: 0.9rem;
             }
         }
+
+        /* Modal แจ้งปัญหาการเข้าสู่ระบบ */
+        .issue-popup {
+            border-radius: 20px !important;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(15, 40, 60, 0.35) !important;
+        }
+
+        .issue-popup-done {
+            padding: 1.5rem !important;
+        }
+
+        .issue-popup .swal2-html-container.issue-body {
+            margin: 0;
+            padding: 0;
+            text-align: left;
+        }
+
+        .issue-header {
+            background: linear-gradient(135deg, #26648E, #1E4F6F);
+            color: #fff;
+            text-align: center;
+            padding: 1.75rem 1.5rem 1.5rem;
+        }
+
+        .issue-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0.75rem 0 0.25rem;
+        }
+
+        .issue-header p {
+            margin: 0;
+            font-size: 0.85rem;
+            opacity: 0.85;
+        }
+
+        .issue-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+        }
+
+        .issue-form {
+            padding: 1.25rem 1.5rem 0.25rem;
+        }
+
+        .issue-field {
+            display: block;
+            margin-bottom: 1rem;
+        }
+
+        .issue-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #344054;
+            margin-bottom: 0.35rem;
+        }
+
+        .issue-label em {
+            font-style: normal;
+            color: #98a2b3;
+            font-weight: 400;
+        }
+
+        .issue-label b {
+            color: #dc3545;
+        }
+
+        .issue-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: #f5f8fa;
+            border: 1.5px solid #e2e8ee;
+            border-radius: 12px;
+            padding: 0 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .issue-input-wrap:focus-within {
+            background: #fff;
+            border-color: #26648E;
+            box-shadow: 0 0 0 4px rgba(38, 100, 142, 0.15);
+        }
+
+        .issue-input-wrap i {
+            color: #7a8ea0;
+            font-size: 1rem;
+        }
+
+        .issue-input-wrap:focus-within i {
+            color: #26648E;
+        }
+
+        .issue-input-wrap input,
+        .issue-input-wrap textarea {
+            flex: 1;
+            width: 100%;
+            border: 0;
+            outline: 0;
+            box-shadow: none;
+            background: transparent;
+            padding: 0.7rem 0;
+            font-size: 0.95rem;
+            color: #1f2d3a;
+            resize: none;
+        }
+
+        .issue-textarea-wrap {
+            align-items: flex-start;
+        }
+
+        .issue-textarea-wrap i {
+            margin-top: 0.85rem;
+        }
+
+        .issue-hint {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #7a8ea0;
+            margin-top: 0.35rem;
+        }
+
+        .issue-actions {
+            gap: 0.6rem;
+            margin: 0.5rem 1.5rem 1.5rem !important;
+            width: auto !important;
+            flex-direction: row-reverse;
+        }
+
+        .issue-btn {
+            flex: 1;
+            border: 0;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .issue-btn-primary {
+            background: linear-gradient(135deg, #26648E, #1E4F6F);
+            color: #fff;
+        }
+
+        .issue-btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(38, 100, 142, 0.35);
+        }
+
+        .issue-btn-ghost {
+            background: #eef2f5;
+            color: #475467;
+        }
+
+        .issue-btn-ghost:hover {
+            background: #e2e8ee;
+        }
+
+        .issue-popup .swal2-close.issue-close {
+            color: #fff;
+        }
+
+        .issue-popup .swal2-validation-message {
+            margin: 0.5rem 1.5rem 0;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .issue-form {
+                padding: 1rem 1rem 0;
+            }
+
+            .issue-actions {
+                margin: 0.5rem 1rem 1rem !important;
+            }
+        }
     </style>
 
     <script>
@@ -442,18 +629,61 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
         function reportLoginIssue() {
             const prefill = <?= json_encode($_GET['error'] ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;
             Swal.fire({
-                title: 'แจ้งปัญหาการเข้าสู่ระบบ',
-                html: `
-                    <input type="text" id="issueStudentId" class="swal2-input" placeholder="รหัสประจำตัวผู้เรียน (ถ้ามี)" maxlength="50">
-                    <input type="text" id="issueName" class="swal2-input" placeholder="ชื่อ-สกุลผู้เรียน *" maxlength="100">
-                    <textarea id="issueDesc" class="swal2-textarea" placeholder="รายละเอียดปัญหา * (อย่าใส่เลขบัตรประชาชนหรือรหัสผ่าน)" maxlength="1000"></textarea>
-                    <input type="text" id="issueWebsite" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true">
-                `,
+                width: 480,
+                padding: 0,
+                showCloseButton: true,
                 showCancelButton: true,
-                confirmButtonText: 'ส่งเรื่อง',
+                confirmButtonText: '<i class="bi bi-send-fill me-2"></i>ส่งเรื่อง',
                 cancelButtonText: 'ยกเลิก',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'issue-popup',
+                    htmlContainer: 'issue-body',
+                    actions: 'issue-actions',
+                    confirmButton: 'issue-btn issue-btn-primary',
+                    cancelButton: 'issue-btn issue-btn-ghost',
+                    closeButton: 'issue-close'
+                },
+                html: `
+                    <div class="issue-header">
+                        <div class="issue-icon"><i class="bi bi-life-preserver"></i></div>
+                        <h3>แจ้งปัญหาการเข้าสู่ระบบ</h3>
+                        <p>กรอกข้อมูลด้านล่าง ผู้ดูแลระบบจะตรวจสอบและแก้ไขให้</p>
+                    </div>
+                    <div class="issue-form">
+                        <label class="issue-field">
+                            <span class="issue-label">รหัสประจำตัวผู้เรียน <em>(ถ้ามี)</em></span>
+                            <span class="issue-input-wrap">
+                                <i class="bi bi-hash"></i>
+                                <input type="text" id="issueStudentId" maxlength="50" placeholder="เช่น 6612345">
+                            </span>
+                        </label>
+                        <label class="issue-field">
+                            <span class="issue-label">ชื่อ-สกุลผู้เรียน <b>*</b></span>
+                            <span class="issue-input-wrap">
+                                <i class="bi bi-person"></i>
+                                <input type="text" id="issueName" maxlength="100" placeholder="ชื่อ นามสกุล">
+                            </span>
+                        </label>
+                        <label class="issue-field">
+                            <span class="issue-label">รายละเอียดปัญหา <b>*</b></span>
+                            <span class="issue-input-wrap issue-textarea-wrap">
+                                <i class="bi bi-chat-left-text"></i>
+                                <textarea id="issueDesc" maxlength="1000" rows="4" placeholder="อธิบายปัญหาที่พบ เช่น เข้าสู่ระบบไม่ได้ ขึ้นข้อความ..."></textarea>
+                            </span>
+                            <span class="issue-hint"><span><i class="bi bi-shield-lock me-1"></i>อย่าใส่เลขบัตรประชาชนหรือรหัสผ่าน</span><span id="issueCount">0/1000</span></span>
+                        </label>
+                        <input type="text" id="issueWebsite" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true">
+                    </div>
+                `,
                 didOpen: () => {
-                    document.getElementById('issueDesc').value = prefill;
+                    const desc = document.getElementById('issueDesc');
+                    const count = document.getElementById('issueCount');
+                    desc.value = prefill;
+                    const update = () => count.textContent = desc.value.length + '/1000';
+                    desc.addEventListener('input', update);
+                    update();
+                    document.getElementById('issueName').focus();
                 },
                 preConfirm: () => {
                     const data = new FormData();
@@ -490,7 +720,12 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                         icon: 'success',
                         title: 'ส่งเรื่องเรียบร้อย',
                         text: result.value.message,
-                        confirmButtonText: 'ตกลง'
+                        confirmButtonText: 'ตกลง',
+                        buttonsStyling: false,
+                        customClass: {
+                            popup: 'issue-popup issue-popup-done',
+                            confirmButton: 'issue-btn issue-btn-primary'
+                        }
                     });
                 }
             });
