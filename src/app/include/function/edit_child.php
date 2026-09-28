@@ -32,6 +32,37 @@ function handleEmptyValue($value, $default = null) {
     return (empty(trim($value)) || $value === '-') ? $default : $value;
 }
 
+// ย้ายเลขประจำตัวเดิมเป็นเลขใหม่ในตารางอื่นที่เก็บ student_id/studentid แต่ไม่มี FK ไปที่ children
+// (เช่น health_data, health_data_external, health_tooth_external) ตารางที่มี ON UPDATE CASCADE
+// จะถูกเปลี่ยนไปแล้วตอน UPDATE children จึงไม่มีแถวตรงเงื่อนไขและไม่ถูกแตะซ้ำ
+function propagateStudentIdRename(PDO $pdo, $oldId, $newId) {
+    $cols = $pdo->query("
+        SELECT c.table_name, c.column_name
+        FROM information_schema.columns c
+        JOIN information_schema.tables t
+          ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+        WHERE c.table_schema = 'public'
+          AND t.table_type = 'BASE TABLE'
+          AND c.column_name IN ('student_id', 'studentid')
+          AND c.data_type IN ('character varying', 'character', 'text')
+          AND c.table_name <> 'children'
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($cols as $col) {
+        $sql = sprintf(
+            'UPDATE "%s" SET "%s" = :new_id WHERE "%s" = :old_id',
+            str_replace('"', '""', $col['table_name']),
+            str_replace('"', '""', $col['column_name']),
+            str_replace('"', '""', $col['column_name'])
+        );
+        $upd = $pdo->prepare($sql);
+        $upd->execute(['new_id' => $newId, 'old_id' => $oldId]);
+        if ($upd->rowCount() > 0) {
+            error_log("Renamed student id in {$col['table_name']}.{$col['column_name']}: {$upd->rowCount()} rows");
+        }
+    }
+}
+
 // ลบเฉพาะไฟล์รูปเดิมที่อยู่ในโฟลเดอร์โปรไฟล์ของระบบเท่านั้น
 function deleteStoredProfileImage($imagePath, $uploadDir) {
     if (empty($imagePath) || strpos($imagePath, 'data:') === 0) {
@@ -418,10 +449,15 @@ try {
             $stmt->bindValue(':has_food_allergy_history', $has_food_allergy_history, PDO::PARAM_BOOL);
 
             // Execute และตรวจสอบผล
+            $isRenaming = ($exists > 0 && $student_id !== $original_student_id);
             try {
+                if ($isRenaming) {
+                    $pdo->beginTransaction();
+                }
+
                 $result = $stmt->execute();
                 error_log("Query execution result: " . ($result ? "Success" : "Failed"));
-                
+
                 if (!$result) {
                     $errorInfo = $stmt->errorInfo();
                     error_log("SQL Error Info: " . print_r($errorInfo, true));
@@ -432,6 +468,11 @@ try {
                 if ($exists > 0) {
                     $rowCount = $stmt->rowCount();
                     error_log("Rows affected: " . $rowCount);
+                }
+
+                if ($isRenaming) {
+                    propagateStudentIdRename($pdo, $original_student_id, $student_id);
+                    $pdo->commit();
                 }
 
                 // ดึงข้อมูลการแพ้ยา
@@ -513,7 +554,10 @@ try {
 
                 return $result;
 
-            } catch (PDOException $e) {
+            } catch (Throwable $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
                 error_log("PDO Error: " . $e->getMessage());
                 error_log("SQL Query: " . $query);
                 throw $e;
