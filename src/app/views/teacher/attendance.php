@@ -733,8 +733,14 @@ $data = getChildrenGroupedByTab($currentTab);
   /* ===== Symptoms Grid ===== */
   .symptoms-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.6rem;
+  }
+
+  @media (max-width: 576px) {
+    .symptoms-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   .symptom-checkbox {
@@ -1107,7 +1113,7 @@ $data = getChildrenGroupedByTab($currentTab);
 
     <!-- Health Modal -->
     <div class="modal fade" id="healthModal" tabindex="-1" aria-labelledby="healthModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
 
         <!-- Header -->
