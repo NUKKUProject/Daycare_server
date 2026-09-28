@@ -93,6 +93,9 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                                 <a class="btn btn-success w-100 py-2 mb-3" href="https://ssonext.kku.ac.th/login?app=0198bb3e-beab-7004-95c1-864db39d9e85">
                                     <i class="bi bi-shield-lock-fill me-2"></i>เข้าสู่ระบบด้วย KKU SSO
                                 </a>
+                                <button type="button" class="btn btn-link text-white w-100" onclick="reportLoginIssue()">
+                                    <i class="bi bi-exclamation-circle me-1"></i>เข้าสู่ระบบไม่ได้? แจ้งปัญหา
+                                </button>
                                 <!-- <button type="button" class="btn btn-success w-100 py-2" onclick="docterLogin()">
                                     <i class="fa-solid fa-stethoscope"></i> เข้าสู่ระบบสำหรับแพทย์
                                 </button> -->
@@ -435,6 +438,70 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
             });
         });
 
+
+        function reportLoginIssue() {
+            const prefill = <?= json_encode($_GET['error'] ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;
+            Swal.fire({
+                title: 'แจ้งปัญหาการเข้าสู่ระบบ',
+                html: `
+                    <input type="text" id="issueStudentId" class="swal2-input" placeholder="รหัสประจำตัวผู้เรียน (ถ้ามี)" maxlength="50">
+                    <input type="text" id="issueName" class="swal2-input" placeholder="ชื่อผู้แจ้ง *" maxlength="100">
+                    <input type="text" id="issueContact" class="swal2-input" placeholder="เบอร์โทร / อีเมล *" maxlength="100">
+                    <select id="issueMethod" class="swal2-select" style="display:flex;width:auto;margin:1em auto;">
+                        <option value="normal">เข้าสู่ระบบสำหรับผู้ปกครอง</option>
+                        <option value="sso">KKU SSO</option>
+                    </select>
+                    <textarea id="issueDesc" class="swal2-textarea" placeholder="รายละเอียดปัญหา * (อย่าใส่เลขบัตรประชาชนหรือรหัสผ่าน)" maxlength="1000"></textarea>
+                    <input type="text" id="issueWebsite" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'ส่งเรื่อง',
+                cancelButtonText: 'ยกเลิก',
+                didOpen: () => {
+                    document.getElementById('issueDesc').value = prefill;
+                },
+                preConfirm: () => {
+                    const data = new FormData();
+                    data.append('student_id', document.getElementById('issueStudentId').value.trim());
+                    data.append('contact_name', document.getElementById('issueName').value.trim());
+                    data.append('contact_info', document.getElementById('issueContact').value.trim());
+                    data.append('login_method', document.getElementById('issueMethod').value);
+                    data.append('description', document.getElementById('issueDesc').value.trim());
+                    data.append('website', document.getElementById('issueWebsite').value);
+
+                    if (!data.get('contact_name') || !data.get('contact_info') || !data.get('description')) {
+                        Swal.showValidationMessage('กรุณากรอกข้อมูลที่มี * ให้ครบถ้วน');
+                        return false;
+                    }
+
+                    return fetch('../include/process/report_login_issue.php', {
+                            method: 'POST',
+                            body: data
+                        })
+                        .then(r => r.json())
+                        .then(res => {
+                            if (!res.success) {
+                                Swal.showValidationMessage(res.message);
+                                return false;
+                            }
+                            return res;
+                        })
+                        .catch(() => {
+                            Swal.showValidationMessage('ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่');
+                            return false;
+                        });
+                }
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'ส่งเรื่องเรียบร้อย',
+                        text: result.value.message,
+                        confirmButtonText: 'ตกลง'
+                    });
+                }
+            });
+        }
 
         function docterLogin() {
             Swal.fire({

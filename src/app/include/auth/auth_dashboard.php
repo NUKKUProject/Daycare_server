@@ -162,6 +162,13 @@ function isCurrentPage($path)
                                 จัดการบัญชีรออนุมัติ
                             </a>
                         </li>
+                        <li class="nav-item mb-2">
+                            <a class="nav-link <?php echo isCurrentPage('login_issues.php') ? 'active' : ''; ?>"
+                                href="/app/views/admin/login_issues.php">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                แจ้งปัญหาการเข้าสู่ระบบ
+                            </a>
+                        </li>
 
                     <?php endif; ?>
 
