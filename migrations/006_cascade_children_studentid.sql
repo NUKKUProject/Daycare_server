@@ -20,8 +20,8 @@ BEGIN
           AND refcl.relname = 'children'
           AND EXISTS (
               SELECT 1
-              FROM unnest(con.confkey) AS attnum
-              JOIN pg_attribute a ON a.attrelid = con.confrelid AND a.attnum = attnum
+              FROM unnest(con.confkey) AS colnum
+              JOIN pg_attribute a ON a.attrelid = con.confrelid AND a.attnum = colnum
               WHERE a.attname = 'studentid'
           )
           AND pg_get_constraintdef(con.oid) NOT ILIKE '%ON UPDATE CASCADE%'
