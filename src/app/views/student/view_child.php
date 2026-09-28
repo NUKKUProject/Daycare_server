@@ -851,7 +851,7 @@ if (getUserRole() === 'student') {
             <img id="profilePreview"
               src="<?= !empty($child['profile_image']) ? htmlspecialchars($child['profile_image']) : '../../../public/assets/images/avatar.png' ?>"
               class="rounded-3 mb-2"
-              style="width:100%;max-width:200px;height:20กดคำ0px;object-fit:cover;border:2px solid var(--gray-200);"
+              style="width:100%;max-width:200px;height:200px;object-fit:cover;border:2px solid var(--gray-200);"
               alt="Profile" />
             <div id="imageUploadWrap" style="display:none;">
               <div class="d-flex gap-2 justify-content-center flex-wrap">
