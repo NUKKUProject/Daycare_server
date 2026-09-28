@@ -2,8 +2,7 @@
 CREATE TABLE IF NOT EXISTS login_issues (
   id SERIAL PRIMARY KEY,
   student_id VARCHAR(50),
-  contact_name VARCHAR(100) NOT NULL,
-  contact_info VARCHAR(100) NOT NULL,
+  student_name VARCHAR(100) NOT NULL,
   description TEXT NOT NULL,
   status VARCHAR(10) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'resolved')),
   ip_address VARCHAR(45),

@@ -26,8 +26,7 @@ $issues = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <th>ลำดับ</th>
                             <th>วันที่แจ้ง</th>
                             <th>รหัสนักเรียน</th>
-                            <th>ผู้แจ้ง</th>
-                            <th>ติดต่อ</th>
+                            <th>ชื่อ-สกุลผู้เรียน</th>
                             <th>รายละเอียด</th>
                             <th>สถานะ</th>
                             <th></th>
@@ -40,8 +39,7 @@ $issues = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td><?= $counter++ ?></td>
                                 <td style="white-space: nowrap;"><?= htmlspecialchars($issue['created_at']) ?></td>
                                 <td><?= htmlspecialchars($issue['student_id'] ?? '-') ?></td>
-                                <td><?= htmlspecialchars($issue['contact_name']) ?></td>
-                                <td><?= htmlspecialchars($issue['contact_info']) ?></td>
+                                <td><?= htmlspecialchars($issue['student_name']) ?></td>
                                 <td style="white-space: pre-wrap; min-width: 250px;"><?= htmlspecialchars($issue['description']) ?></td>
                                 <td>
                                     <?php if ($issue['status'] === 'open'): ?>

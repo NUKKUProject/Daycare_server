@@ -18,23 +18,22 @@ if (!empty($_POST['website'] ?? '')) {
 }
 
 $studentId = trim($_POST['student_id'] ?? '');
-$name = trim($_POST['contact_name'] ?? '');
-$contact = trim($_POST['contact_info'] ?? '');
+$name = trim($_POST['student_name'] ?? '');
 $description = trim($_POST['description'] ?? '');
 
-if ($name === '' || $contact === '' || $description === '') {
+if ($name === '' || $description === '') {
     respond(false, 'กรุณากรอกข้อมูลให้ครบถ้วน');
 }
 
 if (
     mb_strlen($studentId) > 50 || mb_strlen($name) > 100 ||
-    mb_strlen($contact) > 100 || mb_strlen($description) > 1000
+    mb_strlen($description) > 1000
 ) {
     respond(false, 'ข้อมูลยาวเกินกำหนด');
 }
 
-// กันการกรอกเลขบัตรประชาชน 13 หลักลงในรายละเอียด/ช่องติดต่อ
-if (preg_match('/\d{13}/', preg_replace('/[\s-]/', '', $description . $contact . $studentId))) {
+// กันการกรอกเลขบัตรประชาชน 13 หลักลงในรายละเอียด
+if (preg_match('/\d{13}/', preg_replace('/[\s-]/', '', $description . $studentId))) {
     respond(false, 'กรุณาอย่ากรอกเลขบัตรประชาชนหรือรหัสผ่านในการแจ้งปัญหา');
 }
 
@@ -52,18 +51,17 @@ try {
     }
 
     $insert = $pdo->prepare(
-        "INSERT INTO login_issues (student_id, contact_name, contact_info, description, ip_address)
-         VALUES (:student_id, :contact_name, :contact_info, :description, :ip)"
+        "INSERT INTO login_issues (student_id, student_name, description, ip_address)
+         VALUES (:student_id, :student_name, :description, :ip)"
     );
     $insert->execute([
         'student_id' => $studentId !== '' ? $studentId : null,
-        'contact_name' => $name,
-        'contact_info' => $contact,
+        'student_name' => $name,
         'description' => $description,
         'ip' => $ip,
     ]);
 
-    respond(true, 'ส่งเรื่องแจ้งปัญหาเรียบร้อยแล้ว ผู้ดูแลระบบจะติดต่อกลับ');
+    respond(true, 'ส่งเรื่องแจ้งปัญหาเรียบร้อยแล้ว ผู้ดูแลระบบจะตรวจสอบและแก้ไขให้');
 } catch (PDOException $e) {
     error_log('report_login_issue failed: ' . $e->getMessage());
     respond(false, 'เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่ภายหลัง');

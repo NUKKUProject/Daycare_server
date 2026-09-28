@@ -445,8 +445,7 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                 title: 'แจ้งปัญหาการเข้าสู่ระบบ',
                 html: `
                     <input type="text" id="issueStudentId" class="swal2-input" placeholder="รหัสประจำตัวผู้เรียน (ถ้ามี)" maxlength="50">
-                    <input type="text" id="issueName" class="swal2-input" placeholder="ชื่อผู้แจ้ง *" maxlength="100">
-                    <input type="text" id="issueContact" class="swal2-input" placeholder="เบอร์โทร / อีเมล *" maxlength="100">
+                    <input type="text" id="issueName" class="swal2-input" placeholder="ชื่อ-สกุลผู้เรียน *" maxlength="100">
                     <textarea id="issueDesc" class="swal2-textarea" placeholder="รายละเอียดปัญหา * (อย่าใส่เลขบัตรประชาชนหรือรหัสผ่าน)" maxlength="1000"></textarea>
                     <input type="text" id="issueWebsite" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true">
                 `,
@@ -459,12 +458,11 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                 preConfirm: () => {
                     const data = new FormData();
                     data.append('student_id', document.getElementById('issueStudentId').value.trim());
-                    data.append('contact_name', document.getElementById('issueName').value.trim());
-                    data.append('contact_info', document.getElementById('issueContact').value.trim());
+                    data.append('student_name', document.getElementById('issueName').value.trim());
                     data.append('description', document.getElementById('issueDesc').value.trim());
                     data.append('website', document.getElementById('issueWebsite').value);
 
-                    if (!data.get('contact_name') || !data.get('contact_info') || !data.get('description')) {
+                    if (!data.get('student_name') || !data.get('description')) {
                         Swal.showValidationMessage('กรุณากรอกข้อมูลที่มี * ให้ครบถ้วน');
                         return false;
                     }
