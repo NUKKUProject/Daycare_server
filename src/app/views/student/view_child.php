@@ -71,7 +71,7 @@ if (getUserRole() === 'student') {
     }
 }
 ?>
-<link rel="stylesheet" href="../../../public/assets/css/view_child1.css">
+<link rel="stylesheet" href="../../../public/assets/css/view_child1.css?v=<?= @filemtime(__DIR__ . '/../../../public/assets/css/view_child1.css') ?: time() ?>">
 <style>
 .status-badge.status-late { background:#fef3c7;color:#d97706; }
 .status-badge.status-leave { background:#fef3c7;color:#d97706; }
