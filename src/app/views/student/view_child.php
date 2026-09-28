@@ -823,9 +823,9 @@ if (getUserRole() === 'student') {
           ข้อมูลประวัติประจำตัว
         </div>
         <div class="profile-actions">
-        <?php if ($is_admin || $is_teacher): ?>
+        <?php if ($is_admin || $is_teacher || $is_student): ?>
             <button class="btn-action btn-edit" id="btnEdit">
-                <i class="bi bi-pencil"></i><span>แก้ไข</span>
+                <i class="bi bi-pencil"></i><span><?= $is_student ? 'แก้ไขรูปภาพ' : 'แก้ไข' ?></span>
             </button>
             <button class="btn-action btn-save" id="btnSave" style="display:none;">
                 <i class="bi bi-check-lg"></i><span>บันทึก</span>
@@ -1219,9 +1219,9 @@ if (getUserRole() === 'student') {
 
         <!-- Bottom Profile Actions -->
         </form> <div class="profile-actions-bottom" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-200); text-align: center;">
-          <?php if ($is_admin || $is_teacher): ?>
+          <?php if ($is_admin || $is_teacher || $is_student): ?>
               <button class="btn-action btn-edit" id="btnEditBottom">
-                  <i class="bi bi-pencil"></i><span>แก้ไข</span>
+                  <i class="bi bi-pencil"></i><span><?= $is_student ? 'แก้ไขรูปภาพ' : 'แก้ไข' ?></span>
               </button>
               <button class="btn-action btn-save" id="btnSaveBottom" style="display:none;">
                   <i class="bi bi-check-lg"></i><span>บันทึก</span>
@@ -2246,6 +2246,7 @@ if (getUserRole() === 'student') {
   ];
 
   const isAdminUser = <?= $is_admin ? 'true' : 'false' ?>;
+  const isStudentUser = <?= $is_student ? 'true' : 'false' ?>;
 
   function getEditableFields() {
     const studentidExclusion = isAdminUser ? '' : ':not([name="studentid"])';
@@ -2256,13 +2257,18 @@ if (getUserRole() === 'student') {
 
   function enterEditMode() {
     profileEditMode = true;
-    getEditableFields().forEach(el => {
-      el.removeAttribute('readonly');
-      el.removeAttribute('disabled');
-    });
+    // ผู้ปกครอง (student) แก้ไขได้เฉพาะรูปภาพ จึงไม่ปลดล็อกช่องข้อมูลอื่นและปุ่มจัดการการแพ้
+    if (!isStudentUser) {
+      getEditableFields().forEach(el => {
+        el.removeAttribute('readonly');
+        el.removeAttribute('disabled');
+      });
+    }
     imageWrap.style.display = 'block';
     parentImageWraps.forEach(wrap => { if (wrap) wrap.style.display = 'block'; });
-    editAllergyBtns.forEach(b => { if (b) b.style.display = 'flex'; });
+    if (!isStudentUser) {
+      editAllergyBtns.forEach(b => { if (b) b.style.display = 'flex'; });
+    }
     
     // Hide top edit buttons, show top save/cancel
     if (btnEdit) btnEdit.style.display = 'none';
@@ -2274,7 +2280,7 @@ if (getUserRole() === 'student') {
     if (btnSaveBottom) btnSaveBottom.style.display = 'inline-flex';
     if (btnCancelBottom) btnCancelBottom.style.display = 'inline-flex';
     
-    showToast('info', 'โหมดแก้ไขเปิดใช้งานแล้ว');
+    showToast('info', isStudentUser ? 'เลือกรูปภาพที่ต้องการเปลี่ยนแล้วกดบันทึก' : 'โหมดแก้ไขเปิดใช้งานแล้ว');
   }
 
   function exitEditMode(save) {
@@ -2326,7 +2332,54 @@ if (getUserRole() === 'student') {
     }
   }
 
+  function saveStudentImages() {
+    const inputs = ['profileImageInput', 'fatherImageInput', 'motherImageInput']
+      .map(id => document.getElementById(id))
+      .filter(input => input && input.files && input.files.length > 0);
+
+    if (inputs.length === 0) {
+      showToast('warning', 'ยังไม่ได้เลือกรูปภาพใหม่');
+      return false;
+    }
+
+    const formData = new FormData();
+    formData.set('student_id', studentId);
+    inputs.forEach(input => formData.set(input.name, input.files[0]));
+
+    const btnSave = document.getElementById('btnSave');
+    const originalText = btnSave.innerHTML;
+    btnSave.disabled = true;
+    btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึก...';
+
+    fetch('../../include/function/edit_child.php', { method: 'POST', body: formData })
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP error: ' + r.status);
+        return r.json();
+      })
+      .then(result => {
+        if (result.status === 'success') {
+          showToast('success', 'บันทึกรูปภาพเรียบร้อยแล้ว');
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          showToast('error', result.message || 'ไม่สามารถบันทึกรูปภาพได้');
+        }
+      })
+      .catch(error => {
+        console.error('Error saving images:', error);
+        showToast('error', 'เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
+      })
+      .finally(() => {
+        btnSave.disabled = false;
+        btnSave.innerHTML = originalText;
+      });
+
+    return true;
+  }
+
   function saveProfileData() {
+    if (isStudentUser) {
+      return saveStudentImages();
+    }
     // ดึงค่าจากฟอร์มเก็บในตัวแปร
     const studentid = document.querySelector('[name="studentid"]').value;
     const academicYear = document.querySelector('[name="academic_year"]').value;
