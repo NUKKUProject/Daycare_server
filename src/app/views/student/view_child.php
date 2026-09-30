@@ -1238,37 +1238,6 @@ if (getUserRole() === 'student') {
     </div><!-- end content-card -->
   </div>
 
-  <!-- Modal ตัดรูปก่อนบันทึก -->
-  <div class="modal fade" id="cropImageModal" tabindex="-1" aria-labelledby="cropImageModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content crop-modal-content">
-        <div class="crop-modal-header">
-          <h5 class="modal-title" id="cropImageModalLabel">
-            <span class="crop-modal-icon"><i class="bi bi-crop"></i></span>
-            <span>
-              ตัดรูปภาพ
-              <small>ลากเพื่อย้ายกรอบ ใช้นิ้ว/ล้อเมาส์เพื่อซูม</small>
-            </span>
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="ปิด"></button>
-        </div>
-        <div class="modal-body crop-modal-body">
-          <div class="crop-canvas-wrap">
-            <img id="cropImageTarget" src="" alt="รูปที่จะตัด">
-          </div>
-        </div>
-        <div class="modal-footer crop-modal-footer">
-          <button type="button" class="btn-action btn-cancel" id="cropImageCancel">
-            <i class="bi bi-x-lg"></i><span>ยกเลิก</span>
-          </button>
-          <button type="button" class="btn-action btn-save" id="cropImageConfirm">
-            <i class="bi bi-check-lg"></i><span>ตัดรูปและใช้รูปนี้</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- ===== TAB: VACCINE ===== -->
   <div id="tab-vaccine" class="tab-content-pane" style="<?= $currentTab === 'vaccine' ? '' : 'display:none;' ?>">
     <div class="content-card">
@@ -2579,85 +2548,8 @@ if (getUserRole() === 'student') {
     return true;
   }
 
-  /* ── Crop modal ── */
-  const cropImageModalElement = document.getElementById('cropImageModal');
-  const cropImageTarget = document.getElementById('cropImageTarget');
-  const cropImageConfirm = document.getElementById('cropImageConfirm');
-  const cropImageCancel = document.getElementById('cropImageCancel');
-  const cropImageModal = cropImageModalElement && window.bootstrap
-    ? bootstrap.Modal.getOrCreateInstance(cropImageModalElement)
-    : null;
+  /* ── Crop popup (SweetAlert2 พื้นฐาน - ตรงกลาง พื้นหลังสีเทา ตรงกับ popup อื่นในระบบ) ── */
   let cropperInstance = null;
-  let cropPendingTarget = null;
-
-  function destroyCropper() {
-    if (cropperInstance) {
-      cropperInstance.destroy();
-      cropperInstance = null;
-    }
-    if (cropImageTarget) cropImageTarget.src = '';
-  }
-
-  function openCropModal(file, target) {
-    // ไม่มี modal ให้แสดงจริงๆ (เช่น bootstrap โหลดไม่สำเร็จ) ใช้รูปเดิมไปเลย
-    if (!cropImageModal || !cropImageTarget) {
-      if (showProfileImagePreviewFromFile(file, target.preview)) {
-        finalizeImageSelection(target);
-      } else {
-        target.input.value = '';
-      }
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = e => {
-      cropPendingTarget = target;
-
-      let imageReady = false;
-      let modalReady = false;
-
-      // ต้องรอทั้งรูปโหลดเสร็จ "และ" modal แสดงเต็มที่ (fade-in จบ) ก่อนค่อยสร้าง Cropper
-      // ไม่งั้น Cropper จะคำนวณขนาดพื้นที่ตัดรูปผิดตอนกำลัง fade-in ทำให้รูปแสดงเล็กผิดปกติ
-      const tryInitCropper = () => {
-        if (!imageReady || !modalReady) return;
-
-        if (cropperInstance) {
-          cropperInstance.destroy();
-          cropperInstance = null;
-        }
-        // ถ้าไลบรารีตัดรูปโหลดไม่สำเร็จ ยังคงแสดง popup รูปตัวอย่างได้ตามปกติ
-        // เพียงแต่ลากปรับกรอบไม่ได้ กดยืนยันแล้วจะใช้รูปเต็มที่เลือกไว้
-        if (typeof Cropper !== 'undefined') {
-          cropperInstance = new Cropper(cropImageTarget, {
-            aspectRatio: 1,
-            viewMode: 1,
-            autoCropArea: 1,
-            background: false
-          });
-        }
-      };
-
-      cropImageTarget.onload = () => {
-        imageReady = true;
-        tryInitCropper();
-      };
-
-      cropImageTarget.src = e.target.result;
-
-      if (cropImageModalElement.classList.contains('show')) {
-        modalReady = true;
-        tryInitCropper();
-      } else {
-        cropImageModalElement.addEventListener('shown.bs.modal', () => {
-          modalReady = true;
-          tryInitCropper();
-        }, { once: true });
-      }
-
-      cropImageModal.show();
-    };
-    reader.readAsDataURL(file);
-  }
 
   function showProfileImagePreviewFromFile(file, previewElement) {
     if (!isValidImageFile(file)) return false;
@@ -2669,46 +2561,74 @@ if (getUserRole() === 'student') {
     return true;
   }
 
-  if (cropImageConfirm) {
-    cropImageConfirm.addEventListener('click', () => {
-      if (!cropPendingTarget) return;
-      const target = cropPendingTarget;
+  function openCropModal(file, target) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      Swal.fire({
+        title: 'ตัดรูปภาพ',
+        html: `
+          <div class="swal-crop-wrap"><img id="cropImageTarget" src="${e.target.result}" alt="รูปที่จะตัด"></div>
+          <div class="swal-crop-hint">ลากเพื่อย้ายกรอบ ใช้นิ้ว/ล้อเมาส์เพื่อซูม</div>
+        `,
+        width: 560,
+        showCancelButton: true,
+        confirmButtonText: 'ตัดรูปและใช้รูปนี้',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#26648E',
+        heightAuto: false,
+        allowOutsideClick: false,
+        didOpen: () => {
+          // didOpen ทำงานหลัง popup แสดงเต็มที่แล้ว จึงคำนวณขนาดพื้นที่ตัดรูปได้ถูกต้อง
+          const img = document.getElementById('cropImageTarget');
+          if (img && typeof Cropper !== 'undefined') {
+            cropperInstance = new Cropper(img, {
+              aspectRatio: 1,
+              viewMode: 1,
+              autoCropArea: 1,
+              background: false
+            });
+          }
+          // ถ้าไลบรารีตัดรูปโหลดไม่สำเร็จ ยังคงแสดง popup รูปตัวอย่างได้ตามปกติ
+          // เพียงแต่ลากปรับกรอบไม่ได้ กดยืนยันแล้วจะใช้รูปเต็มที่เลือกไว้
+        },
+        willClose: () => {
+          if (cropperInstance) {
+            cropperInstance.destroy();
+            cropperInstance = null;
+          }
+        },
+        preConfirm: () => {
+          if (!cropperInstance) return null;
+          return new Promise(resolve => {
+            cropperInstance.getCroppedCanvas({ width: 500, height: 500 }).toBlob(
+              blob => resolve(blob),
+              'image/jpeg',
+              0.92
+            );
+          });
+        }
+      }).then(result => {
+        if (!result.isConfirmed) {
+          target.input.value = '';
+          return;
+        }
 
-      if (cropperInstance) {
-        // มีตัวตัดรูป: ตัดตามกรอบที่ปรับไว้
-        cropperInstance.getCroppedCanvas({ width: 500, height: 500 }).toBlob(blob => {
-          if (!blob) return;
-          const file = new File([blob], (target.type || 'image') + '_cropped.jpg', { type: 'image/jpeg' });
-
+        if (result.value) {
+          // ตัดรูปสำเร็จ: result.value คือ Blob ที่ตัดแล้วจาก preConfirm
+          const file = new File([result.value], (target.type || 'image') + '_cropped.jpg', { type: 'image/jpeg' });
           const dataTransfer = new DataTransfer();
           dataTransfer.items.add(file);
           target.input.files = dataTransfer.files;
-          if (target.preview) target.preview.src = URL.createObjectURL(blob);
+          if (target.preview) target.preview.src = URL.createObjectURL(result.value);
+        } else if (target.preview) {
+          // ไม่มีตัวตัดรูป: ใช้ไฟล์เต็มที่เลือกไว้ในช่องอัปโหลดอยู่แล้ว
+          target.preview.src = e.target.result;
+        }
 
-          cropImageModal?.hide();
-          finalizeImageSelection(target);
-        }, 'image/jpeg', 0.92);
-      } else {
-        // ไม่มีตัวตัดรูป (ไลบรารีโหลดไม่สำเร็จ): ใช้ไฟล์เต็มที่เลือกไว้ในช่องอัปโหลดอยู่แล้ว
-        if (target.preview) target.preview.src = cropImageTarget.src;
-        cropImageModal?.hide();
         finalizeImageSelection(target);
-      }
-    });
-  }
-
-  if (cropImageCancel) {
-    cropImageCancel.addEventListener('click', () => {
-      if (cropPendingTarget) cropPendingTarget.input.value = '';
-      cropPendingTarget = null;
-      cropImageModal?.hide();
-    });
-  }
-
-  if (cropImageModalElement) {
-    cropImageModalElement.addEventListener('hidden.bs.modal', () => {
-      destroyCropper();
-    });
+      });
+    };
+    reader.readAsDataURL(file);
   }
 
   // ป้ายอัปโหลดบนรูป: เปลี่ยนรูปได้ทันทีโดยไม่ต้องกด "แก้ไขข้อมูล" ก่อน
