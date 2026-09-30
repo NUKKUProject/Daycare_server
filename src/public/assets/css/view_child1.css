@@ -524,10 +524,14 @@
       z-index: 5;
     }
 
-    .crop-person-guide i {
-      color: rgba(255, 255, 255, 0.35);
-      font-size: min(45vh, 260px);
-      line-height: 1;
+    .crop-person-guide svg {
+      fill: none;
+      height: min(42vh, 240px);
+      stroke: rgba(255, 255, 255, 0.55);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 9;
+      width: min(42vh, 240px);
     }
 
     .swal-crop-wrap img {
