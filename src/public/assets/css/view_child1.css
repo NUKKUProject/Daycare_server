@@ -507,6 +507,27 @@
       height: min(55vh, 420px);
       min-height: 280px;
       overflow: hidden;
+      position: relative;
+    }
+
+    /* เงาคนไว้เล็งตำแหน่งใบหน้า ไม่บังการลาก/ซูมรูป */
+    .crop-person-guide {
+      align-items: center;
+      bottom: 0;
+      display: flex;
+      justify-content: center;
+      left: 0;
+      pointer-events: none;
+      position: absolute;
+      right: 0;
+      top: 0;
+      z-index: 5;
+    }
+
+    .crop-person-guide i {
+      color: rgba(255, 255, 255, 0.35);
+      font-size: min(45vh, 260px);
+      line-height: 1;
     }
 
     .swal-crop-wrap img {
@@ -518,6 +539,16 @@
       color: var(--gray-500, #6b7280);
       font-size: 0.8rem;
       margin-top: 0.6rem;
+    }
+
+    /* ทำพื้นที่นอกกรอบตัดให้มืดเข้มขึ้น + ใส่ขอบสว่างรอบกรอบตัด ให้เห็นตำแหน่งกรอบชัดเจนขึ้น */
+    .swal-crop-wrap .cropper-modal {
+      background-color: #000;
+      opacity: 0.7;
+    }
+
+    .swal-crop-wrap .cropper-view-box {
+      outline: 2px solid #fff;
     }
 
     .parent-card-title {

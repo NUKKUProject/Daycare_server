@@ -2576,7 +2576,10 @@ if (getUserRole() === 'student') {
       Swal.fire({
         title: 'ตัดรูปภาพ',
         html: `
-          <div class="swal-crop-wrap"><img id="cropImageTarget" src="${e.target.result}" alt="รูปที่จะตัด"></div>
+          <div class="swal-crop-wrap">
+            <img id="cropImageTarget" src="${e.target.result}" alt="รูปที่จะตัด">
+            <div class="crop-person-guide"><i class="bi bi-person-fill"></i></div>
+          </div>
           <div class="swal-crop-hint">ลากรูปเพื่อย้ายตำแหน่ง ใช้นิ้ว/ล้อเมาส์เพื่อซูมเข้าออก</div>
         `,
         width: 560,
