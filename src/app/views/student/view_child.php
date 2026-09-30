@@ -2445,9 +2445,15 @@ if (getUserRole() === 'student') {
         html: `<ul style="text-align:left;padding-left:1.2rem;margin:0;">${listHtml}</ul>`,
         confirmButtonText: 'ตกลง',
         heightAuto: false
+      }).then(() => {
+        // ต้อง focus หลัง popup ปิดแล้ว ไม่งั้น Swal จะแย่ง focus ไปที่ปุ่มยืนยันของมันเองก่อน
+        const field = document.querySelector(`[name="${validationErrors[0].field}"]`);
+        if (field) {
+          field.focus();
+          if (typeof field.select === 'function') field.select();
+        }
       });
 
-      document.querySelector(`[name="${validationErrors[0].field}"]`)?.focus();
       return false;
     }
 
