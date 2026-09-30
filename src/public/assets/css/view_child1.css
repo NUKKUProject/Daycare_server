@@ -510,30 +510,6 @@
       position: relative;
     }
 
-    /* เงาคนไว้เล็งตำแหน่งใบหน้า ไม่บังการลาก/ซูมรูป */
-    .crop-person-guide {
-      align-items: center;
-      bottom: 0;
-      display: flex;
-      justify-content: center;
-      left: 0;
-      pointer-events: none;
-      position: absolute;
-      right: 0;
-      top: 0;
-      z-index: 5;
-    }
-
-    .crop-person-guide svg {
-      fill: none;
-      height: min(42vh, 240px);
-      stroke: rgba(255, 255, 255, 0.55);
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-width: 9;
-      width: min(42vh, 240px);
-    }
-
     .swal-crop-wrap img {
       display: block;
       max-width: 100%;

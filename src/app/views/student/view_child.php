@@ -2578,12 +2578,6 @@ if (getUserRole() === 'student') {
         html: `
           <div class="swal-crop-wrap">
             <img id="cropImageTarget" src="${e.target.result}" alt="รูปที่จะตัด">
-            <div class="crop-person-guide">
-              <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="100" cy="72" r="44"/>
-                <path d="M18,190 C18,120 60,108 82,108 L118,108 C140,108 182,120 182,190"/>
-              </svg>
-            </div>
           </div>
           <div class="swal-crop-hint">ลากรูปเพื่อย้ายตำแหน่ง ใช้นิ้ว/ล้อเมาส์เพื่อซูมเข้าออก</div>
         `,
