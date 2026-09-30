@@ -2239,8 +2239,6 @@ if (getUserRole() === 'student') {
     if (btnEditBottom) btnEditBottom.style.display = 'none';
     if (btnSaveBottom) btnSaveBottom.style.display = 'inline-flex';
     if (btnCancelBottom) btnCancelBottom.style.display = 'inline-flex';
-
-    showToast('info', 'โหมดแก้ไขเปิดใช้งานแล้ว');
   }
 
   function exitEditMode(save) {
