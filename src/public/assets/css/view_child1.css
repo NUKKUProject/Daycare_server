@@ -463,6 +463,43 @@
       border: 2px solid var(--gray-200);
     }
 
+    /* ===== Avatar camera badge (เปลี่ยนรูปได้โดยไม่ต้องกดแก้ไขข้อมูลก่อน) ===== */
+    .avatar-photo-wrap {
+      display: inline-block;
+      position: relative;
+    }
+
+    .avatar-camera-badge {
+      align-items: center;
+      background: var(--primary, #2563eb);
+      border: 2px solid #fff;
+      border-radius: 50%;
+      bottom: 8px;
+      box-shadow: var(--shadow-md, 0 4px 10px rgba(0,0,0,0.15));
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      font-size: 0.95rem;
+      height: 32px;
+      justify-content: center;
+      position: absolute;
+      right: 0;
+      transition: var(--transition, all 0.2s ease);
+      width: 32px;
+    }
+
+    .avatar-camera-badge:hover {
+      background: var(--primary-dark, #1d4ed8);
+      transform: scale(1.08);
+    }
+
+    .avatar-camera-badge-sm {
+      bottom: 0;
+      font-size: 0.7rem;
+      height: 24px;
+      width: 24px;
+    }
+
     .parent-card-title {
       font-size: 0.85rem;
       font-weight: 700;

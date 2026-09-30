@@ -848,26 +848,20 @@ if (getUserRole() === 'student') {
         <div class="row g-3 align-items-start">
           <!-- รูปโปรไฟล์ -->
           <div class="col-md-2 text-center">
-            <img id="profilePreview"
-              src="<?= !empty($child['profile_image']) ? htmlspecialchars($child['profile_image']) : '../../../public/assets/images/avatar.png' ?>"
-              class="rounded-3 mb-2"
-              style="width:100%;max-width:200px;height:200px;object-fit:cover;border:2px solid var(--gray-200);"
-              alt="Profile" />
-            <div id="imageUploadWrap" style="display:none;">
-              <div class="d-flex gap-2 justify-content-center flex-wrap">
-                <button type="button" class="btn-action btn-cancel" id="takeProfilePhoto"
-                        style="font-size:0.75rem;padding:5px 8px;">
-                  <i class="bi bi-camera-fill"></i> ถ่ายรูป
-                </button>
-                <button type="button" class="btn-action btn-cancel" id="uploadProfilePhoto"
-                        style="font-size:0.75rem;padding:5px 8px;">
-                  <i class="bi bi-upload"></i> อัปโหลดรูป
-                </button>
-              </div>
-              <input type="file" name="profile_image" accept="image/*" style="display:none;"
-                     id="profileImageInput" />
-              <small class="d-block text-muted mt-1">รองรับ JPG, PNG, GIF, WEBP ขนาดไม่เกิน 5MB</small>
+            <div class="avatar-photo-wrap">
+              <img id="profilePreview"
+                src="<?= !empty($child['profile_image']) ? htmlspecialchars($child['profile_image']) : '../../../public/assets/images/avatar.png' ?>"
+                class="rounded-3 mb-2"
+                style="width:100%;max-width:200px;height:200px;object-fit:cover;border:2px solid var(--gray-200);"
+                alt="Profile" />
+              <?php if ($is_admin || $is_teacher || $is_student): ?>
+              <button type="button" class="avatar-camera-badge" id="profilePhotoBadge" title="เปลี่ยนรูปโปรไฟล์">
+                <i class="bi bi-camera-fill"></i>
+              </button>
+              <?php endif; ?>
             </div>
+            <input type="file" name="profile_image" accept="image/*" style="display:none;" id="profileImageInput" />
+            <small class="d-block text-muted mt-1">รองรับ JPG, PNG, GIF, WEBP ขนาดไม่เกิน 5MB</small>
           </div>
 
           <!-- ข้อมูลพื้นฐาน -->
@@ -1018,12 +1012,15 @@ if (getUserRole() === 'student') {
             <div class="parent-card">
               <div class="parent-card-header">
                 <div class="parent-photo-editor text-center">
-                  <img id="fatherImagePreview" src="<?= !empty($child['father_image']) ? htmlspecialchars($child['father_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Father" class="parent-avatar" style="width:80px;height:80px;" />
-                  <div id="fatherImageUploadWrap" class="mt-1" style="display:none;">
-                    <button type="button" class="btn-action btn-cancel" data-parent-camera="father" style="font-size:0.7rem;padding:3px 6px;" title="ถ่ายรูปบิดา"><i class="bi bi-camera-fill"></i> ถ่ายรูป</button>
-                    <button type="button" class="btn-action btn-cancel" data-parent-upload="father" style="font-size:0.7rem;padding:3px 6px;" title="อัปโหลดรูปบิดา"><i class="bi bi-upload"></i> อัปโหลด</button>
-                    <input type="file" name="father_image" id="fatherImageInput" accept="image/*" style="display:none;">
+                  <div class="avatar-photo-wrap avatar-photo-wrap-sm">
+                    <img id="fatherImagePreview" src="<?= !empty($child['father_image']) ? htmlspecialchars($child['father_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Father" class="parent-avatar" style="width:80px;height:80px;" />
+                    <?php if ($is_admin || $is_teacher || $is_student): ?>
+                    <button type="button" class="avatar-camera-badge avatar-camera-badge-sm" data-parent-photo-badge="father" title="เปลี่ยนรูปบิดา">
+                      <i class="bi bi-camera-fill"></i>
+                    </button>
+                    <?php endif; ?>
                   </div>
+                  <input type="file" name="father_image" id="fatherImageInput" accept="image/*" style="display:none;">
                 </div>
                 <div>
                   <div class="parent-card-title"><i class="bi bi-person me-1"></i>บิดา</div>
@@ -1058,12 +1055,15 @@ if (getUserRole() === 'student') {
             <div class="parent-card">
               <div class="parent-card-header">
                 <div class="parent-photo-editor text-center">
-                  <img id="motherImagePreview" src="<?= !empty($child['mother_image']) ? htmlspecialchars($child['mother_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Mother" class="parent-avatar" style="width:80px;height:80px;" />
-                  <div id="motherImageUploadWrap" class="mt-1" style="display:none;">
-                    <button type="button" class="btn-action btn-cancel" data-parent-camera="mother" style="font-size:0.7rem;padding:3px 6px;" title="ถ่ายรูปมารดา"><i class="bi bi-camera-fill"></i> ถ่ายรูป</button>
-                    <button type="button" class="btn-action btn-cancel" data-parent-upload="mother" style="font-size:0.7rem;padding:3px 6px;" title="อัปโหลดรูปมารดา"><i class="bi bi-upload"></i> อัปโหลด</button>
-                    <input type="file" name="mother_image" id="motherImageInput" accept="image/*" style="display:none;">
+                  <div class="avatar-photo-wrap avatar-photo-wrap-sm">
+                    <img id="motherImagePreview" src="<?= !empty($child['mother_image']) ? htmlspecialchars($child['mother_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Mother" class="parent-avatar" style="width:80px;height:80px;" />
+                    <?php if ($is_admin || $is_teacher || $is_student): ?>
+                    <button type="button" class="avatar-camera-badge avatar-camera-badge-sm" data-parent-photo-badge="mother" title="เปลี่ยนรูปมารดา">
+                      <i class="bi bi-camera-fill"></i>
+                    </button>
+                    <?php endif; ?>
                   </div>
+                  <input type="file" name="mother_image" id="motherImageInput" accept="image/*" style="display:none;">
                 </div>
                 <div>
                   <div class="parent-card-title"><i class="bi bi-person me-1"></i>มารดา</div>
@@ -2235,11 +2235,6 @@ if (getUserRole() === 'student') {
   const btnEditBottom   = document.getElementById('btnEditBottom');
   const btnSaveBottom   = document.getElementById('btnSaveBottom');
   const btnCancelBottom = document.getElementById('btnCancelBottom');
-  const imageWrap = document.getElementById('imageUploadWrap');
-  const parentImageWraps = [
-    document.getElementById('fatherImageUploadWrap'),
-    document.getElementById('motherImageUploadWrap')
-  ];
   const editAllergyBtns = [
     document.getElementById('btnEditDrugAllergy'),
     document.getElementById('btnEditFoodAllergy')
@@ -2268,8 +2263,6 @@ if (getUserRole() === 'student') {
       el.removeAttribute('readonly');
       el.removeAttribute('disabled');
     });
-    imageWrap.style.display = 'block';
-    parentImageWraps.forEach(wrap => { if (wrap) wrap.style.display = 'block'; });
     if (!isStudentUser) {
       editAllergyBtns.forEach(b => { if (b) b.style.display = 'flex'; });
     }
@@ -2303,8 +2296,6 @@ if (getUserRole() === 'student') {
         el.setAttribute('readonly', true);
       }
     });
-    imageWrap.style.display = 'none';
-    parentImageWraps.forEach(wrap => { if (wrap) wrap.style.display = 'none'; });
     editAllergyBtns.forEach(b => { if (b) b.style.display = 'none'; });
     
     // Show top edit buttons, hide top save/cancel
@@ -2565,8 +2556,6 @@ if (getUserRole() === 'student') {
   /* ── Profile Image Preview ── */
   const profileImageInput = document.getElementById('profileImageInput');
   const profilePreview = document.getElementById('profilePreview');
-  const takeProfilePhoto = document.getElementById('takeProfilePhoto');
-  const uploadProfilePhoto = document.getElementById('uploadProfilePhoto');
   const parentImageTargets = {};
   ['father', 'mother'].forEach(type => {
     const preview = document.getElementById(type + 'ImagePreview');
@@ -2702,18 +2691,94 @@ if (getUserRole() === 'student') {
     }
   }
 
-  if (takeProfilePhoto && profileImageInput) {
-    takeProfilePhoto.addEventListener('click', () => {
-      openCameraForImage({ preview: profilePreview, input: profileImageInput, type: 'profile' });
+  // ป้ายกล้องบนรูป: เปลี่ยนรูปได้ทันทีโดยไม่ต้องกด "แก้ไขข้อมูล" ก่อน
+  function showPhotoChoice(target) {
+    Swal.fire({
+      title: 'เปลี่ยนรูปภาพ',
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: 'ถ่ายรูป',
+      denyButtonText: 'อัปโหลดรูป',
+      cancelButtonText: 'ยกเลิก',
+      heightAuto: false
+    }).then(result => {
+      if (result.isConfirmed) {
+        openCameraForImage(target);
+      } else if (result.isDenied && target.input) {
+        target.input.removeAttribute('capture');
+        target.input.click();
+      }
     });
   }
 
-  document.querySelectorAll('[data-parent-camera]').forEach(button => {
+  const profilePhotoBadge = document.getElementById('profilePhotoBadge');
+  if (profilePhotoBadge && profileImageInput) {
+    profilePhotoBadge.addEventListener('click', () => {
+      showPhotoChoice({ preview: profilePreview, input: profileImageInput, type: 'profile' });
+    });
+  }
+
+  document.querySelectorAll('[data-parent-photo-badge]').forEach(button => {
     button.addEventListener('click', () => {
-      const target = parentImageTargets[button.dataset.parentCamera];
-      openCameraForImage({ ...target, type: button.dataset.parentCamera });
+      const type = button.dataset.parentPhotoBadge;
+      const target = parentImageTargets[type];
+      if (target) showPhotoChoice({ ...target, type });
     });
   });
+
+  // บันทึกรูปทันทีถ้าไม่ได้อยู่ในโหมดแก้ไขทั้งฟอร์ม (ถ้าอยู่ในโหมดแก้ไข ให้รอกดปุ่มบันทึกรวม)
+  function finalizeImageSelection(target) {
+    if (!profileEditMode) {
+      autoSaveSingleImage(target);
+    }
+  }
+
+  function autoSaveSingleImage(target) {
+    const formData = new FormData();
+    formData.set('student_id', studentId);
+    formData.set('original_student_id', studentId);
+    formData.set(target.input.name, target.input.files[0]);
+
+    const badge = target.type === 'profile'
+      ? profilePhotoBadge
+      : document.querySelector(`[data-parent-photo-badge="${target.type}"]`);
+    const originalBadgeHtml = badge ? badge.innerHTML : '';
+    if (badge) {
+      badge.disabled = true;
+      badge.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    }
+
+    fetch('../../include/function/edit_child.php', { method: 'POST', body: formData })
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP error: ' + r.status);
+        return r.json();
+      })
+      .then(result => {
+        if (result.status === 'success') {
+          showToast('success', 'บันทึกรูปภาพเรียบร้อยแล้ว');
+          if (target.preview) target.preview.dataset.originalSrc = target.preview.src;
+        } else {
+          showToast('error', result.message || 'ไม่สามารถบันทึกรูปภาพได้');
+          if (target.preview && target.preview.dataset.originalSrc) {
+            target.preview.src = target.preview.dataset.originalSrc;
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error saving image:', error);
+        showToast('error', 'เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
+        if (target.preview && target.preview.dataset.originalSrc) {
+          target.preview.src = target.preview.dataset.originalSrc;
+        }
+      })
+      .finally(() => {
+        target.input.value = '';
+        if (badge) {
+          badge.disabled = false;
+          badge.innerHTML = originalBadgeHtml;
+        }
+      });
+  }
 
   if (switchProfileCamera && profileImageInput) {
     switchProfileCamera.addEventListener('click', async () => {
@@ -2770,6 +2835,7 @@ if (getUserRole() === 'student') {
           dataTransfer.items.add(file);
           activeCameraTarget.input.files = dataTransfer.files;
           cameraModal?.hide();
+          finalizeImageSelection(activeCameraTarget);
         }
       }, 'image/jpeg', 0.9);
     });
@@ -2779,31 +2845,25 @@ if (getUserRole() === 'student') {
     cameraModalElement.addEventListener('hidden.bs.modal', stopProfileCamera);
   }
 
-  if (uploadProfilePhoto && profileImageInput) {
-    uploadProfilePhoto.addEventListener('click', () => {
-      profileImageInput.removeAttribute('capture');
-      profileImageInput.click();
-    });
-  }
-
-  document.querySelectorAll('[data-parent-upload]').forEach(button => {
-    button.addEventListener('click', () => {
-      const target = parentImageTargets[button.dataset.parentUpload];
-      if (target && target.input) target.input.click();
-    });
-  });
-
   if (profileImageInput) {
     profileImageInput.addEventListener('change', function () {
       const file = this.files[0];
-      if (!showProfileImagePreview(file, profilePreview)) this.value = '';
+      if (showProfileImagePreview(file, profilePreview)) {
+        finalizeImageSelection({ preview: profilePreview, input: profileImageInput, type: 'profile' });
+      } else {
+        this.value = '';
+      }
     });
   }
 
-  Object.values(parentImageTargets).forEach(target => {
+  Object.entries(parentImageTargets).forEach(([type, target]) => {
     target.input.addEventListener('change', function () {
       const file = this.files[0];
-      if (!showProfileImagePreview(file, target.preview)) this.value = '';
+      if (showProfileImagePreview(file, target.preview)) {
+        finalizeImageSelection({ ...target, type });
+      } else {
+        this.value = '';
+      }
     });
   });
 
