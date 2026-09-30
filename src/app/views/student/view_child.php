@@ -2451,27 +2451,6 @@ if (getUserRole() === 'student') {
       emergency_relation: emergencyRelation
     };
     
-    // Validation: ตรวจสอบข้อมูลที่จำเป็น
-    const requiredFields = [
-      { field: 'prefix_th', message: 'กรุณากรอกคำนำหน้า (ไทย)' },
-      { field: 'firstname_th', message: 'กรุณากรอกชื่อ (ไทย)' },
-      { field: 'lastname_th', message: 'กรุณากรอกนามสกุล (ไทย)' },
-      { field: 'prefix_en', message: 'กรุณากรอกคำนำหน้า (EN)' },
-      { field: 'firstname_en', message: 'กรุณากรอก First Name' },
-      { field: 'lastname_en', message: 'กรุณากรอก Last Name' },
-      { field: 'sex', message: 'กรุณาเลือกเพศ' },
-      { field: 'emergency_contact', message: 'กรุณากรอกชื่อผู้ติดต่อฉุกเฉิน' },
-      { field: 'emergency_phone', message: 'กรุณากรอกเบอร์ผู้ติดต่อฉุกเฉิน' }
-    ];
-    
-    for (const item of requiredFields) {
-      if (!data[item.field] || data[item.field].trim() === '') {
-        showToast('error', item.message);
-        document.querySelector(`[name="${item.field}"]`)?.focus();
-        return false;
-      }
-    }
-    
     // Validation: ตรวจสอบรูปแบบเบอร์โทร
     const phonePattern = /^[0-9]{9,10}$/;
     const phoneFields = ['father_phone', 'mother_phone', 'relative_phone', 'emergency_phone'];
