@@ -967,34 +967,6 @@
     .icon-btn-delete { background: var(--danger-light); color: var(--danger); }
     .icon-btn-add { background: var(--success-light); color: var(--success); }
 
-    /* ===== Toast / Notification ===== */
-    .toast-container {
-      position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .toast-item {
-      background: var(--gray-900);
-      color: #fff;
-      padding: 0.75rem 1.25rem;
-      border-radius: var(--radius-md);
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      box-shadow: var(--shadow-lg);
-      animation: slideInRight 0.3s ease;
-    }
-
-    @keyframes slideInRight {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
 
     /* ===== Modal Overrides ===== */
     .modal-content {

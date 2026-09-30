@@ -1967,9 +1967,6 @@ if (getUserRole() === 'student') {
   </div>
 </div>
 
-<!-- ===== Toast Container ===== -->
-<div class="toast-container" id="toastContainer"></div>
-
 <!-- ===== Modal: Attendance Detail ===== -->
 <div class="modal fade" id="attendanceDetailModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -2784,24 +2781,17 @@ if (getUserRole() === 'student') {
 
   /* ── Toast Notification ── */
   window.showToast = function (type, message) {
-    const container = document.getElementById('toastContainer');
-    const icons = { success: 'bi-check-circle-fill', error: 'bi-x-circle-fill',
-                    warning: 'bi-exclamation-triangle-fill', info: 'bi-info-circle-fill' };
-    const colors = { success: '#22c55e', error: '#ef4444', warning: '#f59e0b', info: '#06b6d4' };
-
-    const toast = document.createElement('div');
-    toast.className = 'toast-item';
-    toast.innerHTML = `
-      <i class="bi ${icons[type] || icons.info}" style="color:${colors[type]};font-size:1rem;"></i>
-      <span>${message}</span>
-    `;
-    container.appendChild(toast);
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateX(100%)';
-      toast.style.transition = 'all 0.3s ease';
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    const icons = { success: 'success', error: 'error', warning: 'warning', info: 'info' };
+    Swal.fire({
+      icon: icons[type] || 'info',
+      title: message,
+      toast: true,
+      position: 'center',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      heightAuto: false
+    });
   };
 
   /* ── Allergy Modal Helpers ── */
