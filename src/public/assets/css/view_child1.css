@@ -469,7 +469,7 @@
       position: relative;
     }
 
-    .avatar-camera-badge {
+    .avatar-upload-badge {
       align-items: center;
       background: var(--primary, #2563eb);
       border: 2px solid #fff;
@@ -488,12 +488,12 @@
       width: 32px;
     }
 
-    .avatar-camera-badge:hover {
+    .avatar-upload-badge:hover {
       background: var(--primary-dark, #1d4ed8);
       transform: scale(1.08);
     }
 
-    .avatar-camera-badge-sm {
+    .avatar-upload-badge-sm {
       bottom: 0;
       font-size: 0.7rem;
       height: 24px;

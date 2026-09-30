@@ -855,8 +855,8 @@ if (getUserRole() === 'student') {
                 style="width:100%;max-width:200px;height:200px;object-fit:cover;border:2px solid var(--gray-200);"
                 alt="Profile" />
               <?php if ($is_admin || $is_teacher || $is_student): ?>
-              <button type="button" class="avatar-camera-badge" id="profilePhotoBadge" title="เปลี่ยนรูปโปรไฟล์">
-                <i class="bi bi-camera-fill"></i>
+              <button type="button" class="avatar-upload-badge" id="profilePhotoBadge" title="เปลี่ยนรูปโปรไฟล์">
+                <i class="bi bi-upload"></i>
               </button>
               <?php endif; ?>
             </div>
@@ -1015,8 +1015,8 @@ if (getUserRole() === 'student') {
                   <div class="avatar-photo-wrap avatar-photo-wrap-sm">
                     <img id="fatherImagePreview" src="<?= !empty($child['father_image']) ? htmlspecialchars($child['father_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Father" class="parent-avatar" style="width:80px;height:80px;" />
                     <?php if ($is_admin || $is_teacher || $is_student): ?>
-                    <button type="button" class="avatar-camera-badge avatar-camera-badge-sm" data-parent-photo-badge="father" title="เปลี่ยนรูปบิดา">
-                      <i class="bi bi-camera-fill"></i>
+                    <button type="button" class="avatar-upload-badge avatar-upload-badge-sm" data-parent-photo-badge="father" title="เปลี่ยนรูปบิดา">
+                      <i class="bi bi-upload"></i>
                     </button>
                     <?php endif; ?>
                   </div>
@@ -1058,8 +1058,8 @@ if (getUserRole() === 'student') {
                   <div class="avatar-photo-wrap avatar-photo-wrap-sm">
                     <img id="motherImagePreview" src="<?= !empty($child['mother_image']) ? htmlspecialchars($child['mother_image']) : '../../../public/assets/images/avatar.png' ?>" alt="Mother" class="parent-avatar" style="width:80px;height:80px;" />
                     <?php if ($is_admin || $is_teacher || $is_student): ?>
-                    <button type="button" class="avatar-camera-badge avatar-camera-badge-sm" data-parent-photo-badge="mother" title="เปลี่ยนรูปมารดา">
-                      <i class="bi bi-camera-fill"></i>
+                    <button type="button" class="avatar-upload-badge avatar-upload-badge-sm" data-parent-photo-badge="mother" title="เปลี่ยนรูปมารดา">
+                      <i class="bi bi-upload"></i>
                     </button>
                     <?php endif; ?>
                   </div>
@@ -1234,44 +1234,6 @@ if (getUserRole() === 'student') {
       </div><!-- end card-body -->
     </div><!-- end content-card -->
   </div>
-
-  <!-- Modal ถ่ายรูปโปรไฟล์ด้วยกล้องจริง -->
-  <div class="modal fade" id="profileCameraModal" tabindex="-1" aria-labelledby="profileCameraModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title" id="profileCameraModalLabel">
-            <i class="bi bi-camera-fill me-2"></i>ถ่ายรูปนักเรียน
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="ปิด"></button>
-        </div>
-          <div class="modal-body text-center">
-            <video id="profileCameraVideo" class="w-100 rounded-3 bg-dark" autoplay playsinline
-                   style="max-height:55vh;object-fit:cover;"></video>
-            <canvas id="profileCameraCanvas" class="d-none"></canvas>
-            <div id="profileCameraError" class="alert alert-warning mt-3 mb-0" style="display:none;"></div>
-            <div id="profileCameraZoomWrap" class="mt-3" style="display:none;">
-              <label for="profileCameraZoom" class="form-label mb-1">
-                <i class="bi bi-zoom-in me-1"></i>ซูม <span id="profileCameraZoomValue">1.0x</span>
-              </label>
-              <input type="range" class="form-range" id="profileCameraZoom" step="0.1">
-            </div>
-            <div class="small text-muted mt-2">กรุณาอนุญาตให้เว็บไซต์เข้าถึงกล้อง</div>
-          </div>
-        <div class="modal-footer justify-content-center">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-          <button type="button" class="btn btn-outline-primary" id="switchProfileCamera">
-            <i class="bi bi-arrow-repeat me-1"></i>สลับกล้อง
-          </button>
-          <button type="button" class="btn btn-primary" id="captureProfilePhoto">
-            <i class="bi bi-camera-fill me-1"></i>ถ่ายภาพ
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  
 
   <!-- ===== TAB: VACCINE ===== -->
   <div id="tab-vaccine" class="tab-content-pane" style="<?= $currentTab === 'vaccine' ? '' : 'display:none;' ?>">
@@ -2568,23 +2530,6 @@ if (getUserRole() === 'student') {
     profilePreview.dataset.originalSrc = profilePreview.src;
   }
 
-  const cameraModalElement = document.getElementById('profileCameraModal');
-  const cameraVideo = document.getElementById('profileCameraVideo');
-  const cameraCanvas = document.getElementById('profileCameraCanvas');
-  const cameraError = document.getElementById('profileCameraError');
-  const captureProfilePhoto = document.getElementById('captureProfilePhoto');
-  const switchProfileCamera = document.getElementById('switchProfileCamera');
-  const cameraZoomWrap = document.getElementById('profileCameraZoomWrap');
-  const cameraZoom = document.getElementById('profileCameraZoom');
-  const cameraZoomValue = document.getElementById('profileCameraZoomValue');
-  const cameraModal = cameraModalElement && window.bootstrap
-    ? bootstrap.Modal.getOrCreateInstance(cameraModalElement)
-    : null;
-  let profileCameraStream = null;
-  let profileCameraTrack = null;
-  let profileCameraFacing = 'user';
-  let activeCameraTarget = { preview: profilePreview, input: profileImageInput, type: 'profile' };
-
   function showProfileImagePreview(file, previewElement) {
     if (!file) return false;
 
@@ -2607,108 +2552,11 @@ if (getUserRole() === 'student') {
     return true;
   }
 
-  function stopProfileCamera() {
-    if (profileCameraStream) {
-      profileCameraStream.getTracks().forEach(track => track.stop());
-      profileCameraStream = null;
-    }
-    profileCameraTrack = null;
-    if (cameraVideo) cameraVideo.srcObject = null;
-    if (cameraZoomWrap) cameraZoomWrap.style.display = 'none';
-    if (switchProfileCamera) switchProfileCamera.disabled = true;
-  }
-
-  function configureProfileCameraZoom() {
-    if (!profileCameraTrack || !cameraZoom || !cameraZoomWrap) return;
-
-    const capabilities = typeof profileCameraTrack.getCapabilities === 'function'
-      ? profileCameraTrack.getCapabilities()
-      : {};
-    const zoom = capabilities.zoom;
-
-    // แสดงเฉพาะกล้องที่รองรับการซูมจริง
-    if (!zoom || Number(zoom.max) <= Number(zoom.min)) {
-      cameraZoomWrap.style.display = 'none';
-      return;
-    }
-
-    const settings = typeof profileCameraTrack.getSettings === 'function'
-      ? profileCameraTrack.getSettings()
-      : {};
-    cameraZoom.min = zoom.min;
-    cameraZoom.max = zoom.max;
-    cameraZoom.step = zoom.step || 0.1;
-    cameraZoom.value = settings.zoom || zoom.min;
-    if (cameraZoomValue) {
-      cameraZoomValue.textContent = Number(cameraZoom.value).toFixed(1) + 'x';
-    }
-    cameraZoomWrap.style.display = 'block';
-  }
-
-  async function startProfileCamera() {
-    if (!cameraVideo || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      throw new Error('เบราว์เซอร์นี้ไม่รองรับการเปิดกล้อง หรือเว็บไซต์ไม่ได้เปิดผ่าน HTTPS');
-    }
-
-    profileCameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: profileCameraFacing } },
-      audio: false
-    });
-    profileCameraTrack = profileCameraStream.getVideoTracks()[0] || null;
-    cameraVideo.srcObject = profileCameraStream;
-    await cameraVideo.play();
-    configureProfileCameraZoom();
-    if (switchProfileCamera) switchProfileCamera.disabled = false;
-  }
-
-  // เปิดกล้องจริงผ่าน getUserMedia แทนการเปิดตัวเลือกไฟล์
-  async function openCameraForImage(target) {
-    if (!cameraModal || !target || !target.input) {
-      showToast('error', 'ไม่สามารถเปิดหน้าต่างกล้องได้');
-      return;
-    }
-
-    activeCameraTarget = target;
-    if (cameraError) {
-      cameraError.style.display = 'none';
-      cameraError.textContent = '';
-    }
-    if (captureProfilePhoto) captureProfilePhoto.disabled = true;
-    if (switchProfileCamera) switchProfileCamera.disabled = true;
-    cameraModal.show();
-
-    try {
-      await startProfileCamera();
-      if (captureProfilePhoto) captureProfilePhoto.disabled = false;
-    } catch (error) {
-      if (cameraError) {
-        cameraError.textContent = window.isSecureContext
-          ? 'ไม่สามารถเปิดกล้องได้ กรุณาตรวจสอบสิทธิ์การใช้งานกล้อง'
-          : 'การใช้กล้องต้องเปิดเว็บไซต์ผ่าน HTTPS หรือ localhost';
-        cameraError.style.display = 'block';
-      }
-      stopProfileCamera();
-    }
-  }
-
-  // ป้ายกล้องบนรูป: เปลี่ยนรูปได้ทันทีโดยไม่ต้องกด "แก้ไขข้อมูล" ก่อน
+  // ป้ายอัปโหลดบนรูป: เปลี่ยนรูปได้ทันทีโดยไม่ต้องกด "แก้ไขข้อมูล" ก่อน
   function showPhotoChoice(target) {
-    Swal.fire({
-      title: 'เปลี่ยนรูปภาพ',
-      showDenyButton: true,
-      showCancelButton: true,
-      confirmButtonText: 'ถ่ายรูป',
-      denyButtonText: 'อัปโหลดรูป',
-      cancelButtonText: 'ยกเลิก',
-      heightAuto: false
-    }).then(result => {
-      if (result.isConfirmed) {
-        openCameraForImage(target);
-      } else if (result.isDenied && target.input) {
-        target.input.removeAttribute('capture');
-        target.input.click();
-      }
-    });
+    if (!target.input) return;
+    target.input.removeAttribute('capture');
+    target.input.click();
   }
 
   const profilePhotoBadge = document.getElementById('profilePhotoBadge');
@@ -2778,71 +2626,6 @@ if (getUserRole() === 'student') {
           badge.innerHTML = originalBadgeHtml;
         }
       });
-  }
-
-  if (switchProfileCamera && profileImageInput) {
-    switchProfileCamera.addEventListener('click', async () => {
-      const previousFacing = profileCameraFacing;
-      profileCameraFacing = previousFacing === 'user' ? 'environment' : 'user';
-      switchProfileCamera.disabled = true;
-      stopProfileCamera();
-
-      try {
-        await startProfileCamera();
-      } catch (error) {
-        profileCameraFacing = previousFacing;
-        try {
-          await startProfileCamera();
-        } catch (restoreError) {
-          if (cameraError) {
-            cameraError.textContent = 'ไม่สามารถสลับกล้องได้ กรุณาตรวจสอบว่ามีกล้องอีกตัวและอนุญาตสิทธิ์แล้ว';
-            cameraError.style.display = 'block';
-          }
-        }
-      }
-    });
-  }
-
-  if (cameraZoom) {
-    cameraZoom.addEventListener('input', async () => {
-      if (!profileCameraTrack || typeof profileCameraTrack.applyConstraints !== 'function') return;
-      const value = Number(cameraZoom.value);
-      if (cameraZoomValue) cameraZoomValue.textContent = value.toFixed(1) + 'x';
-      try {
-        await profileCameraTrack.applyConstraints({ advanced: [{ zoom: value }] });
-      } catch (error) {
-        showToast('warning', 'กล้องไม่รองรับระดับซูมนี้');
-      }
-    });
-  }
-
-  if (captureProfilePhoto) {
-    captureProfilePhoto.addEventListener('click', () => {
-      if (!cameraVideo || !cameraCanvas || !cameraVideo.videoWidth || !activeCameraTarget.input) return;
-
-      cameraCanvas.width = cameraVideo.videoWidth;
-      cameraCanvas.height = cameraVideo.videoHeight;
-      cameraCanvas.getContext('2d').drawImage(
-        cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height
-      );
-
-      cameraCanvas.toBlob(blob => {
-        if (!blob) return;
-        const fileName = activeCameraTarget.type + '_camera.jpg';
-        const file = new File([blob], fileName, { type: 'image/jpeg' });
-        if (showProfileImagePreview(file, activeCameraTarget.preview)) {
-          const dataTransfer = new DataTransfer();
-          dataTransfer.items.add(file);
-          activeCameraTarget.input.files = dataTransfer.files;
-          cameraModal?.hide();
-          finalizeImageSelection(activeCameraTarget);
-        }
-      }, 'image/jpeg', 0.9);
-    });
-  }
-
-  if (cameraModalElement) {
-    cameraModalElement.addEventListener('hidden.bs.modal', stopProfileCamera);
   }
 
   if (profileImageInput) {
