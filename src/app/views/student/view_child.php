@@ -1141,7 +1141,7 @@ if (getUserRole() === 'student') {
             <div class="allergy-card allergy-card-drug" id="drugAllergyCard">
               <div class="allergy-card-title" style="color:#b91c1c;">
                 <i class="bi bi-capsule-pill"></i> การแพ้ยา
-                <?php if ($is_admin): ?>
+                <?php if ($is_admin || $is_teacher || $is_student): ?>
                 <button type="button" class="icon-btn icon-btn-edit ms-auto" id="btnEditDrugAllergy" style="display:none;" title="แก้ไข">
                   <i class="bi bi-pencil"></i>
                 </button>
@@ -1157,7 +1157,7 @@ if (getUserRole() === 'student') {
             <div class="allergy-card allergy-card-none" id="foodAllergyCard">
               <div class="allergy-card-title" style="color:#15803d;">
                 <i class="bi bi-egg-fried"></i> การแพ้อาหาร
-                <?php if ($is_admin): ?>
+                <?php if ($is_admin || $is_teacher || $is_student): ?>
                 <button type="button" class="icon-btn icon-btn-edit ms-auto" id="btnEditFoodAllergy" style="display:none;" title="แก้ไข">
                   <i class="bi bi-pencil"></i>
                 </button>
@@ -2226,9 +2226,7 @@ if (getUserRole() === 'student') {
       el.removeAttribute('readonly');
       el.removeAttribute('disabled');
     });
-    if (!isStudentUser) {
-      editAllergyBtns.forEach(b => { if (b) b.style.display = 'flex'; });
-    }
+    editAllergyBtns.forEach(b => { if (b) b.style.display = 'flex'; });
 
     // Hide top edit buttons, show top save/cancel
     if (btnEdit) btnEdit.style.display = 'none';
