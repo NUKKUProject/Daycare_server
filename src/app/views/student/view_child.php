@@ -1241,24 +1241,28 @@ if (getUserRole() === 'student') {
   <!-- Modal ตัดรูปก่อนบันทึก -->
   <div class="modal fade" id="cropImageModal" tabindex="-1" aria-labelledby="cropImageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
+      <div class="modal-content crop-modal-content">
+        <div class="crop-modal-header">
           <h5 class="modal-title" id="cropImageModalLabel">
-            <i class="bi bi-crop me-2"></i>ตัดรูปภาพ
+            <span class="crop-modal-icon"><i class="bi bi-crop"></i></span>
+            <span>
+              ตัดรูปภาพ
+              <small>ลากเพื่อย้ายกรอบ ใช้นิ้ว/ล้อเมาส์เพื่อซูม</small>
+            </span>
           </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="ปิด"></button>
         </div>
-        <div class="modal-body">
-          <div style="max-height:60vh;">
-            <img id="cropImageTarget" src="" alt="รูปที่จะตัด" style="max-width:100%;display:block;">
+        <div class="modal-body crop-modal-body">
+          <div class="crop-canvas-wrap">
+            <img id="cropImageTarget" src="" alt="รูปที่จะตัด">
           </div>
         </div>
-        <div class="modal-footer justify-content-center">
-          <button type="button" class="btn btn-secondary" id="cropImageCancel">
-            <i class="bi bi-x-lg me-1"></i>ยกเลิก
+        <div class="modal-footer crop-modal-footer">
+          <button type="button" class="btn-action btn-cancel" id="cropImageCancel">
+            <i class="bi bi-x-lg"></i><span>ยกเลิก</span>
           </button>
-          <button type="button" class="btn btn-primary" id="cropImageConfirm">
-            <i class="bi bi-check-lg me-1"></i>ตัดรูปและใช้รูปนี้
+          <button type="button" class="btn-action btn-save" id="cropImageConfirm">
+            <i class="bi bi-check-lg"></i><span>ตัดรูปและใช้รูปนี้</span>
           </button>
         </div>
       </div>
