@@ -1010,19 +1010,6 @@ if (getUserRole() === 'student') {
         <div class="section-divider">
           <span class="section-divider-title"><i class="bi bi-people me-1"></i>ข้อมูลผู้ปกครอง</span>
           <div class="section-divider-line"></div>
-          <?php if ($is_admin || $is_teacher || $is_student): ?>
-          <div class="d-flex gap-2">
-            <button type="button" class="btn-action btn-edit" id="btnEditParent">
-              <i class="bi bi-pencil"></i><span<?= $is_student ? ' class="btn-label-keep"' : '' ?>><?= $is_student ? 'แก้ไขข้อมูล' : 'แก้ไข' ?></span>
-            </button>
-            <button type="button" class="btn-action btn-save" id="btnSaveParent" style="display:none;">
-              <i class="bi bi-check-lg"></i><span>บันทึก</span>
-            </button>
-            <button type="button" class="btn-action btn-cancel" id="btnCancelParent" style="display:none;">
-              <i class="bi bi-x-lg"></i><span>ยกเลิก</span>
-            </button>
-          </div>
-          <?php endif; ?>
         </div>
 
         <div class="row g-3">
@@ -2248,9 +2235,6 @@ if (getUserRole() === 'student') {
   const btnEditBottom   = document.getElementById('btnEditBottom');
   const btnSaveBottom   = document.getElementById('btnSaveBottom');
   const btnCancelBottom = document.getElementById('btnCancelBottom');
-  const btnEditParent   = document.getElementById('btnEditParent');
-  const btnSaveParent   = document.getElementById('btnSaveParent');
-  const btnCancelParent = document.getElementById('btnCancelParent');
   const imageWrap = document.getElementById('imageUploadWrap');
   const parentImageWraps = [
     document.getElementById('fatherImageUploadWrap'),
@@ -2300,11 +2284,6 @@ if (getUserRole() === 'student') {
     if (btnSaveBottom) btnSaveBottom.style.display = 'inline-flex';
     if (btnCancelBottom) btnCancelBottom.style.display = 'inline-flex';
 
-    // Parent section buttons
-    if (btnEditParent) btnEditParent.style.display = 'none';
-    if (btnSaveParent) btnSaveParent.style.display = 'inline-flex';
-    if (btnCancelParent) btnCancelParent.style.display = 'inline-flex';
-    
     showToast('info', 'โหมดแก้ไขเปิดใช้งานแล้ว');
   }
 
@@ -2338,11 +2317,6 @@ if (getUserRole() === 'student') {
     if (btnSaveBottom) btnSaveBottom.style.display = 'none';
     if (btnCancelBottom) btnCancelBottom.style.display = 'none';
 
-    // Parent section buttons
-    if (btnEditParent) btnEditParent.style.display = 'inline-flex';
-    if (btnSaveParent) btnSaveParent.style.display = 'none';
-    if (btnCancelParent) btnCancelParent.style.display = 'none';
-    
     if (!save) {
       const preview = document.getElementById('profilePreview');
       const imageInput = document.getElementById('profileImageInput');
@@ -2587,10 +2561,6 @@ if (getUserRole() === 'student') {
   if (btnEditBottom)   btnEditBottom.addEventListener('click', enterEditMode);
   if (btnSaveBottom)   btnSaveBottom.addEventListener('click', () => exitEditMode(true));
   if (btnCancelBottom) btnCancelBottom.addEventListener('click', () => exitEditMode(false));
-
-  if (btnEditParent)   btnEditParent.addEventListener('click', enterEditMode);
-  if (btnSaveParent)   btnSaveParent.addEventListener('click', () => exitEditMode(true));
-  if (btnCancelParent) btnCancelParent.addEventListener('click', () => exitEditMode(false));
 
   /* ── Profile Image Preview ── */
   const profileImageInput = document.getElementById('profileImageInput');
