@@ -2265,27 +2265,31 @@ if (getUserRole() === 'student') {
   const isStudentUser = <?= $is_student ? 'true' : 'false' ?>;
 
   function getEditableFields() {
-    const studentidExclusion = isAdminUser ? '' : ':not([name="studentid"])';
+    // เลขประจำตัว: แก้ได้เฉพาะ admin
+    const inputExclusion = isAdminUser ? '' : ':not([name="studentid"])';
+    // ปีการศึกษา/กลุ่มเด็ก/ห้องเรียน: ผู้ปกครอง (student) แก้ไม่ได้
+    const selectExclusion = isStudentUser
+      ? ':not([name="academic_year"]):not([name="child_group"]):not([name="classroom"])'
+      : '';
     return document.querySelectorAll(
-      '#tab-profile input:not([type="file"])' + studentidExclusion + ', #tab-profile select, #tab-profile textarea'
+      '#tab-profile input:not([type="file"])' + inputExclusion +
+      ', #tab-profile select' + selectExclusion +
+      ', #tab-profile textarea'
     );
   }
 
   function enterEditMode() {
     profileEditMode = true;
-    // ผู้ปกครอง (student) แก้ไขได้เฉพาะรูปภาพ จึงไม่ปลดล็อกช่องข้อมูลอื่นและปุ่มจัดการการแพ้
-    if (!isStudentUser) {
-      getEditableFields().forEach(el => {
-        el.removeAttribute('readonly');
-        el.removeAttribute('disabled');
-      });
-    }
+    getEditableFields().forEach(el => {
+      el.removeAttribute('readonly');
+      el.removeAttribute('disabled');
+    });
     imageWrap.style.display = 'block';
     parentImageWraps.forEach(wrap => { if (wrap) wrap.style.display = 'block'; });
     if (!isStudentUser) {
       editAllergyBtns.forEach(b => { if (b) b.style.display = 'flex'; });
     }
-    
+
     // Hide top edit buttons, show top save/cancel
     if (btnEdit) btnEdit.style.display = 'none';
     if (btnSave) btnSave.style.display = 'inline-flex';
@@ -2301,7 +2305,7 @@ if (getUserRole() === 'student') {
     if (btnSaveParent) btnSaveParent.style.display = 'inline-flex';
     if (btnCancelParent) btnCancelParent.style.display = 'inline-flex';
     
-    showToast('info', isStudentUser ? 'เลือกรูปภาพที่ต้องการเปลี่ยนแล้วกดบันทึก' : 'โหมดแก้ไขเปิดใช้งานแล้ว');
+    showToast('info', 'โหมดแก้ไขเปิดใช้งานแล้ว');
   }
 
   function exitEditMode(save) {
@@ -2358,54 +2362,7 @@ if (getUserRole() === 'student') {
     }
   }
 
-  function saveStudentImages() {
-    const inputs = ['profileImageInput', 'fatherImageInput', 'motherImageInput']
-      .map(id => document.getElementById(id))
-      .filter(input => input && input.files && input.files.length > 0);
-
-    if (inputs.length === 0) {
-      showToast('warning', 'ยังไม่ได้เลือกรูปภาพใหม่');
-      return false;
-    }
-
-    const formData = new FormData();
-    formData.set('student_id', studentId);
-    inputs.forEach(input => formData.set(input.name, input.files[0]));
-
-    const btnSave = document.getElementById('btnSave');
-    const originalText = btnSave.innerHTML;
-    btnSave.disabled = true;
-    btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึก...';
-
-    fetch('../../include/function/edit_child.php', { method: 'POST', body: formData })
-      .then(r => {
-        if (!r.ok) throw new Error('HTTP error: ' + r.status);
-        return r.json();
-      })
-      .then(result => {
-        if (result.status === 'success') {
-          showToast('success', 'บันทึกรูปภาพเรียบร้อยแล้ว');
-          setTimeout(() => window.location.reload(), 1000);
-        } else {
-          showToast('error', result.message || 'ไม่สามารถบันทึกรูปภาพได้');
-        }
-      })
-      .catch(error => {
-        console.error('Error saving images:', error);
-        showToast('error', 'เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
-      })
-      .finally(() => {
-        btnSave.disabled = false;
-        btnSave.innerHTML = originalText;
-      });
-
-    return true;
-  }
-
   function saveProfileData() {
-    if (isStudentUser) {
-      return saveStudentImages();
-    }
     // ดึงค่าจากฟอร์มเก็บในตัวแปร
     const studentid = document.querySelector('[name="studentid"]').value;
     const academicYear = document.querySelector('[name="academic_year"]').value;

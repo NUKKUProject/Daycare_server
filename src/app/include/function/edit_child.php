@@ -597,15 +597,15 @@ try {
             error_log("Received POST request with data: " . print_r($_POST, true));
         }
 
-        // ผู้ปกครอง (student) แก้ไขได้เฉพาะรูปภาพของเด็กตัวเอง (โปรไฟล์/บิดา/มารดา) เท่านั้น
-        // ตัดข้อมูลอื่นทิ้ง ให้ทุกฟิลด์ที่เหลือใช้ค่าเดิมในฐานข้อมูล และห้ามแก้เลขประจำตัว
+        // ผู้ปกครอง (student) แก้ไขข้อมูลของเด็กตัวเองได้ ยกเว้นเลขประจำตัว ปีการศึกษา
+        // กลุ่มเด็ก และห้องเรียน ฟิลด์เหล่านี้ตัดทิ้งเสมอเพื่อให้ใช้ค่าเดิมในฐานข้อมูลต่อไป
+        // (ไม่ใช่แค่ซ่อนในหน้าจอ บังคับที่ฝั่งเซิร์ฟเวอร์ด้วย)
         if (($_SESSION['role'] ?? '') === 'student') {
             $ownStudentId = $_SESSION['username'] ?? '';
             if ($ownStudentId === '' || ($inputData['student_id'] ?? '') !== $ownStudentId) {
                 sendJsonResponse('error', 'Unauthorized access', 403);
             }
-            $inputData = ['student_id' => $ownStudentId];
-            unset($_FILES['relative_image']);
+            unset($inputData['academic_year'], $inputData['child_group'], $inputData['classroom']);
         }
 
         try {
