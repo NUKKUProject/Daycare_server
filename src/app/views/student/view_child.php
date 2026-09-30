@@ -1599,7 +1599,7 @@ if (getUserRole() === 'student') {
             </div>
           </div>
           <div class="modal-footer bg-light">
-            <?php if ($is_admin || $is_teacher): ?>
+            <?php if ($is_admin || $is_teacher || $is_student): ?>
             <button type="button" class="btn btn-warning" id="detailEditBtn">
               <i class="bi bi-pencil me-2"></i>แก้ไข
             </button>
@@ -3399,10 +3399,10 @@ if (getUserRole() === 'student') {
         html += '<td><div class="d-flex gap-1 flex-nowrap">';
         if (vaccine.vaccine_record_id) {
           html += `<button class="icon-btn icon-btn-view" title="ดูรายละเอียด" onclick="viewVaccineDetails(${vaccine.vaccine_record_id})"><i class="bi bi-eye"></i></button>`;
-          <?php if ($is_admin || $is_teacher): ?>
+          <?php if ($is_admin || $is_teacher || $is_student): ?>
           html += `<button class="icon-btn icon-btn-edit" title="แก้ไข" onclick="editVaccineRecord(${vaccine.vaccine_record_id})"><i class="bi bi-pencil"></i></button>`;
           <?php endif; ?>
-          <?php if ($is_admin): ?>
+          <?php if ($is_admin || $is_student): ?>
           html += `<button class="icon-btn icon-btn-delete" title="ลบ" onclick="deleteVaccineRecord(${vaccine.vaccine_record_id})"><i class="bi bi-trash"></i></button>`;
           <?php endif; ?>
         } else {
@@ -3516,7 +3516,7 @@ if (getUserRole() === 'student') {
           document.getElementById('detailNextAppointment').textContent = formatThaiDate(d.next_appointment);
           document.getElementById('detailNote').textContent = d.vaccine_note || '-';
 
-          <?php if ($is_admin || $is_teacher): ?>
+          <?php if ($is_admin || $is_teacher || $is_student): ?>
           const editBtn = document.getElementById('detailEditBtn');
           editBtn.style.display = 'inline-flex';
           editBtn.onclick = function() {

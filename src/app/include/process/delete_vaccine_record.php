@@ -3,7 +3,7 @@ require_once(__DIR__ . '/../../../config/database.php');
 session_start();
 
 // ตรวจสอบสิทธิ์
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'teacher'])) {
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'teacher', 'student'])) {
     http_response_code(403);
     echo json_encode(['status' => 'error', 'message' => 'ไม่มีสิทธิ์ในการดำเนินการ']);
     exit;
@@ -18,10 +18,19 @@ try {
 
     $pdo = getDatabaseConnection();
 
-    // ดึงข้อมูลรูปภาพก่อนลบ
-    $stmt = $pdo->prepare("SELECT image_path FROM vaccines WHERE id = ?");
+    // ดึงข้อมูลรูปภาพ (และเจ้าของรายการ) ก่อนลบ
+    $stmt = $pdo->prepare("SELECT image_path, student_id FROM vaccines WHERE id = ?");
     $stmt->execute([$data['id']]);
     $vaccine = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // ผู้ปกครอง (student) ลบได้เฉพาะรายการของเด็กตัวเอง
+    if ($_SESSION['role'] === 'student') {
+        if (!$vaccine || $vaccine['student_id'] !== ($_SESSION['username'] ?? '')) {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'ไม่มีสิทธิ์ในการดำเนินการ']);
+            exit;
+        }
+    }
 
     // ลบข้อมูลจากฐานข้อมูล
     $stmt = $pdo->prepare("DELETE FROM vaccines WHERE id = ?");

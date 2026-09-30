@@ -20,21 +20,27 @@ try {
         throw new Exception('ข้อมูลไม่ครบถ้วน กรุณากรอกรหัสวัคซีน วันที่ฉีด และรหัสนักเรียน');
     }
 
-    // ผู้ปกครอง (student) บันทึกรายการใหม่ได้เฉพาะของเด็กตัวเอง และแก้ไขรายการเดิมไม่ได้
+    $pdo = getDatabaseConnection();
+
+    // ผู้ปกครอง (student) บันทึก/แก้ไขได้เฉพาะของเด็กตัวเอง
     if ($_SESSION['role'] === 'student') {
         if ($student_id !== ($_SESSION['username'] ?? '')) {
             http_response_code(403);
             echo json_encode(['status' => 'error', 'message' => 'ไม่มีสิทธิ์ในการดำเนินการ']);
             exit;
         }
+        // ถ้าเป็นการแก้ไขรายการเดิม ต้องเช็คว่ารายการนั้นเป็นของเด็กตัวเองจริง (กันแก้ไขรายการของเด็กคนอื่นผ่าน id)
         if (!empty($data['id'])) {
-            http_response_code(403);
-            echo json_encode(['status' => 'error', 'message' => 'ไม่มีสิทธิ์แก้ไขรายการที่บันทึกแล้ว']);
-            exit;
+            $ownerStmt = $pdo->prepare("SELECT student_id FROM vaccines WHERE id = :id");
+            $ownerStmt->execute(['id' => $data['id']]);
+            $ownerStudentId = $ownerStmt->fetchColumn();
+            if ($ownerStudentId === false || $ownerStudentId !== ($_SESSION['username'] ?? '')) {
+                http_response_code(403);
+                echo json_encode(['status' => 'error', 'message' => 'ไม่มีสิทธิ์ในการดำเนินการ']);
+                exit;
+            }
         }
     }
-
-    $pdo = getDatabaseConnection();
 
     // ดึงชื่อวัคซีนจากตาราง vaccine_list
     $stmt = $pdo->prepare("SELECT vaccine_name FROM vaccine_list WHERE id = :vaccine_list_id");
