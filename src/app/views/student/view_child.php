@@ -2451,38 +2451,79 @@ if (getUserRole() === 'student') {
       emergency_relation: emergencyRelation
     };
     
+    // รวบรวมทุกข้อผิดพลาดไว้ก่อน แล้วค่อยแสดง popup สรุปทีเดียว (ไม่หยุดที่ข้อแรก)
+    const validationErrors = [];
+    const fieldLabels = {
+      studentid: 'รหัสนักเรียน',
+      id_card: 'เลขบัตรประชาชน',
+      zipcode: 'รหัสไปรษณีย์',
+      father_phone: 'เบอร์โทรบิดา',
+      mother_phone: 'เบอร์โทรมารดา',
+      relative_phone: 'เบอร์โทรญาติ',
+      emergency_phone: 'เบอร์โทรผู้ติดต่อฉุกเฉิน'
+    };
+
     // Validation: ตรวจสอบรูปแบบเบอร์โทร
     const phonePattern = /^[0-9]{9,10}$/;
     const phoneFields = ['father_phone', 'mother_phone', 'relative_phone', 'emergency_phone'];
     for (const field of phoneFields) {
       if (data[field] && !phonePattern.test(data[field].replace(/[-\s]/g, ''))) {
-        showToast('error', 'กรุณากรอกเบอร์โทรให้ถูกต้อง (9-10 หลัก)');
-        document.querySelector(`[name="${field}"]`)?.focus();
-        return false;
+        validationErrors.push({
+          field: field,
+          label: fieldLabels[field],
+          value: data[field],
+          reason: 'ต้องเป็นตัวเลข 9-10 หลัก'
+        });
       }
     }
-    
+
     // Validation: ตรวจสอบรหัสนักเรียน (แก้ไขได้เฉพาะ admin)
     if (isAdminUser && !data.student_id.trim()) {
-      showToast('error', 'กรุณากรอกรหัสนักเรียน');
-      document.querySelector('[name="studentid"]')?.focus();
-      return false;
+      validationErrors.push({
+        field: 'studentid',
+        label: fieldLabels.studentid,
+        value: '(ว่าง)',
+        reason: 'ห้ามเว้นว่าง'
+      });
     }
 
     // Validation: ตรวจสอบเลขบัตรประชาชน
     if (data.id_card && !/^[0-9]{13}$/.test(data.id_card)) {
-      showToast('error', 'กรุณากรอกเลขบัตรประชาชนให้ถูกต้อง (13 หลัก)');
-      document.querySelector('[name="id_card"]')?.focus();
-      return false;
+      validationErrors.push({
+        field: 'id_card',
+        label: fieldLabels.id_card,
+        value: data.id_card,
+        reason: 'ต้องเป็นตัวเลข 13 หลัก'
+      });
     }
-    
+
     // Validation: ตรวจสอบรหัสไปรษณีย์
     if (data.zipcode && !/^[0-9]{5}$/.test(data.zipcode)) {
-      showToast('error', 'กรุณากรอกรหัสไปรษณีย์ให้ถูกต้อง (5 หลัก)');
-      document.querySelector('[name="zipcode"]')?.focus();
+      validationErrors.push({
+        field: 'zipcode',
+        label: fieldLabels.zipcode,
+        value: data.zipcode,
+        reason: 'ต้องเป็นตัวเลข 5 หลัก'
+      });
+    }
+
+    if (validationErrors.length > 0) {
+      const listHtml = validationErrors.map(err =>
+        `<li style="margin-bottom:6px;"><strong>${escapeHtml(err.label)}</strong>: "${escapeHtml(err.value)}" — ${escapeHtml(err.reason)}</li>`
+      ).join('');
+
+      Swal.fire({
+        icon: 'error',
+        title: `พบข้อมูลไม่ถูกต้อง ${validationErrors.length} รายการ`,
+        html: `<ul style="text-align:left;padding-left:1.2rem;margin:0;">${listHtml}</ul>`,
+        confirmButtonText: 'ตกลง',
+        heightAuto: false
+      });
+
+      document.querySelector(`[name="${validationErrors[0].field}"]`)?.focus();
       return false;
     }
-    
+
     // แสดง loading state
     const btnSave = document.getElementById('btnSave');
     const originalText = btnSave.innerHTML;
