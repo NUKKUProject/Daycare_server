@@ -2242,14 +2242,15 @@ if (getUserRole() === 'student') {
   }
 
   function exitEditMode(save) {
+    // ถ้าบันทึกแล้วข้อมูลไม่ถูกต้อง (validation ไม่ผ่าน) ให้อยู่ในโหมดแก้ไขต่อ ไม่ปิดโหมด
+    if (save && !saveProfileData()) {
+      return;
+    }
+
     profileEditMode = false;
     // ทำให้ผลลัพธ์จากการโหลดห้องเรียนที่ค้างอยู่ไม่ปลดล็อกช่องภายหลัง
     classroomRequestId++;
-    // ถ้าบันทึก ให้เรียก saveProfileData ก่อน แล้วค่อยปิด edit mode
-    if (save) {
-      saveProfileData();
-    }
-    
+
     getEditableFields().forEach(el => {
       if (el.tagName === 'SELECT') {
         el.setAttribute('disabled', true);
@@ -2491,11 +2492,14 @@ if (getUserRole() === 'student') {
         }, 1000);
       } else {
         showToast('error', result.message || 'ไม่สามารถบันทึกข้อมูลได้');
+        // บันทึกไม่สำเร็จที่ฝั่งเซิร์ฟเวอร์ (เช่น เลขประจำตัวซ้ำ) เปิดโหมดแก้ไขกลับให้แก้ไขแล้วลองใหม่ได้
+        enterEditMode();
       }
     })
     .catch(error => {
       console.error('Error saving profile:', error);
       showToast('error', 'เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
+      enterEditMode();
     })
     .finally(() => {
       // คืนค่าปุ่มบันทึก
