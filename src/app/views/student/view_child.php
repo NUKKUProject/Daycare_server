@@ -3454,12 +3454,14 @@ if (getUserRole() === 'student') {
     document.getElementById('vaccineDate').value = new Date().toISOString().split('T')[0];
 
     // ดึงข้อมูลรายการวัคซีน
-    fetch('../../include/process/get_vaccinelist_detail.php?id=' + vaccineListId)
+    fetch('../../include/process/get_vaccinelist_detail.php?id=' + vaccineListId + '&student_id=' + encodeURIComponent(studentId))
       .then(r => r.json())
       .then(result => {
         if (result.status === 'success') {
           document.getElementById('vaccineRecordName').value = result.data.vaccine_name || '';
           document.getElementById('vaccineListRecordId').value = result.data.vaccine_id;
+          // เติม "ครั้งที่" ให้อัตโนมัติ กันลืมกรอกจนบันทึกไม่ได้ (คอลัมน์นี้ห้ามว่างในฐานข้อมูล) แก้ไขเองได้ถ้าต้องการ
+          document.getElementById('vaccineNumber').value = result.data.next_vaccine_number || 1;
           // ไม่ต้องกำหนดค่า vaccineId เพราะเป็นการเพิ่มข้อมูลใหม่
           new bootstrap.Modal(document.getElementById('vaccineModal')).show();
         } else {

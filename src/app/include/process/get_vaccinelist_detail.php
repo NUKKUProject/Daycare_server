@@ -35,6 +35,21 @@ try {
     // รองรับ vaccine_id สำหรับการแก้ไข (ถ้ามี)
     $vaccine_id = $id;
 
+    // คำนวณ "ครั้งที่" ถัดไปให้อัตโนมัติ ถ้าส่ง student_id มาด้วย (กันลืมกรอกจนบันทึกไม่ได้ เพราะคอลัมน์นี้ NOT NULL)
+    $next_vaccine_number = 1;
+    if (!empty($_GET['student_id'])) {
+        $numStmt = $pdo->prepare("
+            SELECT COALESCE(MAX(vaccine_number), 0) + 1
+            FROM vaccines
+            WHERE vaccine_list_id = :vaccine_list_id AND student_id = :student_id
+        ");
+        $numStmt->execute([
+            'vaccine_list_id' => $id,
+            'student_id' => $_GET['student_id']
+        ]);
+        $next_vaccine_number = (int) $numStmt->fetchColumn();
+    }
+
 // ส่งข้อมูลกลับ
     echo json_encode([
         'status' => 'success',
@@ -45,7 +60,8 @@ try {
             'vaccine_name' => $vaccine['vaccine_name'],
             'vaccine_description' => $vaccine['vaccine_description'],
             'age_groups' => $age_groups,
-            'vaccine_id' => $vaccine_id
+            'vaccine_id' => $vaccine_id,
+            'next_vaccine_number' => $next_vaccine_number
         ]
     ]);
 
