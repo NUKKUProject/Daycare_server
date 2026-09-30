@@ -2742,10 +2742,8 @@ if (getUserRole() === 'student') {
     Swal.fire({
       icon: icons[type] || 'info',
       title: message,
-      toast: true,
-      position: 'center',
       showConfirmButton: false,
-      timer: 3000,
+      timer: 2500,
       timerProgressBar: true,
       heightAuto: false
     });
