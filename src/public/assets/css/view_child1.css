@@ -551,6 +551,14 @@
       outline: 2px solid #fff;
     }
 
+    /* ปิดเส้นกริด/จุดปรับขนาดเริ่มต้นของ Cropper ที่ทำให้ดูเหมือนขอบซ้อนกันหลายเส้น
+       เหลือแค่เส้นขอบเดียว (outline สีขาวด้านบน) เพราะปิดการปรับขนาดกรอบเองอยู่แล้ว */
+    .swal-crop-wrap .cropper-dashed,
+    .swal-crop-wrap .cropper-line,
+    .swal-crop-wrap .cropper-point {
+      display: none;
+    }
+
     .parent-card-title {
       font-size: 0.85rem;
       font-weight: 700;
