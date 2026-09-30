@@ -1240,7 +1240,7 @@ if (getUserRole() === 'student') {
 
   <!-- Modal ตัดรูปก่อนบันทึก -->
   <div class="modal fade" id="cropImageModal" tabindex="-1" aria-labelledby="cropImageModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content crop-modal-content">
         <div class="crop-modal-header">
           <h5 class="modal-title" id="cropImageModalLabel">
@@ -2612,10 +2612,15 @@ if (getUserRole() === 'student') {
     const reader = new FileReader();
     reader.onload = e => {
       cropPendingTarget = target;
-      cropImageTarget.src = e.target.result;
-      cropImageModal.show();
 
-      cropImageTarget.onload = () => {
+      let imageReady = false;
+      let modalReady = false;
+
+      // ต้องรอทั้งรูปโหลดเสร็จ "และ" modal แสดงเต็มที่ (fade-in จบ) ก่อนค่อยสร้าง Cropper
+      // ไม่งั้น Cropper จะคำนวณขนาดพื้นที่ตัดรูปผิดตอนกำลัง fade-in ทำให้รูปแสดงเล็กผิดปกติ
+      const tryInitCropper = () => {
+        if (!imageReady || !modalReady) return;
+
         if (cropperInstance) {
           cropperInstance.destroy();
           cropperInstance = null;
@@ -2631,6 +2636,25 @@ if (getUserRole() === 'student') {
           });
         }
       };
+
+      cropImageTarget.onload = () => {
+        imageReady = true;
+        tryInitCropper();
+      };
+
+      cropImageTarget.src = e.target.result;
+
+      if (cropImageModalElement.classList.contains('show')) {
+        modalReady = true;
+        tryInitCropper();
+      } else {
+        cropImageModalElement.addEventListener('shown.bs.modal', () => {
+          modalReady = true;
+          tryInitCropper();
+        }, { once: true });
+      }
+
+      cropImageModal.show();
     };
     reader.readAsDataURL(file);
   }

@@ -554,7 +554,8 @@
     .crop-canvas-wrap {
       background: #0f172a;
       border-radius: 14px;
-      max-height: 55vh;
+      height: min(60vh, 480px);
+      min-height: 320px;
       overflow: hidden;
     }
 
