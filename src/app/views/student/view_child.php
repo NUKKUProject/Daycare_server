@@ -825,7 +825,7 @@ if (getUserRole() === 'student') {
         <div class="profile-actions">
         <?php if ($is_admin || $is_teacher || $is_student): ?>
             <button class="btn-action btn-edit" id="btnEdit">
-                <i class="bi bi-pencil"></i><span<?= $is_student ? ' class="btn-label-keep"' : '' ?>><?= $is_student ? 'แก้ไขรูปภาพ' : 'แก้ไข' ?></span>
+                <i class="bi bi-pencil"></i><span<?= $is_student ? ' class="btn-label-keep"' : '' ?>><?= $is_student ? 'แก้ไขข้อมูล' : 'แก้ไข' ?></span>
             </button>
             <button class="btn-action btn-save" id="btnSave" style="display:none;">
                 <i class="bi bi-check-lg"></i><span>บันทึก</span>
@@ -1013,7 +1013,7 @@ if (getUserRole() === 'student') {
           <?php if ($is_admin || $is_teacher || $is_student): ?>
           <div class="d-flex gap-2">
             <button type="button" class="btn-action btn-edit" id="btnEditParent">
-              <i class="bi bi-pencil"></i><span<?= $is_student ? ' class="btn-label-keep"' : '' ?>><?= $is_student ? 'แก้ไขรูปภาพ' : 'แก้ไข' ?></span>
+              <i class="bi bi-pencil"></i><span<?= $is_student ? ' class="btn-label-keep"' : '' ?>><?= $is_student ? 'แก้ไขข้อมูล' : 'แก้ไข' ?></span>
             </button>
             <button type="button" class="btn-action btn-save" id="btnSaveParent" style="display:none;">
               <i class="bi bi-check-lg"></i><span>บันทึก</span>
@@ -1234,7 +1234,7 @@ if (getUserRole() === 'student') {
         </form> <div class="profile-actions-bottom" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-200); text-align: center;">
           <?php if ($is_admin || $is_teacher || $is_student): ?>
               <button class="btn-action btn-edit" id="btnEditBottom">
-                  <i class="bi bi-pencil"></i><span<?= $is_student ? ' class="btn-label-keep"' : '' ?>><?= $is_student ? 'แก้ไขรูปภาพ' : 'แก้ไข' ?></span>
+                  <i class="bi bi-pencil"></i><span<?= $is_student ? ' class="btn-label-keep"' : '' ?>><?= $is_student ? 'แก้ไขข้อมูล' : 'แก้ไข' ?></span>
               </button>
               <button class="btn-action btn-save" id="btnSaveBottom" style="display:none;">
                   <i class="bi bi-check-lg"></i><span>บันทึก</span>
