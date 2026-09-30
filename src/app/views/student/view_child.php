@@ -2599,8 +2599,8 @@ if (getUserRole() === 'student') {
   }
 
   function openCropModal(file, target) {
-    if (!cropImageModal || !cropImageTarget || typeof Cropper === 'undefined') {
-      // เผื่อกรณีโหลดไลบรารีตัดรูปไม่สำเร็จ ให้ใช้รูปเดิมไปเลยโดยไม่ตัด
+    // ไม่มี modal ให้แสดงจริงๆ (เช่น bootstrap โหลดไม่สำเร็จ) ใช้รูปเดิมไปเลย
+    if (!cropImageModal || !cropImageTarget) {
       if (showProfileImagePreviewFromFile(file, target.preview)) {
         finalizeImageSelection(target);
       } else {
@@ -2618,13 +2618,18 @@ if (getUserRole() === 'student') {
       cropImageTarget.onload = () => {
         if (cropperInstance) {
           cropperInstance.destroy();
+          cropperInstance = null;
         }
-        cropperInstance = new Cropper(cropImageTarget, {
-          aspectRatio: 1,
-          viewMode: 1,
-          autoCropArea: 1,
-          background: false
-        });
+        // ถ้าไลบรารีตัดรูปโหลดไม่สำเร็จ ยังคงแสดง popup รูปตัวอย่างได้ตามปกติ
+        // เพียงแต่ลากปรับกรอบไม่ได้ กดยืนยันแล้วจะใช้รูปเต็มที่เลือกไว้
+        if (typeof Cropper !== 'undefined') {
+          cropperInstance = new Cropper(cropImageTarget, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 1,
+            background: false
+          });
+        }
       };
     };
     reader.readAsDataURL(file);
@@ -2642,21 +2647,29 @@ if (getUserRole() === 'student') {
 
   if (cropImageConfirm) {
     cropImageConfirm.addEventListener('click', () => {
-      if (!cropperInstance || !cropPendingTarget) return;
+      if (!cropPendingTarget) return;
+      const target = cropPendingTarget;
 
-      cropperInstance.getCroppedCanvas({ width: 500, height: 500 }).toBlob(blob => {
-        if (!blob) return;
-        const target = cropPendingTarget;
-        const file = new File([blob], (target.type || 'image') + '_cropped.jpg', { type: 'image/jpeg' });
+      if (cropperInstance) {
+        // มีตัวตัดรูป: ตัดตามกรอบที่ปรับไว้
+        cropperInstance.getCroppedCanvas({ width: 500, height: 500 }).toBlob(blob => {
+          if (!blob) return;
+          const file = new File([blob], (target.type || 'image') + '_cropped.jpg', { type: 'image/jpeg' });
 
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        target.input.files = dataTransfer.files;
-        if (target.preview) target.preview.src = URL.createObjectURL(blob);
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          target.input.files = dataTransfer.files;
+          if (target.preview) target.preview.src = URL.createObjectURL(blob);
 
+          cropImageModal?.hide();
+          finalizeImageSelection(target);
+        }, 'image/jpeg', 0.92);
+      } else {
+        // ไม่มีตัวตัดรูป (ไลบรารีโหลดไม่สำเร็จ): ใช้ไฟล์เต็มที่เลือกไว้ในช่องอัปโหลดอยู่แล้ว
+        if (target.preview) target.preview.src = cropImageTarget.src;
         cropImageModal?.hide();
         finalizeImageSelection(target);
-      }, 'image/jpeg', 0.92);
+      }
     });
   }
 
