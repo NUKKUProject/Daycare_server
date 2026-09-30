@@ -2,6 +2,9 @@
 include __DIR__ . '/../../include/auth/auth.php';
 checkUserRole(['admin', 'teacher', 'student']);
 include __DIR__ . '/../partials/Header.php';
+?>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" integrity="sha384-6LFfkTKLRlzFtgx8xsWyBdKGpcMMQTkv+dB7rAbugeJAu1Ym2q1Aji1cjHBG12Xh" crossorigin="anonymous">
+<?php
 include __DIR__ . '/../../include/auth/auth_navbar.php';
 require_once __DIR__ . '/../../include/function/pages_referen.php';
 require_once __DIR__ . '/../../include/function/child_functions.php';
@@ -1235,6 +1238,33 @@ if (getUserRole() === 'student') {
     </div><!-- end content-card -->
   </div>
 
+  <!-- Modal ตัดรูปก่อนบันทึก -->
+  <div class="modal fade" id="cropImageModal" tabindex="-1" aria-labelledby="cropImageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="cropImageModalLabel">
+            <i class="bi bi-crop me-2"></i>ตัดรูปภาพ
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="ปิด"></button>
+        </div>
+        <div class="modal-body">
+          <div style="max-height:60vh;">
+            <img id="cropImageTarget" src="" alt="รูปที่จะตัด" style="max-width:100%;display:block;">
+          </div>
+        </div>
+        <div class="modal-footer justify-content-center">
+          <button type="button" class="btn btn-secondary" id="cropImageCancel">
+            <i class="bi bi-x-lg me-1"></i>ยกเลิก
+          </button>
+          <button type="button" class="btn btn-primary" id="cropImageConfirm">
+            <i class="bi bi-check-lg me-1"></i>ตัดรูปและใช้รูปนี้
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== TAB: VACCINE ===== -->
   <div id="tab-vaccine" class="tab-content-pane" style="<?= $currentTab === 'vaccine' ? '' : 'display:none;' ?>">
     <div class="content-card">
@@ -2102,6 +2132,7 @@ if (getUserRole() === 'student') {
 
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" integrity="sha384-jrOgQzBlDeUNdmQn3rUt/PZD+pdcRBdWd/HWRqRo+n2OR2QtGyjSaJC0GiCeH+ir" crossorigin="anonymous"></script>
 
 <script>
 (function () {
@@ -2530,7 +2561,7 @@ if (getUserRole() === 'student') {
     profilePreview.dataset.originalSrc = profilePreview.src;
   }
 
-  function showProfileImagePreview(file, previewElement) {
+  function isValidImageFile(file) {
     if (!file) return false;
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -2544,12 +2575,102 @@ if (getUserRole() === 'student') {
       return false;
     }
 
+    return true;
+  }
+
+  /* ── Crop modal ── */
+  const cropImageModalElement = document.getElementById('cropImageModal');
+  const cropImageTarget = document.getElementById('cropImageTarget');
+  const cropImageConfirm = document.getElementById('cropImageConfirm');
+  const cropImageCancel = document.getElementById('cropImageCancel');
+  const cropImageModal = cropImageModalElement && window.bootstrap
+    ? bootstrap.Modal.getOrCreateInstance(cropImageModalElement)
+    : null;
+  let cropperInstance = null;
+  let cropPendingTarget = null;
+
+  function destroyCropper() {
+    if (cropperInstance) {
+      cropperInstance.destroy();
+      cropperInstance = null;
+    }
+    if (cropImageTarget) cropImageTarget.src = '';
+  }
+
+  function openCropModal(file, target) {
+    if (!cropImageModal || !cropImageTarget || typeof Cropper === 'undefined') {
+      // เผื่อกรณีโหลดไลบรารีตัดรูปไม่สำเร็จ ให้ใช้รูปเดิมไปเลยโดยไม่ตัด
+      if (showProfileImagePreviewFromFile(file, target.preview)) {
+        finalizeImageSelection(target);
+      } else {
+        target.input.value = '';
+      }
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      cropPendingTarget = target;
+      cropImageTarget.src = e.target.result;
+      cropImageModal.show();
+
+      cropImageTarget.onload = () => {
+        if (cropperInstance) {
+          cropperInstance.destroy();
+        }
+        cropperInstance = new Cropper(cropImageTarget, {
+          aspectRatio: 1,
+          viewMode: 1,
+          autoCropArea: 1,
+          background: false
+        });
+      };
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function showProfileImagePreviewFromFile(file, previewElement) {
+    if (!isValidImageFile(file)) return false;
     const reader = new FileReader();
     reader.onload = e => {
       if (previewElement) previewElement.src = e.target.result;
     };
     reader.readAsDataURL(file);
     return true;
+  }
+
+  if (cropImageConfirm) {
+    cropImageConfirm.addEventListener('click', () => {
+      if (!cropperInstance || !cropPendingTarget) return;
+
+      cropperInstance.getCroppedCanvas({ width: 500, height: 500 }).toBlob(blob => {
+        if (!blob) return;
+        const target = cropPendingTarget;
+        const file = new File([blob], (target.type || 'image') + '_cropped.jpg', { type: 'image/jpeg' });
+
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        target.input.files = dataTransfer.files;
+        if (target.preview) target.preview.src = URL.createObjectURL(blob);
+
+        cropImageModal?.hide();
+        finalizeImageSelection(target);
+      }, 'image/jpeg', 0.92);
+    });
+  }
+
+  if (cropImageCancel) {
+    cropImageCancel.addEventListener('click', () => {
+      if (cropPendingTarget) cropPendingTarget.input.value = '';
+      cropPendingTarget = null;
+      cropImageModal?.hide();
+    });
+  }
+
+  if (cropImageModalElement) {
+    cropImageModalElement.addEventListener('hidden.bs.modal', () => {
+      destroyCropper();
+    });
   }
 
   // ป้ายอัปโหลดบนรูป: เปลี่ยนรูปได้ทันทีโดยไม่ต้องกด "แก้ไขข้อมูล" ก่อน
@@ -2631,8 +2752,8 @@ if (getUserRole() === 'student') {
   if (profileImageInput) {
     profileImageInput.addEventListener('change', function () {
       const file = this.files[0];
-      if (showProfileImagePreview(file, profilePreview)) {
-        finalizeImageSelection({ preview: profilePreview, input: profileImageInput, type: 'profile' });
+      if (isValidImageFile(file)) {
+        openCropModal(file, { preview: profilePreview, input: profileImageInput, type: 'profile' });
       } else {
         this.value = '';
       }
@@ -2642,8 +2763,8 @@ if (getUserRole() === 'student') {
   Object.entries(parentImageTargets).forEach(([type, target]) => {
     target.input.addEventListener('change', function () {
       const file = this.files[0];
-      if (showProfileImagePreview(file, target.preview)) {
-        finalizeImageSelection({ ...target, type });
+      if (isValidImageFile(file)) {
+        openCropModal(file, { ...target, type });
       } else {
         this.value = '';
       }
