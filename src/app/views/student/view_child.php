@@ -2577,7 +2577,7 @@ if (getUserRole() === 'student') {
         title: 'ตัดรูปภาพ',
         html: `
           <div class="swal-crop-wrap"><img id="cropImageTarget" src="${e.target.result}" alt="รูปที่จะตัด"></div>
-          <div class="swal-crop-hint">ลากเพื่อย้ายกรอบ ใช้นิ้ว/ล้อเมาส์เพื่อซูม</div>
+          <div class="swal-crop-hint">ลากรูปเพื่อย้ายตำแหน่ง ใช้นิ้ว/ล้อเมาส์เพื่อซูมเข้าออก</div>
         `,
         width: 560,
         showCancelButton: true,
@@ -2594,7 +2594,12 @@ if (getUserRole() === 'student') {
               aspectRatio: 1,
               viewMode: 1,
               autoCropArea: 1,
-              background: false
+              background: false,
+              // ฟิกกรอบตัดไว้ตรงกลาง ให้ลาก/ซูมรูปเข้าออกแทน ไม่ให้ย้ายหรือปรับขนาดกรอบเอง
+              dragMode: 'move',
+              cropBoxMovable: false,
+              cropBoxResizable: false,
+              toggleDragModeOnDblclick: false
             });
           }
           // ถ้าไลบรารีตัดรูปโหลดไม่สำเร็จ ยังคงแสดง popup รูปตัวอย่างได้ตามปกติ
