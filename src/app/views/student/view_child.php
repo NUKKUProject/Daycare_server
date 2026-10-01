@@ -904,7 +904,18 @@ if (getUserRole() === 'student') {
 
               <div class="col-md-2">
                 <label class="form-label">คำนำหน้า (ไทย)</label>
-                <input type="text" class="form-control" name="prefix_th" value="<?= htmlspecialchars($child['prefix_th'] ?? '') ?>" readonly />
+                <?php
+                $prefixThOptions = ['เด็กชาย','เด็กหญิง','นาย','นาง','นางสาว'];
+                $currentPrefixTh = $child['prefix_th'] ?? '';
+                ?>
+                <select class="form-select" name="prefix_th" disabled>
+                  <?php if ($currentPrefixTh !== '' && !in_array($currentPrefixTh, $prefixThOptions)): ?>
+                    <option value="<?= htmlspecialchars($currentPrefixTh) ?>" selected><?= htmlspecialchars($currentPrefixTh) ?></option>
+                  <?php endif; ?>
+                  <?php foreach ($prefixThOptions as $opt): ?>
+                    <option value="<?= $opt ?>" <?= $currentPrefixTh === $opt ? 'selected' : '' ?>><?= $opt ?></option>
+                  <?php endforeach; ?>
+                </select>
               </div>
               <div class="col-md-4">
                 <label class="form-label">ชื่อ (ไทย)</label>
@@ -921,7 +932,19 @@ if (getUserRole() === 'student') {
 
               <div class="col-md-2">
                 <label class="form-label">คำนำหน้า (EN)</label>
-                <input type="text" class="form-control" name="prefix_en" value="<?= htmlspecialchars($child['prefix_en'] ?? '') ?>" readonly />
+                <?php
+                $prefixEnOptions = ['Master','Miss','Mr.','Mrs.','Ms.'];
+                $currentPrefixEn = $child['prefix_en'] ?? '';
+                ?>
+                <select class="form-select" name="prefix_en" disabled>
+                  <option value="">-</option>
+                  <?php if ($currentPrefixEn !== '' && !in_array($currentPrefixEn, $prefixEnOptions)): ?>
+                    <option value="<?= htmlspecialchars($currentPrefixEn) ?>" selected><?= htmlspecialchars($currentPrefixEn) ?></option>
+                  <?php endif; ?>
+                  <?php foreach ($prefixEnOptions as $opt): ?>
+                    <option value="<?= $opt ?>" <?= $currentPrefixEn === $opt ? 'selected' : '' ?>><?= $opt ?></option>
+                  <?php endforeach; ?>
+                </select>
               </div>
               <div class="col-md-4">
                 <label class="form-label">First Name</label>
