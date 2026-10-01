@@ -750,7 +750,7 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
             });
         }
 
-        function checkLoginIssue() {
+        function checkLoginIssue(prefillSid = '') {
             Swal.fire({
                 width: 460,
                 padding: 0,
@@ -783,7 +783,9 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                     </div>
                 `,
                 didOpen: () => {
-                    document.getElementById('checkStudentId').focus();
+                    const input = document.getElementById('checkStudentId');
+                    if (prefillSid) input.value = prefillSid;
+                    input.focus();
                 },
                 preConfirm: async () => {
                     const sid = document.getElementById('checkStudentId').value.trim();
@@ -808,27 +810,22 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                     if (!res.data || res.data.length === 0) {
                         area.innerHTML = `<div style="text-align:center;padding:1rem;color:#6c757d;font-size:0.9rem;"><i class="bi bi-inbox me-2"></i>ไม่พบเรื่องที่แจ้งสำหรับรหัสนี้</div>`;
                     } else {
-                        const statusLabel = { pending: '<span style="color:#f97316;font-size:0.8rem;">รอดำเนินการ</span>', resolved: '<span style="color:#198754;font-size:0.8rem;">แก้ไขแล้ว</span>' };
+                        const statusLabel = {
+                            pending:  '<span style="color:#f97316;font-size:0.78rem;background:#ffedd5;padding:2px 8px;border-radius:20px;">รอดำเนินการ</span>',
+                            resolved: '<span style="color:#198754;font-size:0.78rem;background:#d1fae5;padding:2px 8px;border-radius:20px;">แก้ไขแล้ว</span>'
+                        };
                         const rows = res.data.map(r => `
-                            <div id="issue-card-${r.id}" style="border:1px solid #e2e8ee;border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.6rem;font-size:0.88rem;">
+                            <div onclick="openIssueChat(${r.id},'${encodeURIComponent(sid)}','${r.student_name.replace(/'/g,"\\'")}','${r.status}')"
+                                 style="border:1px solid #e2e8ee;border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.6rem;font-size:0.88rem;cursor:pointer;transition:background 0.15s;"
+                                 onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
                                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">
                                     <span style="font-weight:600;color:#1f2d3a;">${r.student_name}</span>
                                     ${statusLabel[r.status] || statusLabel.pending}
                                 </div>
-                                <div style="color:#475467;white-space:pre-wrap;margin-bottom:0.4rem;">${r.description}</div>
-                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <div style="color:#475467;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.description}</div>
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.3rem;">
                                     <span style="color:#98a2b3;font-size:0.78rem;">${r.created_at}</span>
-                                    ${r.status !== 'resolved' ? `<button onclick="openAppend(${r.id},'${encodeURIComponent(sid)}')" style="border:none;background:none;color:#26648E;font-size:0.8rem;cursor:pointer;padding:0;"><i class="bi bi-pencil-square me-1"></i>เพิ่มรายละเอียด</button>` : ''}
-                                </div>
-                                <div id="append-form-${r.id}" style="display:none;margin-top:0.6rem;">
-                                    <div class="issue-input-wrap issue-textarea-wrap" style="margin-bottom:0.4rem;">
-                                        <i class="bi bi-chat-left-text" style="margin-top:0.6rem;"></i>
-                                        <textarea id="append-text-${r.id}" maxlength="500" rows="2" placeholder="พิมพ์รายละเอียดเพิ่มเติม..."></textarea>
-                                    </div>
-                                    <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
-                                        <button onclick="cancelAppend(${r.id})" style="border:none;background:#eef2f5;color:#475467;border-radius:8px;padding:0.3rem 0.8rem;font-size:0.82rem;cursor:pointer;">ยกเลิก</button>
-                                        <button onclick="submitAppend(${r.id},'${encodeURIComponent(sid)}')" style="border:none;background:linear-gradient(135deg,#26648E,#1E4F6F);color:#fff;border-radius:8px;padding:0.3rem 0.8rem;font-size:0.82rem;cursor:pointer;">ส่ง</button>
-                                    </div>
+                                    <span style="color:#26648E;font-size:0.78rem;"><i class="bi bi-chat-dots me-1"></i>ดูการสนทนา</span>
                                 </div>
                             </div>`).join('');
                         area.innerHTML = `<div style="max-height:320px;overflow-y:auto;">${rows}</div>`;
@@ -839,46 +836,113 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
             });
         }
 
-        function openAppend(id, encodedSid) {
-            document.getElementById('append-form-' + id).style.display = 'block';
-            document.getElementById('append-text-' + id).focus();
+        function openIssueChat(issueId, encodedSid, studentName, status) {
+            const sid = decodeURIComponent(encodedSid);
+            const statusBadge = status === 'resolved'
+                ? '<span style="color:#198754;font-size:0.78rem;background:#d1fae5;padding:2px 10px;border-radius:20px;">แก้ไขแล้ว</span>'
+                : '<span style="color:#f97316;font-size:0.78rem;background:#ffedd5;padding:2px 10px;border-radius:20px;">รอดำเนินการ</span>';
+
+            Swal.fire({
+                width: 480,
+                padding: 0,
+                showConfirmButton: false,
+                showCloseButton: true,
+                customClass: { popup: 'issue-popup', htmlContainer: 'issue-body', closeButton: 'issue-close' },
+                html: `
+                    <div style="background:linear-gradient(135deg,#1E4F6F,#26648E);padding:0.9rem 1.25rem;display:flex;align-items:center;gap:0.6rem;">
+                        <button onclick="backToIssueList('${encodedSid}')" style="background:rgba(255,255,255,0.2);border:none;border-radius:8px;color:#fff;padding:0.25rem 0.6rem;cursor:pointer;"><i class="bi bi-arrow-left"></i></button>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;color:#fff;font-size:0.95rem;">${studentName}</div>
+                            <div style="margin-top:3px;">${statusBadge}</div>
+                        </div>
+                    </div>
+                    <div id="chatMessages" style="height:300px;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.6rem;background:#f8fafc;">
+                        <div style="text-align:center;color:#98a2b3;font-size:0.82rem;margin:auto;">กำลังโหลด...</div>
+                    </div>
+                    ${status !== 'resolved' ? `
+                    <div style="padding:0.6rem 0.9rem;border-top:1px solid #e2e8ee;display:flex;gap:0.5rem;align-items:flex-end;">
+                        <div class="issue-input-wrap issue-textarea-wrap" style="flex:1;margin:0;">
+                            <i class="bi bi-chat-left-text" style="margin-top:0.55rem;font-size:0.9rem;"></i>
+                            <textarea id="chatInput" maxlength="500" rows="2" placeholder="พิมพ์ข้อความ..."></textarea>
+                        </div>
+                        <button id="chatSendBtn" onclick="sendChatMessage(${issueId},'${encodedSid}')"
+                            style="background:linear-gradient(135deg,#26648E,#1E4F6F);color:#fff;border:none;border-radius:10px;padding:0.5rem 0.75rem;cursor:pointer;flex-shrink:0;">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>` : `<div style="padding:0.6rem;text-align:center;color:#198754;font-size:0.82rem;border-top:1px solid #e2e8ee;"><i class="bi bi-check-circle me-1"></i>เรื่องนี้ได้รับการแก้ไขแล้ว</div>`}
+                `,
+                didOpen: () => {
+                    loadChatMessages(issueId, sid);
+                    const input = document.getElementById('chatInput');
+                    if (input) {
+                        input.addEventListener('keydown', e => {
+                            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(issueId, encodedSid); }
+                        });
+                        input.focus();
+                    }
+                }
+            });
         }
 
-        function cancelAppend(id) {
-            document.getElementById('append-form-' + id).style.display = 'none';
-            document.getElementById('append-text-' + id).value = '';
-        }
-
-        async function submitAppend(id, encodedSid) {
-            const text = document.getElementById('append-text-' + id).value.trim();
-            if (!text) return;
-            const btn = document.querySelector(`#append-form-${id} button:last-child`);
-            btn.disabled = true;
-            btn.textContent = 'กำลังส่ง...';
-
+        async function loadChatMessages(issueId, sid) {
+            const area = document.getElementById('chatMessages');
             const data = new FormData();
-            data.append('issue_id', id);
-            data.append('student_id', decodeURIComponent(encodedSid));
-            data.append('append_text', text);
-
-            const res = await fetch('../include/process/append_login_issue.php', { method: 'POST', body: data })
-                .then(r => r.json())
-                .catch(() => null);
-
+            data.append('issue_id', issueId);
+            data.append('student_id', sid);
+            const res = await fetch('../include/process/get_issue_messages.php', { method: 'POST', body: data })
+                .then(r => r.json()).catch(() => null);
             if (!res || !res.success) {
-                btn.disabled = false;
-                btn.textContent = 'ส่ง';
-                Swal.showValidationMessage(res?.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+                area.innerHTML = `<div style="text-align:center;color:#dc3545;font-size:0.82rem;margin:auto;">ไม่สามารถโหลดข้อมูลได้</div>`;
                 return;
             }
+            if (!res.data || res.data.length === 0) {
+                area.innerHTML = `<div style="text-align:center;color:#98a2b3;font-size:0.82rem;margin:auto;">ยังไม่มีข้อความ</div>`;
+                return;
+            }
+            area.innerHTML = res.data.map(m => renderChatBubble(m)).join('');
+            area.scrollTop = area.scrollHeight;
+        }
 
-            // ซ่อนฟอร์มและแสดง toast เล็ก ๆ
-            cancelAppend(id);
-            const card = document.getElementById('issue-card-' + id);
-            const toast = document.createElement('div');
-            toast.style.cssText = 'background:#d1fae5;color:#065f46;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.82rem;margin-top:0.4rem;';
-            toast.textContent = '✓ เพิ่มรายละเอียดเรียบร้อยแล้ว';
-            card.appendChild(toast);
+        function renderChatBubble(m) {
+            const isParent = m.sender_role === 'parent';
+            return `<div style="display:flex;flex-direction:column;align-items:${isParent ? 'flex-end' : 'flex-start'};">
+                <div style="font-size:0.7rem;color:${isParent ? '#1d4ed8' : '#166534'};margin-bottom:2px;">${isParent ? 'ผู้ปกครอง' : '👩‍⚕️ ผู้ดูแลระบบ'}</div>
+                <div style="background:${isParent ? '#dbeafe' : '#f0fdf4'};border-radius:${isParent ? '12px 12px 2px 12px' : '12px 12px 12px 2px'};padding:0.5rem 0.75rem;max-width:82%;font-size:0.87rem;color:#1f2d3a;white-space:pre-wrap;word-break:break-word;">${m.message}</div>
+                <div style="font-size:0.7rem;color:#98a2b3;margin-top:2px;">${m.created_at}</div>
+            </div>`;
+        }
+
+        async function sendChatMessage(issueId, encodedSid) {
+            const input = document.getElementById('chatInput');
+            const text = input ? input.value.trim() : '';
+            if (!text) return;
+            const btn = document.getElementById('chatSendBtn');
+            if (btn) btn.disabled = true;
+
+            const data = new FormData();
+            data.append('issue_id', issueId);
+            data.append('student_id', decodeURIComponent(encodedSid));
+            data.append('message', text);
+            const res = await fetch('../include/process/send_issue_message.php', { method: 'POST', body: data })
+                .then(r => r.json()).catch(() => null);
+
+            if (btn) btn.disabled = false;
+            if (!res || !res.success) return;
+
+            if (input) input.value = '';
+            const area = document.getElementById('chatMessages');
+            const emptyEl = area.querySelector('[style*="ยังไม่มีข้อความ"]');
+            if (emptyEl) emptyEl.remove();
+            const div = document.createElement('div');
+            div.innerHTML = renderChatBubble({ sender_role: 'parent', message: text, created_at: 'เมื่อกี้' });
+            area.appendChild(div.firstElementChild);
+            area.scrollTop = area.scrollHeight;
+            if (input) input.focus();
+        }
+
+        function backToIssueList(encodedSid) {
+            Swal.close();
+            setTimeout(() => checkLoginIssue(decodeURIComponent(encodedSid)), 150);
         }
 
         function docterLogin() {
