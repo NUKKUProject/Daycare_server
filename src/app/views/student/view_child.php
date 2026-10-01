@@ -933,11 +933,10 @@ if (getUserRole() === 'student') {
               <div class="col-md-2">
                 <label class="form-label">คำนำหน้า (EN)</label>
                 <?php
-                $prefixEnOptions = ['Master','Miss','Mr.','Mrs.','Ms.'];
+                $prefixEnOptions = ['Master','Miss'];
                 $currentPrefixEn = $child['prefix_en'] ?? '';
                 ?>
                 <select class="form-select" name="prefix_en" disabled>
-                  <option value="">-</option>
                   <?php if ($currentPrefixEn !== '' && !in_array($currentPrefixEn, $prefixEnOptions)): ?>
                     <option value="<?= htmlspecialchars($currentPrefixEn) ?>" selected><?= htmlspecialchars($currentPrefixEn) ?></option>
                   <?php endif; ?>
