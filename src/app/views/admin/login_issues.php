@@ -227,9 +227,7 @@ async function adminSendMessage() {
     const area = document.getElementById('chatMessages');
     const emptyEl = area.querySelector('[style*="ยังไม่มีข้อความ"]');
     if (emptyEl) emptyEl.remove();
-    const div = document.createElement('div');
-    div.innerHTML = renderAdminBubble({ sender_role:'admin', message:text, created_at:'เมื่อกี้' });
-    area.appendChild(div.firstElementChild);
+    area.insertAdjacentHTML('beforeend', renderAdminBubble({ sender_role:'admin', message:text, created_at:'เมื่อกี้' }));
     area.scrollTop = area.scrollHeight;
     input.focus();
 }

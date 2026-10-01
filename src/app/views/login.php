@@ -937,9 +937,7 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
             const area = document.getElementById('chatMessages');
             const emptyEl = area.querySelector('[style*="ยังไม่มีข้อความ"]');
             if (emptyEl) emptyEl.remove();
-            const div = document.createElement('div');
-            div.innerHTML = renderChatBubble({ sender_role: 'parent', message: text, created_at: 'เมื่อกี้' });
-            area.appendChild(div.firstElementChild);
+            area.insertAdjacentHTML('beforeend', renderChatBubble({ sender_role: 'parent', message: text, created_at: 'เมื่อกี้' }));
             area.scrollTop = area.scrollHeight;
             if (input) input.focus();
         }
