@@ -9,10 +9,17 @@ require_once('../../../config/database.php');
 $pdo = getDatabaseConnection();
 $stmt = $pdo->query("
     SELECT li.*,
-           (SELECT COUNT(*) FROM login_issue_messages WHERE issue_id = li.id) AS msg_count,
-           (SELECT COUNT(*) FROM login_issue_messages WHERE issue_id = li.id AND sender_role = 'parent') AS parent_msg_count
+           (SELECT COUNT(*) FROM login_issue_messages lm
+            WHERE lm.issue_id = li.id
+              AND lm.sender_role = 'parent'
+              AND lm.created_at > COALESCE(
+                (SELECT MAX(a.created_at) FROM login_issue_messages a
+                 WHERE a.issue_id = li.id AND a.sender_role = 'admin'),
+                '1970-01-01'::timestamptz
+              )
+           ) AS unread_count
     FROM login_issues li
-    ORDER BY (li.status = 'pending') DESC, li.created_at DESC
+    ORDER BY (li.status IN ('pending','open')) DESC, li.created_at DESC
 ");
 $issues = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -23,7 +30,7 @@ $issues = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="d-flex align-items-center gap-3 mb-4">
         <h4 class="mb-0 fw-bold"><i class="bi bi-headset me-2 text-primary"></i>รายการแจ้งปัญหาการเข้าสู่ระบบ</h4>
         <span class="badge bg-warning text-dark fs-6">
-            <?= count(array_filter($issues, fn($r) => $r['status'] === 'pending')) ?> รอดำเนินการ
+            <?= count(array_filter($issues, fn($r) => in_array($r['status'], ['pending','open']))) ?> รอดำเนินการ
         </span>
     </div>
 
@@ -46,7 +53,8 @@ $issues = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </thead>
                     <tbody>
                         <?php $n = 1; foreach ($issues as $issue): ?>
-                        <tr class="<?= $issue['status'] === 'pending' ? 'table-warning bg-opacity-25' : '' ?>">
+                        <?php $isPending = in_array($issue['status'], ['pending','open']); ?>
+                        <tr class="<?= $isPending ? 'table-warning bg-opacity-25' : '' ?>">
                             <td class="ps-3 text-muted"><?= $n++ ?></td>
                             <td style="white-space:nowrap;font-size:0.85rem;"><?= htmlspecialchars(date('d/m/Y H:i', strtotime($issue['created_at']))) ?></td>
                             <td><?= htmlspecialchars($issue['student_id'] ?? '-') ?></td>
@@ -57,24 +65,24 @@ $issues = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </td>
                             <td class="text-center">
                                 <button class="btn btn-sm btn-outline-primary position-relative"
-                                        onclick="openChat(<?= (int)$issue['id'] ?>, '<?= htmlspecialchars(addslashes($issue['student_name'])) ?>', '<?= htmlspecialchars($issue['status']) ?>', '<?= htmlspecialchars($issue['student_id'] ?? '') ?>', '<?= htmlspecialchars($issue['national_id'] ?? '') ?>')">
+                                        onclick="openChat(<?= (int)$issue['id'] ?>, '<?= htmlspecialchars(addslashes($issue['student_name'])) ?>', '<?= $isPending ? 'pending' : 'resolved' ?>', '<?= htmlspecialchars($issue['student_id'] ?? '') ?>', '<?= htmlspecialchars($issue['national_id'] ?? '') ?>')">
                                     <i class="bi bi-chat-dots"></i> สนทนา
-                                    <?php if ($issue['parent_msg_count'] > 0): ?>
+                                    <?php if ((int)$issue['unread_count'] > 0): ?>
                                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.65rem;">
-                                        <?= (int)$issue['parent_msg_count'] ?>
+                                        <?= (int)$issue['unread_count'] ?>
                                     </span>
                                     <?php endif; ?>
                                 </button>
                             </td>
                             <td class="text-center">
-                                <?php if ($issue['status'] === 'pending'): ?>
+                                <?php if ($isPending): ?>
                                     <span class="badge bg-warning text-dark">รอดำเนินการ</span>
                                 <?php else: ?>
                                     <span class="badge bg-success">แก้ไขแล้ว</span>
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php if ($issue['status'] === 'pending'): ?>
+                                <?php if ($isPending): ?>
                                 <button class="btn btn-sm btn-success" onclick="resolveIssue(<?= (int)$issue['id'] ?>)">
                                     <i class="bi bi-check-lg"></i> ปิดเคส
                                 </button>
@@ -157,13 +165,14 @@ function openChat(id, name, status, studentId, nationalId) {
     document.getElementById('chatName').textContent = name;
     document.getElementById('chatStudentId').textContent = studentId ? 'รหัส: ' + studentId : '';
     document.getElementById('chatNationalId').textContent = nationalId ? '| บัตร: ' + nationalId : '';
-    document.getElementById('chatStatusBadge').innerHTML = status === 'pending'
+    const isPending = status === 'pending' || status === 'open';
+    document.getElementById('chatStatusBadge').innerHTML = isPending
         ? '<span class="badge bg-warning text-dark">รอดำเนินการ</span>'
         : '<span class="badge bg-success">แก้ไขแล้ว</span>';
 
     const resolveBtn = document.getElementById('resolveBtn');
     const inputArea  = document.getElementById('chatInputArea');
-    if (status === 'resolved') {
+    if (!isPending) {
         resolveBtn.style.display = 'none';
         inputArea.style.display  = 'none';
     } else {

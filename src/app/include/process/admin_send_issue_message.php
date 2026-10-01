@@ -29,7 +29,7 @@ try {
     $check->execute(['id' => $issueId]);
     $row = $check->fetch(PDO::FETCH_ASSOC);
     if (!$row) respond(false, 'ไม่พบรายการ');
-    if ($row['status'] === 'resolved') respond(false, 'เรื่องนี้ปิดแล้ว');
+    if (!in_array($row['status'], ['pending', 'open'])) respond(false, 'เรื่องนี้ปิดแล้ว');
 
     $pdo->prepare(
         "INSERT INTO login_issue_messages (issue_id, sender_role, message) VALUES (:id, 'admin', :msg)"

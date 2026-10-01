@@ -33,7 +33,7 @@ try {
     $check->execute(['id' => $issueId, 'sid' => $studentId]);
     $row = $check->fetch(PDO::FETCH_ASSOC);
     if (!$row) respond(false, 'ไม่พบรายการ หรือรหัสนักเรียนไม่ตรงกัน');
-    if ($row['status'] === 'resolved') respond(false, 'เรื่องนี้ได้รับการแก้ไขแล้ว ไม่สามารถส่งข้อความได้');
+    if (!in_array($row['status'], ['pending', 'open'])) respond(false, 'เรื่องนี้ได้รับการแก้ไขแล้ว ไม่สามารถส่งข้อความได้');
 
     $pdo->prepare(
         "INSERT INTO login_issue_messages (issue_id, sender_role, message) VALUES (:id, 'parent', :msg)"
