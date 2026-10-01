@@ -4176,7 +4176,7 @@ if (getUserRole() === 'student') {
         if (result.status !== 'success') {
           throw new Error(result.message || 'ไม่สามารถโหลดข้อมูลได้');
         }
-        ehRecords = result.data;
+        ehRecords = (result.data || []).filter(r => !!r.doctor_name);
         ehRenderList(ehRecords);
       })
       .catch(error => {
