@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
             $user = $stmt->fetch();
 
             if (!$user) {
-                header("Location: /app/views/login.php?error=" . urlencode("รหัสหรือเลขบัตรไม่ถูกต้อง"));
+                header("Location: /app/views/login.php?error=" . urlencode("รหัสประจำตัวผู้เรียนหรือเลขบัตรประชาชนไม่ถูกต้อง"));
                 exit();
             }
 
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
                 $_SESSION['last_activity'] = time();
                 header("Location: /app/views/admin/admin_dashboard.php");
             } else {
-                header("Location: /app/views/login.php?error=" . urlencode("รหัสหรือเลขบัตรไม่ถูกต้อง"));
+                header("Location: /app/views/login.php?error=" . urlencode("รหัสประจำตัวผู้เรียนหรือเลขบัตรประชาชนไม่ถูกต้อง"));
             }
             exit();
         } else {
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
             $child = $stmt->fetch();
 
             if (!$child) {
-                header("Location: /app/views/login.php?error=" . urlencode("รหัสหรือเลขบัตรไม่ถูกต้อง"));
+                header("Location: /app/views/login.php?error=" . urlencode("รหัสประจำตัวผู้เรียนหรือเลขบัตรประชาชนไม่ถูกต้อง"));
                 exit();
             }
 
@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username']) && isset(
                 $_SESSION['last_activity'] = time();
                 header("Location: /app/views/student/student_dashboard.php");
             } else {
-                header("Location: /app/views/login.php?error=" . urlencode("รหัสหรือเลขบัตรไม่ถูกต้อง"));
+                header("Location: /app/views/login.php?error=" . urlencode("รหัสประจำตัวผู้เรียนหรือเลขบัตรประชาชนไม่ถูกต้อง"));
             }
             exit();
         }
