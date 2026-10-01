@@ -39,10 +39,26 @@ try {
     $pdo->prepare("INSERT INTO login_issue_lookups (ip_address) VALUES (:ip)")->execute(['ip' => $ip]);
 
     $stmt = $pdo->prepare(
-        "SELECT id, student_name, description, status, TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI') AS created_at
-         FROM login_issues
-         WHERE student_id = :student_id
-         ORDER BY created_at DESC
+        "SELECT li.id, li.student_name, li.description, li.status,
+                TO_CHAR(li.created_at, 'DD/MM/YYYY HH24:MI') AS created_at,
+                COALESCE(
+                    (SELECT lm.message FROM login_issue_messages lm
+                     WHERE lm.issue_id = li.id ORDER BY lm.created_at DESC LIMIT 1),
+                    li.description
+                ) AS last_message,
+                COALESCE(
+                    (SELECT lm.sender_role FROM login_issue_messages lm
+                     WHERE lm.issue_id = li.id ORDER BY lm.created_at DESC LIMIT 1),
+                    'parent'
+                ) AS last_sender,
+                COALESCE(
+                    (SELECT TO_CHAR(lm.created_at, 'DD/MM/YYYY HH24:MI') FROM login_issue_messages lm
+                     WHERE lm.issue_id = li.id ORDER BY lm.created_at DESC LIMIT 1),
+                    TO_CHAR(li.created_at, 'DD/MM/YYYY HH24:MI')
+                ) AS last_message_at
+         FROM login_issues li
+         WHERE li.student_id = :student_id
+         ORDER BY li.created_at DESC
          LIMIT 10"
     );
     $stmt->execute(['student_id' => $studentId]);

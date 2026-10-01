@@ -814,7 +814,10 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                             pending:  '<span style="color:#f97316;font-size:0.78rem;background:#ffedd5;padding:2px 8px;border-radius:20px;">รอดำเนินการ</span>',
                             resolved: '<span style="color:#198754;font-size:0.78rem;background:#d1fae5;padding:2px 8px;border-radius:20px;">แก้ไขแล้ว</span>'
                         };
-                        const rows = res.data.map(r => `
+                        const rows = res.data.map(r => {
+                            const isAdmin = r.last_sender === 'admin';
+                            const prefix  = isAdmin ? '<span style="color:#166534;font-size:0.75rem;">ผู้ดูแล: </span>' : '';
+                            return `
                             <div onclick="openIssueChat(${r.id},'${encodeURIComponent(sid)}','${r.student_name.replace(/'/g,"\\'")}','${r.status}')"
                                  style="border:1px solid #e2e8ee;border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.6rem;font-size:0.88rem;cursor:pointer;transition:background 0.15s;"
                                  onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
@@ -822,12 +825,13 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                                     <span style="font-weight:600;color:#1f2d3a;">${r.student_name}</span>
                                     ${statusLabel[r.status] || statusLabel.pending}
                                 </div>
-                                <div style="color:#475467;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.description}</div>
+                                <div style="color:#475467;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${prefix}${r.last_message}</div>
                                 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.3rem;">
-                                    <span style="color:#98a2b3;font-size:0.78rem;">${r.created_at}</span>
+                                    <span style="color:#98a2b3;font-size:0.78rem;">${r.last_message_at}</span>
                                     <span style="color:#26648E;font-size:0.78rem;"><i class="bi bi-chat-dots me-1"></i>ดูการสนทนา</span>
                                 </div>
-                            </div>`).join('');
+                            </div>`;
+                        }).join('');
                         area.innerHTML = `<div style="max-height:320px;overflow-y:auto;">${rows}</div>`;
                     }
                     // ไม่ปิด popup — ให้ผู้ใช้ดูผลแล้วกด X เอง
