@@ -695,6 +695,8 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                     const update = () => count.textContent = desc.value.length + '/1000';
                     desc.addEventListener('input', update);
                     update();
+                    attachLangHint('issueStudentId', 'numeric');
+                    attachLangHint('issueNationalId', 'numeric13');
                     document.getElementById('issueName').focus();
                 },
                 preConfirm: () => {
@@ -750,6 +752,26 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
             });
         }
 
+        function attachLangHint(inputId, mode) {
+            const el = document.getElementById(inputId);
+            if (!el) return;
+            const hint = document.createElement('div');
+            hint.style.cssText = 'font-size:0.75rem;color:#dc3545;margin-top:4px;display:none;';
+            hint.innerHTML = '<i class="bi bi-keyboard me-1"></i>กรุณาเปลี่ยนภาษาเป็น <b>EN</b> แล้วพิมพ์ตัวเลขใหม่';
+            el.closest('.issue-input-wrap').insertAdjacentElement('afterend', hint);
+
+            el.addEventListener('input', () => {
+                const v = el.value;
+                const hasThai = /[ก-๙]/.test(v);
+                const hasNonNum = /[^0-9]/.test(v.replace(/[-\s]/g,''));
+                let warn = false;
+                if (mode === 'numeric' && (hasThai || (v && hasNonNum))) warn = true;
+                if (mode === 'numeric13' && (hasThai || (v && hasNonNum))) warn = true;
+                hint.style.display = warn ? 'block' : 'none';
+                if (mode === 'numeric13' && v.length === 13 && !hasNonNum) hint.style.display = 'none';
+            });
+        }
+
         function checkLoginIssue(prefillSid = '') {
             Swal.fire({
                 width: 460,
@@ -785,6 +807,7 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                 didOpen: () => {
                     const input = document.getElementById('checkStudentId');
                     if (prefillSid) input.value = prefillSid;
+                    attachLangHint('checkStudentId', 'numeric');
                     input.focus();
                 },
                 preConfirm: async () => {
