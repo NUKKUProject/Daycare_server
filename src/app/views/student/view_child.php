@@ -905,7 +905,7 @@ if (getUserRole() === 'student') {
               <div class="col-md-2">
                 <label class="form-label">คำนำหน้า (ไทย)</label>
                 <?php
-                $prefixThOptions = ['เด็กชาย','เด็กหญิง','นาย','นาง','นางสาว'];
+                $prefixThOptions = ['เด็กชาย','เด็กหญิง'];
                 $currentPrefixTh = $child['prefix_th'] ?? '';
                 ?>
                 <select class="form-select" name="prefix_th" disabled>
