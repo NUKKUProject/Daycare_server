@@ -36,14 +36,12 @@ try {
     $stmt->execute(['id' => $issueId]);
     $msgs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // ถ้าไม่มีข้อความเลย ใช้ description เดิมเป็นข้อความแรก
-    if (empty($msgs)) {
-        $msgs = [[
-            'sender_role' => 'parent',
-            'message'     => $issue['description'],
-            'created_at'  => $issue['created_at'],
-        ]];
-    }
+    // description เดิมเป็นข้อความแรกเสมอ
+    array_unshift($msgs, [
+        'sender_role' => 'parent',
+        'message'     => $issue['description'],
+        'created_at'  => $issue['created_at'],
+    ]);
 
     respond(true, 'ok', $msgs);
 } catch (PDOException $e) {
