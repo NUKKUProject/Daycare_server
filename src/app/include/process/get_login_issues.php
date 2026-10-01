@@ -31,7 +31,7 @@ try {
     $ip = $_SERVER['REMOTE_ADDR'] ?? null;
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM login_issue_lookups WHERE ip_address = :ip AND created_at > NOW() - INTERVAL '1 hour'");
     $stmt->execute(['ip' => $ip]);
-    if ((int)$stmt->fetchColumn() >= 10) {
+    if ((int)$stmt->fetchColumn() >= 30) {
         respond(false, 'ค้นหาบ่อยเกินไป กรุณาลองใหม่ภายหลัง');
     }
 

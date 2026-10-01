@@ -25,7 +25,7 @@ try {
     $ip = $_SERVER['REMOTE_ADDR'] ?? null;
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM login_issue_lookups WHERE ip_address = :ip AND created_at > NOW() - INTERVAL '1 hour'");
     $stmt->execute(['ip' => $ip]);
-    if ((int)$stmt->fetchColumn() >= 10) respond(false, 'ส่งข้อความบ่อยเกินไป กรุณาลองใหม่ภายหลัง');
+    if ((int)$stmt->fetchColumn() >= 30) respond(false, 'ส่งข้อความบ่อยเกินไป กรุณาลองใหม่ภายหลัง');
     $pdo->prepare("INSERT INTO login_issue_lookups (ip_address) VALUES (:ip)")->execute(['ip' => $ip]);
 
     // ตรวจสิทธิ์ + สถานะ
