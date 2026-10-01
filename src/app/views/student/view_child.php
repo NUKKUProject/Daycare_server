@@ -4145,16 +4145,15 @@ if (getUserRole() === 'student') {
     }
 
     container.innerHTML = records.map((r, index) => {
-      const checked = !!r.doctor_name;
       return `
         <div class="eh-record-card">
           <div class="eh-record-top">
             <span class="eh-record-title"><i class="bi bi-calendar3 me-1"></i>${ehFormatDate(r.exam_date)}</span>
-            <span class="eh-badge ${checked ? 'checked' : 'pending'}">${checked ? 'หมอตรวจแล้ว' : 'รอแพทย์ตรวจ'}</span>
+            <span class="eh-badge checked">หมอตรวจแล้ว</span>
           </div>
           <div class="eh-record-meta">
             <i class="bi bi-mortarboard me-1"></i>ปีการศึกษา ${ehEscapeHtml(r.academic_year || '-')}
-            ${checked ? ' &nbsp;•&nbsp; <i class="bi bi-person-badge me-1"></i>แพทย์: ' + ehEscapeHtml(r.doctor_name) : ''}
+            &nbsp;•&nbsp; <i class="bi bi-person-badge me-1"></i>แพทย์: ${ehEscapeHtml(r.doctor_name)}
           </div>
           <div class="eh-record-actions">
             <button type="button" class="eh-btn-view" onclick="ehShowDetail(${index})">
@@ -4176,7 +4175,7 @@ if (getUserRole() === 'student') {
         if (result.status !== 'success') {
           throw new Error(result.message || 'ไม่สามารถโหลดข้อมูลได้');
         }
-        ehRecords = result.data;
+        ehRecords = (result.data || []).filter(r => !!r.doctor_name);
         ehRenderList(ehRecords);
       })
       .catch(error => {
