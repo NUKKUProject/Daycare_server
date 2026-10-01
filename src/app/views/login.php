@@ -93,9 +93,14 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                                 <a class="btn btn-success w-100 py-2 mb-3" href="https://ssonext.kku.ac.th/login?app=0198bb3e-beab-7004-95c1-864db39d9e85">
                                     <i class="bi bi-shield-lock-fill me-2"></i>เข้าสู่ระบบด้วย KKU SSO
                                 </a>
-                                <button type="button" class="btn btn-link text-white w-100" onclick="reportLoginIssue()">
-                                    <i class="bi bi-exclamation-circle me-1"></i>แจ้งปัญหาการเข้าสู่ระบบ
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-link text-white flex-fill" onclick="reportLoginIssue()">
+                                        <i class="bi bi-exclamation-circle me-1"></i>แจ้งปัญหา
+                                    </button>
+                                    <button type="button" class="btn btn-link text-white flex-fill" onclick="checkLoginIssue()">
+                                        <i class="bi bi-search me-1"></i>ตรวจสอบเรื่องที่แจ้ง
+                                    </button>
+                                </div>
                                 <!-- <button type="button" class="btn btn-success w-100 py-2" onclick="docterLogin()">
                                     <i class="fa-solid fa-stethoscope"></i> เข้าสู่ระบบสำหรับแพทย์
                                 </button> -->
@@ -659,6 +664,13 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                             </span>
                         </label>
                         <label class="issue-field">
+                            <span class="issue-label">เลขบัตรประชาชนผู้เรียน <em>(ถ้ามี)</em></span>
+                            <span class="issue-input-wrap">
+                                <i class="bi bi-credit-card-2-front"></i>
+                                <input type="text" id="issueNationalId" maxlength="13" inputmode="numeric" pattern="[0-9]*" placeholder="เลข 13 หลัก">
+                            </span>
+                        </label>
+                        <label class="issue-field">
                             <span class="issue-label">ชื่อ-สกุลผู้เรียน <b>*</b></span>
                             <span class="issue-input-wrap">
                                 <i class="bi bi-person"></i>
@@ -669,9 +681,9 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                             <span class="issue-label">รายละเอียดปัญหา <b>*</b></span>
                             <span class="issue-input-wrap issue-textarea-wrap">
                                 <i class="bi bi-chat-left-text"></i>
-                                <textarea id="issueDesc" maxlength="1000" rows="4" placeholder="อธิบายปัญหาที่พบ เช่น เข้าสู่ระบบไม่ได้ ขึ้นข้อความ..."></textarea>
+                                <textarea id="issueDesc" maxlength="1000" rows="3" placeholder="อธิบายปัญหาที่พบ เช่น เข้าสู่ระบบไม่ได้ ขึ้นข้อความ..."></textarea>
                             </span>
-                            <span class="issue-hint"><span><i class="bi bi-shield-lock me-1"></i>อย่าใส่เลขบัตรประชาชนหรือรหัสผ่าน</span><span id="issueCount">0/1000</span></span>
+                            <span class="issue-hint"><span><i class="bi bi-shield-lock me-1"></i>อย่าใส่รหัสผ่านในช่องนี้</span><span id="issueCount">0/1000</span></span>
                         </label>
                         <input type="text" id="issueWebsite" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;" aria-hidden="true">
                     </div>
@@ -688,12 +700,19 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                 preConfirm: () => {
                     const data = new FormData();
                     data.append('student_id', document.getElementById('issueStudentId').value.trim());
+                    data.append('national_id', document.getElementById('issueNationalId').value.trim());
                     data.append('student_name', document.getElementById('issueName').value.trim());
                     data.append('description', document.getElementById('issueDesc').value.trim());
                     data.append('website', document.getElementById('issueWebsite').value);
 
                     if (!data.get('student_name') || !data.get('description')) {
                         Swal.showValidationMessage('กรุณากรอกข้อมูลที่มี * ให้ครบถ้วน');
+                        return false;
+                    }
+
+                    const nationalId = data.get('national_id');
+                    if (nationalId && !/^\d{13}$/.test(nationalId)) {
+                        Swal.showValidationMessage('เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก');
                         return false;
                     }
 
@@ -727,6 +746,82 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                             confirmButton: 'issue-btn issue-btn-primary'
                         }
                     });
+                }
+            });
+        }
+
+        function checkLoginIssue() {
+            Swal.fire({
+                width: 460,
+                padding: 0,
+                showCloseButton: true,
+                showCancelButton: false,
+                confirmButtonText: '<i class="bi bi-search me-2"></i>ค้นหา',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'issue-popup',
+                    htmlContainer: 'issue-body',
+                    actions: 'issue-actions',
+                    confirmButton: 'issue-btn issue-btn-primary',
+                    closeButton: 'issue-close'
+                },
+                html: `
+                    <div class="issue-header" style="background: linear-gradient(135deg, #1E4F6F, #26648E);">
+                        <div class="issue-icon"><i class="bi bi-search"></i></div>
+                        <h3>ตรวจสอบเรื่องที่แจ้ง</h3>
+                        <p>กรอกรหัสประจำตัวผู้เรียนเพื่อดูสถานะ</p>
+                    </div>
+                    <div class="issue-form">
+                        <label class="issue-field">
+                            <span class="issue-label">รหัสประจำตัวผู้เรียน <b>*</b></span>
+                            <span class="issue-input-wrap">
+                                <i class="bi bi-hash"></i>
+                                <input type="text" id="checkStudentId" maxlength="50" placeholder="เช่น 6612345">
+                            </span>
+                        </label>
+                        <div id="issueResultArea" style="margin-bottom:0.5rem;"></div>
+                    </div>
+                `,
+                didOpen: () => {
+                    document.getElementById('checkStudentId').focus();
+                },
+                preConfirm: async () => {
+                    const sid = document.getElementById('checkStudentId').value.trim();
+                    if (!sid) {
+                        Swal.showValidationMessage('กรุณากรอกรหัสประจำตัวผู้เรียน');
+                        return false;
+                    }
+                    const data = new FormData();
+                    data.append('student_id', sid);
+                    const res = await fetch('../include/process/get_login_issues.php', { method: 'POST', body: data })
+                        .then(r => r.json())
+                        .catch(() => null);
+                    if (!res) {
+                        Swal.showValidationMessage('ไม่สามารถเชื่อมต่อได้ กรุณาลองใหม่');
+                        return false;
+                    }
+                    if (!res.success) {
+                        Swal.showValidationMessage(res.message);
+                        return false;
+                    }
+                    const area = document.getElementById('issueResultArea');
+                    if (!res.data || res.data.length === 0) {
+                        area.innerHTML = `<div style="text-align:center;padding:1rem;color:#6c757d;font-size:0.9rem;"><i class="bi bi-inbox me-2"></i>ไม่พบเรื่องที่แจ้งสำหรับรหัสนี้</div>`;
+                    } else {
+                        const statusLabel = { pending: '<span style="color:#f97316;">รอดำเนินการ</span>', resolved: '<span style="color:#198754;">แก้ไขแล้ว</span>' };
+                        const rows = res.data.map(r => `
+                            <div style="border:1px solid #e2e8ee;border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.6rem;font-size:0.88rem;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">
+                                    <span style="font-weight:600;color:#1f2d3a;">${r.student_name}</span>
+                                    ${statusLabel[r.status] || statusLabel.pending}
+                                </div>
+                                <div style="color:#475467;white-space:pre-wrap;">${r.description}</div>
+                                <div style="color:#98a2b3;font-size:0.78rem;margin-top:0.3rem;">${r.created_at}</div>
+                            </div>`).join('');
+                        area.innerHTML = `<div style="max-height:260px;overflow-y:auto;">${rows}</div>`;
+                    }
+                    // ไม่ปิด popup — ให้ผู้ใช้ดูผลแล้วกด X เอง
+                    return false;
                 }
             });
         }
