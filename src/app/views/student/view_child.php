@@ -2559,6 +2559,7 @@ if (getUserRole() === 'student') {
 
   /* ── Crop popup (SweetAlert2 พื้นฐาน - ตรงกลาง พื้นหลังสีเทา ตรงกับ popup อื่นในระบบ) ── */
   let cropperInstance = null;
+  let imageSaveInProgress = false;
 
   function showProfileImagePreviewFromFile(file, previewElement) {
     if (!isValidImageFile(file)) return false;
@@ -2677,6 +2678,9 @@ if (getUserRole() === 'student') {
   }
 
   function autoSaveSingleImage(target) {
+    if (imageSaveInProgress) return;
+    imageSaveInProgress = true;
+
     const formData = new FormData();
     formData.set('student_id', studentId);
     formData.set('original_student_id', studentId);
@@ -2690,6 +2694,12 @@ if (getUserRole() === 'student') {
       badge.disabled = true;
       badge.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
     }
+
+    // ปิดปุ่มบันทึก (ถ้ามี) ระหว่าง auto-save เพื่อป้องกัน race condition
+    const btnSaveEl = document.getElementById('btnSave');
+    const btnSaveBottomEl = document.getElementById('btnSaveBottom');
+    if (btnSaveEl) btnSaveEl.disabled = true;
+    if (btnSaveBottomEl) btnSaveBottomEl.disabled = true;
 
     fetch('../../include/function/edit_child.php', { method: 'POST', body: formData })
       .then(r => {
@@ -2715,11 +2725,14 @@ if (getUserRole() === 'student') {
         }
       })
       .finally(() => {
+        imageSaveInProgress = false;
         target.input.value = '';
         if (badge) {
           badge.disabled = false;
           badge.innerHTML = originalBadgeHtml;
         }
+        if (btnSaveEl) btnSaveEl.disabled = false;
+        if (btnSaveBottomEl) btnSaveBottomEl.disabled = false;
       });
   }
 

@@ -78,9 +78,11 @@ function deleteStoredProfileImage($imagePath, $uploadDir) {
     $fileName = basename($path ?: $imagePath);
     $realImagePath = realpath($realUploadDir . DIRECTORY_SEPARATOR . $fileName);
 
-    // ป้องกันการลบไฟล์นอกโฟลเดอร์ profiles
-    if ($realImagePath && dirname($realImagePath) === $realUploadDir && is_file($realImagePath)) {
-        @unlink($realImagePath);
+    // ป้องกันการลบไฟล์นอกโฟลเดอร์ที่อนุญาต (case-insensitive สำหรับ Windows)
+    if ($realImagePath && strcasecmp(dirname($realImagePath), $realUploadDir) === 0 && is_file($realImagePath)) {
+        if (!unlink($realImagePath)) {
+            error_log("Failed to delete old image: " . $realImagePath);
+        }
     }
 }
 
@@ -676,8 +678,10 @@ try {
             $parentUploadDir = __DIR__ . '/../../../public/uploads/parents/';
             $oldFatherImage = $existingData['father_image'] ?? null;
             $oldMotherImage = $existingData['mother_image'] ?? null;
+            $oldRelativeImage = $existingData['relative_image'] ?? null;
             $newFatherImageUploaded = false;
             $newMotherImageUploaded = false;
+            $newRelativeImageUploaded = false;
 
             if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
     
@@ -894,7 +898,8 @@ try {
 
                 // ทำการย้ายไฟล์
                 if (move_uploaded_file($_FILES['relative_image']['tmp_name'], $uploadFile)) {
-                    $updateData['relative_image'] = '/public/uploads/parents/' . $fileName;
+                    $updateData['relative_image'] = '../../../public/uploads/parents/' . $fileName;
+                    $newRelativeImageUploaded = true;
                 } else {
                     echo 'Failed to upload relative image.';
                 }
@@ -1022,6 +1027,9 @@ try {
                 }
                 if ($newMotherImageUploaded) {
                     deleteStoredProfileImage($oldMotherImage, $parentUploadDir);
+                }
+                if ($newRelativeImageUploaded) {
+                    deleteStoredProfileImage($oldRelativeImage, $parentUploadDir);
                 }
                 sendJsonResponse('success', 'บันทึกข้อมูลสำเร็จ');
             } else {
