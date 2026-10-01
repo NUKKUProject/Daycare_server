@@ -39,7 +39,7 @@ try {
     $pdo->prepare("INSERT INTO login_issue_lookups (ip_address) VALUES (:ip)")->execute(['ip' => $ip]);
 
     $stmt = $pdo->prepare(
-        "SELECT student_name, description, status, TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI') AS created_at
+        "SELECT id, student_name, description, status, TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI') AS created_at
          FROM login_issues
          WHERE student_id = :student_id
          ORDER BY created_at DESC

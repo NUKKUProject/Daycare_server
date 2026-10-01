@@ -804,26 +804,82 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                         Swal.showValidationMessage(res.message);
                         return false;
                     }
+                    const sid = document.getElementById('checkStudentId').value.trim();
                     const area = document.getElementById('issueResultArea');
                     if (!res.data || res.data.length === 0) {
                         area.innerHTML = `<div style="text-align:center;padding:1rem;color:#6c757d;font-size:0.9rem;"><i class="bi bi-inbox me-2"></i>ไม่พบเรื่องที่แจ้งสำหรับรหัสนี้</div>`;
                     } else {
-                        const statusLabel = { pending: '<span style="color:#f97316;">รอดำเนินการ</span>', resolved: '<span style="color:#198754;">แก้ไขแล้ว</span>' };
+                        const statusLabel = { pending: '<span style="color:#f97316;font-size:0.8rem;">รอดำเนินการ</span>', resolved: '<span style="color:#198754;font-size:0.8rem;">แก้ไขแล้ว</span>' };
                         const rows = res.data.map(r => `
-                            <div style="border:1px solid #e2e8ee;border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.6rem;font-size:0.88rem;">
+                            <div id="issue-card-${r.id}" style="border:1px solid #e2e8ee;border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.6rem;font-size:0.88rem;">
                                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">
                                     <span style="font-weight:600;color:#1f2d3a;">${r.student_name}</span>
                                     ${statusLabel[r.status] || statusLabel.pending}
                                 </div>
-                                <div style="color:#475467;white-space:pre-wrap;">${r.description}</div>
-                                <div style="color:#98a2b3;font-size:0.78rem;margin-top:0.3rem;">${r.created_at}</div>
+                                <div style="color:#475467;white-space:pre-wrap;margin-bottom:0.4rem;">${r.description}</div>
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <span style="color:#98a2b3;font-size:0.78rem;">${r.created_at}</span>
+                                    ${r.status !== 'resolved' ? `<button onclick="openAppend(${r.id},'${encodeURIComponent(sid)}')" style="border:none;background:none;color:#26648E;font-size:0.8rem;cursor:pointer;padding:0;"><i class="bi bi-pencil-square me-1"></i>เพิ่มรายละเอียด</button>` : ''}
+                                </div>
+                                <div id="append-form-${r.id}" style="display:none;margin-top:0.6rem;">
+                                    <div class="issue-input-wrap issue-textarea-wrap" style="margin-bottom:0.4rem;">
+                                        <i class="bi bi-chat-left-text" style="margin-top:0.6rem;"></i>
+                                        <textarea id="append-text-${r.id}" maxlength="500" rows="2" placeholder="พิมพ์รายละเอียดเพิ่มเติม..."></textarea>
+                                    </div>
+                                    <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+                                        <button onclick="cancelAppend(${r.id})" style="border:none;background:#eef2f5;color:#475467;border-radius:8px;padding:0.3rem 0.8rem;font-size:0.82rem;cursor:pointer;">ยกเลิก</button>
+                                        <button onclick="submitAppend(${r.id},'${encodeURIComponent(sid)}')" style="border:none;background:linear-gradient(135deg,#26648E,#1E4F6F);color:#fff;border-radius:8px;padding:0.3rem 0.8rem;font-size:0.82rem;cursor:pointer;">ส่ง</button>
+                                    </div>
+                                </div>
                             </div>`).join('');
-                        area.innerHTML = `<div style="max-height:260px;overflow-y:auto;">${rows}</div>`;
+                        area.innerHTML = `<div style="max-height:320px;overflow-y:auto;">${rows}</div>`;
                     }
                     // ไม่ปิด popup — ให้ผู้ใช้ดูผลแล้วกด X เอง
                     return false;
                 }
             });
+        }
+
+        function openAppend(id, encodedSid) {
+            document.getElementById('append-form-' + id).style.display = 'block';
+            document.getElementById('append-text-' + id).focus();
+        }
+
+        function cancelAppend(id) {
+            document.getElementById('append-form-' + id).style.display = 'none';
+            document.getElementById('append-text-' + id).value = '';
+        }
+
+        async function submitAppend(id, encodedSid) {
+            const text = document.getElementById('append-text-' + id).value.trim();
+            if (!text) return;
+            const btn = document.querySelector(`#append-form-${id} button:last-child`);
+            btn.disabled = true;
+            btn.textContent = 'กำลังส่ง...';
+
+            const data = new FormData();
+            data.append('issue_id', id);
+            data.append('student_id', decodeURIComponent(encodedSid));
+            data.append('append_text', text);
+
+            const res = await fetch('../include/process/append_login_issue.php', { method: 'POST', body: data })
+                .then(r => r.json())
+                .catch(() => null);
+
+            if (!res || !res.success) {
+                btn.disabled = false;
+                btn.textContent = 'ส่ง';
+                Swal.showValidationMessage(res?.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+                return;
+            }
+
+            // ซ่อนฟอร์มและแสดง toast เล็ก ๆ
+            cancelAppend(id);
+            const card = document.getElementById('issue-card-' + id);
+            const toast = document.createElement('div');
+            toast.style.cssText = 'background:#d1fae5;color:#065f46;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.82rem;margin-top:0.4rem;';
+            toast.textContent = '✓ เพิ่มรายละเอียดเรียบร้อยแล้ว';
+            card.appendChild(toast);
         }
 
         function docterLogin() {
