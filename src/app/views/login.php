@@ -877,6 +877,7 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                 `,
                 didOpen: () => {
                     loadChatMessages(issueId, sid);
+                    window._chatPollTimer = setInterval(() => loadChatMessages(issueId, sid), 4000);
                     const input = document.getElementById('chatInput');
                     if (input) {
                         input.addEventListener('keydown', e => {
@@ -884,19 +885,26 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                         });
                         input.focus();
                     }
+                },
+                willClose: () => {
+                    clearInterval(window._chatPollTimer);
+                    window._chatPollTimer = null;
                 }
             });
         }
 
         async function loadChatMessages(issueId, sid) {
             const area = document.getElementById('chatMessages');
+            if (!area) return;
+            const nearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 80;
             const data = new FormData();
             data.append('issue_id', issueId);
             data.append('student_id', sid);
             const res = await fetch('../include/process/get_issue_messages.php', { method: 'POST', body: data })
                 .then(r => r.json()).catch(() => null);
+            if (!document.getElementById('chatMessages')) return;
             if (!res || !res.success) {
-                area.innerHTML = `<div style="text-align:center;color:#dc3545;font-size:0.82rem;margin:auto;">ไม่สามารถโหลดข้อมูลได้</div>`;
+                if (area.innerHTML.includes('กำลังโหลด')) area.innerHTML = `<div style="text-align:center;color:#dc3545;font-size:0.82rem;margin:auto;">ไม่สามารถโหลดข้อมูลได้</div>`;
                 return;
             }
             if (!res.data || res.data.length === 0) {
@@ -904,7 +912,7 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                 return;
             }
             area.innerHTML = res.data.map(m => renderChatBubble(m)).join('');
-            area.scrollTop = area.scrollHeight;
+            if (nearBottom) area.scrollTop = area.scrollHeight;
         }
 
         function renderChatBubble(m) {

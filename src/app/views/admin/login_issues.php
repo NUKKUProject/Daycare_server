@@ -143,9 +143,16 @@ $(document).ready(function() {
 });
 
 window._chatIssueId = null;
+window._chatPollTimer = null;
 const chatOffcanvas = new bootstrap.Offcanvas(document.getElementById('chatOffcanvas'));
 
+document.getElementById('chatOffcanvas').addEventListener('hide.bs.offcanvas', () => {
+    clearInterval(window._chatPollTimer);
+    window._chatPollTimer = null;
+});
+
 function openChat(id, name, status, studentId, nationalId) {
+    clearInterval(window._chatPollTimer);
     window._chatIssueId = id;
     document.getElementById('chatName').textContent = name;
     document.getElementById('chatStudentId').textContent = studentId ? 'รหัส: ' + studentId : '';
@@ -167,6 +174,7 @@ function openChat(id, name, status, studentId, nationalId) {
     document.getElementById('chatMessages').innerHTML = '<div class="text-center text-muted small" style="margin:auto;">กำลังโหลด...</div>';
     chatOffcanvas.show();
     loadAdminMessages(id);
+    window._chatPollTimer = setInterval(() => loadAdminMessages(window._chatIssueId), 4000);
 
     document.getElementById('adminChatInput').addEventListener('keydown', function handler(e) {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); adminSendMessage(); }
@@ -175,13 +183,17 @@ function openChat(id, name, status, studentId, nationalId) {
 
 async function loadAdminMessages(issueId) {
     const area = document.getElementById('chatMessages');
+    if (!area || !area.isConnected) return;
+    const nearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 80;
+
     const res = await fetch('../../include/process/get_issue_messages_admin.php', {
         method: 'POST',
         body: (() => { const d = new FormData(); d.append('issue_id', issueId); return d; })()
     }).then(r => r.json()).catch(() => null);
 
+    if (!area.isConnected) return;
     if (!res || !res.success) {
-        area.innerHTML = '<div class="text-center text-danger small" style="margin:auto;">โหลดไม่สำเร็จ</div>';
+        if (area.innerHTML.includes('กำลังโหลด')) area.innerHTML = '<div class="text-center text-danger small" style="margin:auto;">โหลดไม่สำเร็จ</div>';
         return;
     }
     if (!res.data || res.data.length === 0) {
@@ -189,7 +201,7 @@ async function loadAdminMessages(issueId) {
         return;
     }
     area.innerHTML = res.data.map(renderAdminBubble).join('');
-    area.scrollTop = area.scrollHeight;
+    if (nearBottom) area.scrollTop = area.scrollHeight;
 }
 
 function renderAdminBubble(m) {
