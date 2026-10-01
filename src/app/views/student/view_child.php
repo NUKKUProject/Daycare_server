@@ -909,6 +909,7 @@ if (getUserRole() === 'student') {
                 $currentPrefixTh = $child['prefix_th'] ?? '';
                 ?>
                 <select class="form-select" name="prefix_th" disabled>
+                  <option value="" <?= $currentPrefixTh === '' ? 'selected' : '' ?>>-</option>
                   <?php if ($currentPrefixTh !== '' && !in_array($currentPrefixTh, $prefixThOptions)): ?>
                     <option value="<?= htmlspecialchars($currentPrefixTh) ?>" selected><?= htmlspecialchars($currentPrefixTh) ?></option>
                   <?php endif; ?>
@@ -937,6 +938,7 @@ if (getUserRole() === 'student') {
                 $currentPrefixEn = $child['prefix_en'] ?? '';
                 ?>
                 <select class="form-select" name="prefix_en" disabled>
+                  <option value="" <?= $currentPrefixEn === '' ? 'selected' : '' ?>>-</option>
                   <?php if ($currentPrefixEn !== '' && !in_array($currentPrefixEn, $prefixEnOptions)): ?>
                     <option value="<?= htmlspecialchars($currentPrefixEn) ?>" selected><?= htmlspecialchars($currentPrefixEn) ?></option>
                   <?php endif; ?>
