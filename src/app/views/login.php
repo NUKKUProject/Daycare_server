@@ -359,12 +359,29 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
         }
 
         @media (max-width: 768px) {
+            body {
+                padding-top: 16px;
+            }
+
+            .container.mt-5 {
+                margin-top: 0.5rem !important;
+            }
+
             .card {
-                margin: 1rem;
+                margin: 0.5rem 0;
             }
 
             .card-body {
                 padding: 1.5rem;
+            }
+
+            .login-method-buttons .d-flex {
+                flex-wrap: wrap;
+            }
+
+            .login-method-buttons .btn-link {
+                font-size: 0.85rem;
+                padding: 0.4rem 0.25rem;
             }
 
             .login-logo {
@@ -1214,15 +1231,6 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
     <script>
         // เพิ่ม Touch events สำหรับมือถือ
         document.addEventListener('DOMContentLoaded', function() {
-            const loginCard = document.querySelector('.card');
-
-            // ป้องกันการ scroll เมื่อ swipe บนการ์ด
-            loginCard.addEventListener('touchmove', function(e) {
-                e.preventDefault();
-            }, {
-                passive: false
-            });
-
             // ปรับความสูงของ viewport สำหรับมือถือ
             function adjustViewportHeight() {
                 let vh = window.innerHeight * 0.01;
