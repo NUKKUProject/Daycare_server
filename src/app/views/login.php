@@ -804,7 +804,6 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                         Swal.showValidationMessage(res.message);
                         return false;
                     }
-                    const sid = document.getElementById('checkStudentId').value.trim();
                     const area = document.getElementById('issueResultArea');
                     if (!res.data || res.data.length === 0) {
                         area.innerHTML = `<div style="text-align:center;padding:1rem;color:#6c757d;font-size:0.9rem;"><i class="bi bi-inbox me-2"></i>ไม่พบเรื่องที่แจ้งสำหรับรหัสนี้</div>`;
