@@ -628,6 +628,13 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                 normalLoginForm.style.display = 'block';
                 normalLoginBtn.classList.add('active');
             });
+
+            // login ไม่ผ่านแล้วหน้ารีโหลด: เปิดฟอร์มค้างไว้
+            <?php if (!empty($_GET['error'])): ?>
+            normalLoginForm.style.display = 'block';
+            normalLoginBtn.classList.add('active');
+            document.getElementById('username').focus();
+            <?php endif; ?>
         });
 
 
