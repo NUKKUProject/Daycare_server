@@ -78,13 +78,6 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
                                 </div>
                             <?php endif; ?>
 
-                            <?php if (!empty($_GET['error'])): ?>
-                                <div class="alert alert-danger alert-dismissible fade show auto-dismiss" role="alert">
-                                    <?= htmlspecialchars($_GET['error']); ?>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                            <?php endif; ?>
-
                             <!-- ปุ่มเลือกวิธีการเข้าสู่ระบบ -->
                             <div class="login-method-buttons mb-4">
                                 <button type="button" class="btn btn-light w-100 py-2 mb-3" id="normalLoginBtn">
@@ -633,7 +626,12 @@ $_SESSION['url'] = 'testsdso;dfdsodfhsdik';
             <?php if (!empty($_GET['error'])): ?>
             normalLoginForm.style.display = 'block';
             normalLoginBtn.classList.add('active');
-            document.getElementById('username').focus();
+            Swal.fire({
+                icon: 'error',
+                title: 'เข้าสู่ระบบไม่สำเร็จ',
+                text: <?= json_encode($_GET['error'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>,
+                confirmButtonText: 'ตกลง'
+            }).then(() => document.getElementById('username').focus());
             <?php endif; ?>
         });
 
