@@ -415,7 +415,7 @@ try {
                 (!empty($weight) || $weight === 0) ? $weight : null, 
                 (!empty($weight) || $weight === 0) ? PDO::PARAM_STR : PDO::PARAM_NULL
             );
-            $stmt->bindValue(':sex', $sex, PDO::PARAM_STR);
+            $stmt->bindValue(':sex', $sex ?: null, PDO::PARAM_STR);
             $stmt->bindValue(':congenital_disease', $congenital_disease, PDO::PARAM_STR);
             $stmt->bindValue(':classroom', $classroom, PDO::PARAM_STR);
             $stmt->bindValue(':child_group', $child_group, PDO::PARAM_STR);
@@ -644,7 +644,7 @@ try {
                 'birthday' => !empty($inputData['birthday']) ? $inputData['birthday'] : ($existingData['birthday'] ?? null),
                 'height' => !empty($inputData['height']) ? (float)$inputData['height'] : ($existingData['height'] ?? null),
                 'weight' => !empty($inputData['weight']) ? (float)$inputData['weight'] : ($existingData['weight'] ?? null),
-                'sex' => $inputData['sex'] ?? $existingData['sex'] ?? '',
+                'sex' => !empty($inputData['sex']) ? $inputData['sex'] : ($existingData['sex'] ?? null),
                 'classroom' => $inputData['classroom'] ?? $existingData['classroom'] ?? '',
                 'child_group' => $inputData['child_group'] ?? $existingData['child_group'] ?? '',
                 'father_first_name' => $inputData['father_first_name'] ?? $existingData['father_first_name'] ?? '',
