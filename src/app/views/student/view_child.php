@@ -3985,6 +3985,17 @@ if (getUserRole() === 'student') {
     }[c]));
   }
 
+  function ehFormatDoctorName(name) {
+    if (!name) return '';
+    const s = name.trim();
+    if (/^นายแพทย์\s*/.test(s))  return 'นพ.' + s.replace(/^นายแพทย์\s*/, '');
+    if (/^แพทย์หญิง\s*/.test(s)) return 'พญ.' + s.replace(/^แพทย์หญิง\s*/, '');
+    if (/^นางสาว\s*/.test(s))    return 'พญ.' + s.replace(/^นางสาว\s*/, '');
+    if (/^นาง\s*/.test(s))       return 'พญ.' + s.replace(/^นาง\s*/, '');
+    if (/^นาย\s*/.test(s))       return 'นพ.' + s.replace(/^นาย\s*/, '');
+    return s;
+  }
+
   function ehParseJson(value) {
     if (value && typeof value === 'object') return value;
     if (!value) return {};
@@ -4046,7 +4057,7 @@ if (getUserRole() === 'student') {
         <div class="eh-detail-banner">
           <div class="eh-banner-date"><i class="bi bi-calendar3 me-1"></i>${ehFormatDate(r.exam_date)}</div>
           <span class="eh-banner-chip"><i class="bi bi-mortarboard me-1"></i>ปีการศึกษา ${ehEscapeHtml(r.academic_year || '-')}</span>
-          <span class="eh-banner-chip">${checked ? '<i class="bi bi-person-badge me-1"></i>แพทย์: ' + ehEscapeHtml(r.doctor_name) : '<i class="bi bi-hourglass-split me-1"></i>รอแพทย์ตรวจ'}</span>
+          <span class="eh-banner-chip">${checked ? '<i class="bi bi-person-badge me-1"></i>แพทย์: ' + ehEscapeHtml(ehFormatDoctorName(r.doctor_name)) : '<i class="bi bi-hourglass-split me-1"></i>รอแพทย์ตรวจ'}</span>
         </div>
 
         <div class="eh-detail-section" style="--eh-accent:#e0455f;--eh-accent-soft:#fdecef;">
@@ -4154,7 +4165,7 @@ if (getUserRole() === 'student') {
           </div>
           <div class="eh-record-meta">
             <i class="bi bi-mortarboard me-1"></i>ปีการศึกษา ${ehEscapeHtml(r.academic_year || '-')}
-            ${checked ? ' &nbsp;•&nbsp; <i class="bi bi-person-badge me-1"></i>แพทย์: ' + ehEscapeHtml(r.doctor_name) : ''}
+            ${checked ? ' &nbsp;•&nbsp; <i class="bi bi-person-badge me-1"></i>แพทย์: ' + ehEscapeHtml(ehFormatDoctorName(r.doctor_name)) : ''}
           </div>
           <div class="eh-record-actions">
             <button type="button" class="eh-btn-view" onclick="ehShowDetail(${index})">
