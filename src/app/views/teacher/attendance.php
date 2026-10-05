@@ -1299,7 +1299,7 @@ $data = getChildrenGroupedByTab($currentTab);
         <div class="modal-header">
             <h5 class="modal-title" id="healthModalLabel">
             <div class="title-icon-wrap">
-                <i class="bi bi-heart-pulse-fill"></i>
+                <i class="bi bi-heart-fill"></i>
             </div>
             <div>
                 บันทึกข้อมูลส่งเด็ก
@@ -1434,17 +1434,17 @@ $data = getChildrenGroupedByTab($currentTab);
             { code: 'runny_nose', label: 'น้ำมูก', icon: 'bi-droplet-fill', subs: [
                 { code: 'clear', label: 'ใส' }, { code: 'yellow', label: 'เหลือง' }, { code: 'green', label: 'เขียว' }
             ] },
-            { code: 'cough', label: 'ไอ', icon: 'bi-wind', subs: [
+            { code: 'cough', label: 'ไอ', icon: 'bi-mask', subs: [
                 { code: 'dry', label: 'แห้ง' }, { code: 'phlegm', label: 'เสมหะ' }
             ] },
-            { code: 'heat_in', label: 'ร้อนใน', icon: 'bi-fire' },
-            { code: 'gum_swelling', label: 'เหงือกบวม', icon: 'bi-emoji-frown' },
-            { code: 'red_throat', label: 'คอแดง', icon: 'bi-exclamation-circle-fill' },
+            { code: 'heat_in', label: 'ร้อนใน', icon: 'bi-thermometer-sun' },
+            { code: 'gum_swelling', label: 'เหงือกบวม', icon: 'bi-emoji-frown-fill' },
+            { code: 'red_throat', label: 'คอแดง', icon: 'bi-chat-dots-fill' },
             { code: 'mouth_blisters', label: 'ตุ่มที่ปาก', icon: 'bi-record-circle' },
             { code: 'mosquito_bites', label: 'ตุ่มยุงกัด', icon: 'bi-bug-fill' },
             { code: 'hfmd', label: 'มือเท้าปาก', icon: 'bi-hand-index-thumb-fill' },
             { code: 'wound', label: 'แผล', icon: 'bi-bandaid-fill' },
-            { code: 'rash', label: 'ผื่น', icon: 'bi-circle-fill' },
+            { code: 'rash', label: 'ผื่น', icon: 'bi-cloud-drizzle-fill' },
             { code: 'eye_discharge', label: 'ขี้ตา', icon: 'bi-eye-fill', subs: [
                 { code: 'yellow', label: 'เหลือง' }, { code: 'green', label: 'เขียว' }
             ] }
@@ -1453,9 +1453,9 @@ $data = getChildrenGroupedByTab($currentTab);
         // การดูแล/ช่วยเหลือ
         const CARE_OPTIONS = [
             { code: 'wash_hands', label: 'ล้างมือบ่อยๆ', icon: 'bi-water' },
-            { code: 'give_medicine', label: 'ป้อนยา', icon: 'bi-capsule' },
-            { code: 'apply_medicine', label: 'ทายา', icon: 'bi-eyedropper' },
-            { code: 'pcn123', label: 'PCN123', icon: 'bi-heart-pulse' },
+            { code: 'give_medicine', label: 'ป้อนยา', icon: 'bi-eyedropper' },
+            { code: 'apply_medicine', label: 'ทายา', icon: 'bi-brush-fill' },
+            { code: 'pcn123', label: 'PCN123', icon: 'bi-file-medical-fill' },
             { code: 'other', label: 'อื่นๆ', icon: 'bi-pencil-square' }
         ];
 
