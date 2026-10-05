@@ -706,8 +706,10 @@ tbody tr:hover {
   }
 
   .guardian-card-inner .g-avatar {
-    width: 64px;
-    height: 64px;
+    width: 96px;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
     border-radius: 50%;
     object-fit: cover;
     border: 3px solid #e2e8f0;
