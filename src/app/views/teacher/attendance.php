@@ -926,6 +926,98 @@ $data = getChildrenGroupedByTab($currentTab);
     box-shadow: 0 4px 12px rgba(30, 77, 183, 0.1);
   }
 
+  /* ===== Symptom sub-options & care ===== */
+  .symptoms-grid {
+    align-items: start;
+  }
+
+  .symptom-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .symptom-group .symptom-checkbox {
+    display: block;
+  }
+
+  .sub-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0 0.2rem;
+  }
+
+  .sub-options[hidden] {
+    display: none;
+  }
+
+  .sub-chip {
+    position: relative;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .sub-chip input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sub-chip span {
+    display: inline-block;
+    padding: 0.2rem 0.75rem;
+    border-radius: 20px;
+    border: 2px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    user-select: none;
+  }
+
+  .sub-chip input:checked + span {
+    border-color: #1e4db7;
+    background: linear-gradient(135deg, #0f2460, #1e4db7);
+    color: #ffffff;
+  }
+
+  .sub-chip input:focus-visible + span {
+    box-shadow: 0 0 0 3px rgba(30, 77, 183, 0.25);
+  }
+
+  .care-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+  }
+
+  @media (max-width: 576px) {
+    .care-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  #healthCareOther,
+  #healthCaretakerName {
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    padding: 0.65rem 1rem;
+    font-size: 0.9rem;
+    color: #334155;
+    background: #f8faff;
+    box-shadow: none;
+  }
+
+  #healthCareOther:focus,
+  #healthCaretakerName:focus {
+    border-color: #1e4db7;
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(30, 77, 183, 0.1);
+    outline: none;
+  }
+
   /* ===== Other Symptoms Textarea ===== */
   #healthOtherSymptoms {
     border-radius: 12px;
@@ -1271,49 +1363,11 @@ $data = getChildrenGroupedByTab($currentTab);
                     (เลือกได้มากกว่า 1)
                 </span>
                 </div>
-                <div class="symptoms-grid">
-
-                <label class="symptom-checkbox" data-symptom="runny_nose">
-                    <input type="checkbox" id="symptomRunnyNose">
-                    <div class="symptom-item">
-                    <div class="symptom-icon"><i class="bi bi-droplet-fill"></i></div>
-                    <span class="symptom-text">มีน้ำมูก</span>
-                    <div class="check-mark"><i class="bi bi-check"></i></div>
-                    </div>
-                </label>
-
-                <label class="symptom-checkbox" data-symptom="cough">
-                    <input type="checkbox" id="symptomCough">
-                    <div class="symptom-item">
-                    <div class="symptom-icon"><i class="bi bi-wind"></i></div>
-                    <span class="symptom-text">ไอ</span>
-                    <div class="check-mark"><i class="bi bi-check"></i></div>
-                    </div>
-                </label>
-
-                <label class="symptom-checkbox" data-symptom="rash">
-                    <input type="checkbox" id="symptomRash">
-                    <div class="symptom-item">
-                    <div class="symptom-icon"><i class="bi bi-circle-fill"></i></div>
-                    <span class="symptom-text">มีผื่น</span>
-                    <div class="check-mark"><i class="bi bi-check"></i></div>
-                    </div>
-                </label>
-
-                <label class="symptom-checkbox" data-symptom="red_eyes">
-                    <input type="checkbox" id="symptomRedEyes">
-                    <div class="symptom-item">
-                    <div class="symptom-icon"><i class="bi bi-eye-fill"></i></div>
-                    <span class="symptom-text">ตาแดง</span>
-                    <div class="check-mark"><i class="bi bi-check"></i></div>
-                    </div>
-                </label>
-
-                </div>
+                <div class="symptoms-grid" id="symptomsGrid"></div>
             </div>
 
             <!-- Other Symptoms -->
-            <div class="form-card mb-0">
+            <div class="form-card">
                 <div class="section-label">
                 <i class="bi bi-pencil-square"></i> อาการอื่นๆ
                 </div>
@@ -1322,6 +1376,29 @@ $data = getChildrenGroupedByTab($currentTab);
                 id="healthOtherSymptoms"
                 placeholder="เช่น ปวดหัว, คลื่นไส้, ท้องเสีย, ฯลฯ"
                 ></textarea>
+            </div>
+
+            <!-- Care / Help -->
+            <div class="form-card">
+                <div class="section-label">
+                <i class="bi bi-bandaid"></i> การดูแล/ช่วยเหลือ
+                <span class="ms-1 text-muted fw-normal"
+                    style="text-transform: none; letter-spacing: 0; font-size: 0.76rem;">
+                    (เลือกได้มากกว่า 1)
+                </span>
+                </div>
+                <div class="care-grid" id="careGrid"></div>
+                <input type="text" class="form-control mt-3" id="healthCareOther" maxlength="200"
+                    placeholder="ระบุการดูแล/ช่วยเหลืออื่นๆ" style="display:none;">
+            </div>
+
+            <!-- Caretaker -->
+            <div class="form-card mb-0">
+                <div class="section-label">
+                <i class="bi bi-person-check"></i> ผู้ดูแลชื่อ
+                </div>
+                <input type="text" class="form-control" id="healthCaretakerName" maxlength="150"
+                    placeholder="ชื่อผู้ดูแลที่ให้การดูแล/ช่วยเหลือ" autocomplete="off">
             </div>
 
             </form>
@@ -1351,6 +1428,109 @@ $data = getChildrenGroupedByTab($currentTab);
         let lastScannedData = ''; // ตัวแปรเก็บข้อมูล QR ล่าสุดที่สแกน
 
         // ====== Health Check Modal Functions ======
+
+        // อาการที่พบ (subs = ตัวเลือกย่อยที่แสดงเมื่อติ๊กอาการหลัก)
+        const SYMPTOM_OPTIONS = [
+            { code: 'runny_nose', label: 'น้ำมูก', icon: 'bi-droplet-fill', subs: [
+                { code: 'clear', label: 'ใส' }, { code: 'yellow', label: 'เหลือง' }, { code: 'green', label: 'เขียว' }
+            ] },
+            { code: 'cough', label: 'ไอ', icon: 'bi-wind', subs: [
+                { code: 'dry', label: 'แห้ง' }, { code: 'phlegm', label: 'เสมหะ' }
+            ] },
+            { code: 'heat_in', label: 'ร้อนใน', icon: 'bi-fire' },
+            { code: 'gum_swelling', label: 'เหงือกบวม', icon: 'bi-emoji-frown' },
+            { code: 'red_throat', label: 'คอแดง', icon: 'bi-exclamation-circle-fill' },
+            { code: 'mouth_blisters', label: 'ตุ่มที่ปาก', icon: 'bi-record-circle' },
+            { code: 'mosquito_bites', label: 'ตุ่มยุงกัด', icon: 'bi-bug-fill' },
+            { code: 'hfmd', label: 'มือเท้าปาก', icon: 'bi-hand-index-thumb-fill' },
+            { code: 'wound', label: 'แผล', icon: 'bi-bandaid-fill' },
+            { code: 'rash', label: 'ผื่น', icon: 'bi-circle-fill' },
+            { code: 'eye_discharge', label: 'ขี้ตา', icon: 'bi-eye-fill', subs: [
+                { code: 'yellow', label: 'เหลือง' }, { code: 'green', label: 'เขียว' }
+            ] }
+        ];
+
+        // การดูแล/ช่วยเหลือ
+        const CARE_OPTIONS = [
+            { code: 'wash_hands', label: 'ล้างมือบ่อยๆ', icon: 'bi-water' },
+            { code: 'give_medicine', label: 'ป้อนยา', icon: 'bi-capsule' },
+            { code: 'apply_medicine', label: 'ทายา', icon: 'bi-eyedropper' },
+            { code: 'pcn123', label: 'PCN123', icon: 'bi-heart-pulse' },
+            { code: 'other', label: 'อื่นๆ', icon: 'bi-pencil-square' }
+        ];
+
+        function renderHealthOptions() {
+            document.getElementById('symptomsGrid').innerHTML = SYMPTOM_OPTIONS.map(s => `
+                <div class="symptom-group">
+                    <label class="symptom-checkbox">
+                        <input type="checkbox" data-symptom="${s.code}">
+                        <div class="symptom-item">
+                            <div class="symptom-icon"><i class="bi ${s.icon}"></i></div>
+                            <span class="symptom-text">${s.label}</span>
+                            <div class="check-mark"><i class="bi bi-check"></i></div>
+                        </div>
+                    </label>
+                    ${s.subs ? `<div class="sub-options" data-sub-of="${s.code}" hidden>
+                        ${s.subs.map(sub => `<label class="sub-chip"><input type="checkbox" data-sub-of="${s.code}" value="${sub.code}"><span>${sub.label}</span></label>`).join('')}
+                    </div>` : ''}
+                </div>
+            `).join('');
+
+            document.getElementById('careGrid').innerHTML = CARE_OPTIONS.map(c => `
+                <label class="symptom-checkbox">
+                    <input type="checkbox" data-care="${c.code}">
+                    <div class="symptom-item">
+                        <div class="symptom-icon"><i class="bi ${c.icon}"></i></div>
+                        <span class="symptom-text">${c.label}</span>
+                        <div class="check-mark"><i class="bi bi-check"></i></div>
+                    </div>
+                </label>
+            `).join('');
+        }
+
+        function syncSubOptions(code) {
+            const parent = document.querySelector(`input[data-symptom="${code}"]`);
+            const subs = document.querySelector(`.sub-options[data-sub-of="${code}"]`);
+            if (!parent || !subs) return;
+            subs.hidden = !parent.checked;
+            if (!parent.checked) {
+                subs.querySelectorAll('input').forEach(i => i.checked = false);
+            }
+        }
+
+        function collectHealthChoices() {
+            const symptoms = {};
+            document.querySelectorAll('input[data-symptom]:checked').forEach(el => {
+                const code = el.dataset.symptom;
+                symptoms[code] = Array.from(
+                    document.querySelectorAll(`input[data-sub-of="${code}"]:checked`)
+                ).map(i => i.value);
+            });
+            const careActions = Array.from(document.querySelectorAll('input[data-care]:checked'))
+                .map(el => el.dataset.care);
+            return { symptoms, careActions };
+        }
+
+        const CARETAKER_STORAGE_KEY = 'healthCaretakerName';
+        function loadCaretakerName() {
+            try { return localStorage.getItem(CARETAKER_STORAGE_KEY) || ''; } catch (e) { return ''; }
+        }
+        function saveCaretakerName(name) {
+            try { localStorage.setItem(CARETAKER_STORAGE_KEY, name); } catch (e) {}
+        }
+
+        renderHealthOptions();
+
+        document.getElementById('healthModal').addEventListener('change', (e) => {
+            const el = e.target;
+            if (el.dataset.symptom) {
+                syncSubOptions(el.dataset.symptom);
+            } else if (el.dataset.care === 'other') {
+                const otherInput = document.getElementById('healthCareOther');
+                otherInput.style.display = el.checked ? '' : 'none';
+                if (el.checked) otherInput.focus(); else otherInput.value = '';
+            }
+        });
 
         // Bootstrap modal instance (lazy init)
         let healthModalInstance = null;
@@ -1432,12 +1612,13 @@ $data = getChildrenGroupedByTab($currentTab);
 
             // Reset form fields
             document.getElementById('healthTemperature').value = '';
-            document.getElementById('symptomRunnyNose').checked = false;
-            document.getElementById('symptomCough').checked = false;
-            document.getElementById('symptomRash').checked = false;
-            document.getElementById('symptomRedEyes').checked = false;
+            document.querySelectorAll('#healthForm input[type="checkbox"]').forEach(el => el.checked = false);
+            document.querySelectorAll('.sub-options').forEach(el => el.hidden = true);
             document.getElementById('healthOtherSymptoms').value = '';
-            document.querySelectorAll('.symptom-checkbox').forEach(el => el.classList.remove('checked'));
+            const careOtherInput = document.getElementById('healthCareOther');
+            careOtherInput.value = '';
+            careOtherInput.style.display = 'none';
+            document.getElementById('healthCaretakerName').value = loadCaretakerName();
 
             // Show Bootstrap modal
             getHealthModal().show();
@@ -1453,11 +1634,25 @@ $data = getChildrenGroupedByTab($currentTab);
             const studentId = document.getElementById('healthStudentIdInput').value;
             const attendanceId = document.getElementById('healthAttendanceIdInput').value;
             const temperature = document.getElementById('healthTemperature').value;
-            const hasRunnyNose = document.getElementById('symptomRunnyNose').checked ? 1 : 0;
-            const hasCough = document.getElementById('symptomCough').checked ? 1 : 0;
-            const hasRash = document.getElementById('symptomRash').checked ? 1 : 0;
-            const hasRedEyes = document.getElementById('symptomRedEyes').checked ? 1 : 0;
             const otherSymptoms = document.getElementById('healthOtherSymptoms').value;
+            const { symptoms, careActions } = collectHealthChoices();
+            const careOther = careActions.includes('other')
+                ? document.getElementById('healthCareOther').value.trim()
+                : '';
+            const caretakerName = document.getElementById('healthCaretakerName').value.trim();
+
+            // ถ้ามีการดูแล/ช่วยเหลือ ต้องระบุชื่อผู้ดูแล
+            if (careActions.length > 0 && !caretakerName) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'กรุณาระบุชื่อผู้ดูแล',
+                    text: 'เลือกการดูแล/ช่วยเหลือแล้ว กรุณากรอกชื่อผู้ดูแล',
+                    confirmButtonColor: '#1e4db7',
+                    confirmButtonText: 'ตกลง'
+                });
+                document.getElementById('healthCaretakerName').focus();
+                return;
+            }
 
             // ถ้ากรอกอุณหภูมิ ให้ตรวจสอบว่าค่าถูกต้อง
             if (temperature !== '') {
@@ -1485,16 +1680,17 @@ $data = getChildrenGroupedByTab($currentTab);
                     student_id: studentId,
                     attendance_id: attendanceId,
                     temperature: temperature,
-                    has_runny_nose: hasRunnyNose,
-                    has_cough: hasCough,
-                    has_rash: hasRash,
-                    has_red_eyes: hasRedEyes,
-                    other_symptoms: otherSymptoms
+                    symptoms: symptoms,
+                    other_symptoms: otherSymptoms,
+                    care_actions: careActions,
+                    care_other: careOther,
+                    caretaker_name: caretakerName
                 })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
+                    saveCaretakerName(caretakerName);
                     closeHealthModal();
                     Swal.fire({
                         icon: 'success',
@@ -1521,18 +1717,6 @@ $data = getChildrenGroupedByTab($currentTab);
                 saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> บันทึกข้อมูลสุขภาพ';
             });
         }
-
-        // ====== Symptom Checkbox Toggle ======
-        document.addEventListener('click', function(e) {
-            const label = e.target.closest('.symptom-checkbox');
-            if (label) {
-                const checkbox = label.querySelector('input[type="checkbox"]');
-                if (checkbox) {
-                    checkbox.checked = !checkbox.checked;
-                    label.classList.toggle('checked', checkbox.checked);
-                }
-            }
-        });
 
         // ====== Event Listeners สำหรับ Health Modal ======
         document.getElementById('healthBtnSave').addEventListener('click', submitHealthData);
