@@ -1684,14 +1684,17 @@ tbody tr:hover {
     let modalHasGuardian = true;
 
          // ฟังก์ชันเปิด Modal พร้อมข้อมูล
-    function openGuardianModal(studentData, guardianData, timeStr) {
+    function openGuardianModal(studentData, guardianData) {
         // Student Info
         const defaultAvatar = '../../../public/assets/images/avatar.png';
         const nameParts = [studentData.prefix, studentData.first_name, studentData.last_name]
             .filter(Boolean).join(' ');
         document.getElementById('guardianStudentName').textContent = nameParts || '-';
         document.getElementById('guardianStudentId').textContent  = studentData.student_id || '-';
-        document.getElementById('guardianStudentTime').textContent = timeStr || '-';
+        // เวลาเช็คชื่อเข้าของวันนี้ ถ้ายังไม่ได้สแกนเข้าให้แสดง -
+        document.getElementById('guardianStudentTime').textContent = studentData.checkin_time
+            ? 'เข้า ' + studentData.checkin_time.substring(0, 5) + ' น.'
+            : '-';
         document.getElementById('healthStudentClassroom').textContent = studentData.classroom || '-';
         const nicknameEl = document.getElementById('guardianStudentNickname');
         const nickname = (studentData.nickname || '').trim();
@@ -1745,12 +1748,8 @@ tbody tr:hover {
 
             // default avatar path
             const defaultAvatar = '../../../public/assets/images/avatar.png';
-            // format current time for display
-            const now = new Date();
-            const timeStr = now.toLocaleString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
             // เรียกฟังก์ชันเปิด Modal
-            openGuardianModal(studentData, guardianData, timeStr);
+            openGuardianModal(studentData, guardianData);
         }
 
         // ฟังก์ชันอัปเดตตารางการเช็คชื่อ
