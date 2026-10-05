@@ -241,6 +241,13 @@ $data = getChildrenGroupedByTab($currentTab);
         background-color: #f8f9fa;
     }
 
+    /* Sticky table header while scrolling */
+    .sticky-head thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
     /* Checkout Button */
     .checkout-button {
         display: inline-block;
@@ -1042,7 +1049,7 @@ $data = getChildrenGroupedByTab($currentTab);
                 
                 
                 <!-- ตารางแสดงข้อมูลเช็คชื่อ -->
-                <div class="table-responsive" style="width:100% ; max-height: 400px; overflow: scroll; ">
+                <div class="table-responsive sticky-head" style="width:100% ; max-height: 400px; overflow: scroll; ">
                     <table class="table table-striped" >
                         <thead>
                             <tr class="table-primary">
@@ -1131,7 +1138,7 @@ $data = getChildrenGroupedByTab($currentTab);
                                 <h4 class="classroom-title">
                                     <i class="bi bi-door-open-fill"></i> ห้อง: <?= htmlspecialchars($classroomData['classroom']) ?>
                                 </h4>
-                                <div class="table-responsive" style="max-height:350px; overflow-y:auto; overflow-x:auto; -webkit-overflow-scrolling:touch;">
+                                <div class="table-responsive sticky-head" style="max-height:350px; overflow-y:auto; overflow-x:auto; -webkit-overflow-scrolling:touch;">
                                     <table class="table table-striped" style="min-width:760px; white-space:nowrap;">
                                         <thead>
                                             <tr class="table-primary">
