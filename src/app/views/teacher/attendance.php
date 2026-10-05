@@ -1168,7 +1168,7 @@ $data = getChildrenGroupedByTab($currentTab);
                                                         <td><span class="nickname-text"><?= htmlspecialchars($child['nickname']) ?></span></td>
                                                         <td><?= htmlspecialchars($child['prefix_th']) ?> <?= htmlspecialchars($child['firstname_th']) ?></td>
                                                         <td><?= htmlspecialchars($child['lastname_th']) ?></td>
-                                                        <td><span class="badge bg-primary"><?= htmlspecialchars($child['classroom']) ?></span></td>
+                                                        <td><span class="badge bg-info"><?= htmlspecialchars($child['classroom']) ?></span></td>
                                                         <td>
                                                             <?php
                                                             $statusClass = $child['status'] === 'มาเรียน' ? 'bg-success' : 'bg-danger';
