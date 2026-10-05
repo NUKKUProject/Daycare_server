@@ -1156,7 +1156,6 @@ $data = getChildrenGroupedByTab($currentTab);
                                                 <th>ชื่อเล่น</th>
                                                 <th>ชื่อ</th>
                                                 <th>นามสกุล</th>
-                                                <th>กลุ่ม</th>
                                                 <th>ห้องเรียน</th>
                                                 <th>สถานะ</th>
                                             </tr>
@@ -1169,7 +1168,6 @@ $data = getChildrenGroupedByTab($currentTab);
                                                         <td><span class="nickname-text"><?= htmlspecialchars($child['nickname']) ?></span></td>
                                                         <td><?= htmlspecialchars($child['prefix_th']) ?> <?= htmlspecialchars($child['firstname_th']) ?></td>
                                                         <td><?= htmlspecialchars($child['lastname_th']) ?></td>
-                                                        <td><span class="badge bg-info"><?= htmlspecialchars($child['child_group']) ?></span></td>
                                                         <td><span class="badge bg-primary"><?= htmlspecialchars($child['classroom']) ?></span></td>
                                                         <td>
                                                             <?php
