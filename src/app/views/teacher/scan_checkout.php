@@ -1163,7 +1163,7 @@ tbody tr:hover {
     </main>
     <!-- Guardian Modal -->
     <div class="modal fade" id="guardianModal" tabindex="-1" aria-labelledby="guardianModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
 
             <!-- Header -->
