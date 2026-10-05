@@ -241,6 +241,11 @@ $data = getChildrenGroupedByTab($currentTab);
         background-color: #f8f9fa;
     }
 
+    .nickname-text {
+        color: #0f2460;
+        font-weight: 700;
+    }
+
     /* Sticky table header while scrolling */
     .sticky-head thead th {
         position: sticky;
@@ -1074,7 +1079,7 @@ $data = getChildrenGroupedByTab($currentTab);
                                         <tr>
                                             <td><?php echo $counter++; ?></td>
                                             <td><?php echo htmlspecialchars($record['studentid']); ?></td>
-                                            <td style="white-space:nowrap;"><strong><?php echo htmlspecialchars($record['nickname'] ?? ''); ?></strong></td>
+                                            <td style="white-space:nowrap;"><span class="nickname-text"><?php echo htmlspecialchars($record['nickname'] ?? ''); ?></span></td>
                                             <td><?php echo htmlspecialchars($record['prefix_th'] . ' ' . $record['firstname_th'] . ' ' . $record['lastname_th']); ?></td>
                                             <td><?php echo htmlspecialchars($record['classroom']); ?></td>
                                             <td><?php echo date('Y-m-d H:i:s', strtotime($record['check_date'])); ?></td>
@@ -1156,7 +1161,7 @@ $data = getChildrenGroupedByTab($currentTab);
                                                 <?php foreach ($classroomData['children'] as $child): ?>
                                                     <tr>
                                                         <td><?= htmlspecialchars($child['studentid']) ?></td>
-                                                        <td><strong><?= htmlspecialchars($child['nickname']) ?></strong></td>
+                                                        <td><span class="nickname-text"><?= htmlspecialchars($child['nickname']) ?></span></td>
                                                         <td><?= htmlspecialchars($child['prefix_th']) ?> <?= htmlspecialchars($child['firstname_th']) ?></td>
                                                         <td><?= htmlspecialchars($child['lastname_th']) ?></td>
                                                         <td><span class="badge bg-info"><?= htmlspecialchars($child['child_group']) ?></span></td>
@@ -1667,7 +1672,7 @@ $data = getChildrenGroupedByTab($currentTab);
                         row.innerHTML = `
                             <td>${index + 1}</td>
                             <td>${record.student_id}</td>
-                            <td style="white-space:nowrap;"><strong>${record.nickname || ''}</strong></td>
+                            <td style="white-space:nowrap;"><span class="nickname-text">${record.nickname || ''}</span></td>
                             <td>${record.prefix_th} ${record.firstname_th} ${record.lastname_th}</td>
                             <td>${record.classroom}</td>
                             <td>${record.timestamp}</td>
