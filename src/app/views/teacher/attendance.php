@@ -589,9 +589,9 @@ $data = getChildrenGroupedByTab($currentTab);
   }
 
   .health-student-card .avatar {
-    width: 64px;
-    height: 64px;
-    border-radius: 14px;
+    width: 96px;
+    height: 96px;
+    border-radius: 18px;
     background: linear-gradient(135deg, #0f2460, #1e4db7);
     display: flex;
     align-items: center;
@@ -646,8 +646,8 @@ $data = getChildrenGroupedByTab($currentTab);
     }
 
     .health-student-card .avatar {
-      width: 64px;
-      height: 64px;
+      width: 80px;
+      height: 80px;
     }
   }
 
