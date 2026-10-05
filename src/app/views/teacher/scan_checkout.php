@@ -999,17 +999,6 @@ tbody tr:hover {
                             const result = await res.json();
                             if (result.status === 'error') throw new Error(result.message || 'ไม่พบข้อมูลนักเรียน');
                             const guardians = result.data;
-                            const hasGuardian = guardians.father_first_name || guardians.mother_first_name || guardians.relative_first_name;
-                            if (!hasGuardian) {
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: 'ไม่พบข้อมูลผู้ปกครอง',
-                                    text: 'นักเรียนคนนี้ไม่มีข้อมูลผู้ปกครองในระบบ กรุณาติดต่อผู้ดูแล',
-                                    timer: 3000,
-                                    showConfirmButton: false
-                                });
-                                return;
-                            }
                             // Prepare minimal student data for modal
                             const studentData = result;
                             showPickupModal(guardians, studentData.data);
@@ -1217,6 +1206,10 @@ tbody tr:hover {
                     <i class="bi bi-person-check"></i> เลือกผู้รับเด็กกลับบ้าน
                 </div>
 
+                <div id="noGuardianNotice" class="alert alert-warning py-2 small" style="display:none;">
+                    <i class="bi bi-info-circle me-1"></i> ไม่มีข้อมูลผู้ปกครองในระบบ สามารถกดบันทึกได้เลย โดยจะไม่ระบุผู้รับเด็ก
+                </div>
+
                 <!-- Father / Mother / Guardian -->
                 <div class="guardian-grid mb-3">
 
@@ -1339,18 +1332,6 @@ tbody tr:hover {
                         throw new Error(result.message || 'ไม่พบข้อมูลนักเรียน');
                     }
                     const guardians = result.data;
-                    // ตรวจสอบว่ามีข้อมูลผู้ปกครองหรือไม่ (อย่างน้อยต้องมีชื่อใดชื่อหนึ่ง)
-                    const hasGuardian = guardians.father_first_name || guardians.mother_first_name || guardians.relative_first_name;
-                    if (!hasGuardian) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'ไม่พบข้อมูลผู้ปกครอง',
-                            text: 'นักเรียนคนนี้ไม่มีข้อมูลผู้ปกครองในระบบ กรุณาติดต่อผู้ดูแล',
-                            timer: 3000,
-                            showConfirmButton: false
-                        });
-                        return;
-                    }
                     // ตรวจสอบข้อมูลการเช็คชื่อเข้าและออก
                     const checkResult = await checkExistingCheckout(studentData.student_id);
                     if (checkResult.has_checkout) {
@@ -1696,6 +1677,8 @@ tbody tr:hover {
         });
         window.addEventListener('pagehide', () => stopScannerForRestart());
 
+    let modalHasGuardian = true;
+
          // ฟังก์ชันเปิด Modal พร้อมข้อมูล
     function openGuardianModal(studentData, guardianData, timeStr) {
         // Student Info
@@ -1736,6 +1719,10 @@ tbody tr:hover {
         document.getElementById('fatherName').textContent   = guardianData.father_first_name   || '-';
         document.getElementById('motherName').textContent   = guardianData.mother_first_name   || '-';
         document.getElementById('relativeName').textContent = guardianData.relative_first_name || '-';
+
+        // ไม่มีข้อมูลผู้ปกครองเลย -> บันทึกได้โดยไม่ต้องเลือกผู้รับ (ส่งค่าว่าง)
+        modalHasGuardian = !!(guardianData.father_first_name || guardianData.mother_first_name || guardianData.relative_first_name);
+        document.getElementById('noGuardianNotice').style.display = modalHasGuardian ? 'none' : 'block';
 
         // Reset Form
         document.querySelectorAll('input[name="guardian"]').forEach(r => r.checked = false);
@@ -1860,7 +1847,7 @@ tbody tr:hover {
         console.log('guardianBtnSave clicked');
         // 1️⃣ Validate selection
         const selectedGuardian = document.querySelector('input[name="guardian"]:checked');
-        if (!selectedGuardian) {
+        if (!selectedGuardian && modalHasGuardian) {
             showToast('กรุณาเลือกผู้รับเด็กก่อนบันทึก', 'danger');
             return;
         }
@@ -1872,14 +1859,15 @@ tbody tr:hover {
 
         try {
             // 3️⃣ Send data to server (adjust endpoint as needed)
-            console.log('Attempting to save guardian, id:', selectedGuardian.value);
+            const guardianValue = selectedGuardian ? selectedGuardian.value : '';
+            console.log('Attempting to save guardian, id:', guardianValue);
             // Gather student ID from the modal display (element populated when modal opens)
             const studentIdElem = document.getElementById('guardianStudentId');
             const studentId = studentIdElem ? studentIdElem.textContent.trim() : '';
             // Prepare payload with guardian details
             let guardianName = '';
             // Determine name based on selected guardian type
-            switch (selectedGuardian.value) {
+            switch (guardianValue) {
                 case 'father':
                     guardianName = document.getElementById('fatherName')?.textContent.trim() || '';
                     break;
@@ -1898,7 +1886,7 @@ tbody tr:hover {
 
             const payload = {
                 student_id: studentId,
-                guardian_type: selectedGuardian.value,
+                guardian_type: guardianValue,
                 guardian_name: guardianName,
                 other_details: document.getElementById('otherGuardianDetails')?.value.trim() || ''
             };
