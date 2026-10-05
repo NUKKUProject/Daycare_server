@@ -931,6 +931,21 @@ $data = getChildrenGroupedByTab($currentTab);
     align-items: start;
   }
 
+  /* อีโมจิเป็นสีเต็ม จึงคงพื้นอ่อนไว้แม้ติ๊กแล้ว */
+  .symptom-item .symptom-icon.emoji,
+  .symptom-checkbox input:checked + .symptom-item .symptom-icon.emoji {
+    background: #eff3ff;
+    box-shadow: none;
+    font-size: 1.25rem;
+    line-height: 1;
+    font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+  }
+
+  .symptom-checkbox input:checked + .symptom-item .symptom-icon.emoji {
+    background: #ffffff;
+    outline: 2px solid #1e4db7;
+  }
+
   .symptom-group {
     display: flex;
     flex-direction: column;
@@ -1431,32 +1446,32 @@ $data = getChildrenGroupedByTab($currentTab);
 
         // อาการที่พบ (subs = ตัวเลือกย่อยที่แสดงเมื่อติ๊กอาการหลัก)
         const SYMPTOM_OPTIONS = [
-            { code: 'runny_nose', label: 'น้ำมูก', icon: 'bi-droplet-fill', subs: [
+            { code: 'runny_nose', label: 'น้ำมูก', icon: '🤧', subs: [
                 { code: 'clear', label: 'ใส' }, { code: 'yellow', label: 'เหลือง' }, { code: 'green', label: 'เขียว' }
             ] },
-            { code: 'cough', label: 'ไอ', icon: 'bi-mask', subs: [
+            { code: 'cough', label: 'ไอ', icon: '😷', subs: [
                 { code: 'dry', label: 'แห้ง' }, { code: 'phlegm', label: 'เสมหะ' }
             ] },
-            { code: 'heat_in', label: 'ร้อนใน', icon: 'bi-thermometer-sun' },
-            { code: 'gum_swelling', label: 'เหงือกบวม', icon: 'bi-emoji-frown-fill' },
-            { code: 'red_throat', label: 'คอแดง', icon: 'bi-chat-dots-fill' },
-            { code: 'mouth_blisters', label: 'ตุ่มที่ปาก', icon: 'bi-record-circle' },
-            { code: 'mosquito_bites', label: 'ตุ่มยุงกัด', icon: 'bi-bug-fill' },
-            { code: 'hfmd', label: 'มือเท้าปาก', icon: 'bi-hand-index-thumb-fill' },
-            { code: 'wound', label: 'แผล', icon: 'bi-bandaid-fill' },
-            { code: 'rash', label: 'ผื่น', icon: 'bi-cloud-drizzle-fill' },
-            { code: 'eye_discharge', label: 'ขี้ตา', icon: 'bi-eye-fill', subs: [
+            { code: 'heat_in', label: 'ร้อนใน', icon: '🔥' },
+            { code: 'gum_swelling', label: 'เหงือกบวม', icon: '🦷' },
+            { code: 'red_throat', label: 'คอแดง', icon: '🗣️' },
+            { code: 'mouth_blisters', label: 'ตุ่มที่ปาก', icon: '👄' },
+            { code: 'mosquito_bites', label: 'ตุ่มยุงกัด', icon: '🦟' },
+            { code: 'hfmd', label: 'มือเท้าปาก', icon: '🖐️' },
+            { code: 'wound', label: 'แผล', icon: '🩹' },
+            { code: 'rash', label: 'ผื่น', icon: '🔴' },
+            { code: 'eye_discharge', label: 'ขี้ตา', icon: '👁️', subs: [
                 { code: 'yellow', label: 'เหลือง' }, { code: 'green', label: 'เขียว' }
             ] }
         ];
 
         // การดูแล/ช่วยเหลือ
         const CARE_OPTIONS = [
-            { code: 'wash_hands', label: 'ล้างมือบ่อยๆ', icon: 'bi-water' },
-            { code: 'give_medicine', label: 'ป้อนยา', icon: 'bi-eyedropper' },
-            { code: 'apply_medicine', label: 'ทายา', icon: 'bi-brush-fill' },
-            { code: 'pcn123', label: 'PCN123', icon: 'bi-file-medical-fill' },
-            { code: 'other', label: 'อื่นๆ', icon: 'bi-pencil-square' }
+            { code: 'wash_hands', label: 'ล้างมือบ่อยๆ', icon: '🧼' },
+            { code: 'give_medicine', label: 'ป้อนยา', icon: '💊' },
+            { code: 'apply_medicine', label: 'ทายา', icon: '🧴' },
+            { code: 'pcn123', label: 'PCN123', icon: '📋' },
+            { code: 'other', label: 'อื่นๆ', icon: '✏️' }
         ];
 
         function renderHealthOptions() {
@@ -1465,7 +1480,7 @@ $data = getChildrenGroupedByTab($currentTab);
                     <label class="symptom-checkbox">
                         <input type="checkbox" data-symptom="${s.code}">
                         <div class="symptom-item">
-                            <div class="symptom-icon"><i class="bi ${s.icon}"></i></div>
+                            <div class="symptom-icon emoji" aria-hidden="true">${s.icon}</div>
                             <span class="symptom-text">${s.label}</span>
                             <div class="check-mark"><i class="bi bi-check"></i></div>
                         </div>
@@ -1480,7 +1495,7 @@ $data = getChildrenGroupedByTab($currentTab);
                 <label class="symptom-checkbox">
                     <input type="checkbox" data-care="${c.code}">
                     <div class="symptom-item">
-                        <div class="symptom-icon"><i class="bi ${c.icon}"></i></div>
+                        <div class="symptom-icon emoji" aria-hidden="true">${c.icon}</div>
                         <span class="symptom-text">${c.label}</span>
                         <div class="check-mark"><i class="bi bi-check"></i></div>
                     </div>
