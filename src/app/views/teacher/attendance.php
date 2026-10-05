@@ -612,11 +612,41 @@ $data = getChildrenGroupedByTab($currentTab);
     object-fit: cover;
   }
 
+  .health-student-card .info {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .health-student-card .info .nickname {
+    font-size: clamp(1.6rem, 7vw, 2.1rem);
+    font-weight: 800;
+    line-height: 1.15;
+    color: #0f2460;
+    margin: 0 0 2px;
+    word-break: break-word;
+  }
+
   .health-student-card .info h4 {
     margin: 0;
-    font-size: 0.98rem;
-    font-weight: 700;
-    color: #0f2460;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #64748b;
+  }
+
+  @media (max-width: 576px) {
+    #healthModal .modal-body {
+      padding: 1rem;
+    }
+
+    .health-student-card {
+      padding: 0.9rem 1rem;
+      gap: 0.75rem;
+    }
+
+    .health-student-card .avatar {
+      width: 56px;
+      height: 56px;
+    }
   }
 
   .health-student-card .info small {
@@ -1153,7 +1183,7 @@ $data = getChildrenGroupedByTab($currentTab);
                 <i class="bi bi-heart-pulse-fill"></i>
             </div>
             <div>
-                บันทึกข้อมูส่งเด็ก
+                บันทึกข้อมูลส่งเด็ก
                 <div class="header-subtitle">Health Record System</div>
             </div>
             </h5>
@@ -1167,6 +1197,7 @@ $data = getChildrenGroupedByTab($currentTab);
             <div class="health-student-card" id="healthStudentInfo">
             <div class="avatar" id="healthStudentAvatar">-</div>
             <div class="info">
+                <div class="nickname" id="healthStudentNickname" style="display:none;"></div>
                 <h4 id="healthStudentName">ชื่อ นักเรียน</h4>
                 <small id="healthStudentDetail">
                 <i class="bi bi-person-badge"></i>
@@ -1311,6 +1342,10 @@ $data = getChildrenGroupedByTab($currentTab);
             // Populate visible info
             const name = studentData.name || 'ไม่ระบุชื่อ';
             document.getElementById('healthStudentName').textContent = name;
+            const nicknameEl = document.getElementById('healthStudentNickname');
+            const nickname = (studentData.nickname || '').trim();
+            nicknameEl.textContent = nickname;
+            nicknameEl.style.display = nickname ? '' : 'none';
             document.getElementById('healthStudentId').textContent = studentData.student_id;
             document.getElementById('healthStudentClassroom').textContent = studentData.classroom || '-';
 
