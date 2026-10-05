@@ -569,7 +569,7 @@ $data = getChildrenGroupedByTab($currentTab);
     border-radius: 16px;
     padding: 1.1rem 1.4rem;
     display: flex;
-    align-items: flex-start;
+    flex-direction: column;
     gap: 1rem;
     margin-bottom: 1.25rem;
     box-shadow: 0 4px 16px rgba(15, 36, 96, 0.1);
@@ -578,16 +578,14 @@ $data = getChildrenGroupedByTab($currentTab);
     overflow: hidden;
   }
 
-  .health-student-card::after {
-    content: "\F34A";
-    font-family: "bootstrap-icons";
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 4rem;
-    color: #1e4db710;
-    pointer-events: none;
+  .health-student-card .student-head {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+  }
+
+  .health-student-card .info small {
+    gap: 6px;
   }
 
   .health-student-card .avatar {
@@ -643,9 +641,13 @@ $data = getChildrenGroupedByTab($currentTab);
       gap: 0.75rem;
     }
 
+    .health-student-card .student-head {
+      gap: 0.8rem;
+    }
+
     .health-student-card .avatar {
-      width: 56px;
-      height: 56px;
+      width: 64px;
+      height: 64px;
     }
   }
 
@@ -670,10 +672,18 @@ $data = getChildrenGroupedByTab($currentTab);
   }
 
   .health-history-list {
-    margin-top: 8px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
+  }
+
+  .health-history-list:empty {
+    display: none;
+  }
+
+  .health-history-list:not(:empty) {
+    border-top: 1px dashed #dbe3f0;
+    padding-top: 0.9rem;
   }
 
   .health-history-item {
@@ -1195,18 +1205,20 @@ $data = getChildrenGroupedByTab($currentTab);
 
             <!-- Student Info -->
             <div class="health-student-card" id="healthStudentInfo">
-            <div class="avatar" id="healthStudentAvatar">-</div>
-            <div class="info">
-                <div class="nickname" id="healthStudentNickname" style="display:none;"></div>
-                <h4 id="healthStudentName">ชื่อ นักเรียน</h4>
-                <small id="healthStudentDetail">
-                <i class="bi bi-person-badge"></i>
-                <span id="healthStudentId" class="badge-pill">-</span>
-                <i class="bi bi-door-open ms-1"></i>
-                <span id="healthStudentClassroom" class="badge-pill">-</span>
-                </small>
-                <div id="healthHistoryList" class="health-history-list"></div>
+            <div class="student-head">
+                <div class="avatar" id="healthStudentAvatar">-</div>
+                <div class="info">
+                    <div class="nickname" id="healthStudentNickname" style="display:none;"></div>
+                    <h4 id="healthStudentName">ชื่อ นักเรียน</h4>
+                    <small id="healthStudentDetail">
+                    <i class="bi bi-person-badge"></i>
+                    <span id="healthStudentId" class="badge-pill">-</span>
+                    <i class="bi bi-door-open ms-1"></i>
+                    <span id="healthStudentClassroom" class="badge-pill">-</span>
+                    </small>
+                </div>
             </div>
+            <div id="healthHistoryList" class="health-history-list"></div>
             </div>
 
             <!-- Form -->
