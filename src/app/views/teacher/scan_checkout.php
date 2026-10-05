@@ -723,10 +723,12 @@ tbody tr:hover {
   }
 
   .guardian-card-inner .g-name {
-    font-size: 0.72rem;
-    color: #94a3b8;
-    font-weight: 400;
-    margin-top: -4px;
+    font-size: 0.95rem;
+    color: #0f2460;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-top: -2px;
+    word-break: break-word;
   }
 
   .guardian-card-inner .check-mark {
@@ -1716,9 +1718,10 @@ tbody tr:hover {
         document.getElementById('motherImg').src    = guardianData.mother_image   || defaultAvatar;
         document.getElementById('relativeImg').src  = guardianData.relative_image || defaultAvatar;
 
-        document.getElementById('fatherName').textContent   = guardianData.father_first_name   || '-';
-        document.getElementById('motherName').textContent   = guardianData.mother_first_name   || '-';
-        document.getElementById('relativeName').textContent = guardianData.relative_first_name || '-';
+        const fullName = (first, last) => [first, last].filter(Boolean).join(' ') || '-';
+        document.getElementById('fatherName').textContent   = fullName(guardianData.father_first_name, guardianData.father_last_name);
+        document.getElementById('motherName').textContent   = fullName(guardianData.mother_first_name, guardianData.mother_last_name);
+        document.getElementById('relativeName').textContent = fullName(guardianData.relative_first_name, guardianData.relative_last_name);
 
         // ไม่มีข้อมูลผู้ปกครองเลย -> บันทึกได้โดยไม่ต้องเลือกผู้รับ (ส่งค่าว่าง)
         modalHasGuardian = !!(guardianData.father_first_name || guardianData.mother_first_name || guardianData.relative_first_name);
