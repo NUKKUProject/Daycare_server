@@ -1048,6 +1048,7 @@ $data = getChildrenGroupedByTab($currentTab);
                             <tr class="table-primary">
                                 <th>ลำดับ</th>
                                 <th>รหัสนักเรียน</th>
+                                <th>ชื่อเล่น</th>
                                 <th>ชื่อ-นามสกุล</th>
                                 <th>ห้องเรียน</th>
                                 <th>วันเวลา</th>
@@ -1066,6 +1067,7 @@ $data = getChildrenGroupedByTab($currentTab);
                                         <tr>
                                             <td><?php echo $counter++; ?></td>
                                             <td><?php echo htmlspecialchars($record['studentid']); ?></td>
+                                            <td><strong><?php echo htmlspecialchars($record['nickname'] ?? ''); ?></strong></td>
                                             <td><?php echo htmlspecialchars($record['prefix_th'] . ' ' . $record['firstname_th'] . ' ' . $record['lastname_th']); ?></td>
                                             <td><?php echo htmlspecialchars($record['classroom']); ?></td>
                                             <td><?php echo date('Y-m-d H:i:s', strtotime($record['check_date'])); ?></td>
@@ -1078,12 +1080,12 @@ $data = getChildrenGroupedByTab($currentTab);
                                 <?php if (!$hasAttendance): // ถ้าไม่มีรายการที่มีการเช็คชื่อ 
                                 ?>
                                     <tr>
-                                        <td colspan="6">ไม่มีข้อมูลการเช็คชื่อในวันนี้</td>
+                                        <td colspan="7">ไม่มีข้อมูลการเช็คชื่อในวันนี้</td>
                                     </tr>
                                 <?php endif; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="6">ไม่มีข้อมูลการเช็คชื่อในวันนี้</td>
+                                    <td colspan="7">ไม่มีข้อมูลการเช็คชื่อในวันนี้</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -1649,7 +1651,7 @@ $data = getChildrenGroupedByTab($currentTab);
                     tableBody.innerHTML = '';
 
                     if (data.message) {
-                        tableBody.innerHTML = `<tr><td colspan="6" class="text-center">${data.message}</td></tr>`;
+                        tableBody.innerHTML = `<tr><td colspan="7" class="text-center">${data.message}</td></tr>`;
                         return;
                     }
 
@@ -1658,6 +1660,7 @@ $data = getChildrenGroupedByTab($currentTab);
                         row.innerHTML = `
                             <td>${index + 1}</td>
                             <td>${record.student_id}</td>
+                            <td><strong>${record.nickname || ''}</strong></td>
                             <td>${record.prefix_th} ${record.firstname_th} ${record.lastname_th}</td>
                             <td>${record.classroom}</td>
                             <td>${record.timestamp}</td>
@@ -1673,7 +1676,7 @@ $data = getChildrenGroupedByTab($currentTab);
                 .catch(error => {
                     console.error('Error:', error);
                     const tableBody = document.getElementById('attendance-table-body');
-                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
                 });
         }
 
