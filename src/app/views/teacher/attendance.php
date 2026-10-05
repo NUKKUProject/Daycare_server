@@ -1131,14 +1131,14 @@ $data = getChildrenGroupedByTab($currentTab);
                                 <h4 class="classroom-title">
                                     <i class="bi bi-door-open-fill"></i> ห้อง: <?= htmlspecialchars($classroomData['classroom']) ?>
                                 </h4>
-                                <div class="table-responsive" style="max-height:350px; overflow:scroll; overflow-x:hidden;">
-                                    <table class="table table-striped">
+                                <div class="table-responsive" style="max-height:350px; overflow-y:auto; overflow-x:auto; -webkit-overflow-scrolling:touch;">
+                                    <table class="table table-striped" style="min-width:760px; white-space:nowrap;">
                                         <thead>
                                             <tr class="table-primary">
                                                 <th>รหัสประจำตัว</th>
+                                                <th>ชื่อเล่น</th>
                                                 <th>ชื่อ</th>
                                                 <th>นามสกุล</th>
-                                                <th>ชื่อเล่น</th>
                                                 <th>กลุ่ม</th>
                                                 <th>ห้องเรียน</th>
                                                 <th>สถานะ</th>
@@ -1149,9 +1149,9 @@ $data = getChildrenGroupedByTab($currentTab);
                                                 <?php foreach ($classroomData['children'] as $child): ?>
                                                     <tr>
                                                         <td><?= htmlspecialchars($child['studentid']) ?></td>
+                                                        <td><strong><?= htmlspecialchars($child['nickname']) ?></strong></td>
                                                         <td><?= htmlspecialchars($child['prefix_th']) ?> <?= htmlspecialchars($child['firstname_th']) ?></td>
                                                         <td><?= htmlspecialchars($child['lastname_th']) ?></td>
-                                                        <td><?= htmlspecialchars($child['nickname']) ?></td>
                                                         <td><span class="badge bg-info"><?= htmlspecialchars($child['child_group']) ?></span></td>
                                                         <td><span class="badge bg-primary"><?= htmlspecialchars($child['classroom']) ?></span></td>
                                                         <td>
