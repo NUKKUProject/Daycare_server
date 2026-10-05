@@ -621,7 +621,7 @@ $data = getChildrenGroupedByTab($currentTab);
     line-height: 1.15;
     color: #0f2460;
     margin: 0 0 2px;
-    word-break: break-word;
+    white-space: nowrap;
   }
 
   .health-student-card .info h4 {
@@ -1067,7 +1067,7 @@ $data = getChildrenGroupedByTab($currentTab);
                                         <tr>
                                             <td><?php echo $counter++; ?></td>
                                             <td><?php echo htmlspecialchars($record['studentid']); ?></td>
-                                            <td><strong><?php echo htmlspecialchars($record['nickname'] ?? ''); ?></strong></td>
+                                            <td style="white-space:nowrap;"><strong><?php echo htmlspecialchars($record['nickname'] ?? ''); ?></strong></td>
                                             <td><?php echo htmlspecialchars($record['prefix_th'] . ' ' . $record['firstname_th'] . ' ' . $record['lastname_th']); ?></td>
                                             <td><?php echo htmlspecialchars($record['classroom']); ?></td>
                                             <td><?php echo date('Y-m-d H:i:s', strtotime($record['check_date'])); ?></td>
@@ -1660,7 +1660,7 @@ $data = getChildrenGroupedByTab($currentTab);
                         row.innerHTML = `
                             <td>${index + 1}</td>
                             <td>${record.student_id}</td>
-                            <td><strong>${record.nickname || ''}</strong></td>
+                            <td style="white-space:nowrap;"><strong>${record.nickname || ''}</strong></td>
                             <td>${record.prefix_th} ${record.firstname_th} ${record.lastname_th}</td>
                             <td>${record.classroom}</td>
                             <td>${record.timestamp}</td>
