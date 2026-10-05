@@ -242,8 +242,13 @@ $data = getChildrenGroupedByTab($currentTab);
     }
 
     .nickname-text {
-        color: #0f2460;
+        display: inline-block;
+        background: #1e4db7;
+        color: #ffffff;
         font-weight: 700;
+        padding: 3px 12px;
+        border-radius: 20px;
+        white-space: nowrap;
     }
 
     /* Sticky table header while scrolling */
