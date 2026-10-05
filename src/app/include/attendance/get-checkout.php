@@ -11,6 +11,7 @@ try {
         COALESCE(a.prefix_th, '') AS prefix_th, 
         COALESCE(a.firstname_th, '') AS firstname_th, 
         COALESCE(a.lastname_th, '') AS lastname_th,
+        COALESCE(a.nickname, '') AS nickname,
         COALESCE(a.classroom, 'ไม่ระบุห้องเรียน') AS classroom,
         COALESCE(TO_CHAR(c.check_date, 'YYYY-MM-DD HH24:MI:SS'), 'ยังไม่มีการบันทึก') AS check_date,
         COALESCE(TO_CHAR(c.check_out_time, 'HH24:MI:SS'), 'ยังไม่มีการบันทึก') AS check_out_time,

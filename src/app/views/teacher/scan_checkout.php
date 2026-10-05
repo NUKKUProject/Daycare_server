@@ -543,25 +543,88 @@ tbody tr:hover {
   }
 
   .guardian-student-card .avatar {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
+    width: 96px;
+    height: 96px;
+    border-radius: 18px;
     background: linear-gradient(135deg, #0f2460, #1e4db7);
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
     color: #fff;
-    font-size: 1.3rem;
+    font-size: 1.8rem;
     font-weight: 700;
     flex-shrink: 0;
     box-shadow: 0 6px 16px rgba(30, 77, 183, 0.35);
   }
 
+  .guardian-student-card .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .guardian-student-card .info {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .guardian-student-card .info .nickname {
+    font-size: clamp(1.6rem, 7vw, 2.1rem);
+    font-weight: 800;
+    line-height: 1.15;
+    color: #0f2460;
+    margin: 0 0 2px;
+    white-space: nowrap;
+  }
+
   .guardian-student-card .info h4 {
     margin: 0;
-    font-size: 0.98rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #64748b;
+  }
+
+  .guardian-student-card .info small {
+    gap: 6px;
+  }
+
+  @media (max-width: 576px) {
+    #guardianModal .modal-body {
+      padding: 1rem;
+    }
+
+    .guardian-student-card {
+      padding: 0.9rem 1rem;
+      gap: 0.8rem;
+    }
+
+    .guardian-student-card .avatar {
+      width: 80px;
+      height: 80px;
+    }
+  }
+
+  /* Nickname badge in tables */
+  .nickname-text {
+    display: inline-block;
+    background: #1e4db7;
+    color: #ffffff;
     font-weight: 700;
-    color: #0f2460;
+    padding: 3px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* Sticky table header while scrolling */
+  .sticky-head table {
+    overflow: visible;
+  }
+
+  .sticky-head thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
   }
 
   .guardian-student-card .info small {
@@ -990,12 +1053,13 @@ tbody tr:hover {
 
                
 
-                <div class="table-responsive" style="width:100% ; max-height: 400px; overflow: scroll; ">
+                <div class="table-responsive sticky-head" style="width:100% ; max-height: 400px; overflow: scroll; ">
                     <table class="table table-striped" >
                         <thead>
                             <tr class="table-primary">
                                 <th>ลำดับ</th>
                                 <th>รหัสนักเรียน</th>
+                                <th>ชื่อเล่น</th>
                                 <th>ชื่อ-นามสกุล</th>
                                 <th>ห้องเรียน</th>
                                 <th>เวลา</th>
@@ -1061,14 +1125,14 @@ tbody tr:hover {
                             <h4 class="classroom-title">
                                 <i class="bi bi-door-open-fill"></i> ห้อง: <?= htmlspecialchars($classroomData['classroom']) ?>
                             </h4>
-                            <div class="table-responsive">
-                                <table class="student-table">
+                            <div class="table-responsive sticky-head" style="max-height:350px; overflow-y:auto; overflow-x:auto; -webkit-overflow-scrolling:touch;">
+                                <table class="student-table" style="min-width:680px; white-space:nowrap;">
                                     <thead>
                                         <tr>
                                             <th>รหัสประจำตัว</th>
+                                            <th>ชื่อเล่น</th>
                                             <th>ชื่อ</th>
                                             <th>นามสกุล</th>
-                                            <th>กลุ่ม</th>
                                             <th>ห้องเรียน</th>
                                             <th>สถานะ</th>
                                         </tr>
@@ -1078,10 +1142,10 @@ tbody tr:hover {
                                             <?php foreach ($classroomData['children'] as $child): ?>
                                                 <tr>
                                                     <td><?= htmlspecialchars($child['studentid']) ?></td>
+                                                    <td><span class="nickname-text"><?= htmlspecialchars($child['nickname'] ?? '') ?></span></td>
                                                     <td><?= htmlspecialchars($child['prefix_th']) ?> <?= htmlspecialchars($child['firstname_th']) ?></td>
                                                     <td><?= htmlspecialchars($child['lastname_th']) ?></td>
-                                                    <td><span class="badge bg-info"><?= htmlspecialchars($child['child_group']) ?></span></td>
-                                                    <td><span class="badge bg-primary"><?= htmlspecialchars($child['classroom']) ?></span></td>
+                                                    <td><span class="badge bg-info"><?= htmlspecialchars($child['classroom']) ?></span></td>
                                                     <td>
                                                         <?php
                                                         $statusClass = $child['status_checkout'] === 'กลับบ้านแล้ว' ? 'bg-success' : 'bg-warning';
@@ -1134,6 +1198,7 @@ tbody tr:hover {
                 <div class="guardian-student-card">
                 <div class="avatar" id="guardianStudentAvatar">-</div>
                 <div class="info">
+                    <div class="nickname" id="guardianStudentNickname" style="display:none;"></div>
                     <h4 id="guardianStudentName">ชื่อ นักเรียน</h4>
                     <small>
                     <i class="bi bi-person-badge"></i>
@@ -1641,9 +1706,27 @@ tbody tr:hover {
         document.getElementById('guardianStudentId').textContent  = studentData.student_id || '-';
         document.getElementById('guardianStudentTime').textContent = timeStr || '-';
         document.getElementById('healthStudentClassroom').textContent = studentData.classroom || '-';
-        // Avatar Initial
-        const initial = (studentData.first_name || name).charAt(0).toUpperCase();
-        document.getElementById('guardianStudentAvatar').textContent = initial;
+        const nicknameEl = document.getElementById('guardianStudentNickname');
+        const nickname = (studentData.nickname || '').trim();
+        nicknameEl.textContent = nickname ? 'น้อง' + nickname : '';
+        nicknameEl.style.display = nickname ? '' : 'none';
+
+        // Avatar (profile image, fallback to initial)
+        const initial = (studentData.first_name || nickname || '-').charAt(0).toUpperCase();
+        const avatarEl = document.getElementById('guardianStudentAvatar');
+        avatarEl.innerHTML = '';
+        if (studentData.profile_image) {
+            const img = document.createElement('img');
+            img.src = studentData.profile_image;
+            img.alt = 'รูปนักเรียน';
+            img.onerror = () => {
+                avatarEl.innerHTML = '';
+                avatarEl.textContent = initial;
+            };
+            avatarEl.appendChild(img);
+        } else {
+            avatarEl.textContent = initial;
+        }
 
         // Guardian Images & Names
         document.getElementById('fatherImg').src    = guardianData.father_image   || defaultAvatar;
@@ -1693,7 +1776,7 @@ tbody tr:hover {
 
                     if (data.message) {
                         // ถ้าไม่มีข้อมูลการเช็คชื่อ
-                        tableBody.innerHTML = `<tr><td colspan="6">${data.message}</td></tr>`;
+                        tableBody.innerHTML = `<tr><td colspan="7">${data.message}</td></tr>`;
                         return;
                     }
 
@@ -1703,6 +1786,7 @@ tbody tr:hover {
                         row.innerHTML = `
                     <td>${index + 1}</td> <!-- เพิ่มเลขลำดับ -->
                     <td>${record.student_id}</td>
+                    <td style="white-space:nowrap;"><span class="nickname-text">${record.nickname || ''}</span></td>
                     <td>${record.prefix_th} ${record.firstname_th} ${record.lastname_th}</td>
                     <td><span class="badge bg-primary">${record.classroom}</span></td>
                     <td><span class="badge bg-secondary">${record.timestamp}</span></td>
@@ -1722,7 +1806,7 @@ tbody tr:hover {
                 .catch(error => {
                     console.error('Error fetching attendance:', error);
                     const tableBody = document.getElementById('attendance-table-body');
-                    tableBody.innerHTML = '<tr><td colspan="6">เกิดข้อผิดพลาดในการดึงข้อมูล</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="7">เกิดข้อผิดพลาดในการดึงข้อมูล</td></tr>';
                 });
         }
 

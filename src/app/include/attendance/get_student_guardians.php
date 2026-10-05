@@ -11,6 +11,8 @@ if (isset($_GET['student_id'])) {
                 prefix_th as prefix,
                 firstname_th as first_name,
                 lastname_th as last_name,
+                nickname,
+                profile_image,
                 classroom,             
                 father_image,
                 mother_image,
