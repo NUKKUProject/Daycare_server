@@ -64,6 +64,22 @@ $studentid = $_SESSION['username'] ?? '';
     .unit .pn-input { padding-right: 3.2rem; }
     .unit::after { content: attr(data-unit); position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: .8rem; font-weight: 700; pointer-events: none; }
 
+    /* ช่วงเวลาที่บ้าน: เช้าก่อนมาศูนย์ / เย็นและกลางคืน */
+    .period { border-radius: 16px; overflow: hidden; border: 2px solid; margin-bottom: 1rem; background: #fff; }
+    .period-head { display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem; color: #fff; }
+    .period-head .ico { font-size: 2rem; line-height: 1; font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; }
+    .period-head .t { font-weight: 800; font-size: 1.08rem; line-height: 1.2; }
+    .period-head .s { font-size: .78rem; opacity: .92; }
+    .period-body { padding: 1rem; }
+    .period.morning { border-color: #f59e0b; }
+    .period.morning .period-head { background: linear-gradient(135deg, #f59e0b, #f97316); }
+    .period.night { border-color: #4338ca; }
+    .period.night .period-head { background: linear-gradient(135deg, #1e3a8a, #4338ca); }
+    .sub-title {
+        font-weight: 800; color: #0f2460; font-size: .9rem; margin: 0 0 .65rem; padding-bottom: .3rem;
+        border-bottom: 1px dashed #cbd5e1;
+    }
+
     .mood-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: .45rem; }
     .mood-btn {
         border: 2px solid #e2e8f0; background: #f8faff; border-radius: 14px; padding: .55rem .15rem; cursor: pointer;
@@ -182,29 +198,56 @@ $studentid = $_SESSION['username'] ?? '';
                         <div class="mood-group" id="pMoodGroup"></div>
                     </div>
 
-                    <div class="pn-sec">
-                        <label class="pn-label" for="pDropOff">🚗 ส่งเด็กเวลา <small class="text-muted fw-normal" id="dropOffHint"></small></label>
-                        <input type="time" class="form-control pn-input" id="pDropOff" style="max-width:200px;">
-                    </div>
-
-                    <div class="pn-sec">
-                        <div class="pn-sec-title">🌅 ช่วงเช้าก่อนมาศูนย์</div>
-                        <div class="row g-3">
-                            <div class="col-12 col-sm-5"><label class="pn-label" for="hMorningMilk">ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control pn-input" id="hMorningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
-                            <div class="col-12 col-sm-7"><label class="pn-label" for="hMorningFood">อาหารเช้า (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control pn-input" id="hMorningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
+                    <!-- ===== ช่วงเช้าก่อนมาศูนย์ ===== -->
+                    <div class="period morning">
+                        <div class="period-head">
+                            <span class="ico">🌅</span>
+                            <div>
+                                <div class="t">ช่วงเช้าก่อนมาศูนย์</div>
+                                <div class="s">ที่บ้าน ตั้งแต่ตื่นนอนจนถึงเวลาส่งเด็ก</div>
+                            </div>
+                        </div>
+                        <div class="period-body">
+                            <div class="row g-3">
+                                <div class="col-12 col-sm-5"><label class="pn-label" for="hMorningMilk">🥛 ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control pn-input" id="hMorningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                                <div class="col-12 col-sm-7"><label class="pn-label" for="hMorningFood">🍚 อาหารเช้า (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control pn-input" id="hMorningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
+                                <div class="col-12">
+                                    <label class="pn-label" for="pDropOff">🚗 ส่งเด็กเวลา <small class="text-muted fw-normal" id="dropOffHint"></small></label>
+                                    <input type="time" class="form-control pn-input" id="pDropOff" style="max-width:200px;">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="pn-sec">
-                        <div class="pn-sec-title">🌙 ช่วงเย็นและกลางคืน</div>
-                        <div class="row g-3">
-                            <div class="col-12 col-sm-5"><label class="pn-label" for="hEveningMilk">ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control pn-input" id="hEveningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
-                            <div class="col-12 col-sm-7"><label class="pn-label" for="hEveningFood">อาหารเย็น (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control pn-input" id="hEveningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
-                            <div class="col-12 col-sm-4"><label class="pn-label" for="hSleep">กลางคืนนอนหลับ</label><div class="unit" data-unit="ชม."><input type="number" class="form-control pn-input" id="hSleep" data-stepper="step=0.5;min=0;max=16;presets=8|9|10|11|12" min="0" max="24" step="0.5" inputmode="decimal"></div></div>
-                            <div class="col-6 col-sm-4"><label class="pn-label" for="hBedtime">เข้านอนเวลา</label><input type="time" class="form-control pn-input" id="hBedtime"></div>
-                            <div class="col-6 col-sm-4"><label class="pn-label" for="hWake">ตื่นนอนเวลา</label><input type="time" class="form-control pn-input" id="hWake"></div>
+                    <!-- ===== ช่วงเย็นและกลางคืน ===== -->
+                    <div class="period night">
+                        <div class="period-head">
+                            <span class="ico">🌙</span>
+                            <div>
+                                <div class="t">ช่วงเย็นและกลางคืน</div>
+                                <div class="s">ที่บ้าน ตั้งแต่รับกลับจากศูนย์จนถึงเข้านอน</div>
+                            </div>
                         </div>
-                        <div class="d-flex flex-wrap gap-2 mt-3">
+                        <div class="period-body">
+                            <div class="sub-title">🌆 ช่วงเย็น</div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-12 col-sm-5"><label class="pn-label" for="hEveningMilk">🥛 ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control pn-input" id="hEveningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                                <div class="col-12 col-sm-7"><label class="pn-label" for="hEveningFood">🍚 อาหารเย็น (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control pn-input" id="hEveningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
+                            </div>
+
+                            <div class="sub-title">😴 กลางคืน</div>
+                            <div class="row g-3">
+                                <div class="col-12 col-sm-4"><label class="pn-label" for="hSleep">กลางคืนนอนหลับ</label><div class="unit" data-unit="ชม."><input type="number" class="form-control pn-input" id="hSleep" data-stepper="step=0.5;min=0;max=16;presets=8|9|10|11|12" min="0" max="24" step="0.5" inputmode="decimal"></div></div>
+                                <div class="col-6 col-sm-4"><label class="pn-label" for="hBedtime">เข้านอนเวลา</label><input type="time" class="form-control pn-input" id="hBedtime"></div>
+                                <div class="col-6 col-sm-4"><label class="pn-label" for="hWake">ตื่นนอนเวลา</label><input type="time" class="form-control pn-input" id="hWake"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== พัฒนาการ (ไม่ผูกกับช่วงเวลา) ===== -->
+                    <div class="pn-sec">
+                        <div class="pn-sec-title">🧸 พัฒนาการของลูก</div>
+                        <div class="d-flex flex-wrap gap-2">
                             <label class="check-pill"><input type="checkbox" id="hStopDiaper"><span>เลิกใส่แพมเพิร์ส</span></label>
                             <label class="check-pill"><input type="checkbox" id="hStopBottle"><span>เลิกดื่มนมขวด</span></label>
                         </div>
