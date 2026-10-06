@@ -111,7 +111,7 @@ function isCurrentPage($path)
                             .nav-group { margin: .5rem 1rem 0; list-style: none; }
                             .nav-group-toggle {
                                 width: 100%; display: flex; align-items: center; gap: .6rem; background: none; border: none;
-                                color: rgba(255, 255, 255, .75); font-size: .8rem; font-weight: 700; letter-spacing: .04em;
+                                color: rgba(255, 255, 255, .75); font-size: .9rem; font-weight: 700; letter-spacing: .03em;
                                 padding: .55rem .6rem; border-radius: 8px; text-align: left;
                             }
                             .nav-group-toggle:hover { background: rgba(255, 255, 255, .08); color: #fff; }
@@ -121,8 +121,8 @@ function isCurrentPage($path)
                             .nav-group-items { list-style: none; padding: 0; margin: .15rem 0 0; display: none; }
                             .nav-group.open > .nav-group-items { display: block; }
                             .sidebar .nav-group-items .nav-item { margin: .12rem 0; }
-                            .sidebar .nav-group-items .nav-link { padding: .6rem .8rem; font-size: .92rem; }
-                            .sidebar .nav-group-items .nav-sub .nav-link { padding-left: 2.1rem; font-size: .86rem; }
+                            .sidebar .nav-group-items .nav-link { padding: .6rem .8rem; font-size: 1.02rem; }
+                            .sidebar .nav-group-items .nav-sub .nav-link { padding-left: 2.1rem; font-size: .95rem; }
                             .sidebar .nav-group-items .nav-link.active::before { left: -.4rem; }
                         </style>
 
