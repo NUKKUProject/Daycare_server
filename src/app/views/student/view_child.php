@@ -2358,7 +2358,7 @@ textarea.vx-input { height:auto; }
     changes.forEach(c => { counts[changeType(c)]++; });
 
     const pill = (type, n) => n === 0 ? '' :
-      `<span style="background:${chip[type][1]};color:${chip[type][2]};border-radius:20px;padding:2px 12px;font-size:.8rem;font-weight:700;">${chip[type][0]} ${n}</span>`;
+      `<span style="background:${chip[type][1]};color:${chip[type][2]};border-radius:20px;padding:2px 12px;font-size:.75rem;font-weight:600;">${chip[type][0]} ${n}</span>`;
 
     let html = `<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:6px;">
       ${pill('add', counts.add)}${pill('edit', counts.edit)}${pill('remove', counts.remove)}</div>`;
@@ -2368,7 +2368,7 @@ textarea.vx-input { height:auto; }
       const items = changes.filter(c => group.keys.includes(c.key));
       if (items.length === 0) return;
 
-      html += `<div style="background:#eff3ff;color:#0f2460;font-weight:800;padding:7px 12px;border-radius:10px;margin:12px 0 2px;display:flex;align-items:center;gap:8px;">
+      html += `<div style="background:#eff3ff;color:#0f2460;font-weight:600;font-size:.88rem;padding:6px 12px;border-radius:10px;margin:10px 0 2px;display:flex;align-items:center;gap:8px;">
         <i class="bi ${group.icon}"></i><span>${escapeHtml(group.title)}</span>
         <span style="margin-left:auto;font-weight:600;font-size:.78rem;color:#64748b;">${items.length} รายการ</span>
       </div>`;
@@ -2379,12 +2379,12 @@ textarea.vx-input { height:auto; }
         const label = c.label.includes(': ') ? c.label.split(': ').pop() : c.label;
         const before = c.before === '' ? '' : escapeHtml(c.before);
         const after = c.after === '' ? '<span style="color:#94a3b8;">(ว่าง)</span>' : escapeHtml(c.after);
-        html += `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:9px 12px;border-bottom:1px solid #eef2f7;">
-          <div style="flex:0 0 140px;font-weight:700;color:#334155;">${escapeHtml(label)}</div>
+        html += `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:7px 12px;border-bottom:1px solid #eef2f7;font-size:.85rem;">
+          <div style="flex:0 0 130px;font-weight:600;color:#334155;">${escapeHtml(label)}</div>
           <div style="flex:1 1 130px;color:#64748b;word-break:break-word;">${before}</div>
           <div style="color:#94a3b8;"><i class="bi bi-arrow-right"></i></div>
-          <div style="flex:1 1 130px;color:#15803d;font-weight:700;word-break:break-word;">${after}</div>
-          <span style="flex:0 0 auto;background:${chip[type][1]};color:${chip[type][2]};border-radius:20px;padding:1px 10px;font-size:.72rem;font-weight:700;">${chip[type][0]}</span>
+          <div style="flex:1 1 130px;color:#15803d;font-weight:600;word-break:break-word;">${after}</div>
+          <span style="flex:0 0 auto;background:${chip[type][1]};color:${chip[type][2]};border-radius:20px;padding:1px 9px;font-size:.7rem;font-weight:600;">${chip[type][0]}</span>
         </div>`;
       });
     });
@@ -2414,12 +2414,11 @@ textarea.vx-input { height:auto; }
     }
 
     Swal.fire({
-      icon: 'question',
-      title: `ยืนยันการบันทึก (${changes.length} รายการ)`,
+      title: `<span style="font-size:1.15rem;font-weight:700;color:#0f2460;">ยืนยันการบันทึก (${changes.length} รายการ)</span>`,
       html: `
-        <div style="font-size:.9rem;color:#64748b;margin-bottom:6px;">ตรวจสอบการเปลี่ยนแปลงก่อนบันทึก</div>
+        <div style="font-size:.85rem;color:#64748b;margin-bottom:6px;">ตรวจสอบการเปลี่ยนแปลงก่อนบันทึก</div>
         ${buildChangeSummaryHtml(changes)}`,
-      width: 700,
+      width: 640,
       showCancelButton: true,
       confirmButtonText: 'ยืนยันบันทึก',
       cancelButtonText: 'กลับไปแก้ไข',
