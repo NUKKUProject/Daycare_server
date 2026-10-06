@@ -2464,7 +2464,6 @@ textarea.vx-input { height:auto; }
         }
         if (parentInput) parentInput.value = '';
       });
-      showToast('warning', 'ยกเลิกการแก้ไขแล้ว');
     }
   }
 
