@@ -251,6 +251,25 @@ $data = getChildrenGroupedByTab($currentTab);
         white-space: nowrap;
     }
 
+    /* มือถือ: ล็อกคอลัมน์ชื่อเล่นไว้ด้านซ้ายตอนเลื่อนตารางไปทางขวา */
+    @media (max-width: 768px) {
+        table th.nick-col,
+        table td.nick-col {
+            position: sticky;
+            left: 0;
+            box-shadow: 3px 0 5px -2px rgba(15, 36, 96, 0.18);
+        }
+
+        table td.nick-col {
+            z-index: 1;
+            background: #fff;
+        }
+
+        table th.nick-col {
+            z-index: 3;
+        }
+    }
+
     /* Sticky table header while scrolling */
     .sticky-head thead th {
         position: sticky;
@@ -1184,7 +1203,7 @@ $data = getChildrenGroupedByTab($currentTab);
                             <tr class="table-primary">
                                 <th>ลำดับ</th>
                                 <th>รหัสนักเรียน</th>
-                                <th>ชื่อเล่น</th>
+                                <th class="nick-col">ชื่อเล่น</th>
                                 <th>ชื่อ-นามสกุล</th>
                                 <th>ห้องเรียน</th>
                                 <th>วันเวลา</th>
@@ -1203,7 +1222,7 @@ $data = getChildrenGroupedByTab($currentTab);
                                         <tr>
                                             <td><?php echo $counter++; ?></td>
                                             <td><?php echo htmlspecialchars($record['studentid']); ?></td>
-                                            <td style="white-space:nowrap;"><span class="nickname-text"><?php echo htmlspecialchars($record['nickname'] ?? ''); ?></span></td>
+                                            <td class="nick-col" style="white-space:nowrap;"><span class="nickname-text"><?php echo htmlspecialchars($record['nickname'] ?? ''); ?></span></td>
                                             <td><?php echo htmlspecialchars($record['prefix_th'] . ' ' . $record['firstname_th'] . ' ' . $record['lastname_th']); ?></td>
                                             <td><?php echo htmlspecialchars($record['classroom']); ?></td>
                                             <td><?php echo date('Y-m-d H:i:s', strtotime($record['check_date'])); ?></td>
@@ -1272,7 +1291,7 @@ $data = getChildrenGroupedByTab($currentTab);
                                         <thead>
                                             <tr class="table-primary">
                                                 <th>รหัสประจำตัว</th>
-                                                <th>ชื่อเล่น</th>
+                                                <th class="nick-col">ชื่อเล่น</th>
                                                 <th>ชื่อ</th>
                                                 <th>นามสกุล</th>
                                                 <th>ห้องเรียน</th>
@@ -1284,7 +1303,7 @@ $data = getChildrenGroupedByTab($currentTab);
                                                 <?php foreach ($classroomData['children'] as $child): ?>
                                                     <tr>
                                                         <td><?= htmlspecialchars($child['studentid']) ?></td>
-                                                        <td><span class="nickname-text"><?= htmlspecialchars($child['nickname']) ?></span></td>
+                                                        <td class="nick-col"><span class="nickname-text"><?= htmlspecialchars($child['nickname']) ?></span></td>
                                                         <td><?= htmlspecialchars($child['prefix_th']) ?> <?= htmlspecialchars($child['firstname_th']) ?></td>
                                                         <td><?= htmlspecialchars($child['lastname_th']) ?></td>
                                                         <td><span class="badge bg-info"><?= htmlspecialchars($child['classroom']) ?></span></td>
@@ -1887,7 +1906,7 @@ $data = getChildrenGroupedByTab($currentTab);
                         row.innerHTML = `
                             <td>${index + 1}</td>
                             <td>${record.student_id}</td>
-                            <td style="white-space:nowrap;"><span class="nickname-text">${record.nickname || ''}</span></td>
+                            <td class="nick-col" style="white-space:nowrap;"><span class="nickname-text">${record.nickname || ''}</span></td>
                             <td>${record.prefix_th} ${record.firstname_th} ${record.lastname_th}</td>
                             <td>${record.classroom}</td>
                             <td>${record.timestamp}</td>

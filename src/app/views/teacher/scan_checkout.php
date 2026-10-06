@@ -616,6 +616,25 @@ tbody tr:hover {
     white-space: nowrap;
   }
 
+  /* มือถือ: ล็อกคอลัมน์ชื่อเล่นไว้ด้านซ้ายตอนเลื่อนตารางไปทางขวา */
+  @media (max-width: 768px) {
+    table th.nick-col,
+    table td.nick-col {
+      position: sticky;
+      left: 0;
+      box-shadow: 3px 0 5px -2px rgba(15, 36, 96, 0.18);
+    }
+
+    table td.nick-col {
+      z-index: 1;
+      background: #fff;
+    }
+
+    table th.nick-col {
+      z-index: 3;
+    }
+  }
+
   /* Sticky table header while scrolling */
   .sticky-head table {
     overflow: visible;
@@ -1052,7 +1071,7 @@ tbody tr:hover {
                             <tr class="table-primary">
                                 <th>ลำดับ</th>
                                 <th>รหัสนักเรียน</th>
-                                <th>ชื่อเล่น</th>
+                                <th class="nick-col">ชื่อเล่น</th>
                                 <th>ชื่อ-นามสกุล</th>
                                 <th>ห้องเรียน</th>
                                 <th>เวลา</th>
@@ -1123,7 +1142,7 @@ tbody tr:hover {
                                     <thead>
                                         <tr>
                                             <th>รหัสประจำตัว</th>
-                                            <th>ชื่อเล่น</th>
+                                            <th class="nick-col">ชื่อเล่น</th>
                                             <th>ชื่อ</th>
                                             <th>นามสกุล</th>
                                             <th>ห้องเรียน</th>
@@ -1135,7 +1154,7 @@ tbody tr:hover {
                                             <?php foreach ($classroomData['children'] as $child): ?>
                                                 <tr>
                                                     <td><?= htmlspecialchars($child['studentid']) ?></td>
-                                                    <td><span class="nickname-text"><?= htmlspecialchars($child['nickname'] ?? '') ?></span></td>
+                                                    <td class="nick-col"><span class="nickname-text"><?= htmlspecialchars($child['nickname'] ?? '') ?></span></td>
                                                     <td><?= htmlspecialchars($child['prefix_th']) ?> <?= htmlspecialchars($child['firstname_th']) ?></td>
                                                     <td><?= htmlspecialchars($child['lastname_th']) ?></td>
                                                     <td><span class="badge bg-info"><?= htmlspecialchars($child['classroom']) ?></span></td>
@@ -1777,7 +1796,7 @@ tbody tr:hover {
                         row.innerHTML = `
                     <td>${index + 1}</td> <!-- เพิ่มเลขลำดับ -->
                     <td>${record.student_id}</td>
-                    <td style="white-space:nowrap;"><span class="nickname-text">${record.nickname || ''}</span></td>
+                    <td class="nick-col" style="white-space:nowrap;"><span class="nickname-text">${record.nickname || ''}</span></td>
                     <td>${record.prefix_th} ${record.firstname_th} ${record.lastname_th}</td>
                     <td><span class="badge bg-primary">${record.classroom}</span></td>
                     <td><span class="badge bg-secondary">${record.timestamp}</span></td>

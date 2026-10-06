@@ -269,6 +269,26 @@ if (isset($_SESSION['user_id'])) {
         white-space: nowrap;
     }
 
+    /* มือถือ: ล็อกคอลัมน์ชื่อเล่นไว้ด้านซ้ายตอนเลื่อนตารางไปทางขวา */
+    @media (max-width: 768px) {
+        .history-table th.nick-col,
+        .history-table td.nick-col {
+            position: sticky;
+            left: 0;
+            box-shadow: 3px 0 5px -2px rgba(15, 36, 96, 0.18);
+        }
+
+        .history-table td.nick-col {
+            z-index: 1;
+            background: #fff;
+        }
+
+        .history-table th.nick-col {
+            z-index: 3;
+            background: #eff3ff;
+        }
+    }
+
     .action-btns {
         display: inline-flex;
         gap: 0.3rem;
@@ -1153,7 +1173,7 @@ if (isset($_SESSION['user_id'])) {
                         <thead>
                             <tr>
                                 <th>รหัส</th>
-                                <th>ชื่อเล่น</th>
+                                <th class="nick-col">ชื่อเล่น</th>
                                 <th class="text-start">ชื่อ-นามสกุล</th>
                                 <th>สถานะ</th>
                                 <th>เวลามา</th>
@@ -1170,7 +1190,7 @@ if (isset($_SESSION['user_id'])) {
                                 return `
                                 <tr class="st-${key}">
                                     <td>${esc(r.student_id)}</td>
-                                    <td>${r.nickname ? `<span class="nickname-text">${esc(r.nickname)}</span>` : '-'}</td>
+                                    <td class="nick-col">${r.nickname ? `<span class="nickname-text">${esc(r.nickname)}</span>` : '-'}</td>
                                     <td class="name-col">${esc(fullName(r))}</td>
                                     <td><span class="badge ${STATUS_META[key].badge}">${STATUS_META[key].text}</span></td>
                                     <td>${key === 'present' || key === 'late' ? formatTime(r.check_date) : '-'}</td>
