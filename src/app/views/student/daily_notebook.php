@@ -61,10 +61,10 @@ $studentid = $_SESSION['username'] ?? '';
 
     .pn-date {
         background: #fff; border-radius: 15px; box-shadow: 0 2px 15px rgba(0, 0, 0, .05);
-        padding: .9rem 1rem; margin: 0 auto 1rem; max-width: 620px;  /* ตัวเลือกวันที่อยู่กึ่งกลางหน้า */
+        padding: .9rem 1rem; margin: 0 auto 1rem; max-width: 820px;  /* ตัวเลือกวันที่อยู่กึ่งกลางหน้า */
     }
     .pn-date-row { display: flex; gap: .4rem; align-items: stretch; }
-    .pn-date-row input { flex: 1 1 auto; min-width: 0; height: 44px; border-radius: 10px; border: 2px solid #e2e8f0; }
+    .pn-date-row input { flex: 1 1 auto; min-width: 190px; height: 44px; border-radius: 10px; border: 2px solid #e2e8f0; }
     .pn-date-row .btn {
         height: 44px; border-radius: 10px; border: 2px solid #e2e8f0; background: #fff; color: #475569;
         font-weight: 600; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; padding: 0 .8rem;
@@ -252,11 +252,11 @@ $studentid = $_SESSION['username'] ?? '';
                         </div>
                         <div class="period-body">
                             <div class="row g-3">
-                                <div class="col-12 col-sm-5"><label class="pn-label" for="hMorningMilk">🥛 ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control pn-input" id="hMorningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
-                                <div class="col-12 col-sm-7"><label class="pn-label" for="hMorningFood">🍚 อาหารเช้า (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control pn-input" id="hMorningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
+                                <div class="col-12"><label class="pn-label" for="hMorningMilk">🥛 ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control pn-input" id="hMorningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                                <div class="col-12"><label class="pn-label" for="hMorningFood">🍚 อาหารเช้า (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control pn-input" id="hMorningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
                                 <div class="col-12">
                                     <label class="pn-label" for="pDropOff">🚗 ส่งเด็กเวลา <small class="text-muted fw-normal" id="dropOffHint"></small></label>
-                                    <input type="time" class="form-control pn-input" id="pDropOff" style="max-width:200px;">
+                                    <input type="time" class="form-control pn-input" id="pDropOff" style="max-width:260px;">
                                 </div>
                             </div>
                         </div>
@@ -274,15 +274,15 @@ $studentid = $_SESSION['username'] ?? '';
                         <div class="period-body">
                             <div class="sub-title">🌆 ช่วงเย็น</div>
                             <div class="row g-3 mb-3">
-                                <div class="col-12 col-sm-5"><label class="pn-label" for="hEveningMilk">🥛 ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control pn-input" id="hEveningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
-                                <div class="col-12 col-sm-7"><label class="pn-label" for="hEveningFood">🍚 อาหารเย็น (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control pn-input" id="hEveningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
+                                <div class="col-12"><label class="pn-label" for="hEveningMilk">🥛 ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control pn-input" id="hEveningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                                <div class="col-12"><label class="pn-label" for="hEveningFood">🍚 อาหารเย็น (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control pn-input" id="hEveningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
                             </div>
 
                             <div class="sub-title">😴 กลางคืน</div>
                             <div class="row g-3">
-                                <div class="col-12 col-sm-4"><label class="pn-label" for="hSleep">กลางคืนนอนหลับ</label><div class="unit" data-unit="ชม."><input type="number" class="form-control pn-input" id="hSleep" data-stepper="step=0.5;min=0;max=16;presets=8|9|10|11|12" min="0" max="24" step="0.5" inputmode="decimal"></div></div>
-                                <div class="col-6 col-sm-4"><label class="pn-label" for="hBedtime">เข้านอนเวลา</label><input type="time" class="form-control pn-input" id="hBedtime"></div>
-                                <div class="col-6 col-sm-4"><label class="pn-label" for="hWake">ตื่นนอนเวลา</label><input type="time" class="form-control pn-input" id="hWake"></div>
+                                <div class="col-12"><label class="pn-label" for="hSleep">กลางคืนนอนหลับ</label><div class="unit" data-unit="ชม."><input type="number" class="form-control pn-input" id="hSleep" data-stepper="step=0.5;min=0;max=16;presets=8|9|10|11|12" min="0" max="24" step="0.5" inputmode="decimal"></div></div>
+                                <div class="col-6"><label class="pn-label" for="hBedtime">เข้านอนเวลา</label><input type="time" class="form-control pn-input" id="hBedtime"></div>
+                                <div class="col-6"><label class="pn-label" for="hWake">ตื่นนอนเวลา</label><input type="time" class="form-control pn-input" id="hWake"></div>
                             </div>
                         </div>
                     </div>

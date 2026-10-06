@@ -6,9 +6,10 @@
 ?>
 <style>
     .nw-step { display: flex; align-items: stretch; gap: .4rem; }
-    .nw-step > :nth-child(2) { flex: 1 1 auto; min-width: 0; }
+    .nw-step > :nth-child(2) { flex: 1 1 auto; min-width: 110px; }
+    .nw-step .unit .form-control { padding-right: 2.9rem; }
     .nw-step-btn {
-        flex: 0 0 auto; width: 46px; border: 2px solid #c7d7f8; background: #eff3ff; color: #1e4db7;
+        flex: 0 0 auto; width: 42px; border: 2px solid #c7d7f8; background: #eff3ff; color: #1e4db7;
         border-radius: 12px; font-size: 1.4rem; font-weight: 700; line-height: 1; padding: 0;
         display: inline-flex; align-items: center; justify-content: center; user-select: none;
     }
