@@ -11,7 +11,7 @@ $studentid = $_SESSION['username'] ?? '';
 ?>
 
 <style>
-    .pn-wrap { max-width: 1100px; margin: 0 auto; }
+    .pn-wrap { max-width: 1280px; margin: 0 auto; }
 
     /* แท็บสลับส่วน (จอเล็ก) / แสดงสองคอลัมน์ (จอใหญ่) */
     .pn-tabs {
@@ -35,9 +35,11 @@ $studentid = $_SESSION['username'] ?? '';
     }
     @media (min-width: 992px) {
         .pn-tabs { display: none; }
-        .pn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+        /* 3 คอลัมน์เคียงข้างกัน: ที่บ้าน | จากครู | ย้อนหลัง */
+        .pn-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(240px, .62fr); gap: 1rem; align-items: start; }
         .pn-pane { display: block !important; }
-        .pn-pane-history { grid-column: 1 / -1; }
+        .pn-pane-history .pn-card { position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; }
+        .pn-pane-history .hist-item { flex-wrap: wrap; gap: .3rem .5rem; }
         .pn-pane[data-pane="parent"] { order: 1; }
         .pn-pane[data-pane="teacher"] { order: 2; }
         .pn-pane[data-pane="history"] { order: 3; }
@@ -309,7 +311,7 @@ $studentid = $_SESSION['username'] ?? '';
         <div class="pn-pane pn-pane-history" data-pane="history">
         <!-- ย้อนหลัง -->
         <div class="pn-card">
-            <div class="pn-card-head">🗓️ ย้อนหลัง 30 วัน</div>
+            <div class="pn-card-head" style="position:sticky;top:0;z-index:1;">🗓️ ย้อนหลัง 30 วัน</div>
             <div id="histBody"></div>
         </div>
         </div>
