@@ -78,6 +78,58 @@ if (getUserRole() === 'student') {
 <style>
 /* รูปประกอบการฉีดวัคซีน */
 .vaccine-thumb { width:34px; height:34px; object-fit:cover; border-radius:8px; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.25); cursor:zoom-in; margin-left:8px; vertical-align:middle; }
+/* ===== Modal วัคซีน (ธีมเดียวกับหน้าเช็คชื่อ) ===== */
+.vx-modal .modal-content { border:none; border-radius:24px; overflow:hidden; box-shadow:0 25px 70px rgba(10,30,80,.2); }
+.vx-header { background:linear-gradient(135deg,#0f2460 0%,#1a3a8f 60%,#1e4db7 100%); border:none; padding:1.25rem 1.5rem; }
+.vx-header .modal-title { color:#fff; font-weight:700; font-size:1.1rem; display:flex; align-items:center; gap:12px; }
+.vx-title-icon { width:40px; height:40px; border-radius:12px; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+.vx-sub { display:block; font-weight:400; font-size:.78rem; color:rgba(255,255,255,.65); margin-top:2px; }
+.vx-body { background:#f0f4f8; padding:1.25rem; }
+.vx-card { background:#fff; border-radius:16px; padding:1.1rem 1.25rem; margin-bottom:.9rem; box-shadow:0 2px 10px rgba(15,36,96,.07); }
+.vx-section { font-weight:800; color:#0f2460; font-size:.95rem; margin-bottom:.8rem; display:flex; align-items:center; gap:8px; }
+.vx-step { width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,#0f2460,#1e4db7); color:#fff; font-size:.78rem; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+.vx-opt { font-weight:500; color:#94a3b8; font-size:.78rem; }
+.vx-req { color:#dc2626; }
+.vx-label { display:block; font-weight:700; color:#334155; font-size:.88rem; margin-bottom:.35rem; }
+.vx-input { height:48px; border-radius:12px; border:2px solid #e2e8f0; background:#f8faff; font-size:1rem; padding:.5rem .9rem; box-shadow:none; }
+textarea.vx-input { height:auto; }
+.vx-input:focus { border-color:#1e4db7; background:#fff; box-shadow:0 0 0 4px rgba(30,77,183,.1); outline:none; }
+.vx-hero { background:linear-gradient(135deg,#eff3ff,#fff); border:2px solid #c7d7f8; border-left:6px solid #1e4db7; border-radius:16px; padding:.9rem 1.1rem; margin-bottom:.9rem; }
+.vx-hero-label { font-size:.75rem; font-weight:700; color:#64748b; }
+.vx-hero-name { width:100%; border:none; background:transparent; font-size:1.15rem; font-weight:800; color:#0f2460; padding:0; outline:none; }
+.vx-hero-text { font-size:1.2rem; font-weight:800; color:#0f2460; line-height:1.3; }
+.vx-pills { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.6rem; }
+.vx-pill { background:#fff; border:1px solid #c7d7f8; color:#1e4db7; border-radius:20px; padding:3px 12px; font-size:.8rem; font-weight:600; }
+.vx-drop { display:flex; flex-direction:column; align-items:center; gap:.25rem; text-align:center; padding:1.25rem 1rem; border:2px dashed #93b4f0; border-radius:16px; background:#f5f8ff; color:#1e4db7; cursor:pointer; transition:all .2s ease; margin:0; }
+.vx-drop:hover { background:#eaf1ff; border-color:#1e4db7; }
+.vx-drop i { font-size:1.8rem; margin:0; }
+.vx-drop-title { font-weight:800; }
+.vx-drop-hint { font-size:.75rem; color:#64748b; }
+.vx-file { position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; }
+.vx-more > summary { cursor:pointer; list-style:none; }
+.vx-more > summary::-webkit-details-marker { display:none; }
+.vx-more > summary::after { content:"▾"; margin-left:auto; color:#94a3b8; transition:transform .2s ease; }
+.vx-more[open] > summary::after { transform:rotate(180deg); }
+.vx-more[open] > summary { margin-bottom:.8rem !important; }
+.vx-footer { background:#f0f4f8; border-top:1px solid #e2e8f0; padding:.9rem 1.25rem; gap:.6rem; }
+.vx-btn-cancel { border-radius:12px; padding:.6rem 1.3rem; font-weight:700; border:2px solid #e2e8f0; color:#64748b; background:#fff; }
+.vx-btn-cancel:hover { background:#f1f5f9; border-color:#cbd5e1; color:#334155; }
+.vx-btn-save { border-radius:12px; padding:.6rem 1.6rem; font-weight:800; border:none; color:#fff; background:linear-gradient(135deg,#0f2460,#1e4db7); box-shadow:0 4px 16px rgba(15,36,96,.3); }
+.vx-btn-save:hover { color:#fff; background:linear-gradient(135deg,#0a1a4f,#1a43a8); }
+.vx-btn-save:disabled { opacity:.7; color:#fff; }
+.vx-btn-edit { border-radius:12px; padding:.6rem 1.3rem; font-weight:700; border:none; background:#f59e0b; color:#fff; }
+.vx-btn-edit:hover { background:#d97706; color:#fff; }
+.vx-grid { display:grid; grid-template-columns:1fr 1fr; gap:.9rem 1.2rem; }
+.vx-field-full { grid-column:1 / -1; }
+.vx-field-label { font-size:.75rem; font-weight:700; color:#94a3b8; margin-bottom:2px; }
+.vx-field-value { font-size:.98rem; font-weight:600; color:#0f2460; word-break:break-word; }
+.vx-empty { color:#94a3b8; font-size:.9rem; padding:.5rem; }
+@media (max-width:575.98px) {
+  .vx-modal .modal-content { border-radius:0; }
+  .vx-grid { grid-template-columns:1fr; }
+  .vx-body { padding:.9rem; }
+  .vx-footer .btn { flex:1; }
+}
 .vaccine-image-box { text-align:center; }
 .vaccine-image-box img { max-width:100%; max-height:320px; border-radius:12px; border:1px solid #e2e8f0; cursor:zoom-in; }
 .status-badge.status-late { background:#fef3c7;color:#d97706; }
@@ -1450,115 +1502,110 @@ if (getUserRole() === 'student') {
 
     <!-- Modal เพิ่ม/แก้ไขประวัติวัคซีน -->
     <?php if ($is_admin || $is_teacher || $is_student): ?>
-    <div class="modal fade" id="vaccineModal" tabindex="-1" aria-labelledby="vaccineModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal fade vx-modal" id="vaccineModal" tabindex="-1" aria-labelledby="vaccineModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-sm-down">
         <div class="modal-content">
-          <div class="modal-header bg-primary text-white">
+          <div class="modal-header vx-header">
             <h5 class="modal-title" id="vaccineModalLabel">
-              <i class="fa-solid fa-syringe me-2"></i>บันทึกการฉีดวัคซีน
+              <span class="vx-title-icon"><i class="fa-solid fa-syringe"></i></span>
+              <span>
+                บันทึกการฉีดวัคซีน
+                <small class="vx-sub">กรอกข้อมูลตามสมุดบันทึกสุขภาพ</small>
+              </span>
             </h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-body">
+
+          <div class="modal-body vx-body">
             <form id="vaccineForm" class="needs-validation" novalidate>
               <input type="hidden" id="vaccineId" name="vaccine_id">
               <input type="hidden" id="vaccineListRecordId" name="vaccine_list_id">
               <input type="hidden" name="student_id" value="<?= htmlspecialchars($studentid) ?>">
 
-              <div class="row g-4">
-                <div class="col-md-6">
-                  <div class="card h-100 shadow-sm">
-                    <div class="card-header bg-light">
-                      <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>ข้อมูลพื้นฐาน</h6>
-                    </div>
-                    <div class="card-body">
-                      <div class="mb-3">
-                        <label class="form-label fw-bold">วันที่ฉีด</label>
-                        <input type="date" class="form-control form-control-lg" id="vaccineDate" name="vaccine_date" required>
-                      </div>
-                      <div class="mb-3">
-                        <label class="form-label fw-bold">ชื่อวัคซีน</label>
-                        <input type="text" class="form-control form-control-lg" id="vaccineRecordName" name="vaccine_name" readonly>
-                      </div>
-                      <div class="mb-3">
-                        <label class="form-label fw-bold">ครั้งที่</label>
-                        <input type="number" class="form-control form-control-lg" id="vaccineNumber" name="vaccine_number" min="1">
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <!-- ชื่อวัคซีน (แก้ไม่ได้) -->
+              <div class="vx-hero">
+                <div class="vx-hero-label"><i class="fa-solid fa-shield-virus me-1"></i> วัคซีน</div>
+                <input type="text" class="vx-hero-name" id="vaccineRecordName" name="vaccine_name" readonly aria-label="ชื่อวัคซีน">
+              </div>
 
-                <div class="col-md-6">
-                  <div class="card h-100 shadow-sm">
-                    <div class="card-header bg-light">
-                      <h6 class="mb-0"><i class="bi bi-geo-alt me-2"></i>สถานที่และผู้ให้บริการ</h6>
-                    </div>
-                    <div class="card-body">
-                      <div class="mb-3">
-                        <label class="form-label fw-bold">สถานที่ฉีด</label>
-                        <input type="text" class="form-control form-control-lg" id="vaccineLocation" name="vaccine_location">
-                      </div>
-                      <div class="mb-3">
-                        <label class="form-label fw-bold">ผู้ให้บริการ</label>
-                        <input type="text" class="form-control form-control-lg" id="vaccineProvider" name="vaccine_provider">
-                      </div>
-                    </div>
+              <!-- 1. ข้อมูลการฉีด -->
+              <div class="vx-card">
+                <div class="vx-section"><span class="vx-step">1</span> ข้อมูลการฉีด</div>
+                <div class="row g-3">
+                  <div class="col-12 col-sm-7">
+                    <label class="vx-label" for="vaccineDate">วันที่ฉีด <span class="vx-req">*</span></label>
+                    <input type="date" class="form-control vx-input" id="vaccineDate" name="vaccine_date" required>
+                    <div class="invalid-feedback">กรุณาเลือกวันที่ฉีด</div>
                   </div>
-                </div>
-
-                <div class="col-12">
-                  <div class="card shadow-sm">
-                    <div class="card-header bg-light">
-                      <h6 class="mb-0"><i class="bi bi-card-text me-2"></i>ข้อมูลเพิ่มเติม</h6>
-                    </div>
-                    <div class="card-body">
-                      <div class="row">
-                        <div class="col-md-6 mb-3">
-                          <label class="form-label fw-bold">Lot No.</label>
-                          <input type="text" class="form-control form-control-lg" id="lotNumber" name="lot_number">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                          <label class="form-label fw-bold">วันนัดครั้งถัดไป</label>
-                          <input type="date" class="form-control form-control-lg" id="nextAppointment" name="next_appointment">
-                        </div>
-                        <div class="col-12 mb-3">
-                          <label class="form-label fw-bold">หมายเหตุ</label>
-                          <textarea class="form-control" id="vaccineNote" name="vaccine_note" rows="3"></textarea>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-12">
-                  <div class="card shadow-sm">
-                    <div class="card-header bg-light">
-                      <h6 class="mb-0"><i class="bi bi-image me-2"></i>รูปประกอบการฉีดวัคซีน</h6>
-                    </div>
-                    <div class="card-body">
-                      <input type="hidden" name="remove_image" id="vaccineRemoveImage" value="">
-                      <div id="vaccineImagePreviewWrap" class="vaccine-image-box mb-3" style="display:none;">
-                        <img id="vaccineImagePreview" alt="รูปประกอบการฉีดวัคซีน">
-                        <div>
-                          <button type="button" class="btn btn-outline-danger btn-sm mt-2" id="vaccineImageRemoveBtn">
-                            <i class="bi bi-trash me-1"></i>ลบรูป
-                          </button>
-                        </div>
-                      </div>
-                      <input type="file" class="form-control" id="vaccineImageInput" accept="image/jpeg,image/png,image/webp">
-                      <div class="form-text">ถ่ายรูปสมุดวัคซีนหรือใบรับรอง (JPG, PNG, WebP) ระบบจะย่อขนาดรูปให้อัตโนมัติก่อนอัปโหลด</div>
-                    </div>
+                  <div class="col-12 col-sm-5">
+                    <label class="vx-label" for="vaccineNumber">ฉีดครั้งที่</label>
+                    <input type="number" class="form-control vx-input" id="vaccineNumber" name="vaccine_number" min="1" inputmode="numeric">
                   </div>
                 </div>
               </div>
+
+              <!-- 2. สถานที่ -->
+              <div class="vx-card">
+                <div class="vx-section"><span class="vx-step">2</span> สถานที่และผู้ให้บริการ</div>
+                <div class="row g-3">
+                  <div class="col-12 col-sm-6">
+                    <label class="vx-label" for="vaccineLocation">สถานที่ฉีด</label>
+                    <input type="text" class="form-control vx-input" id="vaccineLocation" name="vaccine_location" placeholder="เช่น โรงพยาบาล/คลินิก">
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="vx-label" for="vaccineProvider">ผู้ให้บริการ</label>
+                    <input type="text" class="form-control vx-input" id="vaccineProvider" name="vaccine_provider" placeholder="เช่น ชื่อแพทย์/พยาบาล">
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. รูปประกอบ -->
+              <div class="vx-card">
+                <div class="vx-section"><span class="vx-step">3</span> รูปประกอบ <span class="vx-opt">(ไม่บังคับ)</span></div>
+                <input type="hidden" name="remove_image" id="vaccineRemoveImage" value="">
+                <div id="vaccineImagePreviewWrap" class="vaccine-image-box mb-3" style="display:none;">
+                  <img id="vaccineImagePreview" alt="รูปประกอบการฉีดวัคซีน">
+                  <div>
+                    <button type="button" class="btn btn-outline-danger btn-sm mt-2" id="vaccineImageRemoveBtn">
+                      <i class="bi bi-trash me-1"></i>ลบรูป
+                    </button>
+                  </div>
+                </div>
+                <label class="vx-drop" for="vaccineImageInput">
+                  <i class="bi bi-camera-fill"></i>
+                  <span class="vx-drop-title">แตะเพื่อถ่ายรูปหรือเลือกรูป</span>
+                  <span class="vx-drop-hint">สมุดวัคซีน / ใบรับรอง · JPG, PNG, WebP · ระบบย่อรูปให้อัตโนมัติ</span>
+                </label>
+                <input type="file" class="vx-file" id="vaccineImageInput" accept="image/jpeg,image/png,image/webp">
+              </div>
+
+              <!-- 4. ข้อมูลเพิ่มเติม (พับเก็บ) -->
+              <details class="vx-card vx-more" id="vaccineMoreInfo">
+                <summary class="vx-section mb-0"><span class="vx-step">4</span> ข้อมูลเพิ่มเติม <span class="vx-opt">(Lot, วันนัด, หมายเหตุ)</span></summary>
+                <div class="row g-3 mt-1">
+                  <div class="col-12 col-sm-6">
+                    <label class="vx-label" for="lotNumber">Lot No.</label>
+                    <input type="text" class="form-control vx-input" id="lotNumber" name="lot_number">
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="vx-label" for="nextAppointment">วันนัดครั้งถัดไป</label>
+                    <input type="date" class="form-control vx-input" id="nextAppointment" name="next_appointment">
+                  </div>
+                  <div class="col-12">
+                    <label class="vx-label" for="vaccineNote">หมายเหตุ</label>
+                    <textarea class="form-control vx-input" id="vaccineNote" name="vaccine_note" rows="3"></textarea>
+                  </div>
+                </div>
+              </details>
             </form>
           </div>
-          <div class="modal-footer bg-light">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-              <i class="bi bi-x-circle me-2"></i>ยกเลิก
+
+          <div class="modal-footer vx-footer">
+            <button type="button" class="btn vx-btn-cancel" data-bs-dismiss="modal">
+              <i class="bi bi-x-circle me-1"></i>ยกเลิก
             </button>
-            <button type="button" class="btn btn-primary" onclick="saveVaccine()">
-              <i class="bi bi-save me-2"></i>บันทึก
+            <button type="button" class="btn vx-btn-save" onclick="saveVaccine()">
+              <i class="bi bi-check-circle me-1"></i>บันทึก
             </button>
           </div>
         </div>
@@ -1567,106 +1614,62 @@ if (getUserRole() === 'student') {
     <?php endif; ?>
 
     <!-- Modal ดูรายละเอียดการฉีดวัคซีน -->
-    <div class="modal fade" id="vaccineDetailModal" tabindex="-1" aria-labelledby="vaccineDetailModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal fade vx-modal" id="vaccineDetailModal" tabindex="-1" aria-labelledby="vaccineDetailModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-sm-down">
         <div class="modal-content">
-          <div class="modal-header bg-info text-white">
+          <div class="modal-header vx-header">
             <h5 class="modal-title" id="vaccineDetailModalLabel">
-              <i class="bi bi-eye me-2"></i>รายละเอียดการฉีดวัคซีน
+              <span class="vx-title-icon"><i class="bi bi-eye"></i></span>
+              <span>
+                รายละเอียดการฉีดวัคซีน
+                <small class="vx-sub">ข้อมูลที่บันทึกไว้</small>
+              </span>
             </h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-body">
-            <div class="row g-4">
-              <div class="col-md-6">
-                <div class="card h-100 shadow-sm">
-                  <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>ข้อมูลพื้นฐาน</h6>
-                  </div>
-                  <div class="card-body">
-                    <div class="mb-3">
-                      <div style="font-size:0.75rem;color:var(--gray-500);margin-bottom:0.25rem;">ชื่อวัคซีน</div>
-                      <div style="font-size:0.95rem;font-weight:600;" id="detailVaccineName">-</div>
-                    </div>
-                    <div class="mb-3">
-                      <div style="font-size:0.75rem;color:var(--gray-500);margin-bottom:0.25rem;">ครั้งที่</div>
-                      <div style="font-size:0.95rem;" id="detailVaccineNumber">-</div>
-                    </div>
-                    <div class="mb-3">
-                      <div style="font-size:0.75rem;color:var(--gray-500);margin-bottom:0.25rem;">วันที่ฉีด</div>
-                      <div style="font-size:0.95rem;" id="detailVaccineDate">-</div>
-                    </div>
-                    <div class="mb-3">
-                      <div style="font-size:0.75rem;color:var(--gray-500);margin-bottom:0.25rem;">ช่วงอายุ</div>
-                      <div style="font-size:0.95rem;" id="detailAgeGroup">-</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              <div class="col-md-6">
-                <div class="card h-100 shadow-sm">
-                  <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-geo-alt me-2"></i>สถานที่และผู้ให้บริการ</h6>
-                  </div>
-                  <div class="card-body">
-                    <div class="mb-3">
-                      <div style="font-size:0.75rem;color:var(--gray-500);margin-bottom:0.25rem;">สถานที่ฉีด</div>
-                      <div style="font-size:0.95rem;" id="detailLocation">-</div>
-                    </div>
-                    <div class="mb-3">
-                      <div style="font-size:0.75rem;color:var(--gray-500);margin-bottom:0.25rem;">ผู้ให้บริการ</div>
-                      <div style="font-size:0.95rem;" id="detailProvider">-</div>
-                    </div>
-                  </div>
-                </div>
+          <div class="modal-body vx-body">
+            <!-- สรุปด้านบน -->
+            <div class="vx-hero">
+              <div class="vx-hero-label"><i class="fa-solid fa-shield-virus me-1"></i> วัคซีน</div>
+              <div class="vx-hero-text" id="detailVaccineName">-</div>
+              <div class="vx-pills">
+                <span class="vx-pill"><i class="bi bi-hash"></i> ครั้งที่ <b id="detailVaccineNumber">-</b></span>
+                <span class="vx-pill"><i class="bi bi-calendar-check"></i> ฉีดเมื่อ <b id="detailVaccineDate">-</b></span>
+                <span class="vx-pill"><i class="bi bi-clock-history"></i> <span id="detailAgeGroup">-</span></span>
               </div>
+            </div>
 
-              <div class="col-12">
-                <div class="card shadow-sm">
-                  <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-card-text me-2"></i>ข้อมูลเพิ่มเติม</h6>
-                  </div>
-                  <div class="card-body">
-                    <div class="row">
-                      <div class="col-md-6 mb-3">
-                        <div style="font-size:0.75rem;color:var(--gray-500);margin-bottom:0.25rem;">Lot No.</div>
-                        <div style="font-size:0.95rem;" id="detailLotNumber">-</div>
-                      </div>
-                      <div class="col-md-6 mb-3">
-                        <div style="font-size:0.75rem;color:var(--gray-500);margin-bottom:0.25rem;">วันนัดครั้งถัดไป</div>
-                        <div style="font-size:0.95rem;" id="detailNextAppointment">-</div>
-                      </div>
-                      <div class="col-12 mb-3">
-                        <div style="font-size:0.75rem;color:var(--gray-500);margin-bottom:0.25rem;">หมายเหตุ</div>
-                        <div style="font-size:0.95rem;" id="detailNote">-</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <!-- รูปประกอบ -->
+            <div class="vx-card">
+              <div class="vx-section"><i class="bi bi-image me-1"></i> รูปประกอบ</div>
+              <div class="vaccine-image-box">
+                <img id="detailVaccineImage" alt="รูปประกอบการฉีดวัคซีน" style="display:none;">
+                <div id="detailVaccineNoImage" class="vx-empty">ไม่มีรูปประกอบ</div>
               </div>
+            </div>
 
-              <div class="col-12">
-                <div class="card shadow-sm">
-                  <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-image me-2"></i>รูปประกอบ</h6>
-                  </div>
-                  <div class="card-body vaccine-image-box">
-                    <img id="detailVaccineImage" alt="รูปประกอบการฉีดวัคซีน" style="display:none;">
-                    <div id="detailVaccineNoImage" style="font-size:0.9rem;color:var(--gray-500);">ไม่มีรูปประกอบ</div>
-                  </div>
-                </div>
+            <!-- รายละเอียด -->
+            <div class="vx-card">
+              <div class="vx-section"><i class="bi bi-info-circle me-1"></i> รายละเอียด</div>
+              <div class="vx-grid">
+                <div class="vx-field"><div class="vx-field-label">สถานที่ฉีด</div><div class="vx-field-value" id="detailLocation">-</div></div>
+                <div class="vx-field"><div class="vx-field-label">ผู้ให้บริการ</div><div class="vx-field-value" id="detailProvider">-</div></div>
+                <div class="vx-field"><div class="vx-field-label">Lot No.</div><div class="vx-field-value" id="detailLotNumber">-</div></div>
+                <div class="vx-field"><div class="vx-field-label">วันนัดครั้งถัดไป</div><div class="vx-field-value" id="detailNextAppointment">-</div></div>
+                <div class="vx-field vx-field-full"><div class="vx-field-label">หมายเหตุ</div><div class="vx-field-value" id="detailNote">-</div></div>
               </div>
             </div>
           </div>
-          <div class="modal-footer bg-light">
+
+          <div class="modal-footer vx-footer">
             <?php if ($is_admin || $is_teacher || $is_student): ?>
-            <button type="button" class="btn btn-warning" id="detailEditBtn">
-              <i class="bi bi-pencil me-2"></i>แก้ไข
+            <button type="button" class="btn vx-btn-edit" id="detailEditBtn">
+              <i class="bi bi-pencil me-1"></i>แก้ไข
             </button>
             <?php endif; ?>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-              <i class="bi bi-x-circle me-2"></i>ปิด
+            <button type="button" class="btn vx-btn-cancel" data-bs-dismiss="modal">
+              <i class="bi bi-x-circle me-1"></i>ปิด
             </button>
           </div>
         </div>
@@ -3633,6 +3636,8 @@ if (getUserRole() === 'student') {
     document.getElementById('vaccineListId').value = vaccineListId;
     document.getElementById('vaccineId').value = ''; // เคลียร์ค่าสำหรับการเพิ่มใหม่
     resetVaccineImageUI('');
+    document.getElementById('vaccineForm').classList.remove('was-validated');
+    document.getElementById('vaccineMoreInfo').open = false;
     document.getElementById('vaccineDate').value = new Date().toISOString().split('T')[0];
 
     // ดึงข้อมูลรายการวัคซีน
@@ -3673,6 +3678,9 @@ if (getUserRole() === 'student') {
           document.getElementById('nextAppointment').value = data.next_appointment || '';
           document.getElementById('vaccineNote').value = data.vaccine_note || '';
           resetVaccineImageUI(data.image_path || '');
+          document.getElementById('vaccineForm').classList.remove('was-validated');
+          // ถ้ามีข้อมูลเพิ่มเติมอยู่แล้ว ให้กางส่วนนี้ออกมาให้เห็น
+          document.getElementById('vaccineMoreInfo').open = !!(data.lot_number || data.next_appointment || data.vaccine_note);
           new bootstrap.Modal(document.getElementById('vaccineModal')).show();
         } else {
           showToast('error', 'ไม่สามารถโหลดข้อมูลได้');
@@ -3769,7 +3777,7 @@ if (getUserRole() === 'student') {
     }
 
     window.vaccineSaving = true;
-    const saveBtn = document.querySelector('#vaccineModal .modal-footer .btn-primary');
+    const saveBtn = document.querySelector('#vaccineModal .vx-btn-save');
     const saveBtnHtml = saveBtn ? saveBtn.innerHTML : '';
     if (saveBtn) {
       saveBtn.disabled = true;
