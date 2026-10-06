@@ -2397,19 +2397,9 @@ textarea.vx-input { height:auto; }
   function confirmProfileChanges() {
     const changes = collectProfileChanges();
 
+    // ไม่มีอะไรเปลี่ยน: ออกจากโหมดแก้ไขเงียบๆ ไม่ต้องแสดง popup
     if (changes.length === 0) {
-      Swal.fire({
-        icon: 'info',
-        title: 'ไม่มีข้อมูลที่เปลี่ยนแปลง',
-        text: 'ยังไม่ได้แก้ไขข้อมูลใดๆ',
-        showCancelButton: true,
-        confirmButtonText: 'กลับไปแก้ไข',
-        cancelButtonText: 'ออกจากโหมดแก้ไข',
-        heightAuto: false,
-        returnFocus: false
-      }).then(result => {
-        if (result.dismiss === Swal.DismissReason.cancel) exitEditMode(false);
-      });
+      exitEditMode(false);
       return;
     }
 
