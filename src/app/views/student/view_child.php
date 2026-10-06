@@ -2275,6 +2275,118 @@ textarea.vx-input { height:auto; }
   const isAdminUser = <?= $is_admin ? 'true' : 'false' ?>;
   const isStudentUser = <?= $is_student ? 'true' : 'false' ?>;
 
+  /* ── สรุปรายการที่แก้ไขก่อนบันทึก (แท็บข้อมูลนักเรียน) ── */
+  const PROFILE_FIELD_LABELS = {
+    studentid: 'รหัสนักเรียน', academic_year: 'ปีการศึกษา', child_group: 'กลุ่มเด็ก', classroom: 'ห้องเรียน',
+    prefix_th: 'คำนำหน้า (ไทย)', firstname_th: 'ชื่อ (ไทย)', lastname_th: 'นามสกุล (ไทย)', nickname: 'ชื่อเล่น',
+    prefix_en: 'คำนำหน้า (อังกฤษ)', firstname_en: 'ชื่อ (อังกฤษ)', lastname_en: 'นามสกุล (อังกฤษ)',
+    birthday: 'วันเกิด', id_card: 'เลขบัตรประชาชน', sex: 'เพศ', race: 'เชื้อชาติ', nationality: 'สัญชาติ',
+    religion: 'ศาสนา', blood_type: 'หมู่เลือด', height: 'ส่วนสูง', weight: 'น้ำหนัก', congenital_disease: 'โรคประจำตัว',
+    father_first_name: 'บิดา: ชื่อ', father_last_name: 'บิดา: นามสกุล', father_phone: 'บิดา: เบอร์โทร', father_phone_backup: 'บิดา: เบอร์สำรอง',
+    mother_first_name: 'มารดา: ชื่อ', mother_last_name: 'มารดา: นามสกุล', mother_phone: 'มารดา: เบอร์โทร', mother_phone_backup: 'มารดา: เบอร์สำรอง',
+    relative_first_name: 'ผู้ปกครอง/ผู้ดูแล: ชื่อ', relative_last_name: 'ผู้ปกครอง/ผู้ดูแล: นามสกุล',
+    relative_phone: 'ผู้ปกครอง/ผู้ดูแล: เบอร์โทร', relative_phone_backup: 'ผู้ปกครอง/ผู้ดูแล: เบอร์สำรอง',
+    address: 'ที่อยู่', district: 'ตำบล/แขวง', amphoe: 'อำเภอ/เขต', province: 'จังหวัด', zipcode: 'รหัสไปรษณีย์',
+    emergency_contact: 'ผู้ติดต่อฉุกเฉิน', emergency_phone: 'เบอร์ติดต่อฉุกเฉิน', emergency_relation: 'ความสัมพันธ์กับผู้ติดต่อฉุกเฉิน'
+  };
+  const PROFILE_IMAGE_LABELS = { profileImageInput: 'รูปโปรไฟล์เด็ก', fatherImageInput: 'รูปบิดา', motherImageInput: 'รูปมารดา' };
+
+  function readProfileField(el) {
+    if (el.tagName === 'SELECT') {
+      const opt = el.options[el.selectedIndex];
+      return { value: el.value, text: opt ? opt.text.trim() : '' };
+    }
+    return { value: el.value.trim(), text: el.value.trim() };
+  }
+
+  // เก็บค่าเดิมตอนโหลดหน้า (ก่อนมีการแก้ไขหรือโหลดห้องเรียนใหม่)
+  const profileSnapshot = {};
+  Object.keys(PROFILE_FIELD_LABELS).forEach(name => {
+    const el = document.querySelector('#tab-profile [name="' + name + '"]');
+    if (el) profileSnapshot[name] = readProfileField(el);
+  });
+
+  function collectProfileChanges() {
+    const changes = [];
+    Object.keys(profileSnapshot).forEach(name => {
+      const el = document.querySelector('#tab-profile [name="' + name + '"]');
+      if (!el) return;
+      const before = profileSnapshot[name];
+      const after = readProfileField(el);
+      if (before.value !== after.value) {
+        changes.push({ label: PROFILE_FIELD_LABELS[name], before: before.text, after: after.text });
+      }
+    });
+    Object.keys(PROFILE_IMAGE_LABELS).forEach(id => {
+      const input = document.getElementById(id);
+      if (input && input.files && input.files.length > 0) {
+        changes.push({ label: PROFILE_IMAGE_LABELS[id], before: 'รูปเดิม', after: 'เปลี่ยนเป็น ' + input.files[0].name });
+      }
+    });
+    return changes;
+  }
+
+  let profileSaveConfirmed = false;
+
+  function confirmProfileChanges() {
+    const changes = collectProfileChanges();
+
+    if (changes.length === 0) {
+      Swal.fire({
+        icon: 'info',
+        title: 'ไม่มีข้อมูลที่เปลี่ยนแปลง',
+        text: 'ยังไม่ได้แก้ไขข้อมูลใดๆ',
+        showCancelButton: true,
+        confirmButtonText: 'กลับไปแก้ไข',
+        cancelButtonText: 'ออกจากโหมดแก้ไข',
+        heightAuto: false,
+        returnFocus: false
+      }).then(result => {
+        if (result.dismiss === Swal.DismissReason.cancel) exitEditMode(false);
+      });
+      return;
+    }
+
+    const show = v => v === '' || v == null ? '<span style="color:#94a3b8;">(ว่าง)</span>' : escapeHtml(v);
+    const rows = changes.map(c => `
+      <tr>
+        <td style="padding:8px 10px;font-weight:700;color:#0f2460;white-space:nowrap;vertical-align:top;">${escapeHtml(c.label)}</td>
+        <td style="padding:8px 10px;color:#64748b;text-decoration:line-through;word-break:break-word;vertical-align:top;">${show(c.before)}</td>
+        <td style="padding:8px 10px;color:#15803d;font-weight:600;word-break:break-word;vertical-align:top;">${show(c.after)}</td>
+      </tr>`).join('');
+
+    Swal.fire({
+      icon: 'question',
+      title: `ยืนยันการบันทึก (${changes.length} รายการ)`,
+      html: `
+        <div style="text-align:left;font-size:.9rem;margin-bottom:8px;">ตรวจสอบการเปลี่ยนแปลงก่อนบันทึก</div>
+        <div style="max-height:46vh;overflow:auto;border:1px solid #e2e8f0;border-radius:10px;">
+          <table style="width:100%;border-collapse:collapse;font-size:.88rem;text-align:left;">
+            <thead>
+              <tr style="background:#eff3ff;color:#0f2460;">
+                <th style="padding:8px 10px;">รายการ</th>
+                <th style="padding:8px 10px;">ค่าเดิม</th>
+                <th style="padding:8px 10px;">ค่าใหม่</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`,
+      width: 680,
+      showCancelButton: true,
+      confirmButtonText: 'ยืนยันบันทึก',
+      cancelButtonText: 'กลับไปแก้ไข',
+      confirmButtonColor: '#1e4db7',
+      heightAuto: false,
+      returnFocus: false
+    }).then(result => {
+      if (result.isConfirmed) {
+        profileSaveConfirmed = true;
+        exitEditMode(true);
+      }
+    });
+  }
+
   function getEditableFields() {
     // เลขประจำตัว: แก้ได้เฉพาะ admin
     const inputExclusion = isAdminUser ? '' : ':not([name="studentid"])';
@@ -2526,6 +2638,13 @@ textarea.vx-input { height:auto; }
 
       return false;
     }
+
+    // ข้อมูลถูกต้องแล้ว: ให้ผู้ใช้ตรวจรายการที่แก้ไขและกดยืนยันก่อนบันทึกจริง
+    if (!profileSaveConfirmed) {
+      confirmProfileChanges();
+      return false; // ค้างอยู่ในโหมดแก้ไขจนกว่าจะกดยืนยัน
+    }
+    profileSaveConfirmed = false;
 
     // แสดง loading state
     const btnSave = document.getElementById('btnSave');
