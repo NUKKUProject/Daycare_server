@@ -90,6 +90,17 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
         }
     }
 
+    .bulk-bar {
+        position: sticky; bottom: 12px; z-index: 20; margin-bottom: 1rem;
+        background: #0f2460; color: #fff; border-radius: 16px; padding: .7rem 1rem;
+        display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; box-shadow: 0 8px 24px rgba(15, 36, 96, .35);
+    }
+    .bulk-bar .count { font-weight: 700; margin-right: auto; }
+    .bulk-bar .btn { border-radius: 10px; font-weight: 700; }
+    .nb-table .col-check { width: 44px; }
+    .nb-table input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-color: #1e4db7; }
+    .bulk-hint { background: #eef6ff; border: 1px solid #bfdbfe; color: #1e40af; border-radius: 10px; padding: .55rem .9rem; font-size: .85rem; margin-bottom: .9rem; }
+    .bulk-names { font-size: .85rem; color: #64748b; margin-top: 2px; }
     .state-box { text-align: center; padding: 2.5rem 1rem; color: #64748b; }
     .state-box .emoji { font-size: 2.4rem; display: block; margin-bottom: .4rem; }
 
@@ -231,6 +242,12 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
 
         <div class="nb-card p-0 overflow-hidden">
             <div id="listArea"><div class="state-box"><span class="emoji">📒</span>เลือกกลุ่มหรือห้องเรียนเพื่อดูรายชื่อเด็ก</div></div>
+        </div>
+
+        <div class="bulk-bar" id="bulkBar" style="display:none;">
+            <span class="count"><i class="bi bi-check2-square me-1"></i>เลือกแล้ว <b id="bulkCount">0</b> คน</span>
+            <button type="button" class="btn btn-warning btn-sm" id="btnBulkOpen"><i class="bi bi-people-fill me-1"></i>กรอกพร้อมกัน</button>
+            <button type="button" class="btn btn-outline-light btn-sm" id="btnBulkClear">ล้างที่เลือก</button>
         </div>
     </div>
 
@@ -379,6 +396,64 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
             </div>
         </div>
     </div>
+
+    <!-- Modal กรอกพร้อมกันหลายคน -->
+    <div class="modal fade" id="bulkModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-sm-down">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <span class="title-icon"><i class="bi bi-people-fill"></i></span>
+                        <span>กรอกพร้อมกันหลายคน<small class="title-sub" id="bDate">-</small></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="bulk-hint">
+                        <i class="bi bi-info-circle me-1"></i>
+                        กรอกให้ <b id="bCount">0</b> คน — <b>ช่องที่เว้นว่างจะไม่ถูกเปลี่ยน</b> ข้อมูลเดิมของเด็กแต่ละคนในช่องนั้นยังอยู่ ส่วนช่องที่กรอกจะแทนที่ข้อมูลเดิมของทุกคนที่เลือก
+                        <div class="bulk-names" id="bNames"></div>
+                    </div>
+
+                    <div class="nb-sec">
+                        <div class="nb-sec-title">อารมณ์ของเด็กที่ศูนย์</div>
+                        <div class="mood-group" data-mood-group="bulk"></div>
+                    </div>
+
+                    <div class="nb-sec">
+                        <div class="nb-sec-title">🥛 นม</div>
+                        <div class="row g-3">
+                            <div class="col-6"><label class="nb-label" for="bMorningMilk">ช่วงเช้า</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="bMorningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                            <div class="col-6"><label class="nb-label" for="bAfternoonMilk">ช่วงบ่าย</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="bAfternoonMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="nb-sec">
+                        <div class="nb-sec-title">🍽️ ปริมาณที่ทานอาหาร</div>
+                        <div class="mb-3"><label class="nb-label" for="bMorningSnack">อาหารว่างเช้า</label><input type="text" class="form-control nb-input" id="bMorningSnack" data-quick="หมด|ครึ่งหนึ่ง|น้อย|ไม่ทาน" maxlength="200"></div>
+                        <div class="mb-3"><label class="nb-label" for="bLunch">อาหารกลางวัน</label><input type="text" class="form-control nb-input" id="bLunch" data-quick="หมด|ครึ่งหนึ่ง|น้อย|ไม่ทาน" maxlength="200"></div>
+                        <div><label class="nb-label" for="bAfternoonSnack">อาหารว่างบ่าย</label><input type="text" class="form-control nb-input" id="bAfternoonSnack" data-quick="หมด|ครึ่งหนึ่ง|น้อย|ไม่ทาน" maxlength="200"></div>
+                    </div>
+
+                    <div class="nb-sec">
+                        <div class="nb-sec-title">😴 นอนกลางวัน</div>
+                        <div class="unit" data-unit="ชม." style="max-width:240px;"><input type="number" class="form-control nb-input" id="bNap" data-stepper="step=0.5;min=0;max=6;presets=1|1.5|2|2.5|3" min="0" max="24" step="0.5" inputmode="decimal"></div>
+                    </div>
+
+                    <div class="nb-sec">
+                        <div class="nb-sec-title">🎨 กิจกรรมและการมีส่วนร่วม <small class="text-muted fw-normal">(กิจกรรมของห้อง ใช้ข้อความเดียวกันทุกคน)</small></div>
+                        <textarea class="form-control nb-input" id="bActivities" rows="3"></textarea>
+                    </div>
+
+                    <div class="text-muted small"><i class="bi bi-lightbulb me-1"></i> ข้อความถึงผู้ปกครอง การขับถ่าย และช่องติ๊กเลิกแพมเพิร์ส/นมขวด เป็นข้อมูลรายบุคคล ให้กรอกในสมุดของเด็กแต่ละคน</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-soft" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i>ปิด</button>
+                    <button type="button" class="btn btn-save-note" id="btnBulkSave"><i class="bi bi-check-circle me-1"></i>บันทึกให้ทุกคนที่เลือก</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <?php include __DIR__ . '/../partials/notebook_widgets.php'; ?>
@@ -463,10 +538,12 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
         } catch (e) { console.error(e); }
     }
 
-    async function loadRoster() {
+    async function loadRoster(keep) {
+        if (keep !== true) selected.clear();
         const group = byId('fGroup').value, room = byId('fRoom').value;
         if (!group && !room) {
             roster = []; menus = {};
+            updateBulkBar();
             byId('menuStrip').innerHTML = '';
             byId('sumRow').innerHTML = '';
             byId('listArea').innerHTML = '<div class="state-box"><span class="emoji">📒</span>เลือกกลุ่มหรือห้องเรียนเพื่อดูรายชื่อเด็ก</div>';
@@ -477,6 +554,9 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
             const data = (await api('roster', { date: byId('fDate').value, child_group: group, classroom: room })).data;
             roster = data.children || [];
             menus = data.menus || {};
+            // ตัดรหัสที่ไม่อยู่ในรายชื่อนี้แล้วออกจากที่เลือก
+            const ids = new Set(roster.map((c) => c.studentid));
+            [...selected].forEach((id) => { if (!ids.has(id)) selected.delete(id); });
             renderRoster();
         } catch (e) {
             roster = [];
@@ -485,6 +565,8 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
     }
 
     let filterMode = 'all';
+    const selected = new Set();   // รหัสเด็กที่ติ๊กเลือกไว้เพื่อกรอกพร้อมกัน
+    let bulkModal = null;
 
     function filteredRoster() {
         const q = byId('fSearch').value.trim().toLowerCase();
@@ -530,12 +612,14 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
 
         byId('listArea').innerHTML = `<div class="nb-scroll"><table class="table table-hover nb-table">
             <thead><tr>
+                <th class="col-check"><input type="checkbox" id="checkAll" title="เลือกทั้งหมดที่แสดงอยู่"></th>
                 <th>รหัส</th><th class="nick-col">ชื่อเล่น</th><th class="text-start">ชื่อ-นามสกุล</th><th>ห้อง</th><th>การมาเรียน</th>
                 <th>ที่บ้าน (ผู้ปกครอง)</th><th>ที่ศูนย์ (ครู)</th><th></th>
             </tr></thead>
             <tbody>${list.map((c) => {
                 const att = ATT[c.att_status];
                 return `<tr>
+                    <td class="col-check"><input type="checkbox" class="row-check" data-sid="${esc(c.studentid)}" ${selected.has(c.studentid) ? 'checked' : ''}></td>
                     <td>${esc(c.studentid)}</td>
                     <td class="nick-col">${c.nickname ? `<span class="nickname-text">${esc(c.nickname)}</span>` : '-'}</td>
                     <td class="name-col">${esc(fullName(c))}</td>
@@ -550,6 +634,7 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
                     </td>
                 </tr>`;
             }).join('')}</tbody></table></div>`;
+        updateBulkBar();
     }
 
     // ===== Modal =====
@@ -661,6 +746,87 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
         } catch (e) { showError(e); }
     }
 
+
+    // ===== กรอกพร้อมกันหลายคน =====
+    function updateBulkBar() {
+        byId('bulkCount').textContent = selected.size;
+        byId('bulkBar').style.display = selected.size > 0 ? 'flex' : 'none';
+
+        const all = byId('checkAll');
+        if (all) {
+            const list = filteredRoster();
+            const n = list.filter((c) => selected.has(c.studentid)).length;
+            all.checked = list.length > 0 && n === list.length;
+            all.indeterminate = n > 0 && n < list.length;
+        }
+    }
+
+    function openBulk() {
+        if (selected.size === 0) return;
+        byId('bDate').textContent = formatThaiDate(byId('fDate').value);
+        byId('bCount').textContent = selected.size;
+
+        const names = roster.filter((c) => selected.has(c.studentid)).map((c) => c.nickname || c.firstname_th);
+        byId('bNames').textContent = names.slice(0, 8).join(', ') + (names.length > 8 ? ` และอีก ${names.length - 8} คน` : '');
+
+        ['bMorningMilk', 'bAfternoonMilk', 'bMorningSnack', 'bLunch', 'bAfternoonSnack', 'bNap', 'bActivities']
+            .forEach((id) => { byId(id).value = ''; });
+        setMood('bulk', '');
+        NotebookWidgets.refresh(byId('bulkModal'));
+        bulkModal.show();
+    }
+
+    // เก็บเฉพาะช่องที่กรอกไว้ (ช่องว่าง = ไม่เปลี่ยน)
+    function collectBulk() {
+        const f = {};
+        const mood = getMood('bulk');
+        if (mood) f.teacher_mood = mood;
+        const map = {
+            center_morning_milk_ml: 'bMorningMilk', center_afternoon_milk_ml: 'bAfternoonMilk',
+            center_morning_snack_amount: 'bMorningSnack', center_lunch_amount: 'bLunch',
+            center_afternoon_snack_amount: 'bAfternoonSnack', center_nap_hours: 'bNap', activities: 'bActivities'
+        };
+        Object.entries(map).forEach(([key, id]) => {
+            const v = byId(id).value.trim();
+            if (v !== '') f[key] = v;
+        });
+        return f;
+    }
+
+    async function saveBulk() {
+        const fields = collectBulk();
+        if (Object.keys(fields).length === 0) {
+            Swal.fire({ icon: 'warning', title: 'ยังไม่ได้กรอกข้อมูลใดๆ', text: 'กรอกอย่างน้อย 1 ช่องก่อนบันทึก', confirmButtonText: 'ตกลง' });
+            return;
+        }
+        const ids = [...selected];
+        const confirm = await Swal.fire({
+            icon: 'question',
+            title: `บันทึกให้ ${ids.length} คน?`,
+            html: `จะบันทึก <b>${Object.keys(fields).length}</b> ช่อง ให้เด็กที่เลือกทุกคน<br>ข้อมูลเดิมในช่องที่กรอกจะถูกแทนที่`,
+            showCancelButton: true,
+            confirmButtonText: 'ยืนยันบันทึก',
+            cancelButtonText: 'กลับไปแก้ไข',
+            confirmButtonColor: '#1e4db7',
+            heightAuto: false
+        });
+        if (!confirm.isConfirmed) return;
+
+        const btn = byId('btnBulkSave');
+        btn.disabled = true;
+        try {
+            const res = await api('save_report_bulk', {}, { student_ids: ids, date: byId('fDate').value, fields });
+            toast('success', res.message || 'บันทึกแล้ว');
+            bulkModal.hide();
+            selected.clear();
+            await loadRoster(true);
+        } catch (e) {
+            showError(e);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
     const num = (id) => byId(id).value;
 
     function collectPayload(side) {
@@ -697,7 +863,7 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
 
             const list = filteredRoster();
             const next = goNext ? list[current.index + 1] : null;
-            await loadRoster();
+            await loadRoster(true);
 
             if (goNext) {
                 if (next) { openChild(next.studentid, side); }
@@ -716,6 +882,8 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
         noteModal = new bootstrap.Modal(byId('noteModal'), { backdrop: 'static' });
         buildMoodButtons();
         NotebookWidgets.enhance(byId('noteModal'));
+        NotebookWidgets.enhance(byId('bulkModal'));
+        bulkModal = new bootstrap.Modal(byId('bulkModal'), { backdrop: 'static' });
 
         byId('fDate').value = todayStr();
         byId('fGroup').addEventListener('change', async () => { await loadClassrooms(); loadRoster(); });
@@ -741,6 +909,18 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
             if (!current) return;
             window.open(`../daily_notebook_print.php?student_id=${encodeURIComponent(current.sid)}&date=${encodeURIComponent(byId('fDate').value)}`, '_blank');
         });
+        byId('listArea').addEventListener('change', (e) => {
+            if (e.target.id === 'checkAll') {
+                filteredRoster().forEach((c) => { if (e.target.checked) selected.add(c.studentid); else selected.delete(c.studentid); });
+                renderRoster();
+            } else if (e.target.classList.contains('row-check')) {
+                if (e.target.checked) selected.add(e.target.dataset.sid); else selected.delete(e.target.dataset.sid);
+                updateBulkBar();
+            }
+        });
+        byId('btnBulkOpen').addEventListener('click', openBulk);
+        byId('btnBulkClear').addEventListener('click', () => { selected.clear(); renderRoster(); });
+        byId('btnBulkSave').addEventListener('click', saveBulk);
         byId('btnSave').addEventListener('click', () => saveCurrent(false));
         byId('btnSaveNext').addEventListener('click', () => saveCurrent(true));
     });

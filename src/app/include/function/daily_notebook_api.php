@@ -8,6 +8,7 @@
 //   GET  ?action=roster&date=&child_group=&classroom=        รายชื่อเด็ก + สถานะการกรอกสมุด (staff)
 //   GET  ?action=report&student_id=&date=                    สมุดของเด็ก 1 คน (staff / ผู้ปกครองเฉพาะลูกตัวเอง)
 //   POST {action: save_report, student_id, date, side: teacher|parent, ...fields}
+//   POST {action: save_report_bulk, student_ids[], date, fields{...}}   กรอกฝั่งครูให้เด็กหลายคนพร้อมกัน (staff)
 //        staff บันทึกได้ทั้งสองฝั่ง  ผู้ปกครองบันทึกได้เฉพาะฝั่ง parent ของลูกตัวเองและเฉพาะวันนี้
 
 require_once(__DIR__ . '/../../../config/database.php');
@@ -120,6 +121,45 @@ if (!$ready) {
         'status' => 'needs_migration',
         'message' => 'ยังไม่ได้รัน migrations/010_add_daily_notebook.sql ในฐานข้อมูล',
     ]);
+}
+
+/**
+ * บันทึก (เพิ่ม/อัปเดต) สมุดของเด็ก 1 คนใน 1 วัน เฉพาะฟิลด์ที่ส่งมา (ไม่ส่ง = ไม่แก้)
+ * @return int จำนวนฟิลด์ที่บันทึก (0 = ไม่มีอะไรให้บันทึก)
+ */
+function nb_upsert_report(PDO $pdo, string $sid, string $date, string $side, array $input, string $username): int
+{
+    $fields = $side === 'parent' ? NB_PARENT_FIELDS : NB_TEACHER_FIELDS;
+    $byCol = $side === 'parent' ? 'parent_updated_by' : 'teacher_updated_by';
+    $atCol = $side === 'parent' ? 'parent_updated_at' : 'teacher_updated_at';
+
+    $cols = [];
+    $placeholders = [];
+    $updates = [];
+    $params = [':sid' => $sid, ':d' => $date, ':u' => $username];
+    $cast = ['time' => 'TIME', 'int' => 'INTEGER', 'decimal' => 'NUMERIC', 'bool' => 'BOOLEAN'];
+
+    foreach ($fields as $col => $type) {
+        if (!array_key_exists($col, $input)) {
+            continue; // ไม่ได้ส่งมา = ไม่แก้
+        }
+        $cols[] = $col;
+        $ph = ':p_' . $col;
+        $placeholders[] = isset($cast[$type]) ? "CAST($ph AS {$cast[$type]})" : $ph;
+        $updates[] = "$col = EXCLUDED.$col";
+        $params[$ph] = clean_value($type, $input[$col]);
+    }
+    if (!$cols) {
+        return 0;
+    }
+
+    $sql = "INSERT INTO daily_reports (student_id, report_date, " . implode(', ', $cols) . ", $byCol, $atCol)
+            VALUES (:sid, :d, " . implode(', ', $placeholders) . ", :u, NOW())
+            ON CONFLICT (student_id, report_date) DO UPDATE SET "
+        . implode(', ', $updates) . ", $byCol = EXCLUDED.$byCol, $atCol = NOW(), updated_at = NOW()";
+    $pdo->prepare($sql)->execute($params);
+
+    return count($cols);
 }
 
 function menus_for(PDO $pdo, string $date, array $classrooms): array
@@ -330,6 +370,47 @@ try {
             $stmt->execute([':s' => $sid, ':n' => $days]);
             respond(['status' => 'success', 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
 
+        case 'save_report_bulk':
+            // กรอกพร้อมกันหลายคน: ใช้ค่าเดียวกันกับเด็กทุกคนที่เลือก (เฉพาะฟิลด์ที่ส่งมา คนละฟิลด์ที่ไม่ส่งไม่ถูกแก้)
+            require_staff($isStaff);
+            $date = $input['date'] ?? '';
+            $ids = array_values(array_unique(array_filter((array)($input['student_ids'] ?? []), 'is_string')));
+            if (!valid_date($date) || !$ids) {
+                fail('ข้อมูลไม่ครบถ้วน');
+            }
+            if (count($ids) > 300) {
+                fail('เลือกเด็กได้ไม่เกิน 300 คนต่อครั้ง');
+            }
+
+            // เฉพาะฟิลด์ฝั่งครูที่ปลอดภัยสำหรับการใช้ค่าเดียวกันกับทุกคน
+            $bulkAllowed = ['teacher_mood', 'center_morning_milk_ml', 'center_morning_snack_amount', 'center_lunch_amount',
+                'center_afternoon_milk_ml', 'center_afternoon_snack_amount', 'center_nap_hours', 'activities'];
+            $values = [];
+            foreach ($bulkAllowed as $col) {
+                if (array_key_exists($col, (array)($input['fields'] ?? []))) {
+                    $values[$col] = $input['fields'][$col];
+                }
+            }
+            if (!$values) {
+                fail('ไม่มีข้อมูลที่ต้องบันทึก');
+            }
+
+            // รับเฉพาะรหัสที่มีเด็กอยู่จริง
+            $in = implode(',', array_fill(0, count($ids), '?'));
+            $existStmt = $pdo->prepare("SELECT studentid FROM children WHERE studentid IN ($in)");
+            $existStmt->execute($ids);
+            $valid = $existStmt->fetchAll(PDO::FETCH_COLUMN);
+            if (!$valid) {
+                fail('ไม่พบข้อมูลนักเรียน', 404);
+            }
+
+            $pdo->beginTransaction();
+            foreach ($valid as $sid) {
+                nb_upsert_report($pdo, $sid, $date, 'teacher', $values, $username);
+            }
+            $pdo->commit();
+            respond(['status' => 'success', 'message' => 'บันทึกให้เด็ก ' . count($valid) . ' คนแล้ว', 'count' => count($valid)]);
+
         case 'save_report':
             $sid = (string)($input['student_id'] ?? '');
             $date = $input['date'] ?? '';
@@ -357,35 +438,9 @@ try {
                 fail('ไม่พบข้อมูลนักเรียน', 404);
             }
 
-            $fields = $side === 'parent' ? NB_PARENT_FIELDS : NB_TEACHER_FIELDS;
-            $byCol = $side === 'parent' ? 'parent_updated_by' : 'teacher_updated_by';
-            $atCol = $side === 'parent' ? 'parent_updated_at' : 'teacher_updated_at';
-
-            $cols = [];
-            $placeholders = [];
-            $updates = [];
-            $params = [':sid' => $sid, ':d' => $date, ':u' => $username];
-            $cast = ['time' => 'TIME', 'int' => 'INTEGER', 'decimal' => 'NUMERIC', 'bool' => 'BOOLEAN'];
-
-            foreach ($fields as $col => $type) {
-                if (!array_key_exists($col, $input)) {
-                    continue; // ไม่ได้ส่งมา = ไม่แก้
-                }
-                $cols[] = $col;
-                $ph = ':p_' . $col;
-                $placeholders[] = isset($cast[$type]) ? "CAST($ph AS {$cast[$type]})" : $ph;
-                $updates[] = "$col = EXCLUDED.$col";
-                $params[$ph] = clean_value($type, $input[$col]);
-            }
-            if (!$cols) {
+            if (nb_upsert_report($pdo, $sid, $date, $side, $input, $username) === 0) {
                 fail('ไม่มีข้อมูลที่ต้องบันทึก');
             }
-
-            $sql = "INSERT INTO daily_reports (student_id, report_date, " . implode(', ', $cols) . ", $byCol, $atCol)
-                    VALUES (:sid, :d, " . implode(', ', $placeholders) . ", :u, NOW())
-                    ON CONFLICT (student_id, report_date) DO UPDATE SET "
-                . implode(', ', $updates) . ", $byCol = EXCLUDED.$byCol, $atCol = NOW(), updated_at = NOW()";
-            $pdo->prepare($sql)->execute($params);
 
             respond(['status' => 'success', 'message' => 'บันทึกสมุดสื่อสารแล้ว']);
 
