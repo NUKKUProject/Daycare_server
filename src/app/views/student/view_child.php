@@ -3581,7 +3581,9 @@ textarea.vx-input { height:auto; }
       imageAlt: 'รูปประกอบการฉีดวัคซีน',
       width: 'min(92vw, 760px)',
       showConfirmButton: false,
-      showCloseButton: true
+      showCloseButton: true,
+      focusConfirm: false,
+      heightAuto: false
     });
   };
 
@@ -3607,6 +3609,12 @@ textarea.vx-input { height:auto; }
       showToast('error', error.message || 'ไม่สามารถใช้รูปนี้ได้');
       this.value = '';
     }
+  });
+
+  // กดรูปตัวอย่างในฟอร์มเพื่อดูภาพขยาย (ใช้ได้ทั้งรูปเดิมและรูปที่เพิ่งเลือก)
+  const vaccineImagePreviewEl = document.getElementById('vaccineImagePreview');
+  if (vaccineImagePreviewEl) vaccineImagePreviewEl.addEventListener('click', function() {
+    openVaccineImage(this.src);
   });
 
   if (vaccineImageRemoveBtnEl) vaccineImageRemoveBtnEl.addEventListener('click', function() {
