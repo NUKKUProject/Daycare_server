@@ -38,6 +38,9 @@ $studentid = $_SESSION['username'] ?? '';
         .pn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
         .pn-pane { display: block !important; }
         .pn-pane-history { grid-column: 1 / -1; }
+        .pn-pane[data-pane="parent"] { order: 1; }
+        .pn-pane[data-pane="teacher"] { order: 2; }
+        .pn-pane[data-pane="history"] { order: 3; }
     }
 
     .pn-header {
@@ -205,8 +208,8 @@ $studentid = $_SESSION['username'] ?? '';
         </div>
 
         <div class="pn-tabs" id="pnTabs">
-            <button type="button" class="pn-tab" data-pane="teacher">🏫 จากคุณครู<span class="dot" id="dotTeacher"></span></button>
             <button type="button" class="pn-tab" data-pane="parent">🏠 ที่บ้าน (กรอก)<span class="dot" id="dotParent"></span></button>
+            <button type="button" class="pn-tab" data-pane="teacher">🏫 จากคุณครู<span class="dot" id="dotTeacher"></span></button>
             <button type="button" class="pn-tab" data-pane="history">🗓️ ย้อนหลัง</button>
         </div>
 
