@@ -11,7 +11,7 @@ $studentid = $_SESSION['username'] ?? '';
 ?>
 
 <style>
-    .pn-wrap { max-width: 1280px; margin: 0 auto; }
+    .pn-wrap { max-width: none; margin: 0; }  /* ใช้พื้นที่ทำงานเต็มความกว้าง */
 
     /* แท็บสลับส่วน (จอเล็ก) / แสดงสองคอลัมน์ (จอใหญ่) */
     .pn-tabs {
