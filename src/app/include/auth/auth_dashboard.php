@@ -19,6 +19,97 @@ function isCurrentPage($path)
 
     return strpos($current_url, $path) !== false;
 }
+
+// วาดเมนูแบบกลุ่มที่พับ/กางได้ (ใช้ร่วมกันระหว่าง admin และครู)
+// $menu = [['title' =>, 'icon' =>, 'items' => [['label', 'href', 'match', 'icon', 'sub'?]]]]
+function renderSidebarGroups(array $menu, string $storageKey)
+{
+    static $styleDone = false;
+
+    // กลุ่มที่มีหน้าปัจจุบันอยู่จะกางไว้เสมอ ถ้าไม่อยู่ในกลุ่มใดเลย (เช่นหน้า Dashboard) ให้กางกลุ่มแรก
+    $activeGroup = null;
+    foreach ($menu as $gi => $group) {
+        foreach ($group['items'] as $item) {
+            if (isCurrentPage($item['match'])) {
+                $activeGroup = $gi;
+                break 2;
+            }
+        }
+    }
+
+    if (!$styleDone) {
+        $styleDone = true;
+        ?>
+        <style>
+            .nav-group { margin: .5rem 1rem 0; list-style: none; }
+            .nav-group-toggle {
+                width: 100%; display: flex; align-items: center; gap: .6rem; background: none; border: none;
+                color: rgba(255, 255, 255, .75); font-size: .9rem; font-weight: 700; letter-spacing: .03em;
+                padding: .55rem .6rem; border-radius: 8px; text-align: left;
+            }
+            .nav-group-toggle:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+            .nav-group-toggle .chev { margin-left: auto; font-size: .75rem; transition: transform .2s ease; }
+            .nav-group.open > .nav-group-toggle .chev { transform: rotate(180deg); }
+            .nav-group.has-active > .nav-group-toggle { color: #fff; }
+            .nav-group-items { list-style: none; padding: 0; margin: .15rem 0 0; display: none; }
+            .nav-group.open > .nav-group-items { display: block; }
+            .sidebar .nav-group-items .nav-item { margin: .12rem 0; }
+            .sidebar .nav-group-items .nav-link { padding: .6rem .8rem; font-size: 1.02rem; }
+            .sidebar .nav-group-items .nav-sub .nav-link { padding-left: 2.1rem; font-size: .95rem; }
+            .sidebar .nav-group-items .nav-link.active::before { left: -.4rem; }
+        </style>
+        <?php
+    }
+
+    foreach ($menu as $gi => $group) {
+        $isOpen = $activeGroup === $gi || ($activeGroup === null && $gi === 0);
+        ?>
+        <li class="nav-group <?php echo $isOpen ? 'open' : ''; ?> <?php echo $activeGroup === $gi ? 'has-active' : ''; ?>" data-group="g<?php echo $gi; ?>" data-store="<?php echo htmlspecialchars($storageKey); ?>">
+            <button type="button" class="nav-group-toggle" aria-expanded="<?php echo $isOpen ? 'true' : 'false'; ?>">
+                <i class="<?php echo htmlspecialchars($group['icon']); ?>"></i>
+                <span><?php echo htmlspecialchars($group['title']); ?></span>
+                <i class="bi bi-chevron-down chev"></i>
+            </button>
+            <ul class="nav-group-items">
+                <?php foreach ($group['items'] as $item): ?>
+                    <li class="nav-item <?php echo !empty($item['sub']) ? 'nav-sub' : ''; ?>">
+                        <a class="nav-link <?php echo isCurrentPage($item['match']) ? 'active' : ''; ?>"
+                            href="<?php echo htmlspecialchars($item['href']); ?>">
+                            <i class="<?php echo htmlspecialchars($item['icon']); ?>"></i>
+                            <?php echo htmlspecialchars($item['label']); ?>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </li>
+        <?php
+    }
+    ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var KEY = <?php echo json_encode($storageKey); ?>;
+            var saved = {};
+            try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { saved = {}; }
+
+            document.querySelectorAll('.nav-group[data-store="' + KEY + '"]').forEach(function (g) {
+                var id = g.dataset.group;
+                var btn = g.querySelector('.nav-group-toggle');
+                // จำสถานะที่ผู้ใช้เคยพับ/กางไว้ (กลุ่มที่มีหน้าปัจจุบันกางเสมอ)
+                if (!g.classList.contains('has-active') && saved[id] !== undefined) {
+                    g.classList.toggle('open', saved[id] === true);
+                    btn.setAttribute('aria-expanded', saved[id] === true ? 'true' : 'false');
+                }
+                btn.addEventListener('click', function () {
+                    var open = g.classList.toggle('open');
+                    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    saved[id] = open;
+                    try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) { /* ไม่เป็นไร */ }
+                });
+            });
+        });
+    </script>
+    <?php
+}
 ?>
 <div class="container-fluid">
     <div class="row">
@@ -95,158 +186,45 @@ function isCurrentPage($path)
                                 ],
                             ],
                         ];
-
-                        // กลุ่มที่มีหน้าปัจจุบันอยู่จะกางไว้เสมอ ถ้าไม่อยู่ในกลุ่มใดเลย (เช่นหน้า Dashboard) ให้กางกลุ่มแรก
-                        $adminActiveGroup = null;
-                        foreach ($adminMenu as $gi => $group) {
-                            foreach ($group['items'] as $item) {
-                                if (isCurrentPage($item['match'])) {
-                                    $adminActiveGroup = $gi;
-                                    break 2;
-                                }
-                            }
-                        }
+                        renderSidebarGroups($adminMenu, 'adminNavOpen');
                         ?>
-                        <style>
-                            .nav-group { margin: .5rem 1rem 0; list-style: none; }
-                            .nav-group-toggle {
-                                width: 100%; display: flex; align-items: center; gap: .6rem; background: none; border: none;
-                                color: rgba(255, 255, 255, .75); font-size: .9rem; font-weight: 700; letter-spacing: .03em;
-                                padding: .55rem .6rem; border-radius: 8px; text-align: left;
-                            }
-                            .nav-group-toggle:hover { background: rgba(255, 255, 255, .08); color: #fff; }
-                            .nav-group-toggle .chev { margin-left: auto; font-size: .75rem; transition: transform .2s ease; }
-                            .nav-group.open > .nav-group-toggle .chev { transform: rotate(180deg); }
-                            .nav-group.has-active > .nav-group-toggle { color: #fff; }
-                            .nav-group-items { list-style: none; padding: 0; margin: .15rem 0 0; display: none; }
-                            .nav-group.open > .nav-group-items { display: block; }
-                            .sidebar .nav-group-items .nav-item { margin: .12rem 0; }
-                            .sidebar .nav-group-items .nav-link { padding: .6rem .8rem; font-size: 1.02rem; }
-                            .sidebar .nav-group-items .nav-sub .nav-link { padding-left: 2.1rem; font-size: .95rem; }
-                            .sidebar .nav-group-items .nav-link.active::before { left: -.4rem; }
-                        </style>
-
-                        <?php foreach ($adminMenu as $gi => $group): ?>
-                            <?php $isOpen = $adminActiveGroup === $gi || ($adminActiveGroup === null && $gi === 0); ?>
-                            <li class="nav-group <?php echo $isOpen ? 'open' : ''; ?> <?php echo $adminActiveGroup === $gi ? 'has-active' : ''; ?>" data-group="g<?php echo $gi; ?>">
-                                <button type="button" class="nav-group-toggle" aria-expanded="<?php echo $isOpen ? 'true' : 'false'; ?>">
-                                    <i class="<?php echo htmlspecialchars($group['icon']); ?>"></i>
-                                    <span><?php echo htmlspecialchars($group['title']); ?></span>
-                                    <i class="bi bi-chevron-down chev"></i>
-                                </button>
-                                <ul class="nav-group-items">
-                                    <?php foreach ($group['items'] as $item): ?>
-                                        <li class="nav-item <?php echo !empty($item['sub']) ? 'nav-sub' : ''; ?>">
-                                            <a class="nav-link <?php echo isCurrentPage($item['match']) ? 'active' : ''; ?>"
-                                                href="<?php echo htmlspecialchars($item['href']); ?>">
-                                                <i class="<?php echo htmlspecialchars($item['icon']); ?>"></i>
-                                                <?php echo htmlspecialchars($item['label']); ?>
-                                            </a>
-                                        </li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            </li>
-                        <?php endforeach; ?>
-
-                        <script>
-                            document.addEventListener('DOMContentLoaded', function () {
-                                var KEY = 'adminNavOpen';
-                                var saved = {};
-                                try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { saved = {}; }
-
-                                document.querySelectorAll('.nav-group').forEach(function (g) {
-                                    var id = g.dataset.group;
-                                    var btn = g.querySelector('.nav-group-toggle');
-                                    // จำสถานะที่ผู้ใช้เคยพับ/กางไว้ (กลุ่มที่มีหน้าปัจจุบันกางเสมอ)
-                                    if (!g.classList.contains('has-active') && saved[id] !== undefined) {
-                                        g.classList.toggle('open', saved[id] === true);
-                                        btn.setAttribute('aria-expanded', saved[id] === true ? 'true' : 'false');
-                                    }
-                                    btn.addEventListener('click', function () {
-                                        var open = g.classList.toggle('open');
-                                        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-                                        saved[id] = open;
-                                        try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) { /* ไม่เป็นไร */ }
-                                    });
-                                });
-                            });
-                        </script>
                     <?php endif; ?>
 
                     <?php if (getUserRole() === 'teacher'): ?>
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo isCurrentPage('attendance.php') ? 'active' : ''; ?>"
-                                href="/app/views/teacher/attendance.php">
-                                <i class="bi bi-qr-code-scan" style="font-size: 23px;"></i>
-                                แสกนเช็คชื่อ<br>มาเรียน
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo isCurrentPage('scan_checkout.php') ? 'active' : ''; ?>"
-                                href="/app/views/teacher/scan_checkout.php">
-                                <i class="bi bi-qr-code-scan" style="font-size: 23px;"></i>
-                                แสกนเช็คชื่อ<br>กลับบ้าน
-                            </a>
-                        </li>
-
-                        <li class="nav-item <?php echo isCurrentPage('qr_codes_list.php') ? 'active' : ''; ?>">
-                            <a class="nav-link" href="/app/views/admin/qr_codes_list.php">
-                                <i class="bi bi-qr-code" style="font-size: 23px;"></i>
-                                จัดการ QR Code
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo isCurrentPage('attendance_history.php') ? 'active' : ''; ?>"
-                                href="/app/views/attendance_history.php">
-                                <i class="bi bi-archive-fill" style="font-size: 23px;"></i>
-                                บันทึกประวัติการเช็คชื่อมาเรียน
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo isCurrentPage('checklist_history.php') ? 'active' : ''; ?>"
-                                href="/app/views/checklist_history.php">
-                                <i class="fa-solid fa-stethoscope" style="font-size: 23px;"></i>
-                                บันทึกประวัติการตรวจร่างกาย
-                            </a>
-                        </li>
-                        <li class="nav-item <?php echo isCurrentPage('check_health_external') ? 'active' : ''; ?>">
-                            <a class="nav-link" href="/app/views/check_health_external/checklist_name.php">
-                                <i class="fa-solid fa-user-doctor" style="font-size: 23px;"></i>
-                                บันทึกประวัติการตรวจสุขภาพ
-                            </a>
-                        </li>
-                        <li class="nav-item <?php echo isCurrentPage('check_health_tooth') ? 'active' : ''; ?>">
-                            <a class="nav-link" href="/app/views/check_health_tooth/checklist_name.php">
-                                <i class="fa-solid fa-tooth" style="font-size: 23px;"></i>
-                                บันทึกการตรวจสุขภาพช่องปาก
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo isCurrentPage('growth_history.php') ? 'active' : ''; ?>"
-                                href="/app/views/growth_history.php">
-                                <i class="bi bi-graph-up" style="font-size: 23px;"></i>
-                                บันทึกกราฟการเจริญเติบโตของเด็ก
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo isCurrentPage('daily_notebook.php') ? 'active' : ''; ?>"
-                                href="/app/views/teacher/daily_notebook.php">
-                                <i class="bi bi-journal-text" style="font-size: 23px;"></i>
-                                สมุดสื่อสารประจำวัน
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo isCurrentPage('daily_menu.php') ? 'active' : ''; ?>"
-                                href="/app/views/teacher/daily_menu.php">
-                                <i class="cil-restaurant" style="font-size: 23px;"></i>
-                                เมนูอาหารรายวัน
-                            </a>
-                        </li>
+                        <?php
+                        // เมนูของครูจัดเป็นกลุ่ม (กดที่หัวกลุ่มเพื่อพับ/กาง)
+                        $teacherMenu = [
+                            [
+                                'title' => 'งานประจำวัน',
+                                'icon' => 'bi bi-calendar-check',
+                                'items' => [
+                                    ['label' => 'แสกนเช็คชื่อมาเรียน', 'href' => '/app/views/teacher/attendance.php', 'match' => 'attendance.php', 'icon' => 'bi bi-qr-code-scan'],
+                                    ['label' => 'แสกนเช็คชื่อกลับบ้าน', 'href' => '/app/views/teacher/scan_checkout.php', 'match' => 'scan_checkout.php', 'icon' => 'bi bi-qr-code-scan'],
+                                    ['label' => 'สมุดสื่อสารประจำวัน', 'href' => '/app/views/teacher/daily_notebook.php', 'match' => 'daily_notebook.php', 'icon' => 'bi bi-journal-text'],
+                                    ['label' => 'เมนูอาหารรายวัน', 'href' => '/app/views/teacher/daily_menu.php', 'match' => 'daily_menu.php', 'icon' => 'cil-restaurant'],
+                                ],
+                            ],
+                            [
+                                'title' => 'ข้อมูลเด็ก',
+                                'icon' => 'bi bi-people-fill',
+                                'items' => [
+                                    ['label' => 'จัดการ QR Code', 'href' => '/app/views/admin/qr_codes_list.php', 'match' => 'qr_codes_list.php', 'icon' => 'bi bi-qr-code'],
+                                ],
+                            ],
+                            [
+                                'title' => 'ประวัติและรายงาน',
+                                'icon' => 'bi bi-clock-history',
+                                'items' => [
+                                    ['label' => 'ประวัติการมาเรียน', 'href' => '/app/views/attendance_history.php', 'match' => 'attendance_history.php', 'icon' => 'bi bi-archive-fill'],
+                                    ['label' => 'ตรวจร่างกายประจำวัน', 'href' => '/app/views/checklist_history.php', 'match' => 'checklist_history.php', 'icon' => 'fa-solid fa-stethoscope'],
+                                    ['label' => 'ตรวจสุขภาพโดยกุมารแพทย์', 'href' => '/app/views/check_health_external/checklist_name.php', 'match' => 'check_health_external', 'icon' => 'fa-solid fa-user-doctor'],
+                                    ['label' => 'ตรวจสุขภาพช่องปาก', 'href' => '/app/views/check_health_tooth/checklist_name.php', 'match' => 'check_health_tooth', 'icon' => 'fa-solid fa-tooth'],
+                                    ['label' => 'กราฟการเจริญเติบโต', 'href' => '/app/views/growth_history.php', 'match' => 'growth_history.php', 'icon' => 'bi bi-graph-up'],
+                                ],
+                            ],
+                        ];
+                        renderSidebarGroups($teacherMenu, 'teacherNavOpen');
+                        ?>
                     <?php endif; ?>
 
                     <?php if (getUserRole() === 'doctor'): ?>
