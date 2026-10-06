@@ -128,14 +128,6 @@ function isCurrentPage($path)
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link <?php echo isCurrentPage('nutrition_history.php') ? 'active' : ''; ?>"
-                                href="/app/views/nutrition_history.php">
-                                <i class="cil-restaurant" style="font-size: 23px;"></i>
-                                บันทึกประวัติโภชนาการและพัฒนาการ
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
                             <a class="nav-link <?php echo isCurrentPage('growth_history.php') ? 'active' : ''; ?>"
                                 href="/app/views/growth_history.php">
                                 <i class="bi bi-graph-up" style="font-size: 23px;"></i>
@@ -230,14 +222,6 @@ function isCurrentPage($path)
                                 บันทึกการตรวจสุขภาพช่องปาก
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo isCurrentPage('nutrition_history.php') ? 'active' : ''; ?>"
-                                href="/app/views/nutrition_history.php">
-                                <i class="cil-restaurant" style="font-size: 23px;"></i>
-                                บันทึกประวัติโภชนาการและพัฒนาการ
-                            </a>
-                        </li>
-
                         <li class="nav-item">
                             <a class="nav-link <?php echo isCurrentPage('growth_history.php') ? 'active' : ''; ?>"
                                 href="/app/views/growth_history.php">
