@@ -125,6 +125,16 @@ textarea.vx-input { height:auto; }
   .vx-body { padding:.9rem; }
   .vx-footer .btn { flex:1; }
 }
+/* ตัวดูรูปเต็มจอ (ซูม/ลากได้) */
+.vx-viewer { position:fixed; inset:0; z-index:2000; background:rgba(8,15,40,.93); display:flex; align-items:center; justify-content:center; touch-action:none; overscroll-behavior:contain; user-select:none; -webkit-user-select:none; }
+.vx-viewer-img { max-width:94vw; max-height:84vh; object-fit:contain; transform-origin:center center; will-change:transform; -webkit-user-drag:none; border-radius:6px; box-shadow:0 10px 40px rgba(0,0,0,.5); }
+.vx-viewer-bar { position:absolute; bottom:46px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:.4rem; background:rgba(255,255,255,.14); backdrop-filter:blur(6px); padding:6px 10px; border-radius:30px; }
+.vx-viewer-bar button, .vx-viewer-close { width:40px; height:40px; border:none; border-radius:50%; background:rgba(255,255,255,.18); color:#fff; font-size:1.05rem; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+.vx-viewer-bar button:hover, .vx-viewer-close:hover { background:rgba(255,255,255,.32); }
+.vx-viewer-bar i, .vx-viewer-close i { margin:0; }
+.vx-viewer-pct { min-width:52px; text-align:center; color:#fff; font-weight:700; font-size:.9rem; }
+.vx-viewer-close { position:absolute; top:14px; right:14px; width:44px; height:44px; }
+.vx-viewer-tip { position:absolute; bottom:14px; left:0; right:0; text-align:center; color:rgba(255,255,255,.6); font-size:.78rem; padding:0 1rem; }
 .vaccine-image-box { text-align:center; }
 .vaccine-image-box img { max-width:100%; max-height:320px; border-radius:12px; border:1px solid #e2e8f0; cursor:zoom-in; }
 .status-badge.status-late { background:#fef3c7;color:#d97706; }
@@ -3574,17 +3584,132 @@ textarea.vx-input { height:auto; }
     document.getElementById('vaccineImagePreview').dataset.existing = existingPath ? '1' : '';
   }
 
+  // ตัวดูรูปเต็มจอ: เลื่อนล้อเมาส์/บีบนิ้วเพื่อซูม ลากเพื่อเลื่อนดู ดับเบิลคลิกเพื่อซูมเข้า/ออก
   window.openVaccineImage = function(src) {
     if (!src) return;
-    Swal.fire({
-      imageUrl: src,
-      imageAlt: 'รูปประกอบการฉีดวัคซีน',
-      width: 'min(92vw, 760px)',
-      showConfirmButton: false,
-      showCloseButton: true,
-      focusConfirm: false,
-      heightAuto: false
+
+    const MIN_SCALE = 1, MAX_SCALE = 8;
+    let scale = 1, tx = 0, ty = 0;
+    const pointers = new Map();
+    let dragMoved = false;
+    let pinchStart = null;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'vx-viewer';
+    overlay.innerHTML = `
+      <img class="vx-viewer-img" alt="รูปประกอบการฉีดวัคซีน" draggable="false">
+      <div class="vx-viewer-bar">
+        <button type="button" data-z="out" title="ซูมออก"><i class="bi bi-dash-lg"></i></button>
+        <span class="vx-viewer-pct">100%</span>
+        <button type="button" data-z="in" title="ซูมเข้า"><i class="bi bi-plus-lg"></i></button>
+        <button type="button" data-z="reset" title="กลับเป็นขนาดพอดีจอ"><i class="bi bi-arrows-angle-contract"></i></button>
+      </div>
+      <button type="button" class="vx-viewer-close" title="ปิด (Esc)"><i class="bi bi-x-lg"></i></button>
+      <div class="vx-viewer-tip">เลื่อนล้อเมาส์หรือบีบนิ้วเพื่อซูม · ลากเพื่อเลื่อนดู · ดับเบิลคลิกเพื่อขยาย</div>`;
+    const img = overlay.querySelector('.vx-viewer-img');
+    const pct = overlay.querySelector('.vx-viewer-pct');
+    img.src = src;
+
+    function apply() {
+      if (scale <= MIN_SCALE) { scale = MIN_SCALE; tx = 0; ty = 0; }
+      img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+      img.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
+      pct.textContent = Math.round(scale * 100) + '%';
+    }
+
+    // ซูมโดยให้จุด (px, py) บนหน้าจออยู่ที่เดิม
+    function zoomAt(newScale, px, py) {
+      newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, newScale));
+      const rect = overlay.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+      const ux = (px - cx - tx) / scale, uy = (py - cy - ty) / scale;
+      tx = px - cx - ux * newScale;
+      ty = py - cy - uy * newScale;
+      scale = newScale;
+      apply();
+    }
+
+    function center() {
+      const r = overlay.getBoundingClientRect();
+      return [r.left + r.width / 2, r.top + r.height / 2];
+    }
+
+    function close() {
+      document.removeEventListener('keydown', onKey, true);
+      overlay.remove();
+    }
+
+    function onKey(e) {
+      if (e.key === 'Escape') { e.stopImmediatePropagation(); e.preventDefault(); close(); }
+    }
+    document.addEventListener('keydown', onKey, true);
+
+    overlay.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      zoomAt(scale * Math.exp(-e.deltaY * 0.0015), e.clientX, e.clientY);
+    }, { passive: false });
+
+    overlay.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.vx-viewer-bar, .vx-viewer-close')) return;
+      overlay.setPointerCapture(e.pointerId);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      dragMoved = false;
+      if (pointers.size === 2) {
+        const [a, b] = [...pointers.values()];
+        pinchStart = { dist: Math.hypot(a.x - b.x, a.y - b.y), scale };
+      }
+      if (scale > 1) img.style.cursor = 'grabbing';
     });
+
+    overlay.addEventListener('pointermove', (e) => {
+      const p = pointers.get(e.pointerId);
+      if (!p) return;
+      const dx = e.clientX - p.x, dy = e.clientY - p.y;
+      p.x = e.clientX; p.y = e.clientY;
+
+      if (pointers.size === 2 && pinchStart) {
+        const [a, b] = [...pointers.values()];
+        const dist = Math.hypot(a.x - b.x, a.y - b.y);
+        zoomAt(pinchStart.scale * (dist / pinchStart.dist), (a.x + b.x) / 2, (a.y + b.y) / 2);
+        dragMoved = true;
+      } else if (pointers.size === 1 && scale > 1) {
+        tx += dx; ty += dy;
+        if (Math.abs(dx) + Math.abs(dy) > 1) dragMoved = true;
+        apply();
+      }
+    });
+
+    const endPointer = (e) => {
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) pinchStart = null;
+      apply();
+    };
+    overlay.addEventListener('pointerup', endPointer);
+    overlay.addEventListener('pointercancel', endPointer);
+
+    // คลิกพื้นหลังเพื่อปิด (ไม่นับตอนลาก/ซูม)
+    overlay.addEventListener('click', (e) => {
+      if (dragMoved) { dragMoved = false; return; }
+      if (e.target === overlay) close();
+    });
+
+    img.addEventListener('dblclick', (e) => {
+      e.preventDefault();
+      if (scale > 1) { scale = 1; apply(); } else { zoomAt(2.5, e.clientX, e.clientY); }
+    });
+
+    overlay.querySelector('.vx-viewer-close').addEventListener('click', close);
+    overlay.querySelector('.vx-viewer-bar').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-z]');
+      if (!btn) return;
+      const [cx, cy] = center();
+      if (btn.dataset.z === 'in') zoomAt(scale * 1.4, cx, cy);
+      else if (btn.dataset.z === 'out') zoomAt(scale / 1.4, cx, cy);
+      else { scale = 1; apply(); }
+    });
+
+    document.body.appendChild(overlay);
+    apply();
   };
 
   // ฟอร์มวัคซีนมีเฉพาะผู้ใช้ที่มีสิทธิ์บันทึก (admin/ครู/ผู้ปกครอง)
