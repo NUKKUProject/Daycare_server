@@ -11,7 +11,7 @@ $studentid = $_SESSION['username'] ?? '';
 ?>
 
 <style>
-    .pn-wrap { max-width: none; margin: 0; }  /* ใช้พื้นที่ทำงานเต็มความกว้าง */
+    .pn-wrap { max-width: 1400px; margin: 0 auto; }
 
     /* แท็บสลับส่วน (จอเล็ก) / แสดงสองคอลัมน์ (จอใหญ่) */
     .pn-tabs {
@@ -61,7 +61,7 @@ $studentid = $_SESSION['username'] ?? '';
 
     .pn-date {
         background: #fff; border-radius: 15px; box-shadow: 0 2px 15px rgba(0, 0, 0, .05);
-        padding: .9rem 1rem; margin-bottom: 1rem;
+        padding: .9rem 1rem; margin: 0 auto 1rem; max-width: 620px;  /* ตัวเลือกวันที่อยู่กึ่งกลางหน้า */
     }
     .pn-date-row { display: flex; gap: .4rem; align-items: stretch; }
     .pn-date-row input { flex: 1 1 auto; min-width: 0; height: 44px; border-radius: 10px; border: 2px solid #e2e8f0; }
