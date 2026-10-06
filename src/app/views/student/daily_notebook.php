@@ -98,6 +98,17 @@ $studentid = $_SESSION['username'] ?? '';
     .empty-teacher .emoji { font-size: 2rem; display: block; }
     .flag-chip { display: inline-block; background: #dcfce7; color: #15803d; border-radius: 20px; padding: 1px 10px; font-size: .78rem; font-weight: 700; margin-right: 4px; }
 
+    .soft-btn {
+        border: 2px solid #c7d7f8; background: #eff3ff; color: #1e4db7; border-radius: 12px;
+        padding: .45rem 1rem; font-weight: 700; font-size: .88rem;
+    }
+    .soft-btn:hover:not(:disabled) { background: #dbe7ff; }
+    .soft-btn:disabled { opacity: .5; }
+    .draft-note {
+        background: #eef6ff; border: 1px solid #bfdbfe; color: #1e40af; border-radius: 10px;
+        padding: .5rem .9rem; font-size: .85rem; margin-bottom: .9rem; display: none;
+    }
+    .draft-note a { font-weight: 700; margin-left: .4rem; }
     .btn-save-note {
         width: 100%; border-radius: 12px; padding: .8rem 1.5rem; font-weight: 800; border: none; color: #fff; font-size: 1rem;
         background: linear-gradient(135deg, #0f2460, #1e4db7); box-shadow: 0 4px 16px rgba(15, 36, 96, .3);
@@ -144,6 +155,7 @@ $studentid = $_SESSION['username'] ?? '';
                 <input type="date" class="form-control" id="pDate">
                 <button type="button" class="btn" id="dateNext" title="วันถัดไป"><i class="fas fa-chevron-right"></i></button>
                 <button type="button" class="btn" id="dateToday">วันนี้</button>
+                <button type="button" class="btn" id="btnPrint" title="พิมพ์สมุดของวันนี้"><i class="bi bi-printer"></i></button>
             </div>
             <div class="pn-date-title" id="dateTitle"></div>
             <div class="pn-lock" id="lockNote" style="display:none;"><i class="bi bi-lock-fill me-1"></i> ผู้ปกครองแก้ไขได้เฉพาะสมุดของวันนี้ (วันอื่นดูได้อย่างเดียว)</div>
@@ -159,6 +171,11 @@ $studentid = $_SESSION['username'] ?? '';
         <div class="pn-card">
             <div class="pn-card-head">🏠 ข้อมูลจากผู้ปกครอง (ที่บ้าน) <span class="stamp" id="parentStamp"></span></div>
             <div class="pn-card-body">
+                <div class="draft-note" id="draftNote"><i class="bi bi-pencil-square me-1"></i> กู้คืนข้อมูลที่กรอกค้างไว้แล้ว (ยังไม่ได้บันทึก) <a href="#" id="draftClear">ล้างและโหลดใหม่</a></div>
+                <div class="mb-3" id="copyRow">
+                    <button type="button" class="soft-btn" id="btnCopyYesterday"><i class="bi bi-clipboard-check me-1"></i> ใช้ข้อมูลเมื่อวานเป็นต้นแบบ</button>
+                    <div class="form-text">คัดลอกนม เวลานอน/ตื่น เฉพาะที่ซ้ำกันทุกวัน (ไม่คัดลอกอารมณ์และข้อความ)</div>
+                </div>
                 <fieldset id="parentFields">
                     <div class="pn-sec">
                         <div class="pn-sec-title">อารมณ์ของเด็กที่บ้าน</div>
@@ -173,17 +190,17 @@ $studentid = $_SESSION['username'] ?? '';
                     <div class="pn-sec">
                         <div class="pn-sec-title">🌅 ช่วงเช้าก่อนมาศูนย์</div>
                         <div class="row g-3">
-                            <div class="col-12 col-sm-5"><label class="pn-label" for="hMorningMilk">ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control pn-input" id="hMorningMilk" min="0" inputmode="numeric"></div></div>
-                            <div class="col-12 col-sm-7"><label class="pn-label" for="hMorningFood">อาหารเช้า (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control pn-input" id="hMorningFood" maxlength="500"></div>
+                            <div class="col-12 col-sm-5"><label class="pn-label" for="hMorningMilk">ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control pn-input" id="hMorningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                            <div class="col-12 col-sm-7"><label class="pn-label" for="hMorningFood">อาหารเช้า (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control pn-input" id="hMorningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
                         </div>
                     </div>
 
                     <div class="pn-sec">
                         <div class="pn-sec-title">🌙 ช่วงเย็นและกลางคืน</div>
                         <div class="row g-3">
-                            <div class="col-12 col-sm-5"><label class="pn-label" for="hEveningMilk">ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control pn-input" id="hEveningMilk" min="0" inputmode="numeric"></div></div>
-                            <div class="col-12 col-sm-7"><label class="pn-label" for="hEveningFood">อาหารเย็น (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control pn-input" id="hEveningFood" maxlength="500"></div>
-                            <div class="col-12 col-sm-4"><label class="pn-label" for="hSleep">กลางคืนนอนหลับ</label><div class="unit" data-unit="ชม."><input type="number" class="form-control pn-input" id="hSleep" min="0" max="24" step="0.5" inputmode="decimal"></div></div>
+                            <div class="col-12 col-sm-5"><label class="pn-label" for="hEveningMilk">ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control pn-input" id="hEveningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                            <div class="col-12 col-sm-7"><label class="pn-label" for="hEveningFood">อาหารเย็น (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control pn-input" id="hEveningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
+                            <div class="col-12 col-sm-4"><label class="pn-label" for="hSleep">กลางคืนนอนหลับ</label><div class="unit" data-unit="ชม."><input type="number" class="form-control pn-input" id="hSleep" data-stepper="step=0.5;min=0;max=16;presets=8|9|10|11|12" min="0" max="24" step="0.5" inputmode="decimal"></div></div>
                             <div class="col-6 col-sm-4"><label class="pn-label" for="hBedtime">เข้านอนเวลา</label><input type="time" class="form-control pn-input" id="hBedtime"></div>
                             <div class="col-6 col-sm-4"><label class="pn-label" for="hWake">ตื่นนอนเวลา</label><input type="time" class="form-control pn-input" id="hWake"></div>
                         </div>
@@ -211,6 +228,7 @@ $studentid = $_SESSION['username'] ?? '';
     </div>
 </main>
 
+<?php include __DIR__ . '/../partials/notebook_widgets.php'; ?>
 <script>
     const API = '../../include/function/daily_notebook_api.php';
     const STUDENT_ID = <?php echo json_encode($studentid); ?>;
@@ -370,11 +388,73 @@ $studentid = $_SESSION['username'] ?? '';
         };
     }
 
+    // ===== ร่างอัตโนมัติ (กันข้อมูลที่พิมพ์ค้างหาย) =====
+    let dirty = false;
+    let draftTimer = null;
+    const draftKey = () => `nbDraft:${STUDENT_ID}:${byId('pDate').value}`;
+    const FIELD_IDS = ['pMessage', 'pDropOff', 'hMorningMilk', 'hMorningFood', 'hEveningMilk', 'hEveningFood', 'hSleep', 'hBedtime', 'hWake'];
+    const CHECK_IDS = ['hStopDiaper', 'hStopBottle'];
+
+    function readDraft() {
+        try { return JSON.parse(localStorage.getItem(draftKey()) || 'null'); } catch (e) { return null; }
+    }
+    function clearDraft() {
+        try { localStorage.removeItem(draftKey()); } catch (e) { /* ใช้งานต่อได้แม้เก็บร่างไม่ได้ */ }
+        dirty = false;
+        byId('draftNote').style.display = 'none';
+    }
+    function scheduleDraft() {
+        if (!canEdit) return;
+        dirty = true;
+        clearTimeout(draftTimer);
+        draftTimer = setTimeout(() => {
+            const d = { mood: getMood() };
+            FIELD_IDS.forEach((id) => { d[id] = byId(id).value; });
+            CHECK_IDS.forEach((id) => { d[id] = byId(id).checked; });
+            try { localStorage.setItem(draftKey(), JSON.stringify(d)); } catch (e) { /* ไม่เป็นไร */ }
+        }, 400);
+    }
+    function applyDraft(d) {
+        setMood(d.mood || '');
+        FIELD_IDS.forEach((id) => { if (d[id] !== undefined) byId(id).value = d[id]; });
+        CHECK_IDS.forEach((id) => { if (d[id] !== undefined) byId(id).checked = !!d[id]; });
+        NotebookWidgets.refresh(byId('parentFields'));
+        byId('draftNote').style.display = 'block';
+    }
+
+    async function copyYesterday() {
+        const d = new Date(byId('pDate').value + 'T00:00:00');
+        d.setDate(d.getDate() - 1);
+        const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        try {
+            const r = (await api('report', { student_id: STUDENT_ID, date: ds })).data.report;
+            if (!r || !r.parent_updated_at) {
+                toast('info', 'เมื่อวานยังไม่มีข้อมูลฝั่งผู้ปกครอง');
+                return;
+            }
+            byId('hMorningMilk').value = r.home_morning_milk_ml ?? '';
+            byId('hEveningMilk').value = r.home_evening_milk_ml ?? '';
+            byId('hSleep').value = r.home_sleep_hours ?? '';
+            byId('hBedtime').value = hhmm(r.home_bedtime);
+            byId('hWake').value = hhmm(r.home_wake_time);
+            byId('hStopDiaper').checked = isTrue(r.home_stopped_diaper);
+            byId('hStopBottle').checked = isTrue(r.home_stopped_bottle);
+            NotebookWidgets.refresh(byId('parentFields'));
+            scheduleDraft();
+            toast('success', 'คัดลอกข้อมูลของเมื่อวานแล้ว ตรวจสอบแล้วกดบันทึก');
+        } catch (e) { showError(e); }
+    }
+
+    window.addEventListener('beforeunload', (e) => {
+        if (dirty) { e.preventDefault(); e.returnValue = ''; }
+    });
+
     function applyEditState() {
         const date = byId('pDate').value;
         canEdit = date === todayStr();
         byId('parentFields').disabled = !canEdit;
         byId('btnSave').style.display = canEdit ? '' : 'none';
+        byId('copyRow').style.display = canEdit ? '' : 'none';
         byId('lockNote').style.display = canEdit ? 'none' : '';
         byId('dateTitle').textContent = thaiDate(date) + (canEdit ? ' (วันนี้)' : '');
     }
@@ -401,6 +481,13 @@ $studentid = $_SESSION['username'] ?? '';
             menu = data.menu || {};
             renderTeacher(data.report);
             fillParent(data.report, data.attendance);
+            NotebookWidgets.refresh(byId('parentFields'));
+            dirty = false;
+            byId('draftNote').style.display = 'none';
+            if (canEdit) {
+                const draft = readDraft();
+                if (draft) applyDraft(draft);
+            }
         } catch (e) {
             byId('teacherBody').innerHTML = `<div class="empty-teacher"><span class="emoji">⚠️</span>${esc(e.message)}</div>`;
         }
@@ -437,6 +524,7 @@ $studentid = $_SESSION['username'] ?? '';
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังบันทึก...';
         try {
             await api('save_report', {}, { student_id: STUDENT_ID, date: byId('pDate').value, side: 'parent', ...collectParent() });
+            clearDraft();
             toast('success', 'บันทึกสมุดเรียบร้อยแล้ว');
             await loadReport();
         } catch (e) {
@@ -449,12 +537,20 @@ $studentid = $_SESSION['username'] ?? '';
 
     document.addEventListener('DOMContentLoaded', () => {
         buildMoodButtons();
+        NotebookWidgets.enhance(byId('parentFields'));
         byId('pDate').value = todayStr();
         byId('pDate').addEventListener('change', loadReport);
         byId('datePrev').addEventListener('click', () => shiftDate(-1));
         byId('dateNext').addEventListener('click', () => shiftDate(1));
         byId('dateToday').addEventListener('click', () => { byId('pDate').value = todayStr(); loadReport(); });
+        byId('btnPrint').addEventListener('click', () => {
+            window.open(`../daily_notebook_print.php?date=${encodeURIComponent(byId('pDate').value)}`, '_blank');
+        });
         byId('btnSave').addEventListener('click', saveParent);
+        byId('btnCopyYesterday').addEventListener('click', copyYesterday);
+        byId('draftClear').addEventListener('click', (e) => { e.preventDefault(); clearDraft(); loadReport(); });
+        byId('parentFields').addEventListener('input', scheduleDraft);
+        byId('parentFields').addEventListener('click', (e) => { if (e.target.closest('.mood-btn')) scheduleDraft(); });
         byId('histBody').addEventListener('click', (e) => {
             const b = e.target.closest('button[data-date]');
             if (b) { byId('pDate').value = b.dataset.date; loadReport(); window.scrollTo({ top: 0, behavior: 'smooth' }); }

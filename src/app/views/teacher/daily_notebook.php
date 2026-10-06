@@ -51,6 +51,12 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
     .sum-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
     .sum-pill { background: #eff3ff; color: #1e4db7; border: 1px solid #c7d7f8; border-radius: 20px; padding: 3px 14px; font-weight: 700; font-size: .85rem; }
 
+    .mode-row { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
+    .mode-btn {
+        border: 2px solid #e2e8f0; background: #fff; color: #475569; border-radius: 20px;
+        padding: .3rem 1rem; font-weight: 700; font-size: .85rem;
+    }
+    .mode-btn.active { border-color: #1e4db7; background: linear-gradient(135deg, #0f2460, #1e4db7); color: #fff; }
     .nb-scroll { max-height: 600px; overflow: auto; -webkit-overflow-scrolling: touch; }
     .nb-table { margin: 0; min-width: 760px; white-space: nowrap; border-collapse: separate; border-spacing: 0; }
     .nb-table thead th {
@@ -217,6 +223,11 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
 
         <div id="menuStrip"></div>
         <div id="sumRow" class="sum-row"></div>
+        <div class="mode-row" id="modeRow">
+            <button type="button" class="mode-btn active" data-mode="all">ทั้งหมด</button>
+            <button type="button" class="mode-btn" data-mode="teacher_todo">ครูยังไม่กรอก</button>
+            <button type="button" class="mode-btn" data-mode="parent_todo">ผู้ปกครองยังไม่กรอก</button>
+        </div>
 
         <div class="nb-card p-0 overflow-hidden">
             <div id="listArea"><div class="state-box"><span class="emoji">📒</span>เลือกกลุ่มหรือห้องเรียนเพื่อดูรายชื่อเด็ก</div></div>
@@ -265,8 +276,8 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
                             <div class="nb-sec">
                                 <div class="nb-sec-title">🥛 นม</div>
                                 <div class="row g-3">
-                                    <div class="col-6"><label class="nb-label" for="cMorningMilk">ช่วงเช้า</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="cMorningMilk" min="0" inputmode="numeric"></div></div>
-                                    <div class="col-6"><label class="nb-label" for="cAfternoonMilk">ช่วงบ่าย</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="cAfternoonMilk" min="0" inputmode="numeric"></div></div>
+                                    <div class="col-6"><label class="nb-label" for="cMorningMilk">ช่วงเช้า</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="cMorningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                                    <div class="col-6"><label class="nb-label" for="cAfternoonMilk">ช่วงบ่าย</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="cAfternoonMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
                                 </div>
                             </div>
 
@@ -275,26 +286,26 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
                                 <div class="mb-3">
                                     <label class="nb-label" for="cMorningSnack">อาหารว่างเช้า</label>
                                     <div class="meal-hint" id="hintMorning"></div>
-                                    <input type="text" class="form-control nb-input" id="cMorningSnack" maxlength="200" placeholder="เช่น หมด / ครึ่งหนึ่ง / 3 ช้อน">
+                                    <input type="text" class="form-control nb-input" id="cMorningSnack" data-quick="หมด|ครึ่งหนึ่ง|น้อย|ไม่ทาน" maxlength="200" placeholder="เช่น หมด / ครึ่งหนึ่ง / 3 ช้อน">
                                 </div>
                                 <div class="mb-3">
                                     <label class="nb-label" for="cLunch">อาหารกลางวัน</label>
                                     <div class="meal-hint" id="hintLunch"></div>
-                                    <input type="text" class="form-control nb-input" id="cLunch" maxlength="200" placeholder="เช่น หมด / ครึ่งหนึ่ง / 3 ช้อน">
+                                    <input type="text" class="form-control nb-input" id="cLunch" data-quick="หมด|ครึ่งหนึ่ง|น้อย|ไม่ทาน" maxlength="200" placeholder="เช่น หมด / ครึ่งหนึ่ง / 3 ช้อน">
                                 </div>
                                 <div>
                                     <label class="nb-label" for="cAfternoonSnack">อาหารว่างบ่าย</label>
                                     <div class="meal-hint" id="hintAfternoon"></div>
-                                    <input type="text" class="form-control nb-input" id="cAfternoonSnack" maxlength="200" placeholder="เช่น หมด / ครึ่งหนึ่ง / 3 ช้อน">
+                                    <input type="text" class="form-control nb-input" id="cAfternoonSnack" data-quick="หมด|ครึ่งหนึ่ง|น้อย|ไม่ทาน" maxlength="200" placeholder="เช่น หมด / ครึ่งหนึ่ง / 3 ช้อน">
                                 </div>
                             </div>
 
                             <div class="nb-sec">
                                 <div class="nb-sec-title">😴 นอนและการขับถ่าย</div>
                                 <div class="row g-3">
-                                    <div class="col-12 col-sm-4"><label class="nb-label" for="cNap">นอนกลางวัน</label><div class="unit" data-unit="ชม."><input type="number" class="form-control nb-input" id="cNap" min="0" max="24" step="0.5" inputmode="decimal"></div></div>
-                                    <div class="col-6 col-sm-4"><label class="nb-label" for="cUrine">ปัสสาวะ</label><div class="unit" data-unit="ครั้ง"><input type="number" class="form-control nb-input" id="cUrine" min="0" inputmode="numeric"></div></div>
-                                    <div class="col-6 col-sm-4"><label class="nb-label" for="cStool">อุจจาระ</label><div class="unit" data-unit="ครั้ง"><input type="number" class="form-control nb-input" id="cStool" min="0" inputmode="numeric"></div></div>
+                                    <div class="col-12 col-sm-4"><label class="nb-label" for="cNap">นอนกลางวัน</label><div class="unit" data-unit="ชม."><input type="number" class="form-control nb-input" id="cNap" data-stepper="step=0.5;min=0;max=6;presets=1|1.5|2|2.5|3" min="0" max="24" step="0.5" inputmode="decimal"></div></div>
+                                    <div class="col-6 col-sm-4"><label class="nb-label" for="cUrine">ปัสสาวะ</label><div class="unit" data-unit="ครั้ง"><input type="number" class="form-control nb-input" id="cUrine" data-stepper="step=1;min=0;max=30" min="0" inputmode="numeric"></div></div>
+                                    <div class="col-6 col-sm-4"><label class="nb-label" for="cStool">อุจจาระ</label><div class="unit" data-unit="ครั้ง"><input type="number" class="form-control nb-input" id="cStool" data-stepper="step=1;min=0;max=30" min="0" inputmode="numeric"></div></div>
                                 </div>
                                 <div class="d-flex flex-wrap gap-2 mt-3">
                                     <label class="check-pill"><input type="checkbox" id="cStopDiaper"><span>เลิกใส่แพมเพิร์ส</span></label>
@@ -331,17 +342,17 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
                             <div class="nb-sec">
                                 <div class="nb-sec-title">🌅 ช่วงเช้าก่อนมาศูนย์</div>
                                 <div class="row g-3">
-                                    <div class="col-12 col-sm-5"><label class="nb-label" for="hMorningMilk">ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="hMorningMilk" min="0" inputmode="numeric"></div></div>
-                                    <div class="col-12 col-sm-7"><label class="nb-label" for="hMorningFood">อาหารเช้า (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control nb-input" id="hMorningFood" maxlength="500"></div>
+                                    <div class="col-12 col-sm-5"><label class="nb-label" for="hMorningMilk">ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="hMorningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                                    <div class="col-12 col-sm-7"><label class="nb-label" for="hMorningFood">อาหารเช้า (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control nb-input" id="hMorningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
                                 </div>
                             </div>
 
                             <div class="nb-sec">
                                 <div class="nb-sec-title">🌙 ช่วงเย็นและกลางคืน</div>
                                 <div class="row g-3">
-                                    <div class="col-12 col-sm-5"><label class="nb-label" for="hEveningMilk">ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="hEveningMilk" min="0" inputmode="numeric"></div></div>
-                                    <div class="col-12 col-sm-7"><label class="nb-label" for="hEveningFood">อาหารเย็น (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control nb-input" id="hEveningFood" maxlength="500"></div>
-                                    <div class="col-12 col-sm-4"><label class="nb-label" for="hSleep">กลางคืนนอนหลับ</label><div class="unit" data-unit="ชม."><input type="number" class="form-control nb-input" id="hSleep" min="0" max="24" step="0.5" inputmode="decimal"></div></div>
+                                    <div class="col-12 col-sm-5"><label class="nb-label" for="hEveningMilk">ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="hEveningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                                    <div class="col-12 col-sm-7"><label class="nb-label" for="hEveningFood">อาหารเย็น (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control nb-input" id="hEveningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
+                                    <div class="col-12 col-sm-4"><label class="nb-label" for="hSleep">กลางคืนนอนหลับ</label><div class="unit" data-unit="ชม."><input type="number" class="form-control nb-input" id="hSleep" data-stepper="step=0.5;min=0;max=16;presets=8|9|10|11|12" min="0" max="24" step="0.5" inputmode="decimal"></div></div>
                                     <div class="col-6 col-sm-4"><label class="nb-label" for="hBedtime">เข้านอนเวลา</label><input type="time" class="form-control nb-input" id="hBedtime"></div>
                                     <div class="col-6 col-sm-4"><label class="nb-label" for="hWake">ตื่นนอนเวลา</label><input type="time" class="form-control nb-input" id="hWake"></div>
                                 </div>
@@ -361,6 +372,7 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-soft" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i>ปิด</button>
+                    <button type="button" class="btn btn-soft" id="btnPrintOne"><i class="bi bi-printer me-1"></i>พิมพ์</button>
                     <button type="button" class="btn btn-save-note" id="btnSave"><i class="bi bi-check-circle me-1"></i>บันทึก</button>
                     <button type="button" class="btn btn-save-note" id="btnSaveNext"><i class="bi bi-arrow-right-circle me-1"></i>บันทึกและคนถัดไป</button>
                 </div>
@@ -369,6 +381,7 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
     </div>
 </main>
 
+<?php include __DIR__ . '/../partials/notebook_widgets.php'; ?>
 <script>
     const API = '../../include/function/daily_notebook_api.php';
     const MOODS = [
@@ -471,10 +484,15 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
         }
     }
 
+    let filterMode = 'all';
+
     function filteredRoster() {
         const q = byId('fSearch').value.trim().toLowerCase();
-        if (!q) return roster;
-        return roster.filter((c) => (`${c.nickname || ''} ${fullName(c)} ${c.studentid}`).toLowerCase().includes(q));
+        return roster.filter((c) => {
+            if (filterMode === 'teacher_todo' && c.teacher_filled) return false;
+            if (filterMode === 'parent_todo' && c.parent_filled) return false;
+            return !q || (`${c.nickname || ''} ${fullName(c)} ${c.studentid}`).toLowerCase().includes(q);
+        });
     }
 
     function renderMenuStrip() {
@@ -497,10 +515,14 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
         byId('sumRow').innerHTML = `
             <span class="sum-pill">เด็กทั้งหมด ${total} คน</span>
             <span class="sum-pill">ผู้ปกครองกรอกแล้ว ${p}/${total}</span>
-            <span class="sum-pill">ครูกรอกแล้ว ${t}/${total}</span>`;
+            <span class="sum-pill">ครูกรอกแล้ว ${t}/${total}</span>
+            ${byId('fRoom').value ? `<a class="btn btn-outline-primary btn-sm ms-auto" target="_blank"
+                href="../daily_notebook_print.php?classroom=${encodeURIComponent(byId('fRoom').value)}&date=${encodeURIComponent(byId('fDate').value)}"><i class="bi bi-printer me-1"></i>พิมพ์ทั้งห้อง</a>` : ''}`;
 
         if (list.length === 0) {
-            byId('listArea').innerHTML = '<div class="state-box"><span class="emoji">📭</span>ไม่พบรายชื่อเด็ก</div>';
+            byId('listArea').innerHTML = filterMode === 'all'
+                ? '<div class="state-box"><span class="emoji">📭</span>ไม่พบรายชื่อเด็ก</div>'
+                : '<div class="state-box"><span class="emoji">🎉</span>กรอกครบทุกคนแล้ว</div>';
             return;
         }
         const chip = (yes, label) => `<span class="fill-chip ${yes ? 'yes' : 'no'}">${yes ? '✓' : '–'} ${label}</span>`;
@@ -521,7 +543,11 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
                     <td>${att ? `<span class="badge ${att[1]}">${att[0]}</span>` : '<span class="badge bg-secondary">ยังไม่บันทึก</span>'}</td>
                     <td>${mood(c.parent_mood)}${chip(c.parent_filled, c.parent_filled ? 'กรอกแล้ว' : 'ยังไม่กรอก')}</td>
                     <td>${mood(c.teacher_mood)}${chip(c.teacher_filled, c.teacher_filled ? 'กรอกแล้ว' : 'ยังไม่กรอก')}</td>
-                    <td><button type="button" class="btn btn-primary btn-sm" data-open="${esc(c.studentid)}"><i class="bi bi-journal-text me-1"></i>เปิดสมุด</button></td>
+                    <td>
+                        <button type="button" class="btn btn-primary btn-sm" data-open="${esc(c.studentid)}"><i class="bi bi-journal-text me-1"></i>เปิดสมุด</button>
+                        <a class="btn btn-outline-secondary btn-sm" target="_blank" title="พิมพ์สมุดของเด็กคนนี้"
+                           href="../daily_notebook_print.php?student_id=${encodeURIComponent(c.studentid)}&date=${encodeURIComponent(byId('fDate').value)}"><i class="bi bi-printer"></i></a>
+                    </td>
                 </tr>`;
             }).join('')}</tbody></table></div>`;
     }
@@ -595,6 +621,7 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
 
         byId('dotTeacher').style.display = r.teacher_updated_at ? 'inline-block' : 'none';
         byId('dotParent').style.display = r.parent_updated_at ? 'inline-block' : 'none';
+        NotebookWidgets.refresh(byId('noteModal'));
     }
 
     async function openChild(sid, tab = 'teacher') {
@@ -688,12 +715,20 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
     document.addEventListener('DOMContentLoaded', async () => {
         noteModal = new bootstrap.Modal(byId('noteModal'), { backdrop: 'static' });
         buildMoodButtons();
+        NotebookWidgets.enhance(byId('noteModal'));
 
         byId('fDate').value = todayStr();
         byId('fGroup').addEventListener('change', async () => { await loadClassrooms(); loadRoster(); });
         byId('fRoom').addEventListener('change', loadRoster);
         byId('fDate').addEventListener('change', loadRoster);
         byId('fSearch').addEventListener('input', () => { if (roster.length) renderRoster(); });
+        byId('modeRow').addEventListener('click', (e) => {
+            const b = e.target.closest('.mode-btn');
+            if (!b) return;
+            filterMode = b.dataset.mode;
+            document.querySelectorAll('#modeRow .mode-btn').forEach((x) => x.classList.toggle('active', x === b));
+            if (roster.length) renderRoster();
+        });
         byId('datePrev').addEventListener('click', () => shiftDate(-1));
         byId('dateNext').addEventListener('click', () => shiftDate(1));
         byId('dateToday').addEventListener('click', () => { byId('fDate').value = todayStr(); loadRoster(); });
@@ -701,6 +736,10 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
         byId('listArea').addEventListener('click', (e) => {
             const b = e.target.closest('button[data-open]');
             if (b) openChild(b.dataset.open);
+        });
+        byId('btnPrintOne').addEventListener('click', () => {
+            if (!current) return;
+            window.open(`../daily_notebook_print.php?student_id=${encodeURIComponent(current.sid)}&date=${encodeURIComponent(byId('fDate').value)}`, '_blank');
         });
         byId('btnSave').addEventListener('click', () => saveCurrent(false));
         byId('btnSaveNext').addEventListener('click', () => saveCurrent(true));
