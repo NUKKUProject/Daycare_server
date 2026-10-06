@@ -76,6 +76,10 @@ if (getUserRole() === 'student') {
 ?>
 <link rel="stylesheet" href="../../../public/assets/css/view_child1.css?v=<?= @filemtime(__DIR__ . '/../../../public/assets/css/view_child1.css') ?: time() ?>">
 <style>
+/* รูปประกอบการฉีดวัคซีน */
+.vaccine-thumb { width:34px; height:34px; object-fit:cover; border-radius:8px; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.25); cursor:zoom-in; margin-left:8px; vertical-align:middle; }
+.vaccine-image-box { text-align:center; }
+.vaccine-image-box img { max-width:100%; max-height:320px; border-radius:12px; border:1px solid #e2e8f0; cursor:zoom-in; }
 .status-badge.status-late { background:#fef3c7;color:#d97706; }
 .status-badge.status-leave { background:#fef3c7;color:#d97706; }
 
@@ -1525,6 +1529,27 @@ if (getUserRole() === 'student') {
                     </div>
                   </div>
                 </div>
+
+                <div class="col-12">
+                  <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                      <h6 class="mb-0"><i class="bi bi-image me-2"></i>รูปประกอบการฉีดวัคซีน</h6>
+                    </div>
+                    <div class="card-body">
+                      <input type="hidden" name="remove_image" id="vaccineRemoveImage" value="">
+                      <div id="vaccineImagePreviewWrap" class="vaccine-image-box mb-3" style="display:none;">
+                        <img id="vaccineImagePreview" alt="รูปประกอบการฉีดวัคซีน">
+                        <div>
+                          <button type="button" class="btn btn-outline-danger btn-sm mt-2" id="vaccineImageRemoveBtn">
+                            <i class="bi bi-trash me-1"></i>ลบรูป
+                          </button>
+                        </div>
+                      </div>
+                      <input type="file" class="form-control" id="vaccineImageInput" accept="image/jpeg,image/png,image/webp">
+                      <div class="form-text">ถ่ายรูปสมุดวัคซีนหรือใบรับรอง (JPG, PNG, WebP) ระบบจะย่อขนาดรูปให้อัตโนมัติก่อนอัปโหลด</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </form>
           </div>
@@ -1617,6 +1642,18 @@ if (getUserRole() === 'student') {
                         <div style="font-size:0.95rem;" id="detailNote">-</div>
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="card shadow-sm">
+                  <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-image me-2"></i>รูปประกอบ</h6>
+                  </div>
+                  <div class="card-body vaccine-image-box">
+                    <img id="detailVaccineImage" alt="รูปประกอบการฉีดวัคซีน" style="display:none;">
+                    <div id="detailVaccineNoImage" style="font-size:0.9rem;color:var(--gray-500);">ไม่มีรูปประกอบ</div>
                   </div>
                 </div>
               </div>
@@ -3436,6 +3473,9 @@ if (getUserRole() === 'student') {
           const date = new Date(vaccine.vaccine_date);
           const formattedDate = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear() + 543}`;
           html += `<span class="vaccine-status-done"><i class="bi bi-check-circle-fill"></i> ${formattedDate}</span>`;
+          if (vaccine.image_path) {
+            html += `<img class="vaccine-thumb" src="${escapeAttr(vaccine.image_path)}" alt="รูปประกอบ" title="ดูรูปประกอบ" onclick="openVaccineImage(this.src)" onerror="this.style.display='none'">`;
+          }
         } else {
           html += `<span class="vaccine-status-pending"><i class="bi bi-clock"></i> ยังไม่ได้รับ</span>`;
         }
@@ -3484,6 +3524,103 @@ if (getUserRole() === 'student') {
     <?php endif; ?>
   }
 
+  /* ── รูปประกอบการฉีดวัคซีน ── */
+  let vaccineImageBlob = null;   // รูปที่เลือกใหม่ (ย่อขนาดแล้ว)
+  let vaccineImagePreviewUrl = null;
+
+  function escapeAttr(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // ย่อรูปก่อนอัปโหลด (ด้านยาวสุด 1600px, JPEG) กันรูปจากมือถือใหญ่เกินที่เซิร์ฟเวอร์รับ
+  function compressImage(file, maxSize = 1600, quality = 0.82) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('ย่อรูปไม่สำเร็จ')), 'image/jpeg', quality);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('ไม่สามารถอ่านไฟล์รูปนี้ได้')); };
+      img.src = url;
+    });
+  }
+
+  function setVaccineImagePreview(src) {
+    const wrap = document.getElementById('vaccineImagePreviewWrap');
+    const img = document.getElementById('vaccineImagePreview');
+    if (src) {
+      img.src = src;
+      wrap.style.display = '';
+    } else {
+      img.removeAttribute('src');
+      wrap.style.display = 'none';
+    }
+  }
+
+  function resetVaccineImageUI(existingPath) {
+    vaccineImageBlob = null;
+    if (vaccineImagePreviewUrl) { URL.revokeObjectURL(vaccineImagePreviewUrl); vaccineImagePreviewUrl = null; }
+    document.getElementById('vaccineImageInput').value = '';
+    document.getElementById('vaccineRemoveImage').value = '';
+    setVaccineImagePreview(existingPath || '');
+    // จำไว้ว่ารูปที่แสดงอยู่เป็นรูปเดิมที่เคยบันทึก (ใช้ตอนกดลบรูป)
+    document.getElementById('vaccineImagePreview').dataset.existing = existingPath ? '1' : '';
+  }
+
+  window.openVaccineImage = function(src) {
+    if (!src) return;
+    Swal.fire({
+      imageUrl: src,
+      imageAlt: 'รูปประกอบการฉีดวัคซีน',
+      width: 'min(92vw, 760px)',
+      showConfirmButton: false,
+      showCloseButton: true
+    });
+  };
+
+  // ฟอร์มวัคซีนมีเฉพาะผู้ใช้ที่มีสิทธิ์บันทึก (admin/ครู/ผู้ปกครอง)
+  const vaccineImageInputEl = document.getElementById('vaccineImageInput');
+  const vaccineImageRemoveBtnEl = document.getElementById('vaccineImageRemoveBtn');
+
+  if (vaccineImageInputEl) vaccineImageInputEl.addEventListener('change', async function() {
+    const file = this.files && this.files[0];
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      showToast('error', 'รองรับเฉพาะไฟล์รูป JPG, PNG หรือ WebP');
+      this.value = '';
+      return;
+    }
+    try {
+      vaccineImageBlob = await compressImage(file);
+      if (vaccineImagePreviewUrl) URL.revokeObjectURL(vaccineImagePreviewUrl);
+      vaccineImagePreviewUrl = URL.createObjectURL(vaccineImageBlob);
+      document.getElementById('vaccineRemoveImage').value = '';
+      setVaccineImagePreview(vaccineImagePreviewUrl);
+    } catch (error) {
+      showToast('error', error.message || 'ไม่สามารถใช้รูปนี้ได้');
+      this.value = '';
+    }
+  });
+
+  if (vaccineImageRemoveBtnEl) vaccineImageRemoveBtnEl.addEventListener('click', function() {
+    const hadExisting = !!document.getElementById('vaccineImagePreview').dataset.existing;
+    vaccineImageBlob = null;
+    if (vaccineImagePreviewUrl) { URL.revokeObjectURL(vaccineImagePreviewUrl); vaccineImagePreviewUrl = null; }
+    document.getElementById('vaccineImageInput').value = '';
+    // ถ้าเป็นรูปเดิมที่บันทึกไว้แล้ว ให้ส่งคำสั่งลบไปตอนกดบันทึก
+    document.getElementById('vaccineRemoveImage').value = hadExisting ? '1' : '';
+    setVaccineImagePreview('');
+  });
+
   /* ── Vaccine Functions ── */
   window.addVaccineRecord = function(vaccineListId) {
     // ตรวจสอบว่ามี vaccineListId หรือไม่
@@ -3495,6 +3632,7 @@ if (getUserRole() === 'student') {
     document.getElementById('vaccineForm').reset();
     document.getElementById('vaccineListId').value = vaccineListId;
     document.getElementById('vaccineId').value = ''; // เคลียร์ค่าสำหรับการเพิ่มใหม่
+    resetVaccineImageUI('');
     document.getElementById('vaccineDate').value = new Date().toISOString().split('T')[0];
 
     // ดึงข้อมูลรายการวัคซีน
@@ -3534,6 +3672,7 @@ if (getUserRole() === 'student') {
           document.getElementById('lotNumber').value = data.lot_number || '';
           document.getElementById('nextAppointment').value = data.next_appointment || '';
           document.getElementById('vaccineNote').value = data.vaccine_note || '';
+          resetVaccineImageUI(data.image_path || '');
           new bootstrap.Modal(document.getElementById('vaccineModal')).show();
         } else {
           showToast('error', 'ไม่สามารถโหลดข้อมูลได้');
@@ -3559,6 +3698,21 @@ if (getUserRole() === 'student') {
           document.getElementById('detailLotNumber').textContent = d.lot_number || '-';
           document.getElementById('detailNextAppointment').textContent = formatThaiDate(d.next_appointment);
           document.getElementById('detailNote').textContent = d.vaccine_note || '-';
+
+          const detailImg = document.getElementById('detailVaccineImage');
+          const detailNoImg = document.getElementById('detailVaccineNoImage');
+          if (d.image_path) {
+            detailImg.src = d.image_path;
+            detailImg.style.display = '';
+            detailImg.onclick = () => openVaccineImage(detailImg.src);
+            detailImg.onerror = () => { detailImg.style.display = 'none'; detailNoImg.style.display = ''; detailNoImg.textContent = 'ไม่พบไฟล์รูป'; };
+            detailNoImg.style.display = 'none';
+          } else {
+            detailImg.removeAttribute('src');
+            detailImg.style.display = 'none';
+            detailNoImg.style.display = '';
+            detailNoImg.textContent = 'ไม่มีรูปประกอบ';
+          }
 
           <?php if ($is_admin || $is_teacher || $is_student): ?>
           const editBtn = document.getElementById('detailEditBtn');
@@ -3594,24 +3748,37 @@ if (getUserRole() === 'student') {
       return;
     }
 
+    if (window.vaccineSaving) return;
+
+    // ส่งเป็น multipart เพื่อแนบรูปได้ (ฟิลด์อื่นเหมือนเดิม)
     const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-    
+
     // ตรวจสอบและแปลงชื่อฟิลด์ให้ตรงกับ API
-    if (data.student_id && !data.studentid) {
-      data.studentid = data.student_id;
+    if (formData.get('student_id') && !formData.get('studentid')) {
+      formData.append('studentid', formData.get('student_id'));
     }
-    
+
     // เพิ่มการส่งค่า id สำหรับการแก้ไขข้อมูล
     const vaccineId = document.getElementById('vaccineId').value;
     if (vaccineId && vaccineId.trim() !== '') {
-      data.id = vaccineId;
+      formData.append('id', vaccineId);
+    }
+
+    if (vaccineImageBlob) {
+      formData.append('vaccine_image', vaccineImageBlob, 'vaccine.jpg');
+    }
+
+    window.vaccineSaving = true;
+    const saveBtn = document.querySelector('#vaccineModal .modal-footer .btn-primary');
+    const saveBtnHtml = saveBtn ? saveBtn.innerHTML : '';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังบันทึก...';
     }
 
     fetch('../../include/process/save_vaccine.php', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: formData
     })
     .then(r => r.json())
     .then(result => {
@@ -3625,6 +3792,13 @@ if (getUserRole() === 'student') {
     })
     .catch(error => {
       showToast('error', 'เกิดข้อผิดพลาด');
+    })
+    .finally(() => {
+      window.vaccineSaving = false;
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = saveBtnHtml;
+      }
     });
   };
 
