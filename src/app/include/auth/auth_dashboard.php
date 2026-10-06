@@ -177,7 +177,15 @@ function isCurrentPage($path)
                             <a class="nav-link <?php echo isCurrentPage('attendance.php') ? 'active' : ''; ?>"
                                 href="/app/views/teacher/attendance.php">
                                 <i class="bi bi-qr-code-scan" style="font-size: 23px;"></i>
-                                แสกนเช็คชื่อ
+                                แสกนเช็คชื่อ<br>มาเรียน
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo isCurrentPage('scan_checkout.php') ? 'active' : ''; ?>"
+                                href="/app/views/teacher/scan_checkout.php">
+                                <i class="bi bi-qr-code-scan" style="font-size: 23px;"></i>
+                                แสกนเช็คชื่อ<br>กลับบ้าน
                             </a>
                         </li>
 
@@ -203,10 +211,16 @@ function isCurrentPage($path)
                                 บันทึกประวัติการตรวจร่างกาย
                             </a>
                         </li>
-                        <li class="nav-item <?php echo isCurrentPage('checklist_history.php') ? 'active' : ''; ?>">
+                        <li class="nav-item <?php echo isCurrentPage('check_health_external') ? 'active' : ''; ?>">
                             <a class="nav-link" href="/app/views/check_health_external/checklist_name.php">
                                 <i class="fa-solid fa-user-doctor" style="font-size: 23px;"></i>
                                 บันทึกประวัติการตรวจสุขภาพ
+                            </a>
+                        </li>
+                        <li class="nav-item <?php echo isCurrentPage('check_health_tooth') ? 'active' : ''; ?>">
+                            <a class="nav-link" href="/app/views/check_health_tooth/checklist_name.php">
+                                <i class="fa-solid fa-tooth" style="font-size: 23px;"></i>
+                                บันทึกการตรวจสุขภาพช่องปาก
                             </a>
                         </li>
                         <li class="nav-item">
