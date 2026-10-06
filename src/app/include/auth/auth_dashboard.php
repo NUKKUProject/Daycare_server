@@ -135,6 +135,22 @@ function isCurrentPage($path)
                             </a>
                         </li>
 
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo isCurrentPage('daily_notebook.php') ? 'active' : ''; ?>"
+                                href="/app/views/teacher/daily_notebook.php">
+                                <i class="bi bi-journal-text" style="font-size: 23px;"></i>
+                                สมุดสื่อสารประจำวัน
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo isCurrentPage('daily_menu.php') ? 'active' : ''; ?>"
+                                href="/app/views/teacher/daily_menu.php">
+                                <i class="cil-restaurant" style="font-size: 23px;"></i>
+                                เมนูอาหารรายวัน
+                            </a>
+                        </li>
+
                         <li class="nav-item <?php echo isCurrentPage('profile_management.php') ? 'active' : ''; ?>">
                             <a class="nav-link" href="/app/views/admin/profile_management.php">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -227,6 +243,22 @@ function isCurrentPage($path)
                                 href="/app/views/growth_history.php">
                                 <i class="bi bi-graph-up" style="font-size: 23px;"></i>
                                 บันทึกกราฟการเจริญเติบโตของเด็ก
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo isCurrentPage('daily_notebook.php') ? 'active' : ''; ?>"
+                                href="/app/views/teacher/daily_notebook.php">
+                                <i class="bi bi-journal-text" style="font-size: 23px;"></i>
+                                สมุดสื่อสารประจำวัน
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo isCurrentPage('daily_menu.php') ? 'active' : ''; ?>"
+                                href="/app/views/teacher/daily_menu.php">
+                                <i class="cil-restaurant" style="font-size: 23px;"></i>
+                                เมนูอาหารรายวัน
                             </a>
                         </li>
                     <?php endif; ?>
