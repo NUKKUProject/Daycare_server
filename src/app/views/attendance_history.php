@@ -80,12 +80,34 @@ if (isset($_SESSION['user_id'])) {
         gap: 0.4rem;
     }
 
+    /* ทุกช่องในแถวตัวกรองสูงเท่ากัน */
+    .filter-card .form-control,
+    .filter-card .form-select,
     .date-nav .btn {
+        height: 42px;
+    }
+
+    .date-nav {
+        align-items: stretch;
+    }
+
+    .date-nav input[type="date"] {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .date-nav .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        flex-shrink: 0;
         border-radius: 10px;
         border: 2px solid #e2e8f0;
         background: #fff;
         color: #475569;
-        padding: 0 0.7rem;
+        padding: 0 0.8rem;
+        font-weight: 600;
     }
 
     .date-nav .btn:hover {
@@ -753,7 +775,7 @@ if (isset($_SESSION['user_id'])) {
         <!-- ฟอร์มค้นหา -->
         <div class="filter-card">
             <form id="searchForm" method="GET" class="row g-3 align-items-end" onsubmit="return false;">
-                <div class="col-6 col-lg-3 <?= $is_student ? 'd-none' : '' ?>">
+                <div class="col-6 col-lg-2 <?= $is_student ? 'd-none' : '' ?>">
                     <label for="child_group" class="form-label">กลุ่มเรียน</label>
                     <select name="child_group" id="child_group" class="form-select">
                         <option value="">ทั้งหมด</option>
@@ -769,14 +791,14 @@ if (isset($_SESSION['user_id'])) {
                     </select>
                 </div>
 
-                <div class="col-6 col-lg-3 <?= $is_student ? 'd-none' : '' ?>">
+                <div class="col-6 col-lg-2 <?= $is_student ? 'd-none' : '' ?>">
                     <label for="classroom" class="form-label">ห้องเรียน</label>
                     <select name="classroom" id="classroom" class="form-select">
                         <option value="">ทั้งหมด</option>
                     </select>
                 </div>
 
-                <div class="col-12 col-md-6 col-lg-3">
+                <div class="col-12 col-md-6 col-lg-4">
                     <label for="date" class="form-label">วันที่</label>
                     <div class="date-nav">
                         <button type="button" class="btn" id="datePrev" title="วันก่อนหน้า"><i class="fas fa-chevron-left"></i></button>
@@ -786,7 +808,7 @@ if (isset($_SESSION['user_id'])) {
                     </div>
                 </div>
 
-                <div class="col-12 col-md-6 col-lg-3 <?= $is_student ? 'd-none' : '' ?>">
+                <div class="col-12 col-md-6 col-lg-4 <?= $is_student ? 'd-none' : '' ?>">
                     <label for="search" class="form-label">ค้นหา</label>
                     <div class="search-wrap">
                         <i class="fas fa-search"></i>
