@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__ . '/../../../config/database.php');
+require_once(__DIR__ . '/../function/health_data.php');
 
 try {
     $pdo = getDatabaseConnection();
@@ -94,10 +95,15 @@ try {
         throw new Exception('มีข้อมูลการเข้าเรียนของนักเรียนในวันที่เลือกแล้ว กรุณาใช้การแก้ไขแทน');
     }
 
+    // ข้อมูลสุขภาพ: เก็บเฉพาะกรณีมาเรียน/มาสาย
+    $health = parse_health_payload($data, !in_array($data['status'], ['present', 'late'], true));
+
     // SQL query
     $sql = "INSERT INTO attendance (
-            student_id, status, check_date, check_out_time, 
-            leave_note, status_checkout, is_recorded, created_at, updated_at
+            student_id, status, check_date, check_out_time,
+            leave_note, status_checkout, is_recorded, created_at, updated_at,
+            temperature, has_runny_nose, has_cough, has_rash, has_red_eyes,
+            other_symptoms, symptoms, care_actions, care_other, caretaker_name
         ) VALUES (
             :student_id,
             :status::varchar,
@@ -126,7 +132,17 @@ try {
             END,
             TRUE,
             CURRENT_TIMESTAMP,
-            CURRENT_TIMESTAMP
+            CURRENT_TIMESTAMP,
+            :temperature,
+            :has_runny_nose::boolean,
+            :has_cough::boolean,
+            :has_rash::boolean,
+            :has_red_eyes::boolean,
+            :other_symptoms,
+            :symptoms::jsonb,
+            :care_actions::jsonb,
+            :care_other,
+            :caretaker_name
         ) RETURNING id, check_date, status";
 
     // กำหนดค่าพารามิเตอร์
@@ -136,7 +152,17 @@ try {
         ':full_timestamp' => $full_timestamp,
         ':check_out_time' => $check_out_time,
         ':leave_note' => $leave_note,
-        ':attendance_date' => $attendance_date
+        ':attendance_date' => $attendance_date,
+        ':temperature' => $health['temperature'],
+        ':has_runny_nose' => $health['has_runny_nose'],
+        ':has_cough' => $health['has_cough'],
+        ':has_rash' => $health['has_rash'],
+        ':has_red_eyes' => $health['has_red_eyes'],
+        ':other_symptoms' => $health['other_symptoms'],
+        ':symptoms' => $health['symptoms_json'],
+        ':care_actions' => $health['care_actions_json'],
+        ':care_other' => $health['care_other'],
+        ':caretaker_name' => $health['caretaker_name']
     ];
 
     // Debug logs

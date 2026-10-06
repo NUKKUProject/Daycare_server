@@ -18,920 +18,1642 @@ if (isset($_SESSION['user_id'])) {
 ?>
 
 <style>
+    /* ===== หน้าประวัติการมาเรียน ===== */
     .attendance-container {
-    padding: 2rem;
-    background: #fff;
-    border-radius: 15px;
-    box-shadow: 0 2px 15px rgba(0,0,0,0.05);
-}
+        padding: 1.5rem;
+        background: #fff;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    }
 
+    .ah-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .ah-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: #0f2460;
+        font-weight: 800;
+    }
+
+    .ah-header .sub {
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+
+    /* ฟอร์มค้นหา */
+    .filter-card {
+        background: #f8faff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .filter-card .form-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 0.3rem;
+    }
+
+    .filter-card .form-control,
+    .filter-card .form-select {
+        border-radius: 10px;
+        border: 2px solid #e2e8f0;
+    }
+
+    .filter-card .form-control:focus,
+    .filter-card .form-select:focus {
+        border-color: #1e4db7;
+        box-shadow: 0 0 0 4px rgba(30, 77, 183, 0.1);
+    }
+
+    .date-nav {
+        display: flex;
+        gap: 0.4rem;
+    }
+
+    .date-nav .btn {
+        border-radius: 10px;
+        border: 2px solid #e2e8f0;
+        background: #fff;
+        color: #475569;
+        padding: 0 0.7rem;
+    }
+
+    .date-nav .btn:hover {
+        border-color: #1e4db7;
+        color: #1e4db7;
+    }
+
+    .search-wrap {
+        position: relative;
+    }
+
+    .search-wrap i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        pointer-events: none;
+    }
+
+    .search-wrap input {
+        padding-left: 2.3rem;
+    }
+
+    /* การ์ดสรุปสถานะ (กดเพื่อกรอง) */
+    .stat-row {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.6rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+        border: 2px solid #e2e8f0;
+        background: #fff;
+        border-radius: 14px;
+        padding: 0.65rem 0.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(15, 36, 96, 0.1);
+    }
+
+    .stat-card .num {
+        display: block;
+        font-size: 1.6rem;
+        font-weight: 800;
+        line-height: 1.1;
+        color: #0f2460;
+    }
+
+    .stat-card .lbl {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #64748b;
+    }
+
+    .stat-card.active {
+        border-color: #1e4db7;
+        background: #eff3ff;
+        box-shadow: 0 4px 14px rgba(30, 77, 183, 0.18);
+    }
+
+    .stat-card[data-status="present"] .num { color: #198754; }
+    .stat-card[data-status="late"] .num { color: #b45309; }
+    .stat-card[data-status="absent"] .num { color: #dc3545; }
+    .stat-card[data-status="leave"] .num { color: #0d6efd; }
+    .stat-card[data-status="none"] .num { color: #6c757d; }
+
+    @media (max-width: 768px) {
+        .stat-row {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    /* การ์ดแต่ละห้อง */
+    .class-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        overflow: hidden;
+        margin-bottom: 1.25rem;
+        background: #fff;
+    }
+
+    .class-card .class-head {
+        background: linear-gradient(135deg, #0f2460 0%, #1e4db7 100%);
+        color: #fff;
+        padding: 0.7rem 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .class-card .class-head h5 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .class-card .class-head .mini {
+        font-size: 0.78rem;
+        opacity: 0.9;
+    }
+
+    .history-scroll {
+        max-height: 520px;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .history-table {
+        margin: 0;
+        min-width: 820px;
+        white-space: nowrap;
+    }
+
+    .history-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #eff3ff;
+        color: #0f2460;
+        font-size: 0.82rem;
+        font-weight: 700;
+        border-bottom: 2px solid #c7d7f8;
+        text-align: center;
+    }
+
+    .history-table td {
+        vertical-align: middle;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+
+    .history-table td.name-col {
+        text-align: left;
+    }
+
+    .history-table tr.st-present td:first-child { box-shadow: inset 4px 0 0 #198754; }
+    .history-table tr.st-late td:first-child { box-shadow: inset 4px 0 0 #f59e0b; }
+    .history-table tr.st-absent td:first-child { box-shadow: inset 4px 0 0 #dc3545; }
+    .history-table tr.st-leave td:first-child { box-shadow: inset 4px 0 0 #0d6efd; }
+    .history-table tr.st-none td:first-child { box-shadow: inset 4px 0 0 #cbd5e1; }
+
+    .nickname-text {
+        display: inline-block;
+        background: #1e4db7;
+        color: #fff;
+        font-weight: 700;
+        padding: 2px 12px;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+
+    .action-btns {
+        display: inline-flex;
+        gap: 0.3rem;
+    }
+
+    .action-btns .btn {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .action-btns .btn.add {
+        width: auto;
+        padding: 0 0.8rem;
+        gap: 0.3rem;
+    }
+
+    .state-box {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        color: #64748b;
+    }
+
+    .state-box .emoji {
+        font-size: 2.4rem;
+        display: block;
+        margin-bottom: 0.4rem;
+    }
+
+    /* ===== Modal แก้ไข (ธีมเดียวกับหน้าเช็คชื่อ) ===== */
+    #attendanceEditModal .modal-content {
+        border: none;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 25px 70px rgba(10, 30, 80, 0.2);
+    }
+
+    #attendanceEditModal .modal-header {
+        background: linear-gradient(135deg, #0f2460 0%, #1a3a8f 60%, #1e4db7 100%);
+        border: none;
+        padding: 1.5rem 2rem;
+    }
+
+    #attendanceEditModal .modal-title {
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.15rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    #attendanceEditModal .title-icon-wrap {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    #attendanceEditModal .header-subtitle {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.75rem;
+        font-weight: 400;
+        margin-top: 2px;
+    }
+
+    #attendanceEditModal .btn-close {
+        filter: brightness(0) invert(1);
+        opacity: 0.6;
+    }
+
+    #attendanceEditModal .modal-body {
+        background: #f0f4f8;
+        padding: 1.75rem;
+    }
+
+    #attendanceEditModal .modal-footer {
+        background: #f0f4f8;
+        border-top: 1px solid #e2e8f0;
+        padding: 1rem 1.75rem;
+        gap: 0.65rem;
+    }
+
+    .ae-student-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.1rem 1.4rem;
+        display: flex;
+        align-items: center;
+        gap: 1.1rem;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 4px 16px rgba(15, 36, 96, 0.1);
+        border-left: 5px solid #1e4db7;
+    }
+
+    .ae-student-card .avatar {
+        width: 96px;
+        height: 96px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #0f2460, #1e4db7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        color: #fff;
+        font-size: 1.8rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        box-shadow: 0 6px 16px rgba(30, 77, 183, 0.35);
+    }
+
+    .ae-student-card .avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .ae-student-card .info {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .ae-student-card .nickname {
+        font-size: clamp(1.6rem, 7vw, 2.1rem);
+        font-weight: 800;
+        line-height: 1.15;
+        color: #0f2460;
+        margin: 0 0 2px;
+        white-space: nowrap;
+    }
+
+    .ae-student-card .fullname {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #64748b;
+    }
+
+    .ae-student-card .pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+    }
+
+    .badge-pill {
+        background: #eff3ff;
+        color: #1e4db7;
+        border-radius: 20px;
+        padding: 2px 10px;
+        font-size: 0.74rem;
+        font-weight: 600;
+        border: 1px solid #c7d7f8;
+    }
+
+    .ae-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 10px rgba(15, 36, 96, 0.07);
+    }
+
+    .ae-card .section-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.7px;
+        color: #94a3b8;
+        margin-bottom: 0.65rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .ae-card .section-label i {
+        color: #1e4db7;
+        font-size: 0.9rem;
+    }
+
+    .ae-card .form-control {
+        border-radius: 12px;
+        border: 2px solid #e2e8f0;
+        padding: 0.65rem 1rem;
+        background: #f8faff;
+        box-shadow: none;
+        color: #334155;
+    }
+
+    .ae-card .form-control:focus {
+        border-color: #1e4db7;
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(30, 77, 183, 0.1);
+        outline: none;
+    }
+
+    .temp-input-group {
+        position: relative;
+    }
+
+    .temp-input-group .form-control {
+        padding-right: 4rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #0f2460;
+    }
+
+    .temp-input-group .unit-badge {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: linear-gradient(135deg, #0f2460, #1e4db7);
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 8px;
+        pointer-events: none;
+    }
+
+    .status-choices {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.6rem;
+    }
+
+    .status-choice {
+        margin: 0;
+        position: relative;
+        cursor: pointer;
+    }
+
+    .status-choice input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .status-choice span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 0.75rem 0.5rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        background: #f8faff;
+        font-weight: 700;
+        color: #475569;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+
+    .status-choice input:checked + span {
+        border-color: #1e4db7;
+        background: #eff3ff;
+        color: #0f2460;
+        box-shadow: 0 4px 14px rgba(30, 77, 183, 0.15);
+    }
+
+    .status-choice input:focus-visible + span {
+        box-shadow: 0 0 0 4px rgba(30, 77, 183, 0.25);
+    }
+
+    .symptoms-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.6rem;
+        align-items: start;
+    }
+
+    .care-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.6rem;
+    }
+
+    @media (max-width: 576px) {
+        .symptoms-grid,
+        .care-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        #attendanceEditModal .modal-body {
+            padding: 1rem;
+        }
+
+        #attendanceEditModal .modal-header {
+            padding: 1.1rem 1.25rem;
+        }
+
+        .ae-student-card {
+            padding: 0.9rem 1rem;
+            gap: 0.8rem;
+        }
+
+        .ae-student-card .avatar {
+            width: 80px;
+            height: 80px;
+        }
+
+        .status-choices {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .symptom-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .symptom-checkbox {
+        position: relative;
+        cursor: pointer;
+        margin: 0;
+        display: block;
+    }
+
+    .symptom-checkbox input[type="checkbox"] {
+        display: none;
+    }
+
+    .symptom-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #f8faff;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0.65rem 0.9rem;
+        transition: all 0.25s ease;
+        user-select: none;
+    }
+
+    .symptom-item .symptom-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: #eff3ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        line-height: 1;
+        font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+        flex-shrink: 0;
+    }
+
+    .symptom-item .symptom-text {
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: #475569;
+    }
+
+    .symptom-item .check-mark {
+        margin-left: auto;
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        border: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.25s ease;
+        flex-shrink: 0;
+    }
+
+    .symptom-item .check-mark i {
+        font-size: 0.68rem;
+        color: #fff;
+        opacity: 0;
+        margin: 0;
+    }
+
+    .symptom-checkbox input:checked + .symptom-item {
+        border-color: #1e4db7;
+        background: #eff3ff;
+        box-shadow: 0 4px 14px rgba(30, 77, 183, 0.15);
+    }
+
+    .symptom-checkbox input:checked + .symptom-item .symptom-icon {
+        background: #fff;
+        outline: 2px solid #1e4db7;
+    }
+
+    .symptom-checkbox input:checked + .symptom-item .symptom-text {
+        color: #0f2460;
+    }
+
+    .symptom-checkbox input:checked + .symptom-item .check-mark {
+        background: linear-gradient(135deg, #0f2460, #1e4db7);
+        border-color: transparent;
+    }
+
+    .symptom-checkbox input:checked + .symptom-item .check-mark i {
+        opacity: 1;
+    }
+
+    .symptom-item:hover {
+        border-color: #1e4db750;
+        background: #f0f5ff;
+    }
+
+    .sub-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        padding: 0 0.2rem;
+    }
+
+    .sub-options[hidden] {
+        display: none;
+    }
+
+    .sub-chip {
+        position: relative;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .sub-chip input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .sub-chip span {
+        display: inline-block;
+        padding: 0.2rem 0.75rem;
+        border-radius: 20px;
+        border: 2px solid #e2e8f0;
+        background: #fff;
+        color: #475569;
+        font-size: 0.78rem;
+        font-weight: 600;
+        user-select: none;
+    }
+
+    .sub-chip input:checked + span {
+        border-color: #1e4db7;
+        background: linear-gradient(135deg, #0f2460, #1e4db7);
+        color: #fff;
+    }
+
+    #attendanceEditModal .btn-close-custom {
+        border-radius: 12px;
+        padding: 0.58rem 1.3rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        border: 2px solid #e2e8f0;
+        color: #64748b;
+        background: #fff;
+    }
+
+    #attendanceEditModal .btn-close-custom:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        color: #334155;
+    }
+
+    #attendanceEditModal .btn-save-custom {
+        border-radius: 12px;
+        padding: 0.58rem 1.5rem;
+        font-size: 0.88rem;
+        font-weight: 700;
+        border: none;
+        background: linear-gradient(135deg, #0f2460 0%, #1e4db7 100%);
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(15, 36, 96, 0.35);
+    }
+
+    #attendanceEditModal .btn-save-custom:hover {
+        background: linear-gradient(135deg, #0a1a4f 0%, #1a43a8 100%);
+    }
+
+    #attendanceEditModal .btn-save-custom:disabled {
+        opacity: 0.7;
+    }
 </style>
 
 <main class="main-content">
-<div class="attendance-container">
-    <h2 class="mb-4">ประวัติการมาเรียนของเด็ก</h2>
+    <div class="attendance-container">
+        <div class="ah-header">
+            <div>
+                <h2>ประวัติการมาเรียนของเด็ก</h2>
+                <div class="sub">เลือกวันที่และห้องเรียน ระบบจะแสดงผลให้อัตโนมัติ กดการ์ดสรุปเพื่อกรองตามสถานะ</div>
+            </div>
+            <?php if (!$is_student): ?>
+                <button type="button" class="btn btn-success" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel"></i> Export Excel
+                </button>
+            <?php endif; ?>
+        </div>
 
-    <!-- ฟอร์มค้นหา -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <form id="searchForm" method="GET" class="row g-3">
-                <!-- เลือกกลุ่มเรียน -->
-                <div class="col-md-3">
+        <!-- ฟอร์มค้นหา -->
+        <div class="filter-card">
+            <form id="searchForm" method="GET" class="row g-3 align-items-end" onsubmit="return false;">
+                <div class="col-6 col-lg-3 <?= $is_student ? 'd-none' : '' ?>">
                     <label for="child_group" class="form-label">กลุ่มเรียน</label>
-                    <select name="child_group" id="child_group" class="form-select" onchange="loadClassrooms()">
-                        <option value="">-- เลือกกลุ่มเรียน --</option>
+                    <select name="child_group" id="child_group" class="form-select">
+                        <option value="">ทั้งหมด</option>
                         <?php
                         $groups = get_childgroup();
                         foreach ($groups as $group) {
                             if (!empty($group['child_group'])) {
-                                $selected = (isset($_GET['child_group']) && $_GET['child_group'] == $group['child_group']) ? 'selected' : '';
-                                echo "<option value='" . $group['child_group'] . "' $selected>" . $group['child_group'] . "</option>";
+                                $g = htmlspecialchars($group['child_group']);
+                                echo "<option value='" . $g . "'>" . $g . "</option>";
                             }
                         }
                         ?>
                     </select>
                 </div>
 
-                <!-- เลือกห้องเรียน -->
-                <div class="col-md-3">
+                <div class="col-6 col-lg-3 <?= $is_student ? 'd-none' : '' ?>">
                     <label for="classroom" class="form-label">ห้องเรียน</label>
                     <select name="classroom" id="classroom" class="form-select">
-                        <option value="">-- เลือกห้องเรียน --</option>
+                        <option value="">ทั้งหมด</option>
                     </select>
                 </div>
 
-                <!-- เลือกวันที่ -->
-                <div class="col-md-3">
+                <div class="col-12 col-md-6 col-lg-3">
                     <label for="date" class="form-label">วันที่</label>
-                    <input type="date" class="form-control" id="date" name="date"
-                        value="<?php echo htmlspecialchars(isset($_GET['date']) ? $_GET['date'] : date('Y-m-d')); ?>">
+                    <div class="date-nav">
+                        <button type="button" class="btn" id="datePrev" title="วันก่อนหน้า"><i class="fas fa-chevron-left"></i></button>
+                        <input type="date" class="form-control" id="date" name="date" value="<?php echo date('Y-m-d'); ?>">
+                        <button type="button" class="btn" id="dateNext" title="วันถัดไป"><i class="fas fa-chevron-right"></i></button>
+                        <button type="button" class="btn" id="dateToday" title="กลับมาวันนี้">วันนี้</button>
+                    </div>
                 </div>
 
-                <!-- ค้นหาชื่อ -->
-                <div class="col-md-3">
-                    <label for="search" class="form-label">ค้นหาชื่อ</label>
-                    <input type="text" class="form-control" id="search" name="search" placeholder="ชื่อ-นามสกุล"
-                        value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                <div class="col-12 col-md-6 col-lg-3 <?= $is_student ? 'd-none' : '' ?>">
+                    <label for="search" class="form-label">ค้นหา</label>
+                    <div class="search-wrap">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control" id="search" name="search" placeholder="ชื่อเล่น, ชื่อ-นามสกุล, รหัส" autocomplete="off">
+                    </div>
                 </div>
 
-                <!-- เพิ่มปุ่ม Export ไว้ข้างๆ ปุ่มค้นหาและรีเซ็ต -->
-                <div class="col-12">
-                    <button type="submit" class="btn btn-primary">ค้นหา</button>
-                    <button type="button" class="btn btn-secondary" onclick="resetForm()">รีเซ็ต</button>
-                    <button type="button" class="btn btn-success" onclick="exportToExcel()">
-                        <i class="fas fa-file-excel"></i> Export Excel
+                <div class="col-12 <?= $is_student ? 'd-none' : '' ?>">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="resetBtn">
+                        <i class="fas fa-rotate-left me-1"></i> ล้างตัวกรอง
                     </button>
                 </div>
             </form>
         </div>
-    </div>
 
-    <!-- ตารางแสดงผล -->
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <div class="table-responsive" id="resultTable">
-                <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
+        <!-- สรุป + ผลลัพธ์ -->
+        <div id="summaryArea"></div>
+        <div id="resultArea"></div>
+    </div>
+</main>
+
+<!-- Modal เพิ่ม/แก้ไขข้อมูลการเข้าเรียน -->
+<div class="modal fade" id="attendanceEditModal" tabindex="-1" aria-labelledby="attendanceEditTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <div class="title-icon-wrap"><i class="bi bi-pencil-square"></i></div>
+                    <div>
+                        <span id="attendanceEditTitle">แก้ไขข้อมูลการเข้าเรียน</span>
+                        <div class="header-subtitle">Attendance Record</div>
+                    </div>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="ae-student-card">
+                    <div class="avatar" id="aeAvatar">-</div>
+                    <div class="info">
+                        <div class="nickname" id="aeNickname" style="display:none;"></div>
+                        <h4 class="fullname" id="aeFullname">-</h4>
+                        <div class="pills">
+                            <span class="badge-pill"><i class="bi bi-person-badge me-1"></i><span id="aeStudentId">-</span></span>
+                            <span class="badge-pill"><i class="bi bi-door-open me-1"></i><span id="aeClassroom">-</span></span>
+                            <span class="badge-pill"><i class="bi bi-calendar3 me-1"></i><span id="aeDate">-</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="attendanceEditForm" onsubmit="return false;">
+                    <input type="hidden" id="aeRecordId">
+                    <input type="hidden" id="aeStudentIdInput">
+                    <input type="hidden" id="aeDateInput">
+
+                    <!-- สถานะ -->
+                    <div class="ae-card">
+                        <div class="section-label"><i class="bi bi-check2-square"></i> สถานะการมาเรียน</div>
+                        <div class="status-choices">
+                            <label class="status-choice"><input type="radio" name="aeStatus" value="present"><span>✅ มาเรียน</span></label>
+                            <label class="status-choice"><input type="radio" name="aeStatus" value="leave"><span>📝 ลา</span></label>
+                            <label class="status-choice"><input type="radio" name="aeStatus" value="absent"><span>❌ ไม่มาเรียน</span></label>
+                        </div>
+                        <div class="form-text mt-2" id="aeLateHint">ถ้าเวลามาหลัง 08:30 น. ระบบจะบันทึกเป็น "มาสาย" ให้อัตโนมัติ</div>
+                    </div>
+
+                    <!-- เวลา -->
+                    <div class="ae-card" id="aeTimeCard">
+                        <div class="section-label"><i class="bi bi-clock"></i> เวลา</div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold" for="aeCheckIn">เวลามาเรียน</label>
+                                <input type="time" class="form-control" id="aeCheckIn">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold" for="aeCheckOut">เวลากลับบ้าน</label>
+                                <input type="time" class="form-control" id="aeCheckOut">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- หมายเหตุการลา -->
+                    <div class="ae-card" id="aeLeaveCard" style="display:none;">
+                        <div class="section-label"><i class="bi bi-journal-text"></i> หมายเหตุการลา</div>
+                        <textarea class="form-control" id="aeLeaveNote" rows="3" placeholder="ระบุเหตุผลการลา"></textarea>
+                    </div>
+
+                    <!-- ข้อมูลสุขภาพ (เฉพาะมาเรียน) -->
+                    <div id="aeHealthSection">
+                        <div class="ae-card">
+                            <div class="section-label"><i class="bi bi-thermometer-half"></i> อุณหภูมิร่างกาย</div>
+                            <div class="temp-input-group">
+                                <input type="number" class="form-control" id="aeTemperature" step="0.1" min="35.0" max="42.0" placeholder="37.0">
+                                <span class="unit-badge">°C</span>
+                            </div>
+                        </div>
+
+                        <div class="ae-card">
+                            <div class="section-label">
+                                <i class="bi bi-exclamation-triangle"></i> อาการผิดปกติ
+                                <span class="ms-1 text-muted fw-normal" style="font-size:0.76rem;">(เลือกได้มากกว่า 1)</span>
+                            </div>
+                            <div class="symptoms-grid" id="aeSymptomsGrid"></div>
+                        </div>
+
+                        <div class="ae-card">
+                            <div class="section-label"><i class="bi bi-pencil-square"></i> อาการอื่นๆ</div>
+                            <textarea class="form-control" id="aeOtherSymptoms" rows="2" placeholder="เช่น ปวดหัว, คลื่นไส้, ท้องเสีย, ฯลฯ"></textarea>
+                        </div>
+
+                        <div class="ae-card">
+                            <div class="section-label">
+                                <i class="bi bi-bandaid"></i> การดูแล/ช่วยเหลือ
+                                <span class="ms-1 text-muted fw-normal" style="font-size:0.76rem;">(เลือกได้มากกว่า 1)</span>
+                            </div>
+                            <div class="care-grid" id="aeCareGrid"></div>
+                            <input type="text" class="form-control mt-3" id="aeCareOther" maxlength="200" placeholder="ระบุการดูแล/ช่วยเหลืออื่นๆ" style="display:none;">
+                        </div>
+
+                        <div class="ae-card mb-0">
+                            <div class="section-label"><i class="bi bi-person-check"></i> ผู้ดูแลชื่อ</div>
+                            <input type="text" class="form-control" id="aeCaretaker" maxlength="150" placeholder="ชื่อผู้ดูแลที่ให้การดูแล/ช่วยเหลือ" autocomplete="off">
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-close-custom" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i> ปิด
+                </button>
+                <button type="button" class="btn btn-save-custom" id="aeSaveBtn">
+                    <i class="bi bi-check-circle me-1"></i> บันทึก
+                </button>
             </div>
         </div>
     </div>
-
 </div>
-</main>
 
 <script>
-    // โหลดห้องเรียนเมื่อเลือกกลุ่มเรียน
-    function loadClassrooms() {
-        var childGroup = document.getElementById('child_group').value;
+    const CAN_EDIT = <?php echo json_encode($is_admin || $is_teacher); ?>;
+    const IS_STUDENT = <?php echo json_encode($is_student); ?>;
+    const STUDENT_SELF_ID = <?php echo json_encode($is_student ? ($_SESSION['username'] ?? '') : ''); ?>;
 
-        if (!childGroup) {
-            document.getElementById('classroom').innerHTML = '<option value="">-- เลือกห้องเรียน --</option>';
-            return;
-        }
+    <?php include __DIR__ . '/partials/health_options.js.php'; ?>
 
-        fetch(`../include/function/get_classrooms.php?child_group=${childGroup}`)
-            .then(response => response.json())
-            .then(data => {
-                var classroomSelect = document.getElementById('classroom');
-                classroomSelect.innerHTML = '<option value="">-- เลือกห้องเรียน --</option>';
+    const STATUS_META = {
+        present: { text: 'มาเรียน', badge: 'bg-success' },
+        late: { text: 'มาสาย', badge: 'bg-warning text-dark' },
+        absent: { text: 'ไม่มาเรียน', badge: 'bg-danger' },
+        leave: { text: 'ลา', badge: 'bg-primary' },
+        none: { text: 'ยังไม่บันทึก', badge: 'bg-secondary' }
+    };
+    const STATUS_ORDER = ['present', 'late', 'absent', 'leave', 'none'];
 
-                data.forEach(function(classroom) {
-                    var option = document.createElement('option');
-                    option.value = classroom.classroom_name;
-                    option.textContent = classroom.classroom_name;
-                    classroomSelect.appendChild(option);
-                });
+    let records = [];
+    let statusFilter = 'all';
+    let editModalInstance = null;
+    let editingIsNew = false;
 
-                <?php if (isset($_GET['classroom'])): ?>
-                    classroomSelect.value = '<?php echo htmlspecialchars($_GET['classroom']); ?>';
-                <?php endif; ?>
-            })
-            .catch(error => console.error('Error:', error));
+    const byId = (id) => document.getElementById(id);
+
+    function esc(value) {
+        return String(value ?? '').replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
     }
 
-    // รีเซ็ตฟอร์ม
-    function resetForm() {
-        // รีเซ็ตฟอร์ม
-        document.getElementById('searchForm').reset();
-
-        // รีเซ็ตค่าห้องเรียน
-        document.getElementById('classroom').innerHTML = '<option value="">-- เลือกห้องเรียน --</option>';
-
-        // รีเซ็ตค่ากลุ่มเรียน
-        document.getElementById('child_group').value = '';
-
-        // รีเซ็ตค่าวันที่เป็นวันปัจจุบัน
-        document.getElementById('date').value = new Date().toISOString().split('T')[0];
-
-        // ล้างค่าช่องค้นหา
-        document.getElementById('search').value = '';
-
-        // แสดงข้อความแนะนำ
-        const table = document.getElementById('resultTable');
-        table.innerHTML = '<div class="alert alert-info">กรุณาเลือกกลุ่มเรียน, ห้องเรียน หรือค้นหาจากชื่อนักเรียน แล้วกดปุ่มค้นหา</div>';
-
-        // ล้าง URL parameters
-        window.history.replaceState({}, '', window.location.pathname);
-    }
-
-    // โหลดผลลัพธ์
-    function loadResults() {
-        const formData = new FormData(document.getElementById('searchForm'));
-        const searchValue = formData.get('search');
-
-        // ถ้าไม่มีการเลือกกลุ่มเรียนและห้องเรียน และไม่มีการค้นหาชื่อ
-        if (!formData.get('child_group') && !formData.get('classroom') && !searchValue) {
-            const table = document.getElementById('resultTable');
-            table.innerHTML = '<div class="alert alert-info">กรุณาเลือกกลุ่มเรียน, ห้องเรียน หรือค้นหาจากชื่อนักเรียน แล้วกดปุ่มค้นหา</div>';
-            return;
-        }
-
-        // สร้าง URL parameters
-        const params = new URLSearchParams(formData);
-
-        fetch(`../include/function/get_attendance_history.php?${params.toString()}`)
-            .then(response => response.json())
-            .then(data => {
-                const table = document.getElementById('resultTable');
-                if (data.length === 0) {
-                    table.innerHTML = '<div class="alert alert-info">ไม่พบข้อมูล</div>';
-                    return;
-                }
-
-                // แสดงสรุปจำนวนรวม
-                let html = showStatusSummary(data);
-
-                // จัดกลุ่มข้อมูลตามกลุ่มเรียนและห้องเรียน
-                const groupedData = groupStudentsByClass(data);
-
-                // วนลูปแสดงผลแต่ละกลุ่ม
-                Object.entries(groupedData).forEach(([groupKey, group]) => {
-                    // แสดงหัวข้อกลุ่ม
-                    html += `
-                        <div class="card mb-4">
-                            <div class="card-header bg-primary text-white">
-                                <h5 class="mb-0">กลุ่มเรียน: ${group.child_group} | ห้องเรียน: ${group.classroom}</h5>
-                            </div>
-                            <div class="card-body">
-                                ${showStatusSummary(group.students)} <!-- แสดงสรุปจำนวนของแต่ละกลุ่ม -->
-                                <div class="table-responsive">
-                                    <table class="table table-striped table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>รหัสนักเรียน</th>
-                                                <th>ชื่อ-นามสกุล</th>
-                                                <th>ชื่อเล่น</th>
-                                                <th>สถานะ</th>
-                                                <th>เวลามา</th>
-                                                <th>สถานะกลับบ้าน</th>
-                                                <th>เวลากลับ</th>
-                                                <th>จัดการ</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                    `;
-
-                    // แสดงข้อมูลนักเรียนในกลุ่ม
-                    group.students.forEach(student => {
-                        const statusClass = student.status === 'absent' ? 'table-danger' :
-                            student.status === 'present' ? 'table-success' :
-                                student.status === 'leave' ? 'table-warning' : '';
-
-                        // แก้ไขการจัดการกับเวลา
-                        const checkDate = student.check_date ? formatTime(student.check_date) : '-';
-                        const checkOutTime = student.check_out_time ? formatTime(student.check_out_time) : '-';
-
-                        html += `
-                            <tr class="${statusClass}">
-                                <td>${student.student_id}</td>
-                                <td>${student.prefix_th} ${student.firstname_th} ${student.lastname_th}</td>
-                                <td>${student.nickname}</td>
-                                <td>
-                                    <span class="badge ${getStatusBadgeClass(student.status)}">
-                                        ${student.status ? getStatusText(student.status) : 'ยังไม่บันทึก'}
-                                    </span>
-                                </td>
-                                <td>${checkDate}</td>
-                                <td>
-                                    <span class="badge ${student.status_checkout === 'checked_out' ? 'bg-success' : 'bg-secondary'}">
-                                        ${student.status_checkout === 'checked_out' ? 'กลับแล้ว' : 'ยังไม่กลับ'}
-                                    </span>
-                                </td>
-                                <td>${checkOutTime}</td>
-                                <td>
-                                    <?php if ($is_admin || $is_teacher): ?>
-                                        ${renderActionButtons(student)}
-                                    <?php else: ?>
-                                        <span class="text-muted">ดูข้อมูลเท่านั้น</span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        `;
-                    });
-
-                    html += `
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                table.innerHTML = html;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                table.innerHTML = '<div class="alert alert-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
-            });
-    }
-
-    // เพิ่มฟังก์ชันจัดกลุ่มข้อมูล
-    function groupStudentsByClass(students) {
-        return students.reduce((groups, student) => {
-            const key = `${student.child_group}-${student.classroom}`;
-            if (!groups[key]) {
-                groups[key] = {
-                    child_group: student.child_group,
-                    classroom: student.classroom,
-                    students: []
-                };
-            }
-            groups[key].students.push(student);
-            return groups;
-        }, {});
-    }
-
-    // เพิ่มฟังก์ชันใหม่สำหรับจัดการกับเวลา
-    function formatTime(timeString) {
-        if (!timeString) return '-';
-        
-        // ถ้าเป็นรูปแบบ HH:mm:ss
-        if (timeString.match(/^\d{2}:\d{2}:\d{2}$/)) {
-            return timeString.substring(0, 5) + ' น.';
-        }
-        
-        // ถ้าเป็น timestamp หรือวันที่เต็ม
-        const date = new Date(timeString);
-        if (isNaN(date.getTime())) return '-';
-        
-        return date.toLocaleTimeString('th-TH', {
-            hour: '2-digit',
-            minute: '2-digit'
-        }) + ' น.';
-    }
-
-    // เพิ่มฟังก์ชันเมื่อโหลดหน้า
-    document.addEventListener('DOMContentLoaded', () => {
-        // ถ้ามี URL parameters ให้กรอกข้อมูลในฟอร์มและค้นหา
-        const urlParams = new URLSearchParams(window.location.search);
-        
-        // ถ้ามีการเลือกกลุ่มเรียน ให้โหลดห้องเรียนก่อน
-        if (urlParams.get('child_group')) {
-            // กรอกข้อมูลกลุ่มเรียน
-            document.getElementById('child_group').value = urlParams.get('child_group');
-            
-            // โหลดห้องเรียน
-            loadClassrooms();
-            
-            // รอให้ห้องเรียนโหลดเสร็จก่อนเลือกห้องเรียนและโหลดผลลัพธ์
-            setTimeout(() => {
-                if (urlParams.get('classroom')) {
-                    document.getElementById('classroom').value = urlParams.get('classroom');
-                }
-                loadResults();
-            }, 500);
-        } else {
-            // แสดงข้อความแนะนำเมื่อโหลดหน้าครั้งแรก
-            const table = document.getElementById('resultTable');
-            table.innerHTML = '<div class="alert alert-info">กรุณาเลือกกลุ่มเรียน, ห้องเรียน หรือค้นหาจากชื่อนักเรียน แล้วกดปุ่มค้นหา</div>';
-        }
-
-        // กรอกข้อมูลอื่นๆ จาก URL parameters
-        for (const [key, value] of urlParams) {
-            if (key !== 'child_group' && key !== 'classroom') {
-                const element = document.getElementById(key);
-                if (element) {
-                    element.value = value;
-                }
-            }
-        }
-    });
-
-    // เพิ่ม event listener สำหรับการ submit form
-    document.getElementById('searchForm').addEventListener('submit', function (e) {
-        e.preventDefault(); // ป้องกันการ refresh หน้า
-        loadResults();
-    });
-
-    // ฟังก์ชันเพิ่มข้อมูลใหม่
-    function addAttendance(studentData) {
-        const currentDate = document.getElementById('date').value;
-        
-        // ดึงเวลาปัจจุบัน
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        const currentTime = `${hours}:${minutes}:${seconds}`;
-
-        showAttendanceForm({
-            id: null,
-            student_id: studentData.student_id,
-            prefix_th: studentData.prefix_th,
-            firstname_th: studentData.firstname_th,
-            lastname_th: studentData.lastname_th,
-            status: 'present',
-            check_date: currentTime, // ใช้เวลาปัจจุบันในรูปแบบ HH:mm:ss
-            check_out_time: '',
-            leave_note: '',
-            attendance_date: currentDate
-        }, true);
-    }
-
-    // ฟังก์ชันดึงวันที่ปัจจุบัน
-    function getCurrentDate() {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    // ฟังก์ชันแก้ไขข้อมูล
-    function editAttendance(id) {
-        const currentDate = document.getElementById('date').value;
-        fetch(`../include/function/get_attendance_detail.php?id=${id}&date=${currentDate}`)
-            .then(response => response.json())
-            .then(response => {
-                if (response.status !== 'success') {
-                    throw new Error(response.message || 'เกิดข้อผิดพลาดในการดึงข้อมูล');
-                }
-
-                // แปลงรูปแบบเวลาให้ถูกต้อง
-                const data = response.data;
-                if (data.check_date) {
-                    const date = new Date(data.check_date);
-                    data.formatted_check_date = date.toTimeString().slice(0, 8); // แปลงเป็น HH:mm:ss
-                }
-                
-                if (data.check_out_time) {
-                    data.formatted_check_out_time = data.check_out_time.slice(0, 8); // แปลงเป็น HH:mm:ss
-                }
-
-                showAttendanceForm({
-                    ...data,
-                    attendance_date: currentDate
-                }, false);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: error.message,
-                    confirmButtonText: 'ตกลง'
-                });
-            });
-    }
-
-    // ฟังก์ชันแสดงฟอร์ม
-    function showAttendanceForm(data, isNewRecord) {
-        // ดึงเวลาปัจจุบันสำหรับกรณีเพิ่มข้อมูลใหม่
-        const now = new Date();
-        const currentTime = isNewRecord ? 
-            `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}` : 
-            '';
-
-        // จัดการกับเวลาที่มีอยู่
-        let checkTime = '';
-        let checkOutTime = '';
-
-        if (data.formatted_check_date) {
-            checkTime = data.formatted_check_date.substring(0, 5);
-        } else if (data.check_date) {
-            const date = new Date(data.check_date);
-            if (!isNaN(date.getTime())) {
-                checkTime = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-            }
-        }
-
-        if (data.formatted_check_out_time) {
-            checkOutTime = data.formatted_check_out_time.substring(0, 5);
-        } else if (data.check_out_time) {
-            if (data.check_out_time.includes(':')) {
-                checkOutTime = data.check_out_time.substring(0, 5);
-            } else {
-                const date = new Date(data.check_out_time);
-                if (!isNaN(date.getTime())) {
-                    checkOutTime = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-                }
-            }
-        }
-
-        Swal.fire({
-            title: isNewRecord ? 'บันทึกการเข้าเรียน' : 'แก้ไขข้อมูลการเข้าเรียน',
-            html: `
-                <form id="attendanceForm">
-                    <input type="hidden" name="id" value="${data.id || ''}">
-                    <input type="hidden" name="student_id" value="${data.student_id || ''}">
-                    <input type="hidden" name="attendance_date" value="${data.attendance_date}">
-                    <div class="mb-3">
-                        <label class="form-label">รหัสนักเรียน</label>
-                        <input type="text" class="form-control" value="${data.student_id || ''}" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">ชื่อ-นามสกุล</label>
-                        <input type="text" class="form-control" value="${data.prefix_th || ''} ${data.firstname_th || ''} ${data.lastname_th || ''}" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">วันที่</label>
-                        <input type="date" class="form-control" value="${data.attendance_date}" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">สถานะการมาเรียน</label>
-                        <select class="form-select" name="status" id="attendanceStatus">
-                            <option value="present" ${data.status === 'present' ? 'selected' : ''}>มาเรียน</option>
-                            <option value="absent" ${data.status === 'absent' ? 'selected' : ''}>ไม่มาเรียน</option>
-                            <option value="leave" ${data.status === 'leave' ? 'selected' : ''}>ลา</option>
-                        </select>
-                    </div>
-                    <div class="mb-3" id="timeDiv">
-                        <label class="form-label">เวลามาเรียน</label>
-                        <input type="time" class="form-control" name="check_date" 
-                            value="${isNewRecord ? currentTime : (data.formatted_check_date ? data.formatted_check_date.substring(0, 5) : '')}">
-                    </div>
-                    <div class="mb-3" id="checkoutDiv">
-                        <label class="form-label">เวลากลับ</label>
-                        <input type="time" class="form-control" name="check_out_time"
-                            value="${data.formatted_check_out_time ? data.formatted_check_out_time.substring(0, 5) : ''}">
-                    </div>
-                    <div class="mb-3" id="leaveNoteDiv" style="display:none">
-                        <label class="form-label">หมายเหตุการลา</label>
-                        <textarea class="form-control" name="leave_note" rows="3">${data.leave_note || ''}</textarea>
-                    </div>
-                </form>
-            `,
-            didOpen: () => {
-                const attendanceStatus = document.getElementById('attendanceStatus');
-                const timeDiv = document.getElementById('timeDiv');
-                const checkoutDiv = document.getElementById('checkoutDiv');
-                const leaveNoteDiv = document.getElementById('leaveNoteDiv');
-
-                function updateFieldsVisibility() {
-                    const status = attendanceStatus.value;
-                    timeDiv.style.display = status === 'present' ? 'block' : 'none';
-                    checkoutDiv.style.display = status === 'present' ? 'block' : 'none';
-                    leaveNoteDiv.style.display = status === 'leave' ? 'block' : 'none';
-                }
-
-                attendanceStatus.addEventListener('change', updateFieldsVisibility);
-                updateFieldsVisibility();
-            },
-            showCancelButton: true,
-            confirmButtonText: 'บันทึก',
-            cancelButtonText: 'ยกเลิก',
-            preConfirm: () => {
-                const form = document.getElementById('attendanceForm');
-                const formData = new FormData(form);
-                const status = formData.get('status');
-                
-                // ตรวจสอบความถูกต้องของข้อมูล
-                if (!formData.get('student_id')) {
-                    Swal.showValidationMessage('กรุณาระบุรหัสนักเรียน');
-                    return false;
-                }
-
-                if (status === 'present' && !formData.get('check_date')) {
-                    Swal.showValidationMessage('กรุณาระบุเวลามาเรียน');
-                    return false;
-                }
-
-                if (status === 'leave' && !formData.get('leave_note')) {
-                    Swal.showValidationMessage('กรุณาระบุหมายเหตุการลา');
-                    return false;
-                }
-
-                // แปลง FormData เป็น object ที่จะส่งไป
-                const requestData = {
-                    id: formData.get('id'),
-                    student_id: formData.get('student_id'),
-                    attendance_date: formData.get('attendance_date'),
-                    status: status,
-                    check_date: formData.get('check_date'),
-                    check_out_time: formData.get('check_out_time'),
-                    leave_note: formData.get('leave_note')
-                };
-
-                // เลือก URL ตามประเภทการทำงาน
-                const url = isNewRecord ? 
-                    '../include/process/save_attendance_record.php' : 
-                    '../include/process/update_attendance_record.php';
-
-                return fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(requestData)
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.status === 'success') {
-                        return result;
-                    }
-                    throw new Error(result.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
-                })
-                .catch(error => {
-                    Swal.showValidationMessage(
-                        `เกิดข้อผิดพลาด: ${error.message}`
-                    );
-                    return false;
-                });
-            }
-        }).then((result) => {
-            if (result.isConfirmed && result.value) {
-                Swal.fire({
-                    icon: 'success',
-                    title: isNewRecord ? 'บันทึกข้อมูลสำเร็จ' : 'แก้ไขข้อมูลสำเร็จ',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => {
-                    loadResults(); // โหลดข้อมูลใหม่
-                });
-            }
-        });
-    }
-
-    function deleteAttendance(id) {
-        Swal.fire({
-            title: 'ยืนยันการลบ',
-            text: "คุณต้องการลบข้อมูลนี้ใช่หรือไม่?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'ใช่, ลบข้อมูล',
-            cancelButtonText: 'ยกเลิก'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fetch('../include/process/delete_attendance_record.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ id: id })
-                })
-                    .then(response => response.json())
-                    .then(result => {
-                        if (result.status === 'success') {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'ลบข้อมูลสำเร็จ',
-                                text: 'ข้อมูลได้ถูกลบเรียบร้อยแล้ว',
-                                showConfirmButton: false,
-                                timer: 1500
-                            }).then(() => {
-                                loadResults(); // โหลดข้อมูลใหม่แทนการรีเฟรชหน้า
-                            });
-                        } else {
-                            throw new Error(result.message || 'เกิดข้อผิดพลาดในการลบข้อมูล');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'เกิดข้อผิดพลาด',
-                            text: error.message,
-                            confirmButtonText: 'ตกลง'
-                        });
-                    });
-            }
-        });
-    }
-
-    // ในส่วนของการแสดงสถานะในตาราง
-    function getStatusText(status) {
-        if (!status) return 'ยังไม่บันทึก';
-        switch (status) {
-            case 'present': return 'มาเรียน';
-            case 'absent': return 'ไม่มาเรียน';
-            case 'leave': return 'ลา';
-            case 'late': return 'มาสาย';
-            default: return status;
-        }
-    }
-
-    // แก้ไขฟังก์ชัน getStatusBadgeClass
-    function getStatusBadgeClass(status) {
-        switch (status) {
-            case 'present':
-                return 'bg-success';
-            case 'absent':
-                return 'bg-danger';
-            case 'leave':
-                return 'bg-warning';
-            case 'late':
-                return 'bg-warning text-dark';
-            default:
-                return 'bg-secondary';
-        }
-    }
-
-    // เพิ่มฟังก์ชันคำนวณจำนวนแต่ละสถานะ
-    function calculateStatusCounts(data) {
-        const counts = {
-            present: 0,
-            late: 0,
-            absent: 0,
-            leave: 0,
-            notRecorded: 0
+    function debounce(fn, ms) {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn(...args), ms);
         };
+    }
 
-        data.forEach(student => {
-            if (!student.status) {
-                counts.notRecorded++;
-            } else if (student.status === 'present') {
-                counts.present++;
-            } else if (student.status === 'late') {
-                counts.late++;
-            } else if (student.status === 'absent') {
-                counts.absent++;
-            } else if (student.status === 'leave') {
-                counts.leave++;
+    function statusKey(record) {
+        return record.status && STATUS_META[record.status] ? record.status : 'none';
+    }
+
+    // ดึงเวลา HH:MM จากข้อความเวลา/วันที่-เวลา (ไม่พึ่ง new Date เพื่อให้ใช้ได้ทุกเบราว์เซอร์)
+    function timeParts(value) {
+        const m = String(value || '').match(/(?:^|[ T])(\d{2}):(\d{2})(?::\d{2})?/);
+        return m ? { h: m[1], m: m[2] } : null;
+    }
+
+    function formatTime(value) {
+        const t = timeParts(value);
+        if (!t || (t.h === '00' && t.m === '00')) return '-';
+        return `${t.h}:${t.m} น.`;
+    }
+
+    function inputTime(value) {
+        const t = timeParts(value);
+        if (!t || (t.h === '00' && t.m === '00')) return '';
+        return `${t.h}:${t.m}`;
+    }
+
+    function fullName(r) {
+        return [r.prefix_th, r.firstname_th, r.lastname_th].filter(Boolean).join(' ');
+    }
+
+    function formatThaiDate(dateStr) {
+        const m = String(dateStr || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (!m) return '-';
+        const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+        return d.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    function shiftDate(days) {
+        const input = byId('date');
+        const base = input.value ? new Date(input.value + 'T00:00:00') : new Date();
+        base.setDate(base.getDate() + days);
+        const y = base.getFullYear();
+        const mo = String(base.getMonth() + 1).padStart(2, '0');
+        const d = String(base.getDate()).padStart(2, '0');
+        input.value = `${y}-${mo}-${d}`;
+        loadResults();
+    }
+
+    function todayString() {
+        const n = new Date();
+        return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+    }
+
+    // ===== โหลดห้องเรียนตามกลุ่ม =====
+    async function loadClassrooms(selected = '') {
+        const group = byId('child_group').value;
+        const select = byId('classroom');
+        select.innerHTML = '<option value="">ทั้งหมด</option>';
+        if (!group) return;
+
+        try {
+            const res = await fetch(`../include/function/get_classrooms.php?child_group=${encodeURIComponent(group)}`);
+            const data = await res.json();
+            (Array.isArray(data) ? data : []).forEach((c) => {
+                const option = document.createElement('option');
+                option.value = c.classroom_name;
+                option.textContent = c.classroom_name;
+                select.appendChild(option);
+            });
+            if (selected) select.value = selected;
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // ===== โหลดผลลัพธ์ =====
+    async function loadResults() {
+        const area = byId('resultArea');
+        area.innerHTML = '<div class="state-box"><div class="spinner-border text-primary" role="status"></div><div class="mt-2">กำลังโหลดข้อมูล...</div></div>';
+
+        const params = new URLSearchParams();
+        if (IS_STUDENT) {
+            params.set('student_id', STUDENT_SELF_ID);
+            params.set('date', byId('date').value || todayString());
+        } else {
+            ['child_group', 'classroom', 'date', 'search'].forEach((key) => {
+                const value = byId(key).value.trim();
+                if (value) params.set(key, value);
+            });
+        }
+
+        try {
+            const res = await fetch(`../include/function/get_attendance_history.php?${params.toString()}`);
+            const data = await res.json();
+            if (!Array.isArray(data)) {
+                throw new Error(data.message || 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
             }
-        });
+            records = data;
+            renderAll();
+        } catch (error) {
+            console.error('Error:', error);
+            records = [];
+            byId('summaryArea').innerHTML = '';
+            area.innerHTML = `<div class="state-box"><span class="emoji">⚠️</span>${esc(error.message)}<div class="mt-3"><button class="btn btn-outline-primary btn-sm" onclick="loadResults()">ลองใหม่</button></div></div>`;
+        }
+    }
 
+    function countStatuses(list) {
+        const counts = { present: 0, late: 0, absent: 0, leave: 0, none: 0 };
+        list.forEach((r) => { counts[statusKey(r)]++; });
         return counts;
     }
 
-    // แก้ไขฟังก์ชัน showStatusSummary
-    function showStatusSummary(data) {
-        const counts = calculateStatusCounts(data);
-        const total = data.length;
+    function renderSummary() {
+        const counts = countStatuses(records);
+        const cards = [{ key: 'all', text: 'ทั้งหมด', num: records.length }]
+            .concat(STATUS_ORDER.map((k) => ({ key: k, text: STATUS_META[k].text, num: counts[k] })));
 
-        return `
-            <div class="alert alert-info mb-3">
-                <h6 class="mb-2">สรุปการมาเรียน:</h6>
-                <div class="row g-2">
-                    <div class="col text-center">
-                        <span class="badge bg-success d-block">มาเรียน: ${counts.present} คน</span>
-                    </div>
-                    <div class="col text-center">
-                        <span class="badge bg-warning text-dark d-block">มาสาย: ${counts.late} คน</span>
-                    </div>
-                    <div class="col text-center">
-                        <span class="badge bg-danger d-block">ไม่มาเรียน: ${counts.absent} คน</span>
-                    </div>
-                    <div class="col text-center">
-                        <span class="badge bg-warning d-block">ลา: ${counts.leave} คน</span>
-                    </div>
-                    <div class="col text-center">
-                        <span class="badge bg-secondary d-block">ยังไม่บันทึก: ${counts.notRecorded} คน</span>
-                    </div>
-                </div>
-                <div class="mt-2 text-center">
-                    <small>จำนวนนักเรียนทั้งหมด: ${total} คน</small>
-                </div>
-            </div>
-        `;
+        byId('summaryArea').innerHTML = `<div class="stat-row">${cards.map((c) => `
+            <button type="button" class="stat-card ${statusFilter === c.key ? 'active' : ''}" data-status="${c.key}">
+                <span class="num">${c.num}</span>
+                <span class="lbl">${c.text}</span>
+            </button>`).join('')}</div>`;
     }
 
-    // แก้ไขฟังก์ชัน renderActionButtons
-    function renderActionButtons(student) {
-        let buttons = '';
+    function renderActionButtons(r, idx) {
+        if (!CAN_EDIT) return '<span class="text-muted small">ดูข้อมูลเท่านั้น</span>';
+        if (r.id) {
+            return `<div class="action-btns">
+                <button type="button" class="btn btn-info text-white" data-action="view" data-id="${r.id}" title="ดูรายละเอียด"><i class="fas fa-eye"></i></button>
+                <button type="button" class="btn btn-warning" data-action="edit" data-id="${r.id}" title="แก้ไข"><i class="fas fa-edit"></i></button>
+                <button type="button" class="btn btn-danger" data-action="delete" data-id="${r.id}" title="ลบ"><i class="fas fa-trash"></i></button>
+            </div>`;
+        }
+        return `<div class="action-btns"><button type="button" class="btn btn-primary add" data-action="add" data-idx="${idx}"><i class="fas fa-plus"></i> บันทึก</button></div>`;
+    }
 
-        // ตรวจสอบว่ามีข้อมูลการเข้าเรียนหรือไม่
-        if (student.id) {  // ถ้ามี id แสดงว่ามีการบันทึกข้อมูลแล้ว
-            buttons = `
-                <button type="button" class="btn btn-info btn-sm" onclick="viewAttendanceDetail(${student.id})">
-                    <i class="fas fa-eye"></i> ดู
-                </button>
-                <button type="button" class="btn btn-warning btn-sm" onclick="editAttendance(${student.id})">
-                    <i class="fas fa-edit"></i> แก้ไข
-                </button>
-                <button type="button" class="btn btn-danger btn-sm" onclick="deleteAttendance(${student.id})">
-                    <i class="fas fa-trash"></i> ลบ
-                </button>
-            `;
-        } else {
-            // กรณีไม่มีข้อมูลการเข้าเรียน
-            buttons = `
-                <button type="button" class="btn btn-primary btn-sm" 
-                    onclick="addAttendance({
-                        student_id: '${student.student_id}',
-                        prefix_th: '${student.prefix_th}',
-                        firstname_th: '${student.firstname_th}',
-                        lastname_th: '${student.lastname_th}'
-                    })">
-                    <i class="fas fa-plus"></i> เพิ่ม
-                </button>
-            `;
+    function renderResults() {
+        const area = byId('resultArea');
+        const list = statusFilter === 'all' ? records : records.filter((r) => statusKey(r) === statusFilter);
+
+        if (list.length === 0) {
+            area.innerHTML = `<div class="state-box"><span class="emoji">📭</span>${
+                records.length === 0 ? 'ไม่พบข้อมูลนักเรียนตามเงื่อนไขที่เลือก' : 'ไม่มีรายการในสถานะนี้'}</div>`;
+            return;
         }
 
-        return buttons;
+        // จัดกลุ่มตามกลุ่มเรียน + ห้องเรียน
+        const groups = new Map();
+        list.forEach((r) => {
+            const key = `${r.child_group}|${r.classroom}`;
+            if (!groups.has(key)) groups.set(key, { child_group: r.child_group, classroom: r.classroom, rows: [] });
+            groups.get(key).rows.push(r);
+        });
+
+        let html = '';
+        groups.forEach((g) => {
+            const counts = countStatuses(g.rows);
+            const mini = STATUS_ORDER.filter((k) => counts[k] > 0)
+                .map((k) => `${STATUS_META[k].text} ${counts[k]}`).join(' · ');
+
+            html += `
+            <div class="class-card">
+                <div class="class-head">
+                    <h5><i class="bi bi-door-open-fill me-1"></i> ${esc(g.child_group || '-')} | ห้อง ${esc(g.classroom || '-')}</h5>
+                    <span class="mini">${g.rows.length} คน${mini ? ' — ' + mini : ''}</span>
+                </div>
+                <div class="history-scroll">
+                    <table class="table table-hover history-table">
+                        <thead>
+                            <tr>
+                                <th>รหัส</th>
+                                <th>ชื่อเล่น</th>
+                                <th class="text-start">ชื่อ-นามสกุล</th>
+                                <th>สถานะ</th>
+                                <th>เวลามา</th>
+                                <th>กลับบ้าน</th>
+                                <th>เวลากลับ</th>
+                                <th>จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${g.rows.map((r) => {
+                                const key = statusKey(r);
+                                const idx = records.indexOf(r);
+                                const home = r.status_checkout === 'checked_out';
+                                return `
+                                <tr class="st-${key}">
+                                    <td>${esc(r.student_id)}</td>
+                                    <td>${r.nickname ? `<span class="nickname-text">${esc(r.nickname)}</span>` : '-'}</td>
+                                    <td class="name-col">${esc(fullName(r))}</td>
+                                    <td><span class="badge ${STATUS_META[key].badge}">${STATUS_META[key].text}</span></td>
+                                    <td>${key === 'present' || key === 'late' ? formatTime(r.check_date) : '-'}</td>
+                                    <td>${key === 'present' || key === 'late'
+                                        ? `<span class="badge ${home ? 'bg-success' : 'bg-secondary'}">${home ? 'กลับแล้ว' : 'ยังไม่กลับ'}</span>` : '-'}</td>
+                                    <td>${formatTime(r.check_out_time)}</td>
+                                    <td>${renderActionButtons(r, idx)}</td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>`;
+        });
+        area.innerHTML = html;
     }
 
-    // เพิ่มฟังก์ชันดูรายละเอียด
-    function viewAttendanceDetail(id) {
-        fetch(`../include/function/get_attendance_detail.php?id=${id}`)
-            .then(response => response.json())
-            .then(response => {
-                if (response.status !== 'success') {
-                    throw new Error(response.message || 'เกิดข้อผิดพลาดในการดึงข้อมูล');
-                }
+    function renderAll() {
+        renderSummary();
+        renderResults();
+    }
 
-                const data = response.data;
-                let statusText = getStatusText(data.status);
-                let statusClass = getStatusBadgeClass(data.status);
+    // ===== เหตุการณ์ในตาราง/การ์ดสรุป =====
+    document.addEventListener('click', (e) => {
+        const card = e.target.closest('.stat-card');
+        if (card) {
+            statusFilter = card.dataset.status;
+            renderAll();
+            return;
+        }
 
-                // Build symptoms string
-                const symptoms = [];
-                if (data.has_runny_nose === true || data.has_runny_nose === 't' || data.has_runny_nose === '1') symptoms.push('น้ำมูกไหล');
-                if (data.has_cough === true || data.has_cough === 't' || data.has_cough === '1') symptoms.push('ไอ');
-                if (data.has_rash === true || data.has_rash === 't' || data.has_rash === '1') symptoms.push('ผื่น');
-                if (data.has_red_eyes === true || data.has_red_eyes === 't' || data.has_red_eyes === '1') symptoms.push('ตาแดง');
-                if (data.other_symptoms) symptoms.push(data.other_symptoms);
-                const symptomsText = symptoms.length > 0 ? symptoms.join(', ') : 'ไม่มีอาการ';
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const { action, id, idx } = btn.dataset;
+        if (action === 'view') viewAttendanceDetail(id);
+        else if (action === 'edit') editAttendance(id);
+        else if (action === 'delete') deleteAttendance(id);
+        else if (action === 'add') addAttendance(records[Number(idx)]);
+    });
 
-                const pickupName = data.picked_up_by || (data.status_checkout === 'checked_out' ? data.leave_note || '-' : '-');
+    // ===== ข้อมูลสุขภาพ: อาการ / การดูแล =====
+    function renderHealthOptions() {
+        byId('aeSymptomsGrid').innerHTML = SYMPTOM_OPTIONS.map((s) => `
+            <div class="symptom-group">
+                <label class="symptom-checkbox">
+                    <input type="checkbox" data-symptom="${s.code}">
+                    <div class="symptom-item">
+                        <div class="symptom-icon" aria-hidden="true">${s.icon}</div>
+                        <span class="symptom-text">${s.label}</span>
+                        <div class="check-mark"><i class="bi bi-check"></i></div>
+                    </div>
+                </label>
+                ${s.subs ? `<div class="sub-options" data-sub-of="${s.code}" hidden>
+                    ${s.subs.map((sub) => `<label class="sub-chip"><input type="checkbox" data-sub-of="${s.code}" value="${sub.code}"><span>${sub.label}</span></label>`).join('')}
+                </div>` : ''}
+            </div>`).join('');
 
-                Swal.fire({
-                    title: '<span style="font-size:1.25rem;font-weight:800;color:#1a1a2e;">รายละเอียดการเข้าเรียน</span>',
-                    html: `
-                        <div style="text-align:left;font-family:system-ui,-apple-system,sans-serif;">
-                            <div style="background:#f8f9fa;border-radius:12px;padding:1rem;margin-bottom:0.75rem;">
-                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
-                                    <div>
-                                        <div style="font-size:1.05rem;font-weight:700;color:#1a1a2e;">${data.prefix_th} ${data.firstname_th} ${data.lastname_th}</div>
-                                        <div style="font-size:0.8rem;color:#6c757d;">${data.student_id} | ${data.child_group} | ${data.classroom}</div>
-                                    </div>
-                                    <span class="badge ${statusClass}" style="font-size:0.8rem;padding:0.4rem 0.8rem;border-radius:8px;">${statusText}</span>
-                                </div>
-                                <div style="font-size:0.8rem;color:#6c757d;"><i class="bi bi-calendar3" style="color:#e94560;margin-right:4px;"></i>${new Date(data.check_date).toLocaleDateString('th-TH', {year:'numeric',month:'long',day:'numeric'})}</div>
-                            </div>
+        byId('aeCareGrid').innerHTML = CARE_OPTIONS.map((c) => `
+            <label class="symptom-checkbox">
+                <input type="checkbox" data-care="${c.code}">
+                <div class="symptom-item">
+                    <div class="symptom-icon" aria-hidden="true">${c.icon}</div>
+                    <span class="symptom-text">${c.label}</span>
+                    <div class="check-mark"><i class="bi bi-check"></i></div>
+                </div>
+            </label>`).join('');
+    }
 
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
-                                <div style="background:#f8f9fa;border-radius:12px;padding:1rem;">
-                                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-                                        <div style="width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,#0f3460,#16213e);display:flex;align-items:center;justify-content:center;"><i class="bi bi-box-arrow-in-right text-white" style="font-size:0.75rem;"></i></div>
-                                        <span style="font-size:0.75rem;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:0.3px;">เวลาเข้าเรียน</span>
-                                    </div>
-                                    <div style="font-size:1.3rem;font-weight:800;color:#0f3460;margin-bottom:4px;">${data.check_date && new Date(data.check_date).getHours() !== 0 && new Date(data.check_date).getMinutes() !== 0 ? new Date(data.check_date).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) + ' น.' : '-'}</div>
-                                    <hr style="border-color:#e9ecef;margin:0.5rem 0;">
-                                    <div style="font-size:0.82rem;">
-                                        <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="color:#6c757d;">อุณหภูมิ</span><strong style="color:#1a1a2e;">${data.temperature ? data.temperature + ' °C' : '-'}</strong></div>
-                                        <div style="display:flex;justify-content:space-between;"><span style="color:#6c757d;">อาการ</span><strong style="color:#1a1a2e;text-align:right;">${symptomsText}</strong></div>
-                                    </div>
-                                </div>
-                                <div style="background:#f8f9fa;border-radius:12px;padding:1rem;">
-                                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-                                        <div style="width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,#e94560,#c23152);display:flex;align-items:center;justify-content:center;"><i class="bi bi-box-arrow-right text-white" style="font-size:0.75rem;"></i></div>
-                                        <span style="font-size:0.75rem;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:0.3px;">เวลากลับบ้าน</span>
-                                    </div>
-                                    <div style="font-size:1.3rem;font-weight:800;color:#e94560;margin-bottom:4px;">${data.check_out_time ? new Date(data.check_out_time).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) + ' น.' : '-'}</div>
-                                    <div style="margin-bottom:4px;">${data.status_checkout === 'checked_out' ? '<span class="badge bg-success" style="border-radius:6px;">กลับแล้ว</span>' : '<span class="badge bg-secondary" style="border-radius:6px;">ยังไม่กลับ</span>'}</div>
-                                    <div style="border-top:1px solid #e9ecef;padding-top:4px;font-size:0.82rem;display:flex;justify-content:space-between;"><span style="color:#6c757d;">ผู้รับ</span><strong style="color:#1a1a2e;">${pickupName}</strong></div>
-                                </div>
-                            </div>
+    function syncSubOptions(code) {
+        const parent = document.querySelector(`#aeSymptomsGrid input[data-symptom="${code}"]`);
+        const subs = document.querySelector(`#aeSymptomsGrid .sub-options[data-sub-of="${code}"]`);
+        if (!parent || !subs) return;
+        subs.hidden = !parent.checked;
+        if (!parent.checked) subs.querySelectorAll('input').forEach((i) => { i.checked = false; });
+    }
 
-                            ${data.status === 'leave' ? `<div style="background:#fff3f3;border-radius:12px;padding:0.75rem 1rem;border-left:4px solid #e94560;font-size:0.85rem;"><strong style="color:#1a1a2e;">หมายเหตุการลา:</strong> ${data.leave_note || '-'}</div>` : ''}
-                        </div>
-                    `,
-                    width: '50%',
-                    confirmButtonText: '<i class="bi bi-x-circle me-1"></i> ปิด',
-                    buttonsStyling: false,
-                    customClass: {
-                        confirmButton: 'btn',
-                        popup: 'rounded-4',
-                        header: 'border-0 pb-0',
-                        footer: 'border-0'
-                    },
-                    didOpen: () => {
-                        const btn = Swal.getConfirmButton();
-                        btn.style.cssText = 'background:#1a1a2e;color:#fff;border:none;border-radius:8px;padding:0.5rem 1.5rem;font-weight:600;';
-                    }
-                });
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: error.message,
-                    confirmButtonText: 'ตกลง'
-                });
+    function syncCareOther() {
+        const other = document.querySelector('#aeCareGrid input[data-care="other"]');
+        const input = byId('aeCareOther');
+        input.style.display = other && other.checked ? '' : 'none';
+        if (!other || !other.checked) input.value = '';
+    }
+
+    function collectHealth() {
+        const symptoms = {};
+        document.querySelectorAll('#aeSymptomsGrid input[data-symptom]:checked').forEach((el) => {
+            const code = el.dataset.symptom;
+            symptoms[code] = Array.from(
+                document.querySelectorAll(`#aeSymptomsGrid input[data-sub-of="${code}"]:checked`)
+            ).map((i) => i.value);
+        });
+        const careActions = Array.from(document.querySelectorAll('#aeCareGrid input[data-care]:checked'))
+            .map((el) => el.dataset.care);
+        return { symptoms, careActions };
+    }
+
+    function parseJsonField(value, fallback) {
+        if (value && typeof value === 'object') return value;
+        try {
+            const parsed = JSON.parse(value);
+            return parsed && typeof parsed === 'object' ? parsed : fallback;
+        } catch (e) {
+            return fallback;
+        }
+    }
+
+    const isTrue = (v) => v === true || v === 't' || v === '1' || v === 1;
+
+    function applyHealthToForm(data) {
+        document.querySelectorAll('#aeHealthSection input[type="checkbox"]').forEach((el) => { el.checked = false; });
+        document.querySelectorAll('#aeSymptomsGrid .sub-options').forEach((el) => { el.hidden = true; });
+
+        let symptoms = parseJsonField(data.symptoms, {});
+        if (Array.isArray(symptoms)) symptoms = {};
+
+        // ข้อมูลเก่าที่ยังไม่มี symptoms ให้ดึงจากช่อง boolean เดิม
+        if (Object.keys(symptoms).length === 0) {
+            if (isTrue(data.has_runny_nose)) symptoms.runny_nose = [];
+            if (isTrue(data.has_cough)) symptoms.cough = [];
+            if (isTrue(data.has_rash)) symptoms.rash = [];
+        }
+
+        Object.entries(symptoms).forEach(([code, subs]) => {
+            const parent = document.querySelector(`#aeSymptomsGrid input[data-symptom="${code}"]`);
+            if (!parent) return;
+            parent.checked = true;
+            syncSubOptions(code);
+            (Array.isArray(subs) ? subs : []).forEach((sub) => {
+                const chip = document.querySelector(`#aeSymptomsGrid input[data-sub-of="${code}"][value="${sub}"]`);
+                if (chip) chip.checked = true;
             });
+        });
+
+        let careActions = parseJsonField(data.care_actions, []);
+        if (!Array.isArray(careActions)) careActions = [];
+        careActions.forEach((code) => {
+            const el = document.querySelector(`#aeCareGrid input[data-care="${code}"]`);
+            if (el) el.checked = true;
+        });
+        syncCareOther();
+        byId('aeCareOther').value = data.care_other || '';
+
+        // "ตาแดง" ของข้อมูลเก่าไม่มีในรายการใหม่ จึงเก็บไว้ในช่องอาการอื่นๆ ไม่ให้หาย
+        let other = data.other_symptoms || '';
+        if (isTrue(data.has_red_eyes) && !other.includes('ตาแดง')) {
+            other = other ? `ตาแดง, ${other}` : 'ตาแดง';
+        }
+        byId('aeOtherSymptoms').value = other;
+        byId('aeTemperature').value = data.temperature ?? '';
+        byId('aeCaretaker').value = data.caretaker_name || '';
     }
 
-    // ฟังก์ชันแสดงฟอร์มแก้ไข
-    function showEditForm(student) {
-        let checkDate = '';
-        let checkOutTime = '';
-        
-        // ถ้ามีเวลาที่บันทึกไว้ ให้แปลงเป็นรูปแบบที่ input time รับได้
-        if (student.check_date) {
-            const date = new Date(student.check_date);
-            checkDate = date.toTimeString().slice(0, 8); // แปลงเป็น HH:mm:ss
+    function updateStatusVisibility() {
+        const status = document.querySelector('input[name="aeStatus"]:checked')?.value;
+        const present = status === 'present';
+        byId('aeTimeCard').style.display = present ? '' : 'none';
+        byId('aeHealthSection').style.display = present ? '' : 'none';
+        byId('aeLeaveCard').style.display = status === 'leave' ? '' : 'none';
+        byId('aeLateHint').style.display = present ? '' : 'none';
+    }
+
+    function getEditModal() {
+        if (!editModalInstance) {
+            editModalInstance = new bootstrap.Modal(byId('attendanceEditModal'), { backdrop: 'static', keyboard: true });
         }
-        
-        if (student.check_out_time) {
-            checkOutTime = student.check_out_time.slice(0, 8); // แปลงเป็น HH:mm:ss
+        return editModalInstance;
+    }
+
+    function openEditModal(data, isNew) {
+        editingIsNew = isNew;
+        byId('attendanceEditTitle').textContent = isNew ? 'บันทึกการเข้าเรียน' : 'แก้ไขข้อมูลการเข้าเรียน';
+
+        byId('aeRecordId').value = data.id || '';
+        byId('aeStudentIdInput').value = data.student_id || '';
+        byId('aeDateInput').value = data.attendance_date;
+
+        const name = fullName(data) || 'ไม่ระบุชื่อ';
+        const nickname = (data.nickname || '').trim();
+        const nickEl = byId('aeNickname');
+        nickEl.textContent = nickname ? 'น้อง' + nickname : '';
+        nickEl.style.display = nickname ? '' : 'none';
+        byId('aeFullname').textContent = name;
+        byId('aeStudentId').textContent = data.student_id || '-';
+        byId('aeClassroom').textContent = data.classroom || '-';
+        byId('aeDate').textContent = formatThaiDate(data.attendance_date);
+
+        const initial = (data.firstname_th || nickname || '-').charAt(0).toUpperCase();
+        const avatar = byId('aeAvatar');
+        avatar.innerHTML = '';
+        if (data.profile_image) {
+            const img = document.createElement('img');
+            img.src = data.profile_image;
+            img.alt = 'รูปนักเรียน';
+            img.onerror = () => { avatar.innerHTML = ''; avatar.textContent = initial; };
+            avatar.appendChild(img);
+        } else {
+            avatar.textContent = initial;
         }
 
+        // 'late' แสดงเป็นมาเรียน (ระบบคำนวณมาสายจากเวลาเอง)
+        const status = data.status === 'late' ? 'present' : (data.status || 'present');
+        const radio = document.querySelector(`input[name="aeStatus"][value="${status}"]`);
+        (radio || document.querySelector('input[name="aeStatus"][value="present"]')).checked = true;
+
+        byId('aeCheckIn').value = isNew ? inputTime(data.check_date) : inputTime(data.check_date);
+        byId('aeCheckOut').value = inputTime(data.check_out_time);
+        byId('aeLeaveNote').value = data.status === 'leave' ? (data.leave_note || '') : '';
+
+        applyHealthToForm(data);
+        updateStatusVisibility();
+        getEditModal().show();
+    }
+
+    function addAttendance(record) {
+        const now = new Date();
+        openEditModal({
+            id: null,
+            student_id: record.student_id,
+            prefix_th: record.prefix_th,
+            firstname_th: record.firstname_th,
+            lastname_th: record.lastname_th,
+            nickname: record.nickname,
+            profile_image: record.profile_image,
+            classroom: record.classroom,
+            status: 'present',
+            check_date: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:00`,
+            attendance_date: byId('date').value || todayString()
+        }, true);
+    }
+
+    async function editAttendance(id) {
+        const date = byId('date').value || todayString();
+        try {
+            const res = await fetch(`../include/function/get_attendance_detail.php?id=${encodeURIComponent(id)}&date=${date}`);
+            const response = await res.json();
+            if (response.status !== 'success') {
+                throw new Error(response.message || 'เกิดข้อผิดพลาดในการดึงข้อมูล');
+            }
+            openEditModal({ ...response.data, attendance_date: date }, false);
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message, confirmButtonText: 'ตกลง' });
+        }
+    }
+
+    async function saveAttendanceEdit() {
+        const status = document.querySelector('input[name="aeStatus"]:checked')?.value;
+        const studentId = byId('aeStudentIdInput').value;
+        const checkIn = byId('aeCheckIn').value;
+        const checkOut = byId('aeCheckOut').value;
+        const leaveNote = byId('aeLeaveNote').value.trim();
+        const temperature = byId('aeTemperature').value;
+        const caretaker = byId('aeCaretaker').value.trim();
+        const { symptoms, careActions } = collectHealth();
+        const careOther = careActions.includes('other') ? byId('aeCareOther').value.trim() : '';
+
+        const warn = (text, focusId) => {
+            Swal.fire({ icon: 'warning', title: text, confirmButtonColor: '#1e4db7', confirmButtonText: 'ตกลง' });
+            if (focusId) setTimeout(() => byId(focusId)?.focus(), 300);
+        };
+
+        if (!studentId) return warn('ไม่พบรหัสนักเรียน');
+        if (!status) return warn('กรุณาเลือกสถานะการมาเรียน');
+        if (status === 'present' && !checkIn) return warn('กรุณาระบุเวลามาเรียน', 'aeCheckIn');
+        if (status === 'present' && checkOut && checkIn && checkOut < checkIn) {
+            return warn('เวลากลับบ้านต้องไม่ก่อนเวลามาเรียน', 'aeCheckOut');
+        }
+        if (status === 'leave' && !leaveNote) return warn('กรุณาระบุหมายเหตุการลา', 'aeLeaveNote');
+        if (status === 'present') {
+            if (temperature !== '') {
+                const t = parseFloat(temperature);
+                if (isNaN(t) || t < 35 || t > 42) return warn('กรุณากรอกอุณหภูมิระหว่าง 35.0 - 42.0 °C', 'aeTemperature');
+            }
+            if (careActions.length > 0 && !caretaker) return warn('กรุณาระบุชื่อผู้ดูแล', 'aeCaretaker');
+        }
+
+        const payload = {
+            id: byId('aeRecordId').value,
+            student_id: studentId,
+            attendance_date: byId('aeDateInput').value,
+            status: status,
+            check_date: status === 'present' ? checkIn : '',
+            check_out_time: status === 'present' ? checkOut : '',
+            leave_note: status === 'leave' ? leaveNote : '',
+            temperature: status === 'present' ? temperature : '',
+            symptoms: status === 'present' ? symptoms : {},
+            other_symptoms: status === 'present' ? byId('aeOtherSymptoms').value.trim() : '',
+            care_actions: status === 'present' ? careActions : [],
+            care_other: status === 'present' ? careOther : '',
+            caretaker_name: status === 'present' ? caretaker : ''
+        };
+
+        const url = editingIsNew
+            ? '../include/process/save_attendance_record.php'
+            : '../include/process/update_attendance_record.php';
+
+        const btn = byId('aeSaveBtn');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> กำลังบันทึก...';
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            if (result.status !== 'success') {
+                throw new Error(result.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            }
+            getEditModal().hide();
+            Swal.fire({
+                icon: 'success',
+                title: editingIsNew ? 'บันทึกข้อมูลสำเร็จ' : 'แก้ไขข้อมูลสำเร็จ',
+                showConfirmButton: false,
+                timer: 1500
+            });
+            loadResults();
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message, confirmButtonText: 'ตกลง' });
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    }
+
+    // ===== ลบ =====
+    function deleteAttendance(id) {
         Swal.fire({
-            title: 'แก้ไขข้อมูลการเข้าเรียน',
-            html: `
-                <div class="mb-3">
-                    <label class="form-label">สถานะ</label>
-                    <select class="form-select" id="edit-status">
-                        <option value="present" ${student.status === 'present' ? 'selected' : ''}>มาเรียน</option>
-                        <option value="absent" ${student.status === 'absent' ? 'selected' : ''}>ไม่มาเรียน</option>
-                        <option value="leave" ${student.status === 'leave' ? 'selected' : ''}>ลา</option>
-                        <option value="late" ${student.status === 'late' ? 'selected' : ''}>มาสาย</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">เวลาเข้าเรียน</label>
-                    <input type="time" class="form-control" id="edit-check-date" step="1" value="${checkDate}">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">เวลากลับ</label>
-                    <input type="time" class="form-control" id="edit-check-out-time" step="1" value="${checkOutTime}">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">หมายเหตุ (กรณีลา)</label>
-                    <textarea class="form-control" id="edit-leave-note">${student.leave_note || ''}</textarea>
-                </div>
-            `,
+            title: 'ยืนยันการลบ',
+            text: 'คุณต้องการลบข้อมูลนี้ใช่หรือไม่?',
+            icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'บันทึก',
-            cancelButtonText: 'ยกเลิก',
-            preConfirm: () => {
-                return {
-                    id: student.id,
-                    student_id: student.student_id,
-                    status: document.getElementById('edit-status').value,
-                    check_date: document.getElementById('edit-check-date').value,
-                    check_out_time: document.getElementById('edit-check-out-time').value,
-                    leave_note: document.getElementById('edit-leave-note').value,
-                    attendance_date: student.check_date.split(' ')[0] // เก็บวันที่เดิมไว้
-                };
-            }
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'ใช่, ลบข้อมูล',
+            cancelButtonText: 'ยกเลิก'
         }).then((result) => {
-            if (result.isConfirmed) {
-                updateAttendance(result.value);
-            }
+            if (!result.isConfirmed) return;
+            fetch('../include/process/delete_attendance_record.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            })
+                .then((response) => response.json())
+                .then((res) => {
+                    if (res.status !== 'success') throw new Error(res.message || 'เกิดข้อผิดพลาดในการลบข้อมูล');
+                    Swal.fire({ icon: 'success', title: 'ลบข้อมูลสำเร็จ', showConfirmButton: false, timer: 1500 });
+                    loadResults();
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message, confirmButtonText: 'ตกลง' });
+                });
         });
     }
 
-    // อัพเดทการแสดงผลในตาราง
-    function updateTableRow(student) {
-        const row = document.querySelector(`tr[data-id="${student.id}"]`);
-        if (row) {
-            row.innerHTML = `
-                <td>${student.student_id}</td>
-                <td>${student.prefix_th}${student.firstname_th} ${student.lastname_th}</td>
-                <td>${student.classroom}</td>
-                <td>
-                    <span class="badge ${getStatusBadgeClass(student.status)}">
-                        ${getStatusText(student.status)}
-                    </span>
-                </td>
-                <td>${student.check_date ? new Date(student.check_date).toLocaleTimeString() : '-'}</td>
-                <td>${student.check_out_time || '-'}</td>
-                <td>${student.leave_note || '-'}</td>
-                <td>
-                    <button class="btn btn-warning btn-sm" onclick="showEditForm(${JSON.stringify(student)})">
-                        <i class="fas fa-edit"></i> แก้ไข
-                    </button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteAttendance(${student.id})">
-                        <i class="fas fa-trash"></i> ลบ
-                    </button>
-                </td>
-            `;
+    // ===== ดูรายละเอียด =====
+    function symptomsSummary(data) {
+        let symptoms = parseJsonField(data.symptoms, {});
+        if (Array.isArray(symptoms)) symptoms = {};
+        const items = [];
+
+        const entries = Object.entries(symptoms);
+        if (entries.length > 0) {
+            entries.forEach(([code, subs]) => {
+                const opt = SYMPTOM_OPTIONS.find((s) => s.code === code);
+                if (!opt) return;
+                const subLabels = (Array.isArray(subs) ? subs : []).map((sc) => {
+                    const sub = (opt.subs || []).find((x) => x.code === sc);
+                    return sub ? sub.label : sc;
+                });
+                items.push(subLabels.length ? `${opt.label} (${subLabels.join(', ')})` : opt.label);
+            });
+        } else {
+            if (isTrue(data.has_runny_nose)) items.push('น้ำมูก');
+            if (isTrue(data.has_cough)) items.push('ไอ');
+            if (isTrue(data.has_rash)) items.push('ผื่น');
+        }
+        if (isTrue(data.has_red_eyes)) items.push('ตาแดง');
+        if (data.other_symptoms) items.push(data.other_symptoms);
+        return items.length ? items.join(', ') : 'ไม่มีอาการ';
+    }
+
+    function careSummary(data) {
+        let actions = parseJsonField(data.care_actions, []);
+        if (!Array.isArray(actions)) actions = [];
+        const labels = actions.map((code) => {
+            const opt = CARE_OPTIONS.find((c) => c.code === code);
+            if (!opt) return code;
+            return code === 'other' && data.care_other ? `อื่นๆ: ${data.care_other}` : opt.label;
+        });
+        return labels.length ? labels.join(', ') : '-';
+    }
+
+    async function viewAttendanceDetail(id) {
+        try {
+            const res = await fetch(`../include/function/get_attendance_detail.php?id=${encodeURIComponent(id)}`);
+            const response = await res.json();
+            if (response.status !== 'success') {
+                throw new Error(response.message || 'เกิดข้อผิดพลาดในการดึงข้อมูล');
+            }
+            const data = response.data;
+            const key = data.status && STATUS_META[data.status] ? data.status : 'none';
+            const present = key === 'present' || key === 'late';
+            const nickname = (data.nickname || '').trim();
+            const pickupName = data.status_checkout === 'checked_out' ? (data.leave_note || '-') : '-';
+
+            const row = (label, value) => `<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;"><span style="color:#64748b;">${label}</span><strong style="color:#0f2460;text-align:right;">${value}</strong></div>`;
+
+            Swal.fire({
+                title: '<span style="font-size:1.25rem;font-weight:800;color:#0f2460;">รายละเอียดการเข้าเรียน</span>',
+                html: `
+                <div style="text-align:left;font-size:0.9rem;">
+                    <div style="background:#f0f4f8;border-radius:12px;padding:1rem;margin-bottom:0.75rem;display:flex;justify-content:space-between;gap:10px;align-items:center;">
+                        <div>
+                            ${nickname ? `<div style="font-size:1.4rem;font-weight:800;color:#0f2460;line-height:1.2;">น้อง${esc(nickname)}</div>` : ''}
+                            <div style="font-weight:600;color:#475569;">${esc(fullName(data))}</div>
+                            <div style="font-size:0.78rem;color:#64748b;">${esc(data.student_id)} | ${esc(data.child_group)} | ${esc(data.classroom)}</div>
+                            <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">${formatThaiDate(data.check_date)}</div>
+                        </div>
+                        <span class="badge ${STATUS_META[key].badge}" style="font-size:0.85rem;">${STATUS_META[key].text}</span>
+                    </div>
+                    ${present ? `
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0.75rem;margin-bottom:0.75rem;">
+                        <div style="background:#f0f4f8;border-radius:12px;padding:1rem;">
+                            <div style="font-weight:700;color:#0f2460;margin-bottom:6px;">🏫 เข้าเรียน</div>
+                            ${row('เวลา', formatTime(data.check_date))}
+                            ${row('อุณหภูมิ', data.temperature ? esc(data.temperature) + ' °C' : '-')}
+                            ${row('อาการ', esc(symptomsSummary(data)))}
+                            ${row('การดูแล', esc(careSummary(data)))}
+                            ${row('ผู้ดูแล', esc(data.caretaker_name || '-'))}
+                        </div>
+                        <div style="background:#f0f4f8;border-radius:12px;padding:1rem;">
+                            <div style="font-weight:700;color:#0f2460;margin-bottom:6px;">🏠 กลับบ้าน</div>
+                            ${row('เวลา', formatTime(data.check_out_time))}
+                            ${row('สถานะ', data.status_checkout === 'checked_out' ? 'กลับแล้ว' : 'ยังไม่กลับ')}
+                            ${row('ผู้รับ', esc(pickupName))}
+                        </div>
+                    </div>` : ''}
+                    ${key === 'leave' ? `<div style="background:#eff3ff;border-left:4px solid #1e4db7;border-radius:10px;padding:0.75rem 1rem;"><strong>หมายเหตุการลา:</strong> ${esc(data.leave_note || '-')}</div>` : ''}
+                </div>`,
+                width: 640,
+                confirmButtonText: '<i class="bi bi-x-circle me-1"></i> ปิด',
+                confirmButtonColor: '#0f2460'
+            });
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message, confirmButtonText: 'ตกลง' });
         }
     }
+
+    // ===== เริ่มต้นหน้า =====
+    document.addEventListener('DOMContentLoaded', async () => {
+        renderHealthOptions();
+
+        byId('aeSymptomsGrid').addEventListener('change', (e) => {
+            if (e.target.dataset.symptom) syncSubOptions(e.target.dataset.symptom);
+        });
+        byId('aeCareGrid').addEventListener('change', (e) => {
+            if (e.target.dataset.care === 'other') {
+                syncCareOther();
+                if (e.target.checked) byId('aeCareOther').focus();
+            }
+        });
+        document.querySelectorAll('input[name="aeStatus"]').forEach((r) => r.addEventListener('change', updateStatusVisibility));
+        byId('aeSaveBtn').addEventListener('click', saveAttendanceEdit);
+
+        // ตัวกรอง: เปลี่ยนแล้วค้นหาอัตโนมัติ
+        byId('date').addEventListener('change', loadResults);
+        byId('datePrev').addEventListener('click', () => shiftDate(-1));
+        byId('dateNext').addEventListener('click', () => shiftDate(1));
+        byId('dateToday').addEventListener('click', () => { byId('date').value = todayString(); loadResults(); });
+
+        if (IS_STUDENT) {
+            loadResults();
+            return;
+        }
+
+        byId('child_group').addEventListener('change', async () => { await loadClassrooms(); loadResults(); });
+        byId('classroom').addEventListener('change', loadResults);
+        byId('search').addEventListener('input', debounce(loadResults, 350));
+        byId('resetBtn').addEventListener('click', async () => {
+            byId('child_group').value = '';
+            byId('classroom').innerHTML = '<option value="">ทั้งหมด</option>';
+            byId('date').value = todayString();
+            byId('search').value = '';
+            statusFilter = 'all';
+            window.history.replaceState({}, '', window.location.pathname);
+            loadResults();
+        });
+
+        // รับค่าตัวกรองจาก URL (ถ้ามี)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('child_group')) {
+            byId('child_group').value = urlParams.get('child_group');
+            await loadClassrooms(urlParams.get('classroom') || '');
+        }
+        if (urlParams.get('date')) byId('date').value = urlParams.get('date');
+        if (urlParams.get('search')) byId('search').value = urlParams.get('search');
+
+        loadResults();
+    });
 
     // เพิ่มฟังก์ชันสำหรับ Export
     function exportToExcel() {
@@ -1091,5 +1813,3 @@ if (isset($_SESSION['user_id'])) {
             .catch(error => console.error('Error:', error));
     }
 </script>
-
-

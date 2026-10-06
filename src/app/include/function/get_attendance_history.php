@@ -7,7 +7,7 @@ try {
 
     $sql = "SELECT a.id, a.*, 
        c.studentid as student_id, 
-       c.prefix_th, c.firstname_th, c.lastname_th, c.nickname,
+       c.prefix_th, c.firstname_th, c.lastname_th, c.nickname, c.profile_image,
        c.child_group, c.classroom, a.is_recorded,
        COALESCE(CASE 
             WHEN a.status_checkout = 'checked_out' THEN 'กลับแล้ว'
@@ -57,7 +57,7 @@ WHERE 1=1
     }
 
     if (!empty($_GET['search'])) {
-        $sql .= " AND (c.firstname_th LIKE :search OR c.lastname_th LIKE :search OR c.studentid LIKE :search)";
+        $sql .= " AND (c.firstname_th LIKE :search OR c.lastname_th LIKE :search OR c.studentid LIKE :search OR c.nickname LIKE :search)";
         $params[':search'] = '%' . $_GET['search'] . '%';
     }
 

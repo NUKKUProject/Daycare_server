@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__ . '/../../../config/database.php');
+require_once(__DIR__ . '/../function/health_data.php');
 
 try {
     $pdo = getDatabaseConnection();
@@ -71,8 +72,21 @@ try {
         $check_out_time = sprintf('%02d:%02d:00', $hours, $minutes);
     }
 
+    // ข้อมูลสุขภาพ: เก็บเฉพาะกรณีมาเรียน/มาสาย ถ้าเป็นลาหรือไม่มาเรียนให้ล้างทิ้ง
+    $health = parse_health_payload($data, !in_array($data['status'], ['present', 'late'], true));
+
     // SQL query สำหรับอัพเดท
-    $sql = "UPDATE attendance SET 
+    $sql = "UPDATE attendance SET
+            temperature = :temperature,
+            has_runny_nose = :has_runny_nose::boolean,
+            has_cough = :has_cough::boolean,
+            has_rash = :has_rash::boolean,
+            has_red_eyes = :has_red_eyes::boolean,
+            other_symptoms = :other_symptoms,
+            symptoms = :symptoms::jsonb,
+            care_actions = :care_actions::jsonb,
+            care_other = :care_other,
+            caretaker_name = :caretaker_name,
             status = :status::varchar,
             check_date = CASE 
                 WHEN :status IN ('present', 'late') 
@@ -107,7 +121,17 @@ try {
         ':full_timestamp' => $full_timestamp,
         ':check_out_time' => $check_out_time,
         ':leave_note' => $data['leave_note'] ?? null,
-        ':attendance_date' => $data['attendance_date']
+        ':attendance_date' => $data['attendance_date'],
+        ':temperature' => $health['temperature'],
+        ':has_runny_nose' => $health['has_runny_nose'],
+        ':has_cough' => $health['has_cough'],
+        ':has_rash' => $health['has_rash'],
+        ':has_red_eyes' => $health['has_red_eyes'],
+        ':other_symptoms' => $health['other_symptoms'],
+        ':symptoms' => $health['symptoms_json'],
+        ':care_actions' => $health['care_actions_json'],
+        ':care_other' => $health['care_other'],
+        ':caretaker_name' => $health['caretaker_name']
     ];
 
     // Debug logs

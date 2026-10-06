@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__ . '/../../../config/database.php');
+require_once(__DIR__ . '/../function/health_data.php');
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -22,51 +23,16 @@ try {
 $student_id = $data['student_id'];
 $attendance_id = isset($data['attendance_id']) ? intval($data['attendance_id']) : null;
 $temperature = isset($data['temperature']) && $data['temperature'] !== '' ? floatval($data['temperature']) : null;
-$other_symptoms = !empty($data['other_symptoms']) ? $data['other_symptoms'] : null;
-
-// อาการที่พบ: รับเฉพาะรหัสที่กำหนดไว้ พร้อมตัวเลือกย่อยที่อนุญาต
-$allowed_symptoms = [
-    'runny_nose' => ['clear', 'yellow', 'green'],
-    'cough' => ['dry', 'phlegm'],
-    'heat_in' => [],
-    'gum_swelling' => [],
-    'red_throat' => [],
-    'mouth_blisters' => [],
-    'mosquito_bites' => [],
-    'hfmd' => [],
-    'wound' => [],
-    'rash' => [],
-    'eye_discharge' => ['yellow', 'green'],
-];
-$allowed_care = ['wash_hands', 'give_medicine', 'apply_medicine', 'pcn123', 'other'];
-
-$symptoms = [];
-if (isset($data['symptoms']) && is_array($data['symptoms'])) {
-    foreach ($data['symptoms'] as $code => $subs) {
-        if (!isset($allowed_symptoms[$code])) {
-            continue;
-        }
-        $subs = is_array($subs) ? $subs : [];
-        $symptoms[$code] = array_values(array_intersect($allowed_symptoms[$code], $subs));
-    }
-}
-
-$care_actions = [];
-if (isset($data['care_actions']) && is_array($data['care_actions'])) {
-    $care_actions = array_values(array_intersect($allowed_care, $data['care_actions']));
-}
-$care_other = in_array('other', $care_actions, true) && !empty($data['care_other'])
-    ? mb_substr(trim($data['care_other']), 0, 200) : null;
-$caretaker_name = !empty($data['caretaker_name'])
-    ? mb_substr(trim($data['caretaker_name']), 0, 150) : null;
-
-// คอลัมน์ boolean เดิม เติมจากอาการใหม่เพื่อให้หน้าประวัติเดิมใช้งานได้
-$has_runny_nose = isset($symptoms['runny_nose']) ? 't' : 'f';
-$has_cough = isset($symptoms['cough']) ? 't' : 'f';
-$has_rash = isset($symptoms['rash']) ? 't' : 'f';
-$has_red_eyes = isset($symptoms['red_eyes']) ? 't' : 'f';
-$symptoms_json = json_encode((object)$symptoms, JSON_UNESCAPED_UNICODE);
-$care_actions_json = json_encode($care_actions, JSON_UNESCAPED_UNICODE);
+$health = parse_health_payload($data);
+$other_symptoms = $health['other_symptoms'];
+$care_other = $health['care_other'];
+$caretaker_name = $health['caretaker_name'];
+$has_runny_nose = $health['has_runny_nose'];
+$has_cough = $health['has_cough'];
+$has_rash = $health['has_rash'];
+$has_red_eyes = $health['has_red_eyes'];
+$symptoms_json = $health['symptoms_json'];
+$care_actions_json = $health['care_actions_json'];
 
 // Determine attendance status based on current time (same logic as attendance-submit.php)
 function isLate($time) {

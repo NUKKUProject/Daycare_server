@@ -17,6 +17,8 @@ try {
             c.prefix_th,
             c.firstname_th,
             c.lastname_th,
+            c.nickname,
+            c.profile_image,
             c.child_group,
             c.classroom,
             CASE 
