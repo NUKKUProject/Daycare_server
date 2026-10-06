@@ -68,6 +68,14 @@ $viewTabs = [
         'color' => 'blue',
     ],
     [
+        'id' => 'daily_notebook',
+        'icon' => 'bi bi-journal-text',
+        'title' => 'สมุดสื่อสารประจำวัน',
+        'description' => 'ส่งข้อมูลที่บ้านถึงครู และดูบันทึกของครูที่ศูนย์',
+        'color' => 'orange',
+        'href' => 'daily_notebook.php',
+    ],
+    [
         'id' => 'vaccine',
         'icon' => 'fa-solid fa-syringe',
         'title' => 'วัคซีน',

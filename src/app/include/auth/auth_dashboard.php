@@ -294,6 +294,14 @@ function isCurrentPage($path)
                             </a>
                         </li>
 
+                        <li class="nav-item">
+                            <a href="/app/views/student/daily_notebook.php"
+                                class="nav-link <?php echo isCurrentPage('daily_notebook.php') ? 'active' : ''; ?>">
+                                <i class="bi bi-journal-text" style="font-size: 23px;"></i>
+                                สมุดสื่อสารประจำวัน
+                            </a>
+                        </li>
+
                         <!-- <li class="nav-item">
                             <a class="nav-link" href="/app/views/attendance_history.php">
                                 <i class="bi bi-archive-fill" style="font-size: 23px;"></i>

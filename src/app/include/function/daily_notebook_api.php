@@ -309,6 +309,27 @@ try {
                 'attendance' => $att,
             ]]);
 
+        case 'history':
+            // ประวัติสมุดย้อนหลังของเด็ก 1 คน (staff หรือผู้ปกครองเฉพาะลูกตัวเอง)
+            $sid = $_GET['student_id'] ?? '';
+            if ($sid === '') {
+                fail('ข้อมูลไม่ครบถ้วน');
+            }
+            if (!$isStaff && $sid !== $username) {
+                fail('ไม่มีสิทธิ์ในการดำเนินการ', 403);
+            }
+            $days = max(1, min(120, (int)($_GET['days'] ?? 30)));
+            $stmt = $pdo->prepare("
+                SELECT report_date, parent_mood, teacher_mood,
+                       (parent_updated_at IS NOT NULL) AS parent_filled,
+                       (teacher_updated_at IS NOT NULL) AS teacher_filled
+                FROM daily_reports
+                WHERE student_id = :s AND report_date >= CURRENT_DATE - CAST(:n AS INTEGER)
+                ORDER BY report_date DESC
+            ");
+            $stmt->execute([':s' => $sid, ':n' => $days]);
+            respond(['status' => 'success', 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+
         case 'save_report':
             $sid = (string)($input['student_id'] ?? '');
             $date = $input['date'] ?? '';
