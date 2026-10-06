@@ -271,21 +271,39 @@ if (isset($_SESSION['user_id'])) {
 
     /* มือถือ: ล็อกคอลัมน์ชื่อเล่นไว้ด้านซ้ายตอนเลื่อนตารางไปทางขวา */
     @media (max-width: 768px) {
+        /* ใช้ separate เพื่อให้เส้นขอบของเซลล์ที่ล็อกไม่หาย */
+        .history-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
         .history-table th.nick-col,
         .history-table td.nick-col {
             position: sticky;
             left: 0;
-            box-shadow: 3px 0 5px -2px rgba(15, 36, 96, 0.18);
         }
 
         .history-table td.nick-col {
             z-index: 1;
-            background: #fff;
+            background-color: #fff;
         }
 
         .history-table th.nick-col {
             z-index: 3;
-            background: #eff3ff;
+            background-color: #eff3ff;
+        }
+
+        /* เงาจางๆ ขอบขวา บอกว่าคอลัมน์นี้ถูกล็อก (ไม่ทับสไตล์เดิมของเซลล์) */
+        .history-table th.nick-col::after,
+        .history-table td.nick-col::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: -6px;
+            width: 6px;
+            pointer-events: none;
+            background: linear-gradient(to right, rgba(15, 36, 96, 0.12), transparent);
         }
     }
 

@@ -622,16 +622,28 @@ tbody tr:hover {
     table td.nick-col {
       position: sticky;
       left: 0;
-      box-shadow: 3px 0 5px -2px rgba(15, 36, 96, 0.18);
     }
 
     table td.nick-col {
       z-index: 1;
-      background: #fff;
+      background-color: #fff;
     }
 
     table th.nick-col {
       z-index: 3;
+    }
+
+    /* เงาจางๆ ขอบขวา บอกว่าคอลัมน์นี้ถูกล็อก (ไม่ทับสไตล์เดิมของเซลล์) */
+    table th.nick-col::after,
+    table td.nick-col::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: -6px;
+      width: 6px;
+      pointer-events: none;
+      background: linear-gradient(to right, rgba(15, 36, 96, 0.12), transparent);
     }
   }
 
