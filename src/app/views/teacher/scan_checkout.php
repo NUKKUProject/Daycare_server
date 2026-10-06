@@ -645,6 +645,19 @@ tbody tr:hover {
       pointer-events: none;
       background: linear-gradient(to right, rgba(15, 36, 96, 0.12), transparent);
     }
+
+    /* เงาด้านซ้าย */
+    table th.nick-col::before,
+    table td.nick-col::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -6px;
+      width: 6px;
+      pointer-events: none;
+      background: linear-gradient(to left, rgba(15, 36, 96, 0.12), transparent);
+    }
   }
 
   /* Sticky table header while scrolling */

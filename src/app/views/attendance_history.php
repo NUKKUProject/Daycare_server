@@ -305,6 +305,19 @@ if (isset($_SESSION['user_id'])) {
             pointer-events: none;
             background: linear-gradient(to right, rgba(15, 36, 96, 0.12), transparent);
         }
+
+        /* เงาด้านซ้าย */
+        .history-table th.nick-col::before,
+        .history-table td.nick-col::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: -6px;
+            width: 6px;
+            pointer-events: none;
+            background: linear-gradient(to left, rgba(15, 36, 96, 0.12), transparent);
+        }
     }
 
     .action-btns {
