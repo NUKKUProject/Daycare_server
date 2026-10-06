@@ -106,11 +106,6 @@ textarea.vx-input { height:auto; }
 .vx-drop-title { font-weight:800; }
 .vx-drop-hint { font-size:.75rem; color:#64748b; }
 .vx-file { position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; }
-.vx-more > summary { cursor:pointer; list-style:none; }
-.vx-more > summary::-webkit-details-marker { display:none; }
-.vx-more > summary::after { content:"▾"; margin-left:auto; color:#94a3b8; transition:transform .2s ease; }
-.vx-more[open] > summary::after { transform:rotate(180deg); }
-.vx-more[open] > summary { margin-bottom:.8rem !important; }
 .vx-footer { background:#f0f4f8; border-top:1px solid #e2e8f0; padding:.9rem 1.25rem; gap:.6rem; }
 .vx-btn-cancel { border-radius:12px; padding:.6rem 1.3rem; font-weight:700; border:2px solid #e2e8f0; color:#64748b; background:#fff; }
 .vx-btn-cancel:hover { background:#f1f5f9; border-color:#cbd5e1; color:#334155; }
@@ -1580,9 +1575,9 @@ textarea.vx-input { height:auto; }
               </div>
 
               <!-- 4. ข้อมูลเพิ่มเติม (พับเก็บ) -->
-              <details class="vx-card vx-more" id="vaccineMoreInfo">
-                <summary class="vx-section mb-0"><span class="vx-step">4</span> ข้อมูลเพิ่มเติม <span class="vx-opt">(Lot, วันนัด, หมายเหตุ)</span></summary>
-                <div class="row g-3 mt-1">
+              <div class="vx-card" id="vaccineMoreInfo">
+                <div class="vx-section"><span class="vx-step">4</span> ข้อมูลเพิ่มเติม <span class="vx-opt">(ไม่บังคับ)</span></div>
+                <div class="row g-3">
                   <div class="col-12 col-sm-6">
                     <label class="vx-label" for="lotNumber">Lot No.</label>
                     <input type="text" class="form-control vx-input" id="lotNumber" name="lot_number">
@@ -1596,7 +1591,7 @@ textarea.vx-input { height:auto; }
                     <textarea class="form-control vx-input" id="vaccineNote" name="vaccine_note" rows="3"></textarea>
                   </div>
                 </div>
-              </details>
+              </div>
             </form>
           </div>
 
@@ -3636,9 +3631,7 @@ textarea.vx-input { height:auto; }
     document.getElementById('vaccineListId').value = vaccineListId;
     document.getElementById('vaccineId').value = ''; // เคลียร์ค่าสำหรับการเพิ่มใหม่
     resetVaccineImageUI('');
-    document.getElementById('vaccineForm').classList.remove('was-validated');
-    document.getElementById('vaccineMoreInfo').open = false;
-    document.getElementById('vaccineDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('vaccineForm').classList.remove('was-validated');    document.getElementById('vaccineDate').value = new Date().toISOString().split('T')[0];
 
     // ดึงข้อมูลรายการวัคซีน
     fetch('../../include/process/get_vaccinelist_detail.php?id=' + vaccineListId + '&student_id=' + encodeURIComponent(studentId))
@@ -3678,10 +3671,7 @@ textarea.vx-input { height:auto; }
           document.getElementById('nextAppointment').value = data.next_appointment || '';
           document.getElementById('vaccineNote').value = data.vaccine_note || '';
           resetVaccineImageUI(data.image_path || '');
-          document.getElementById('vaccineForm').classList.remove('was-validated');
-          // ถ้ามีข้อมูลเพิ่มเติมอยู่แล้ว ให้กางส่วนนี้ออกมาให้เห็น
-          document.getElementById('vaccineMoreInfo').open = !!(data.lot_number || data.next_appointment || data.vaccine_note);
-          new bootstrap.Modal(document.getElementById('vaccineModal')).show();
+          document.getElementById('vaccineForm').classList.remove('was-validated');          new bootstrap.Modal(document.getElementById('vaccineModal')).show();
         } else {
           showToast('error', 'ไม่สามารถโหลดข้อมูลได้');
         }
