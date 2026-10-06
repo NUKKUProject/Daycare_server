@@ -2294,7 +2294,8 @@ textarea.vx-input { height:auto; }
   function readProfileField(el) {
     if (el.tagName === 'SELECT') {
       const opt = el.options[el.selectedIndex];
-      return { value: el.value, text: opt ? opt.text.trim() : '' };
+      // ตัวเลือกว่าง (เช่น "เลือกกรุ๊ปเลือด") ถือว่ายังไม่มีข้อมูล
+      return { value: el.value, text: el.value === '' ? '' : (opt ? opt.text.trim() : '') };
     }
     return { value: el.value.trim(), text: el.value.trim() };
   }
@@ -2314,16 +2315,81 @@ textarea.vx-input { height:auto; }
       const before = profileSnapshot[name];
       const after = readProfileField(el);
       if (before.value !== after.value) {
-        changes.push({ label: PROFILE_FIELD_LABELS[name], before: before.text, after: after.text });
+        changes.push({ key: name, label: PROFILE_FIELD_LABELS[name], before: before.text, after: after.text });
       }
     });
     Object.keys(PROFILE_IMAGE_LABELS).forEach(id => {
       const input = document.getElementById(id);
       if (input && input.files && input.files.length > 0) {
-        changes.push({ label: PROFILE_IMAGE_LABELS[id], before: 'รูปเดิม', after: 'เปลี่ยนเป็น ' + input.files[0].name });
+        changes.push({ key: 'img:' + id, label: PROFILE_IMAGE_LABELS[id], before: 'รูปเดิม', after: 'เปลี่ยนเป็น ' + input.files[0].name });
       }
     });
     return changes;
+  }
+
+  // จัดกลุ่มรายการที่แก้ไขให้อ่านง่าย (ชื่อกลุ่ม, ไอคอน, รายการในกลุ่ม)
+  const PROFILE_GROUPS = [
+    { title: 'ข้อมูลชั้นเรียน', icon: 'bi-mortarboard-fill', keys: ['studentid', 'academic_year', 'child_group', 'classroom'] },
+    { title: 'ชื่อ-นามสกุล', icon: 'bi-person-badge-fill', keys: ['prefix_th', 'firstname_th', 'lastname_th', 'nickname', 'prefix_en', 'firstname_en', 'lastname_en'] },
+    { title: 'ข้อมูลส่วนตัว', icon: 'bi-person-fill', keys: ['birthday', 'id_card', 'sex', 'race', 'nationality', 'religion'] },
+    { title: 'สุขภาพ', icon: 'bi-heart-fill', keys: ['blood_type', 'height', 'weight', 'congenital_disease'] },
+    { title: 'บิดา', icon: 'bi-person-fill', keys: ['father_first_name', 'father_last_name', 'father_phone', 'father_phone_backup'] },
+    { title: 'มารดา', icon: 'bi-person-fill', keys: ['mother_first_name', 'mother_last_name', 'mother_phone', 'mother_phone_backup'] },
+    { title: 'ผู้ปกครอง/ผู้ดูแล', icon: 'bi-people-fill', keys: ['relative_first_name', 'relative_last_name', 'relative_phone', 'relative_phone_backup'] },
+    { title: 'ที่อยู่', icon: 'bi-geo-alt-fill', keys: ['address', 'district', 'amphoe', 'province', 'zipcode'] },
+    { title: 'ผู้ติดต่อฉุกเฉิน', icon: 'bi-telephone-fill', keys: ['emergency_contact', 'emergency_phone', 'emergency_relation'] },
+    { title: 'รูปภาพ', icon: 'bi-image-fill', keys: ['img:profileImageInput', 'img:fatherImageInput', 'img:motherImageInput'] }
+  ];
+
+  function changeType(c) {
+    if (c.key.startsWith('img:')) return 'edit';
+    if (c.before === '') return 'add';
+    if (c.after === '') return 'remove';
+    return 'edit';
+  }
+
+  function buildChangeSummaryHtml(changes) {
+    const chip = {
+      add: ['เพิ่มใหม่', '#dcfce7', '#15803d'],
+      edit: ['แก้ไข', '#fef3c7', '#b45309'],
+      remove: ['ลบออก', '#fee2e2', '#b91c1c']
+    };
+    const counts = { add: 0, edit: 0, remove: 0 };
+    changes.forEach(c => { counts[changeType(c)]++; });
+
+    const pill = (type, n) => n === 0 ? '' :
+      `<span style="background:${chip[type][1]};color:${chip[type][2]};border-radius:20px;padding:2px 12px;font-size:.8rem;font-weight:700;">${chip[type][0]} ${n}</span>`;
+
+    let html = `<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:6px;">
+      ${pill('add', counts.add)}${pill('edit', counts.edit)}${pill('remove', counts.remove)}</div>`;
+
+    html += '<div style="max-height:52vh;overflow:auto;text-align:left;padding-right:4px;">';
+    PROFILE_GROUPS.forEach(group => {
+      const items = changes.filter(c => group.keys.includes(c.key));
+      if (items.length === 0) return;
+
+      html += `<div style="background:#eff3ff;color:#0f2460;font-weight:800;padding:7px 12px;border-radius:10px;margin:12px 0 2px;display:flex;align-items:center;gap:8px;">
+        <i class="bi ${group.icon}"></i><span>${escapeHtml(group.title)}</span>
+        <span style="margin-left:auto;font-weight:600;font-size:.78rem;color:#64748b;">${items.length} รายการ</span>
+      </div>`;
+
+      items.forEach(c => {
+        const type = changeType(c);
+        // ในกลุ่มบิดา/มารดา/ผู้ปกครอง ตัดคำนำหน้า "บิดา: " ออกเพราะมีหัวกลุ่มบอกอยู่แล้ว
+        const label = c.label.includes(': ') ? c.label.split(': ').pop() : c.label;
+        const before = c.before === '' ? '' : escapeHtml(c.before);
+        const after = c.after === '' ? '<span style="color:#94a3b8;">(ว่าง)</span>' : escapeHtml(c.after);
+        html += `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:9px 12px;border-bottom:1px solid #eef2f7;">
+          <div style="flex:0 0 140px;font-weight:700;color:#334155;">${escapeHtml(label)}</div>
+          <div style="flex:1 1 130px;color:#64748b;word-break:break-word;">${before}</div>
+          <div style="color:#94a3b8;"><i class="bi bi-arrow-right"></i></div>
+          <div style="flex:1 1 130px;color:#15803d;font-weight:700;word-break:break-word;">${after}</div>
+          <span style="flex:0 0 auto;background:${chip[type][1]};color:${chip[type][2]};border-radius:20px;padding:1px 10px;font-size:.72rem;font-weight:700;">${chip[type][0]}</span>
+        </div>`;
+      });
+    });
+    html += '</div>';
+    return html;
   }
 
   let profileSaveConfirmed = false;
@@ -2347,34 +2413,13 @@ textarea.vx-input { height:auto; }
       return;
     }
 
-    // ข้อมูลเดิม: ถ้าไม่เคยมีข้อมูลให้ปล่อยว่าง  ข้อมูลใหม่: ถ้าลบจนว่างให้แสดง "(ว่าง)"
-    const showBefore = v => v === '' || v == null ? '' : escapeHtml(v);
-    const showAfter = v => v === '' || v == null ? '<span style="color:#94a3b8;">(ว่าง)</span>' : escapeHtml(v);
-    const rows = changes.map(c => `
-      <tr>
-        <td style="padding:8px 10px;font-weight:700;color:#0f2460;white-space:nowrap;vertical-align:top;">${escapeHtml(c.label)}</td>
-        <td style="padding:8px 10px;color:#64748b;word-break:break-word;vertical-align:top;">${showBefore(c.before)}</td>
-        <td style="padding:8px 10px;color:#15803d;font-weight:600;word-break:break-word;vertical-align:top;">${showAfter(c.after)}</td>
-      </tr>`).join('');
-
     Swal.fire({
       icon: 'question',
       title: `ยืนยันการบันทึก (${changes.length} รายการ)`,
       html: `
-        <div style="text-align:left;font-size:.9rem;margin-bottom:8px;">ตรวจสอบการเปลี่ยนแปลงก่อนบันทึก</div>
-        <div style="max-height:46vh;overflow:auto;border:1px solid #e2e8f0;border-radius:10px;">
-          <table style="width:100%;border-collapse:collapse;font-size:.88rem;text-align:left;">
-            <thead>
-              <tr style="background:#eff3ff;color:#0f2460;">
-                <th style="padding:8px 10px;">รายการ</th>
-                <th style="padding:8px 10px;">ข้อมูลเดิม</th>
-                <th style="padding:8px 10px;">ข้อมูลใหม่</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>`,
-      width: 680,
+        <div style="font-size:.9rem;color:#64748b;margin-bottom:6px;">ตรวจสอบการเปลี่ยนแปลงก่อนบันทึก</div>
+        ${buildChangeSummaryHtml(changes)}`,
+      width: 700,
       showCancelButton: true,
       confirmButtonText: 'ยืนยันบันทึก',
       cancelButtonText: 'กลับไปแก้ไข',
