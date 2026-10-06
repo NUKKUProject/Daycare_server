@@ -11,7 +11,34 @@ $studentid = $_SESSION['username'] ?? '';
 ?>
 
 <style>
-    .pn-wrap { max-width: 820px; margin: 0 auto; }
+    .pn-wrap { max-width: 1100px; margin: 0 auto; }
+
+    /* แท็บสลับส่วน (จอเล็ก) / แสดงสองคอลัมน์ (จอใหญ่) */
+    .pn-tabs {
+        position: sticky; top: 62px; z-index: 5; display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem;
+        background: #f0f4f8; padding: .4rem 0 .6rem; margin-bottom: .4rem;
+    }
+    .pn-tab {
+        position: relative; border: 2px solid #e2e8f0; background: #fff; color: #475569; border-radius: 14px;
+        padding: .6rem .3rem; font-weight: 800; font-size: .88rem; line-height: 1.25;
+    }
+    .pn-tab.active { border-color: #1e4db7; background: linear-gradient(135deg, #0f2460, #1e4db7); color: #fff; }
+    .pn-tab .dot {
+        display: none; position: absolute; top: 6px; right: 8px; width: 9px; height: 9px; border-radius: 50%;
+        background: #22c55e; border: 2px solid #fff;
+    }
+    .pn-pane { display: none; }
+    .pn-pane.active { display: block; }
+    .save-bar {
+        position: sticky; bottom: 0; z-index: 4; background: linear-gradient(to top, #fff 75%, rgba(255, 255, 255, 0));
+        padding: .9rem 0 .2rem; margin-top: .5rem;
+    }
+    @media (min-width: 992px) {
+        .pn-tabs { display: none; }
+        .pn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+        .pn-pane { display: block !important; }
+        .pn-pane-history { grid-column: 1 / -1; }
+    }
 
     .pn-header {
         background: linear-gradient(135deg, #0f2460 0%, #1a3a8f 60%, #1e4db7 100%);
@@ -177,12 +204,23 @@ $studentid = $_SESSION['username'] ?? '';
             <div class="pn-lock" id="lockNote" style="display:none;"><i class="bi bi-lock-fill me-1"></i> ผู้ปกครองแก้ไขได้เฉพาะสมุดของวันนี้ (วันอื่นดูได้อย่างเดียว)</div>
         </div>
 
+        <div class="pn-tabs" id="pnTabs">
+            <button type="button" class="pn-tab" data-pane="teacher">🏫 จากคุณครู<span class="dot" id="dotTeacher"></span></button>
+            <button type="button" class="pn-tab" data-pane="parent">🏠 ที่บ้าน (กรอก)<span class="dot" id="dotParent"></span></button>
+            <button type="button" class="pn-tab" data-pane="history">🗓️ ย้อนหลัง</button>
+        </div>
+
+        <div class="pn-grid">
+        <div class="pn-pane" data-pane="teacher">
         <!-- ข้อมูลจากครู -->
         <div class="pn-card">
             <div class="pn-card-head">🏫 ข้อมูลจากคุณครู (ที่ศูนย์) <span class="stamp" id="teacherStamp"></span></div>
             <div class="pn-card-body" id="teacherBody"></div>
         </div>
 
+        </div>
+
+        <div class="pn-pane" data-pane="parent">
         <!-- ข้อมูลจากผู้ปกครอง -->
         <div class="pn-card">
             <div class="pn-card-head">🏠 ข้อมูลจากผู้ปกครอง (ที่บ้าน) <span class="stamp" id="parentStamp"></span></div>
@@ -259,14 +297,19 @@ $studentid = $_SESSION['username'] ?? '';
                     </div>
                 </fieldset>
 
-                <button type="button" class="btn btn-save-note mt-3" id="btnSave"><i class="bi bi-check-circle me-1"></i> บันทึกสมุดของวันนี้</button>
+                <div class="save-bar"><button type="button" class="btn btn-save-note" id="btnSave"><i class="bi bi-check-circle me-1"></i> บันทึกสมุดของวันนี้</button></div>
             </div>
         </div>
 
+        </div>
+
+        <div class="pn-pane pn-pane-history" data-pane="history">
         <!-- ย้อนหลัง -->
         <div class="pn-card">
             <div class="pn-card-head">🗓️ ย้อนหลัง 30 วัน</div>
             <div id="histBody"></div>
+        </div>
+        </div>
         </div>
     </div>
 </main>
@@ -285,6 +328,13 @@ $studentid = $_SESSION['username'] ?? '';
 
     let canEdit = false;
     let menu = {};
+    let paneInit = false;
+
+    // สลับส่วนที่แสดง (เฉพาะจอเล็ก จอใหญ่แสดงสองคอลัมน์ด้วย CSS)
+    function setPane(name) {
+        document.querySelectorAll('.pn-pane').forEach((p) => p.classList.toggle('active', p.dataset.pane === name));
+        document.querySelectorAll('.pn-tab').forEach((b) => b.classList.toggle('active', b.dataset.pane === name));
+    }
 
     const byId = (id) => document.getElementById(id);
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({
@@ -374,6 +424,7 @@ $studentid = $_SESSION['username'] ?? '';
             }
             byId('teacherBody').innerHTML = html;
             byId('teacherStamp').textContent = '';
+            byId('dotTeacher').style.display = 'none';
             return;
         }
 
@@ -396,6 +447,7 @@ $studentid = $_SESSION['username'] ?? '';
 
         byId('teacherBody').innerHTML = html;
         byId('teacherStamp').textContent = 'บันทึกล่าสุด ' + thaiDateTime(r.teacher_updated_at);
+        byId('dotTeacher').style.display = 'block';
     }
 
     // ===== ฝั่งผู้ปกครอง =====
@@ -418,6 +470,7 @@ $studentid = $_SESSION['username'] ?? '';
         byId('dropOffHint').textContent = !saved && att && att.checkin_time ? '(เติมจากเวลาเช็คชื่อเข้า)' : '';
 
         byId('parentStamp').textContent = r.parent_updated_at ? 'บันทึกล่าสุด ' + thaiDateTime(r.parent_updated_at) : 'ยังไม่ได้บันทึก';
+        byId('dotParent').style.display = r.parent_updated_at ? 'block' : 'none';
     }
 
     function collectParent() {
@@ -495,6 +548,7 @@ $studentid = $_SESSION['username'] ?? '';
     function applyEditState() {
         const date = byId('pDate').value;
         canEdit = date === todayStr();
+        if (paneInit) setPane(canEdit ? 'parent' : 'teacher');
         byId('parentFields').disabled = !canEdit;
         byId('btnSave').style.display = canEdit ? '' : 'none';
         byId('copyRow').style.display = canEdit ? '' : 'none';
@@ -522,6 +576,7 @@ $studentid = $_SESSION['username'] ?? '';
             } else { av.textContent = initial; }
 
             menu = data.menu || {};
+            if (!paneInit) { paneInit = true; setPane(canEdit ? 'parent' : 'teacher'); }
             renderTeacher(data.report);
             fillParent(data.report, data.attendance);
             NotebookWidgets.refresh(byId('parentFields'));
@@ -589,6 +644,10 @@ $studentid = $_SESSION['username'] ?? '';
         byId('btnPrint').addEventListener('click', () => {
             window.open(`../daily_notebook_print.php?date=${encodeURIComponent(byId('pDate').value)}`, '_blank');
         });
+        byId('pnTabs').addEventListener('click', (e) => {
+            const b = e.target.closest('.pn-tab');
+            if (b) { setPane(b.dataset.pane); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        });
         byId('btnSave').addEventListener('click', saveParent);
         byId('btnCopyYesterday').addEventListener('click', copyYesterday);
         byId('draftClear').addEventListener('click', (e) => { e.preventDefault(); clearDraft(); loadReport(); });
@@ -596,7 +655,12 @@ $studentid = $_SESSION['username'] ?? '';
         byId('parentFields').addEventListener('click', (e) => { if (e.target.closest('.mood-btn')) scheduleDraft(); });
         byId('histBody').addEventListener('click', (e) => {
             const b = e.target.closest('button[data-date]');
-            if (b) { byId('pDate').value = b.dataset.date; loadReport(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+            if (b) {
+                byId('pDate').value = b.dataset.date;
+                setPane(b.dataset.date === todayStr() ? 'parent' : 'teacher');
+                loadReport();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         });
         loadReport();
     });
