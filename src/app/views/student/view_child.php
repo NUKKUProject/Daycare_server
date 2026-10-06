@@ -2347,12 +2347,14 @@ textarea.vx-input { height:auto; }
       return;
     }
 
-    const show = v => v === '' || v == null ? '<span style="color:#94a3b8;">(ว่าง)</span>' : escapeHtml(v);
+    // ข้อมูลเดิม: ถ้าไม่เคยมีข้อมูลให้ปล่อยว่าง  ข้อมูลใหม่: ถ้าลบจนว่างให้แสดง "(ว่าง)"
+    const showBefore = v => v === '' || v == null ? '' : escapeHtml(v);
+    const showAfter = v => v === '' || v == null ? '<span style="color:#94a3b8;">(ว่าง)</span>' : escapeHtml(v);
     const rows = changes.map(c => `
       <tr>
         <td style="padding:8px 10px;font-weight:700;color:#0f2460;white-space:nowrap;vertical-align:top;">${escapeHtml(c.label)}</td>
-        <td style="padding:8px 10px;color:#64748b;text-decoration:line-through;word-break:break-word;vertical-align:top;">${show(c.before)}</td>
-        <td style="padding:8px 10px;color:#15803d;font-weight:600;word-break:break-word;vertical-align:top;">${show(c.after)}</td>
+        <td style="padding:8px 10px;color:#64748b;word-break:break-word;vertical-align:top;">${showBefore(c.before)}</td>
+        <td style="padding:8px 10px;color:#15803d;font-weight:600;word-break:break-word;vertical-align:top;">${showAfter(c.after)}</td>
       </tr>`).join('');
 
     Swal.fire({
@@ -2365,8 +2367,8 @@ textarea.vx-input { height:auto; }
             <thead>
               <tr style="background:#eff3ff;color:#0f2460;">
                 <th style="padding:8px 10px;">รายการ</th>
-                <th style="padding:8px 10px;">ค่าเดิม</th>
-                <th style="padding:8px 10px;">ค่าใหม่</th>
+                <th style="padding:8px 10px;">ข้อมูลเดิม</th>
+                <th style="padding:8px 10px;">ข้อมูลใหม่</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
