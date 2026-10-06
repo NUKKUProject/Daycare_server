@@ -250,6 +250,41 @@ function getTeacherById($teacher_id)
 }
 
 
+// ดึงบัญชีที่มีสิทธิ์ผู้ดูแลระบบ (admin) ทั้งหมด
+// บัญชี admin บางบัญชีไม่มีข้อมูลในตาราง teachers จึงดึงจากตาราง users เป็นหลัก
+function getAdminAccounts()
+{
+    try {
+        $pdo = getDatabaseConnection();
+
+        $sql = "
+            SELECT
+                u.id AS user_id,
+                u.username,
+                u.role,
+                u.created_at,
+                t.teacher_id,
+                t.first_name,
+                t.last_name,
+                t.email,
+                t.phone_number,
+                t.profile_image
+            FROM users u
+            LEFT JOIN teachers t ON t.email = u.username
+            WHERE u.role = 'admin'
+            ORDER BY u.created_at ASC, u.id ASC
+        ";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("getAdminAccounts error: " . $e->getMessage());
+        return [];
+    }
+}
+
 // ดึงข้อมูลของคุณครูทั้งหมด
 function getAllTeachers()
 {
