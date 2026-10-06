@@ -190,68 +190,6 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
         </div>
 
 
-        <!-- บัญชีสิทธิ์ผู้ดูแลระบบ -->
-        <div class="group-section mb-4">
-            <div class="group-header mt-0">
-                <h3 class="group-title">
-                    <i class="bi bi-shield-lock-fill me-2"></i>
-                    บัญชีผู้ดูแลระบบ
-                    <span class="badge bg-danger ms-2"><?= count($adminAccounts) ?> บัญชี</span>
-                </h3>
-                <div class="group-line"></div>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle text-center" id="adminTable">
-                    <thead class="table-primary">
-                        <tr>
-                            <th>รูป</th>
-                            <th>ชื่อผู้ใช้</th>
-                            <th>ชื่อ-นามสกุล</th>
-                            <th>เบอร์โทร</th>
-                            <th>สร้างเมื่อ</th>
-                            <th>สิทธิ์</th>
-                            <th>แก้ไข</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($adminAccounts as $admin): ?>
-                            <?php
-                            $adminName = trim(($admin['first_name'] ?? '') . ' ' . ($admin['last_name'] ?? ''));
-                            $isCurrentUser = ($admin['username'] ?? '') === ($_SESSION['username'] ?? null);
-                            ?>
-                            <tr>
-                                <td>
-                                    <img src="<?= htmlspecialchars($admin['profile_image'] ?: '../../../public/assets/images/avatar.png') ?>" class="rounded-circle" alt="avatar" style="width:60px;height:60px;object-fit:cover;" onerror="this.src='../../../public/assets/images/avatar.png'">
-                                </td>
-                                <td>
-                                    <?= htmlspecialchars($admin['username']) ?>
-                                    <?php if ($isCurrentUser): ?>
-                                        <span class="badge bg-success ms-1">คุณ</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td><?= $adminName !== '' ? htmlspecialchars($adminName) : '-' ?></td>
-                                <td><?= htmlspecialchars($admin['phone_number'] ?? '') ?: '-' ?></td>
-                                <td><?= !empty($admin['created_at']) ? date('d/m/Y', strtotime($admin['created_at'])) : '-' ?></td>
-                                <td><span class="badge bg-danger"><i class="bi bi-shield-lock-fill me-1"></i>ผู้ดูแลระบบ</span></td>
-                                <td>
-                                    <?php if (!empty($admin['teacher_id'])): ?>
-                                        <button class="btn btn-outline-primary btn-sm" onclick="editTeacher(<?= (int)$admin['teacher_id'] ?>)"><i class="bi bi-pencil-square me-2"></i>แก้ไข</button>
-                                    <?php else: ?>
-                                        <span class="text-muted small">ไม่มีข้อมูลครู</span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                        <?php if (empty($adminAccounts)): ?>
-                            <tr>
-                                <td colspan="7" class="text-muted">ไม่พบบัญชีผู้ดูแลระบบ</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
         <div class="tab-content" id="profileTabsContent">
             <!-- แท็บจัดการข้อมูลคุณครู -->
             <div class="tab-pane fade show active" id="teachers" role="tabpanel">
@@ -346,6 +284,68 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
                         </div>
                     <?php endif; ?>
                 </div>
+            </div>
+        </div>
+
+        <!-- บัญชีสิทธิ์ผู้ดูแลระบบ -->
+        <div class="group-section mt-4 mb-4">
+            <div class="group-header mt-0">
+                <h3 class="group-title">
+                    <i class="bi bi-shield-lock-fill me-2"></i>
+                    บัญชีผู้ดูแลระบบ
+                    <span class="badge bg-danger ms-2"><?= count($adminAccounts) ?> บัญชี</span>
+                </h3>
+                <div class="group-line"></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle text-center" id="adminTable">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>รูป</th>
+                            <th>ชื่อผู้ใช้</th>
+                            <th>ชื่อ-นามสกุล</th>
+                            <th>เบอร์โทร</th>
+                            <th>สร้างเมื่อ</th>
+                            <th>สิทธิ์</th>
+                            <th>แก้ไข</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($adminAccounts as $admin): ?>
+                            <?php
+                            $adminName = trim(($admin['first_name'] ?? '') . ' ' . ($admin['last_name'] ?? ''));
+                            $isCurrentUser = ($admin['username'] ?? '') === ($_SESSION['username'] ?? null);
+                            ?>
+                            <tr>
+                                <td>
+                                    <img src="<?= htmlspecialchars($admin['profile_image'] ?: '../../../public/assets/images/avatar.png') ?>" class="rounded-circle" alt="avatar" style="width:60px;height:60px;object-fit:cover;" onerror="this.src='../../../public/assets/images/avatar.png'">
+                                </td>
+                                <td>
+                                    <?= htmlspecialchars($admin['username']) ?>
+                                    <?php if ($isCurrentUser): ?>
+                                        <span class="badge bg-success ms-1">คุณ</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?= $adminName !== '' ? htmlspecialchars($adminName) : '-' ?></td>
+                                <td><?= htmlspecialchars($admin['phone_number'] ?? '') ?: '-' ?></td>
+                                <td><?= !empty($admin['created_at']) ? date('d/m/Y', strtotime($admin['created_at'])) : '-' ?></td>
+                                <td><span class="badge bg-danger"><i class="bi bi-shield-lock-fill me-1"></i>ผู้ดูแลระบบ</span></td>
+                                <td>
+                                    <?php if (!empty($admin['teacher_id'])): ?>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="editTeacher(<?= (int)$admin['teacher_id'] ?>)"><i class="bi bi-pencil-square me-2"></i>แก้ไข</button>
+                                    <?php else: ?>
+                                        <span class="text-muted small">ไม่มีข้อมูลครู</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        <?php if (empty($adminAccounts)): ?>
+                            <tr>
+                                <td colspan="7" class="text-muted">ไม่พบบัญชีผู้ดูแลระบบ</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
