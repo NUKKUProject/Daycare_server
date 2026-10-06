@@ -36,13 +36,19 @@ $care_actions_json = $health['care_actions_json'];
 
 // Determine attendance status based on current time (same logic as attendance-submit.php)
 function isLate($time) {
-    $parts = explode(':', $time);
-    $h = intval($parts[0]);
-    $m = intval($parts[1]);
-    $seconds = $h * 3600 + $m * 60;
-    return $seconds > (8 * 3600 + 30 * 60);
+    return checkin_is_late($time);
 }
 $current_time = date('H:i');
+
+// ใช้เวลาที่สแกนจริง (ส่งมาจากหน้าเว็บ) ตัดสินมาสาย ไม่ใช่เวลาที่กดบันทึก
+// รับเฉพาะเวลาที่ห่างจากเวลาปัจจุบันไม่เกิน 30 นาที กันค่าที่ผิดปกติ
+if (!empty($data['scan_time']) && preg_match('/^([01]\d|2[0-3]):([0-5]\d)$/', $data['scan_time'], $mt)) {
+    $scan_seconds = intval($mt[1]) * 3600 + intval($mt[2]) * 60;
+    $now_seconds = intval(date('H')) * 3600 + intval(date('i')) * 60;
+    if ($scan_seconds <= $now_seconds && $now_seconds - $scan_seconds <= 30 * 60) {
+        $current_time = $data['scan_time'];
+    }
+}
 $status = isLate($current_time) ? 'late' : 'present';
 
 if ($attendance_id) {

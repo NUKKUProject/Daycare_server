@@ -688,6 +688,18 @@ $data = getChildrenGroupedByTab($currentTab);
     border: 1px solid #c7d7f8;
   }
 
+  .health-student-card .info .badge-pill.late {
+    background: #fff7e0;
+    color: #b45309;
+    border-color: #fcd34d;
+  }
+
+  .health-student-card .info .badge-pill.ontime {
+    background: #ecfdf3;
+    color: #15803d;
+    border-color: #86efac;
+  }
+
   .health-history-list {
     display: flex;
     flex-direction: column;
@@ -1278,7 +1290,8 @@ $data = getChildrenGroupedByTab($currentTab);
                                                         <td><span class="badge bg-info"><?= htmlspecialchars($child['classroom']) ?></span></td>
                                                         <td>
                                                             <?php
-                                                            $statusClass = $child['status'] === 'มาเรียน' ? 'bg-success' : 'bg-danger';
+                                                            $statusClass = $child['status'] === 'มาเรียน' ? 'bg-success'
+                                                                : ($child['status'] === 'มาสาย' ? 'bg-warning text-dark' : 'bg-danger');
                                                             ?>
                                                             <span class="badge <?= $statusClass ?>">
                                                                 <?= htmlspecialchars($child['status']) ?>
@@ -1339,6 +1352,7 @@ $data = getChildrenGroupedByTab($currentTab);
                     <span id="healthStudentId" class="badge-pill">-</span>
                     <i class="bi bi-door-open ms-1"></i>
                     <span id="healthStudentClassroom" class="badge-pill">-</span>
+                    <span id="healthLateBadge" class="badge-pill"></span>
                     </small>
                 </div>
             </div>
@@ -1446,33 +1460,48 @@ $data = getChildrenGroupedByTab($currentTab);
 
         <?php include __DIR__ . '/../partials/health_options.js.php'; ?>
 
+        // ชื่อ/ไอคอนมาจากหน้าตั้งค่า จึงต้อง escape ก่อนใส่ลง HTML
+        const escHtml = (str) => String(str ?? '').replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+
         function renderHealthOptions() {
-            document.getElementById('symptomsGrid').innerHTML = SYMPTOM_OPTIONS.map(s => `
+            const grid = document.getElementById('symptomsGrid');
+            grid.innerHTML = SYMPTOM_OPTIONS.length === 0
+                ? '<div class="text-muted small">ยังไม่มีตัวเลือกอาการ (ตั้งค่าได้ที่หน้า "ตั้งค่าการเช็คชื่อ")</div>'
+                : SYMPTOM_OPTIONS.map(s => `
                 <div class="symptom-group">
                     <label class="symptom-checkbox">
-                        <input type="checkbox" data-symptom="${s.code}">
+                        <input type="checkbox" data-symptom="${escHtml(s.code)}">
                         <div class="symptom-item">
-                            <div class="symptom-icon emoji" aria-hidden="true">${s.icon}</div>
-                            <span class="symptom-text">${s.label}</span>
+                            <div class="symptom-icon emoji" aria-hidden="true">${escHtml(s.icon) || '🔹'}</div>
+                            <span class="symptom-text">${escHtml(s.label)}</span>
                             <div class="check-mark"><i class="bi bi-check"></i></div>
                         </div>
                     </label>
-                    ${s.subs ? `<div class="sub-options" data-sub-of="${s.code}" hidden>
-                        ${s.subs.map(sub => `<label class="sub-chip"><input type="checkbox" data-sub-of="${s.code}" value="${sub.code}"><span>${sub.label}</span></label>`).join('')}
+                    ${s.subs && s.subs.length ? `<div class="sub-options" data-sub-of="${escHtml(s.code)}" hidden>
+                        ${s.subs.map(sub => `<label class="sub-chip"><input type="checkbox" data-sub-of="${escHtml(s.code)}" value="${escHtml(sub.code)}"><span>${escHtml(sub.label)}</span></label>`).join('')}
                     </div>` : ''}
                 </div>
             `).join('');
 
-            document.getElementById('careGrid').innerHTML = CARE_OPTIONS.map(c => `
+            document.getElementById('careGrid').innerHTML = CARE_OPTIONS.length === 0
+                ? '<div class="text-muted small">ยังไม่มีตัวเลือกการดูแล</div>'
+                : CARE_OPTIONS.map(c => `
                 <label class="symptom-checkbox">
-                    <input type="checkbox" data-care="${c.code}">
+                    <input type="checkbox" data-care="${escHtml(c.code)}" data-allows-text="${c.allowsText ? 1 : 0}">
                     <div class="symptom-item">
-                        <div class="symptom-icon emoji" aria-hidden="true">${c.icon}</div>
-                        <span class="symptom-text">${c.label}</span>
+                        <div class="symptom-icon emoji" aria-hidden="true">${escHtml(c.icon) || '🔹'}</div>
+                        <span class="symptom-text">${escHtml(c.label)}</span>
                         <div class="check-mark"><i class="bi bi-check"></i></div>
                     </div>
                 </label>
             `).join('');
+        }
+
+        // ตัวเลือกการดูแลที่ถูกติ๊กอยู่ มีตัวที่เปิดให้พิมพ์ข้อความเพิ่ม (เช่น "อื่นๆ") หรือไม่
+        function careNeedsText() {
+            return !!document.querySelector('input[data-care][data-allows-text="1"]:checked');
         }
 
         function syncSubOptions(code) {
@@ -1512,15 +1541,17 @@ $data = getChildrenGroupedByTab($currentTab);
             const el = e.target;
             if (el.dataset.symptom) {
                 syncSubOptions(el.dataset.symptom);
-            } else if (el.dataset.care === 'other') {
+            } else if (el.dataset.care !== undefined && el.dataset.allowsText === '1') {
                 const otherInput = document.getElementById('healthCareOther');
-                otherInput.style.display = el.checked ? '' : 'none';
-                if (el.checked) otherInput.focus(); else otherInput.value = '';
+                const need = careNeedsText();
+                otherInput.style.display = need ? '' : 'none';
+                if (need) otherInput.focus(); else otherInput.value = '';
             }
         });
 
         // Bootstrap modal instance (lazy init)
         let healthModalInstance = null;
+        let currentScanTime = ''; // เวลา (HH:MM) ที่สแกนเด็กคนนี้ ใช้ตัดสินมาสาย
         function getHealthModal() {
             if (!healthModalInstance) {
                 const modalEl = document.getElementById('healthModal');
@@ -1544,6 +1575,15 @@ $data = getChildrenGroupedByTab($currentTab);
             nicknameEl.style.display = nickname ? '' : 'none';
             document.getElementById('healthStudentId').textContent = studentData.student_id;
             document.getElementById('healthStudentClassroom').textContent = studentData.classroom || '-';
+
+            // สถานะมาสาย คำนวณจากเวลาที่สแกน เทียบกับเวลาตัดสายที่ admin ตั้งไว้
+            currentScanTime = studentData.time || '';
+            const lateBadge = document.getElementById('healthLateBadge');
+            const isLateNow = studentData.attendance_status === 'late';
+            lateBadge.textContent = isLateNow
+                ? `⏰ มาสาย (หลัง ${CHECKIN_LATE_TIME} น.)`
+                : `✅ ตรงเวลา (ก่อน ${CHECKIN_LATE_TIME} น.)`;
+            lateBadge.className = 'badge-pill ' + (isLateNow ? 'late' : 'ontime');
 
             const isEmpty = (val) => !val || val === '-' || val.trim() === '';
             const avatarEl = document.getElementById('healthStudentAvatar');
@@ -1623,7 +1663,7 @@ $data = getChildrenGroupedByTab($currentTab);
             const temperature = document.getElementById('healthTemperature').value;
             const otherSymptoms = document.getElementById('healthOtherSymptoms').value;
             const { symptoms, careActions } = collectHealthChoices();
-            const careOther = careActions.includes('other')
+            const careOther = careNeedsText()
                 ? document.getElementById('healthCareOther').value.trim()
                 : '';
             const caretakerName = document.getElementById('healthCaretakerName').value.trim();
@@ -1671,7 +1711,8 @@ $data = getChildrenGroupedByTab($currentTab);
                     other_symptoms: otherSymptoms,
                     care_actions: careActions,
                     care_other: careOther,
-                    caretaker_name: caretakerName
+                    caretaker_name: caretakerName,
+                    scan_time: currentScanTime
                 })
             })
             .then(response => response.json())

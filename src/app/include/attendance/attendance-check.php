@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__ . '/../../../config/database.php'); // เชื่อมต่อไฟล์ database.php
+require_once(__DIR__ . '/../function/checkin_settings.php');
 
 // เพิ่ม error logging
 error_reporting(E_ALL);
@@ -15,13 +16,8 @@ function isLate($time) {
     $minutes = intval($time_parts[1]);
     $check_time = $hours * 3600 + $minutes * 60;
     
-    // เวลาที่กำหนด (8:30)
-    $cutoff_time = 8 * 3600 + 30 * 60;
-    
-    error_log("Check time: {$hours}:{$minutes} ({$check_time} seconds)");
-    error_log("Cutoff time: 8:30 ({$cutoff_time} seconds)");
-    
-    return $check_time > $cutoff_time;
+    // เวลาตัดสายตามที่ตั้งค่าไว้ (ค่าเริ่มต้น 08:30)
+    return checkin_is_late(sprintf('%02d:%02d', $hours, $minutes));
 }
 
 // รับข้อมูลจาก QR Code

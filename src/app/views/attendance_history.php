@@ -850,7 +850,7 @@ if (isset($_SESSION['user_id'])) {
                             <label class="status-choice"><input type="radio" name="aeStatus" value="leave"><span>📝 ลา</span></label>
                             <label class="status-choice"><input type="radio" name="aeStatus" value="absent"><span>❌ ไม่มาเรียน</span></label>
                         </div>
-                        <div class="form-text mt-2" id="aeLateHint">ถ้าเวลามาหลัง 08:30 น. ระบบจะบันทึกเป็น "มาสาย" ให้อัตโนมัติ</div>
+                        <div class="form-text mt-2" id="aeLateHint">ถ้าเวลามาหลัง <span id="aeLateTime">08:30</span> น. ระบบจะบันทึกเป็น "มาสาย" ให้อัตโนมัติ</div>
                     </div>
 
                     <!-- เวลา -->
@@ -1190,31 +1190,54 @@ if (isset($_SESSION['user_id'])) {
     });
 
     // ===== ข้อมูลสุขภาพ: อาการ / การดูแล =====
-    function renderHealthOptions() {
-        byId('aeSymptomsGrid').innerHTML = SYMPTOM_OPTIONS.map((s) => `
+    // วาดตัวเลือกอาการ/การดูแลตามที่ admin ตั้งไว้
+    // ถ้าข้อมูลเดิมใช้ตัวเลือกที่ถูกปิด/ลบไปแล้ว จะแสดงเพิ่มให้ (ติดป้าย "เลิกใช้") เพื่อไม่ให้ข้อมูลหายตอนแก้ไข
+    function renderHealthOptions(record = {}) {
+        let usedSymptoms = parseJsonField(record.symptoms, {});
+        if (Array.isArray(usedSymptoms)) usedSymptoms = {};
+        let usedCare = parseJsonField(record.care_actions, []);
+        if (!Array.isArray(usedCare)) usedCare = [];
+
+        const symptoms = SYMPTOM_LOOKUP.filter((s) => !s.archived || usedSymptoms[s.code] !== undefined);
+        const care = CARE_LOOKUP.filter((c) => !c.archived || usedCare.includes(c.code));
+
+        byId('aeSymptomsGrid').innerHTML = symptoms.length === 0
+            ? '<div class="text-muted small">ยังไม่มีตัวเลือกอาการ</div>'
+            : symptoms.map((s) => {
+                const usedSubs = Array.isArray(usedSymptoms[s.code]) ? usedSymptoms[s.code] : [];
+                const subs = (s.subs || []).filter((x) => !x.archived || usedSubs.includes(x.code));
+                return `
             <div class="symptom-group">
                 <label class="symptom-checkbox">
-                    <input type="checkbox" data-symptom="${s.code}">
+                    <input type="checkbox" data-symptom="${esc(s.code)}">
                     <div class="symptom-item">
-                        <div class="symptom-icon" aria-hidden="true">${s.icon}</div>
-                        <span class="symptom-text">${s.label}</span>
+                        <div class="symptom-icon" aria-hidden="true">${esc(s.icon) || '🔹'}</div>
+                        <span class="symptom-text">${esc(s.label)}${s.archived ? ' <small class="text-muted">(เลิกใช้)</small>' : ''}</span>
                         <div class="check-mark"><i class="bi bi-check"></i></div>
                     </div>
                 </label>
-                ${s.subs ? `<div class="sub-options" data-sub-of="${s.code}" hidden>
-                    ${s.subs.map((sub) => `<label class="sub-chip"><input type="checkbox" data-sub-of="${s.code}" value="${sub.code}"><span>${sub.label}</span></label>`).join('')}
+                ${subs.length ? `<div class="sub-options" data-sub-of="${esc(s.code)}" hidden>
+                    ${subs.map((sub) => `<label class="sub-chip"><input type="checkbox" data-sub-of="${esc(s.code)}" value="${esc(sub.code)}"><span>${esc(sub.label)}</span></label>`).join('')}
                 </div>` : ''}
-            </div>`).join('');
+            </div>`;
+            }).join('');
 
-        byId('aeCareGrid').innerHTML = CARE_OPTIONS.map((c) => `
+        byId('aeCareGrid').innerHTML = care.length === 0
+            ? '<div class="text-muted small">ยังไม่มีตัวเลือกการดูแล</div>'
+            : care.map((c) => `
             <label class="symptom-checkbox">
-                <input type="checkbox" data-care="${c.code}">
+                <input type="checkbox" data-care="${esc(c.code)}" data-allows-text="${c.allowsText ? 1 : 0}">
                 <div class="symptom-item">
-                    <div class="symptom-icon" aria-hidden="true">${c.icon}</div>
-                    <span class="symptom-text">${c.label}</span>
+                    <div class="symptom-icon" aria-hidden="true">${esc(c.icon) || '🔹'}</div>
+                    <span class="symptom-text">${esc(c.label)}${c.archived ? ' <small class="text-muted">(เลิกใช้)</small>' : ''}</span>
                     <div class="check-mark"><i class="bi bi-check"></i></div>
                 </div>
             </label>`).join('');
+    }
+
+    // ตัวเลือกการดูแลที่ถูกติ๊กอยู่ มีตัวที่เปิดให้พิมพ์ข้อความเพิ่ม (เช่น "อื่นๆ") หรือไม่
+    function careNeedsText() {
+        return !!document.querySelector('#aeCareGrid input[data-care][data-allows-text="1"]:checked');
     }
 
     function syncSubOptions(code) {
@@ -1226,10 +1249,10 @@ if (isset($_SESSION['user_id'])) {
     }
 
     function syncCareOther() {
-        const other = document.querySelector('#aeCareGrid input[data-care="other"]');
         const input = byId('aeCareOther');
-        input.style.display = other && other.checked ? '' : 'none';
-        if (!other || !other.checked) input.value = '';
+        const need = careNeedsText();
+        input.style.display = need ? '' : 'none';
+        if (!need) input.value = '';
     }
 
     function collectHealth() {
@@ -1357,6 +1380,7 @@ if (isset($_SESSION['user_id'])) {
         byId('aeCheckOut').value = inputTime(data.check_out_time);
         byId('aeLeaveNote').value = data.status === 'leave' ? (data.leave_note || '') : '';
 
+        renderHealthOptions(data);
         applyHealthToForm(data);
         updateStatusVisibility();
         getEditModal().show();
@@ -1403,7 +1427,7 @@ if (isset($_SESSION['user_id'])) {
         const temperature = byId('aeTemperature').value;
         const caretaker = byId('aeCaretaker').value.trim();
         const { symptoms, careActions } = collectHealth();
-        const careOther = careActions.includes('other') ? byId('aeCareOther').value.trim() : '';
+        const careOther = careNeedsText() ? byId('aeCareOther').value.trim() : '';
 
         const warn = (text, focusId) => {
             Swal.fire({ icon: 'warning', title: text, confirmButtonColor: '#1e4db7', confirmButtonText: 'ตกลง' });
@@ -1517,7 +1541,7 @@ if (isset($_SESSION['user_id'])) {
         const entries = Object.entries(symptoms);
         if (entries.length > 0) {
             entries.forEach(([code, subs]) => {
-                const opt = SYMPTOM_OPTIONS.find((s) => s.code === code);
+                const opt = SYMPTOM_LOOKUP.find((s) => s.code === code);
                 if (!opt) return;
                 const subLabels = (Array.isArray(subs) ? subs : []).map((sc) => {
                     const sub = (opt.subs || []).find((x) => x.code === sc);
@@ -1539,9 +1563,9 @@ if (isset($_SESSION['user_id'])) {
         let actions = parseJsonField(data.care_actions, []);
         if (!Array.isArray(actions)) actions = [];
         const labels = actions.map((code) => {
-            const opt = CARE_OPTIONS.find((c) => c.code === code);
+            const opt = CARE_LOOKUP.find((c) => c.code === code);
             if (!opt) return code;
-            return code === 'other' && data.care_other ? `อื่นๆ: ${data.care_other}` : opt.label;
+            return opt.allowsText && data.care_other ? `${opt.label}: ${data.care_other}` : opt.label;
         });
         return labels.length ? labels.join(', ') : '-';
     }
@@ -1606,12 +1630,13 @@ if (isset($_SESSION['user_id'])) {
     // ===== เริ่มต้นหน้า =====
     document.addEventListener('DOMContentLoaded', async () => {
         renderHealthOptions();
+        byId('aeLateTime').textContent = CHECKIN_LATE_TIME;
 
         byId('aeSymptomsGrid').addEventListener('change', (e) => {
             if (e.target.dataset.symptom) syncSubOptions(e.target.dataset.symptom);
         });
         byId('aeCareGrid').addEventListener('change', (e) => {
-            if (e.target.dataset.care === 'other') {
+            if (e.target.dataset.allowsText === '1') {
                 syncCareOther();
                 if (e.target.checked) byId('aeCareOther').focus();
             }

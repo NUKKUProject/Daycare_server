@@ -29,7 +29,8 @@ try {
         $check_time = $hours * 3600 + $minutes * 60;
         
         // เวลาที่กำหนด (8:30)
-        $cutoff_time = 8 * 3600 + 30 * 60;
+        $cutoff_parts = explode(':', checkin_get_late_time());
+        $cutoff_time = intval($cutoff_parts[0]) * 3600 + intval($cutoff_parts[1]) * 60;
         
         error_log("Check time (seconds): " . $check_time);
         error_log("Cutoff time (seconds): " . $cutoff_time);

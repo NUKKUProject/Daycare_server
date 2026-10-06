@@ -24,6 +24,7 @@ function getChildrenData($checkDate = null)
                     WHEN a.status = 'present' THEN 'มาเรียน'
                     WHEN a.status = 'absent' THEN 'ไม่มาเรียน'
                     WHEN a.status = 'leave' THEN 'ลา'
+                    WHEN a.status = 'late' THEN 'มาสาย'
                     ELSE a.status
                 END AS status,
                 CASE 
@@ -119,6 +120,7 @@ function getChildrenDataByTeacher($teacher_id, $currentTab)
                     WHEN a.status = 'present' THEN 'มาเรียน'
                     WHEN a.status = 'absent' THEN 'ไม่มาเรียน'
                     WHEN a.status = 'leave' THEN 'ลา'
+                    WHEN a.status = 'late' THEN 'มาสาย'
                     ELSE a.status
                 END AS status,
                 CASE 
@@ -365,6 +367,7 @@ function getChildrenGroupedByTab($currentTab)
             WHEN a.status = 'present' THEN 'มาเรียน'
             WHEN a.status = 'absent' THEN 'ไม่มาเรียน'
             WHEN a.status = 'leave' THEN 'ลา'
+            WHEN a.status = 'late' THEN 'มาสาย'
             ELSE a.status
         END AS status,
         -- สถานะการเช็คออก

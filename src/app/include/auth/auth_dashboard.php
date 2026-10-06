@@ -169,6 +169,13 @@ function isCurrentPage($path)
                                 แจ้งปัญหาการเข้าสู่ระบบ
                             </a>
                         </li>
+                        <li class="nav-item mb-2">
+                            <a class="nav-link <?php echo isCurrentPage('checkin_settings.php') ? 'active' : ''; ?>"
+                                href="/app/views/admin/checkin_settings.php">
+                                <i class="bi bi-gear-fill me-2"></i>
+                                ตั้งค่าการเช็คชื่อ
+                            </a>
+                        </li>
 
                     <?php endif; ?>
 
