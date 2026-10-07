@@ -479,7 +479,28 @@ $viewTabs = [
     .chip-care { background: #dbeafe; color: #1e40af; }
     .chip-ok   { background: #dcfce7; color: #15803d; }
 
-    .attendance-summary-card-value.time { font-size: 1.35rem; }
+    .attendance-summary-card.person { gap: 0.6rem; }
+
+    .attendance-summary-card.person .attendance-summary-card-label {
+        color: var(--student-primary-dark);
+        font-size: 0.95rem;
+    }
+
+    .time-chip {
+        background: #fff;
+        border: 1px solid #cfe0eb;
+        border-radius: 999px;
+        color: var(--student-primary-dark);
+        font-size: 0.9rem;
+        font-weight: 700;
+        padding: 0.2rem 0.8rem;
+    }
+
+    .time-chip i { color: var(--student-primary); margin-right: 0.15rem; }
+
+    .attendance-summary-card.person .dropoff-avatar { height: 72px; width: 72px; }
+    .attendance-summary-card.person .dropoff-row .attendance-summary-card-value { font-size: 1.3rem; }
+    .attendance-summary-card.person .dropoff-name { font-size: 0.85rem; margin-top: 0.1rem; }
 
     .dropoff-row {
         align-items: center;
@@ -688,13 +709,13 @@ $viewTabs = [
             <div class="attendance-summary">
                 <div class="attendance-summary-groups today-info">
                         <div class="attendance-summary-card person">
-                            <span class="attendance-summary-card-label"><i class="bi bi-box-arrow-in-right"></i> ผู้ส่ง · สแกนบัตรถึงศูนย์</span>
-                            <span class="attendance-summary-card-value time"><?= $todayAtt && $todayAtt['checkin_time'] !== '00:00' ? htmlspecialchars($todayAtt['checkin_time']) . ' น.' : '-' ?></span>
+                            <span class="attendance-summary-card-label"><i class="bi bi-box-arrow-in-right"></i> ผู้ส่ง</span>
+                            <span class="time-chip"><i class="bi bi-clock"></i> สแกนบัตร <?= $todayAtt && $todayAtt['checkin_time'] !== '00:00' ? htmlspecialchars($todayAtt['checkin_time']) . ' น.' : '-' ?></span>
                             <?php renderGuardian($dropOff); ?>
                         </div>
                         <div class="attendance-summary-card person">
-                            <span class="attendance-summary-card-label"><i class="bi bi-box-arrow-right"></i> ผู้รับ · กลับบ้าน</span>
-                            <span class="attendance-summary-card-value time"><?= !empty($todayAtt['checkout_time']) ? htmlspecialchars($todayAtt['checkout_time']) . ' น.' : '-' ?></span>
+                            <span class="attendance-summary-card-label"><i class="bi bi-box-arrow-right"></i> ผู้รับ</span>
+                            <span class="time-chip"><i class="bi bi-clock"></i> กลับบ้าน <?= !empty($todayAtt['checkout_time']) ? htmlspecialchars($todayAtt['checkout_time']) . ' น.' : '-' ?></span>
                             <?php renderGuardian($pickUp); ?>
                         </div>
                         <div class="attendance-summary-card">
