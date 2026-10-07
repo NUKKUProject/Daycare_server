@@ -12,7 +12,8 @@ const CHILD_COLUMN_LABELS = [
     'academic_year' => 'ปีการศึกษา',
     'child_group' => 'กลุ่ม',
     'classroom' => 'ห้องเรียน',
-    'status' => 'สถานะ',
+    'status' => 'สถานะการศึกษา',
+    'date_success' => 'วันที่จบ/ออก',
     'prefix_th' => 'คำนำหน้า (ไทย)',
     'firstname_th' => 'ชื่อ (ไทย)',
     'lastname_th' => 'นามสกุล (ไทย)',
@@ -59,6 +60,7 @@ const CHILD_COLUMNS_EXCLUDED = [
     'id', 'qr_code', 'created_at', 'updated_at', 'academic_year_id',
     'profile_image', 'father_image', 'mother_image', 'relative_image',
     'age_years', 'age_months', 'age_days',
+    'success_type',
     'place_birth', 'issue_at', 'issue_date', 'expiry_date',
 ];
 
@@ -100,6 +102,7 @@ try {
     $classroom = trim($_POST['classroom'] ?? '');
     $year = trim($_POST['academic_year'] ?? '');
     $scope = ($_POST['scope'] ?? 'all') === 'basic' ? 'basic' : 'all';
+    $eduStatus = trim($_POST['edu_status'] ?? 'all');
 
     $where = [];
     $params = [];
@@ -122,10 +125,21 @@ try {
         WHERE table_schema = 'public' AND table_name = 'children'
         ORDER BY ordinal_position
     ");
+    $allColumns = $colStmt->fetchAll(PDO::FETCH_COLUMN);
     $columns = array_values(array_filter(
-        $colStmt->fetchAll(PDO::FETCH_COLUMN),
+        $allColumns,
         fn($c) => !in_array($c, CHILD_COLUMNS_EXCLUDED, true)
     ));
+
+    // สถานะการศึกษาจริง: เด็กที่จบ/ออกจะมี status = 'สำเร็จการศึกษา' เสมอ ประเภทจริง
+    // (สำเร็จการศึกษา / ย้ายไปโรงเรียนอื่น / ลาออก) อยู่ใน success_type จึงรวมสองคอลัมน์เป็นค่าเดียว
+    $statusExpr = in_array('success_type', $allColumns, true)
+        ? "CASE WHEN status = 'สำเร็จการศึกษา' AND COALESCE(success_type, '') <> '' THEN success_type ELSE status END"
+        : 'status';
+    if ($eduStatus !== '' && $eduStatus !== 'all') {
+        $where[] = "($statusExpr) = :edu";
+        $params['edu'] = $eduStatus;
+    }
 
     // เรียงคอลัมน์ที่รู้จักตามลำดับใน CHILD_COLUMN_LABELS ก่อน ที่เหลือต่อท้าย
     $known = array_keys(CHILD_COLUMN_LABELS);
@@ -140,7 +154,12 @@ try {
         $columns = array_values(array_filter($columns, fn($c) => in_array($c, CHILD_COLUMNS_BASIC, true)));
     }
 
-    $select = implode(', ', array_map(fn($c) => '"' . str_replace('"', '""', $c) . '"', $columns));
+    $select = implode(', ', array_map(function ($c) use ($statusExpr) {
+        if ($c === 'status') {
+            return "($statusExpr) AS status";
+        }
+        return '"' . str_replace('"', '""', $c) . '"';
+    }, $columns));
     $sql = "SELECT $select FROM public.children"
         . ($where ? ' WHERE ' . implode(' AND ', $where) : '')
         . ' ORDER BY child_group, classroom, studentid';
@@ -152,6 +171,7 @@ try {
     if ($year !== '') { $parts[] = 'year' . $year; }
     if ($group !== '' && $group !== 'all') { $parts[] = array_search($group, $groupMap, true) ?: 'group'; }
     if ($classroom !== '' && $classroom !== 'all') { $parts[] = 'room'; }
+    if ($eduStatus !== '' && $eduStatus !== 'all') { $parts[] = 'status'; }
     $filename = implode('_', $parts) . '_' . date('Y-m-d_His') . '.csv';
 
     while (ob_get_level()) {

@@ -31,6 +31,10 @@ if ($currentAcademicYear) {
                     'room'   => $child['classroom'],
                     'gender' => isset($child['gender']) ? $child['gender'] : 'male',
                     'img'    => isset($child['profile_image']) ? $child['profile_image'] : '',
+                    // สถานะการศึกษา: เด็กที่จบ/ออกใช้ประเภทจริง (ลาออก / ย้ายไปโรงเรียนอื่น) แทนคำว่าสำเร็จการศึกษา
+                    'edu'    => (($child['edu_status'] ?? '') === 'สำเร็จการศึกษา' && !empty($child['success_type']))
+                                    ? $child['success_type']
+                                    : (($child['edu_status'] ?? '') !== '' ? $child['edu_status'] : 'กำลังศึกษา'),
                 ];
             }
         }
@@ -52,7 +56,12 @@ $selectedClassroom = $_GET['classroom'] ?? null;
 <link href="../../../public/assets/css/view_child1.css" rel="stylesheet">
 
 <style>
-
+    .edu-badge { display: inline-block; border-radius: 999px; padding: 1px 10px; font-size: .72rem; font-weight: 700; white-space: nowrap; }
+    .edu-studying { background: #dcfce7; color: #15803d; }
+    .edu-graduated { background: #dbeafe; color: #1d4ed8; }
+    .edu-moved { background: #fef3c7; color: #b45309; }
+    .edu-quit { background: #fee2e2; color: #b91c1c; }
+    .edu-other { background: #f1f5f9; color: #475569; }
 </style>
 
 <main class="main-content">
@@ -165,6 +174,15 @@ $selectedClassroom = $_GET['classroom'] ?? null;
             <button class="filter-tab" data-group="เตรียมอนุบาล">เตรียมอนุบาล</button>
         </div>
 
+        <!-- Education status filter -->
+        <select class="sort-select" id="statusSelect" aria-label="สถานะการศึกษา">
+            <option value="all">ทุกสถานะ</option>
+            <option value="กำลังศึกษา">กำลังศึกษา</option>
+            <option value="สำเร็จการศึกษา">สำเร็จการศึกษา</option>
+            <option value="ย้ายไปโรงเรียนอื่น">ย้ายไปโรงเรียนอื่น</option>
+            <option value="ลาออก">ลาออก</option>
+        </select>
+
         <!-- Sort -->
         <select class="sort-select" id="sortSelect">
             <option value="name-asc">ชื่อ ก-ฮ</option>
@@ -210,6 +228,7 @@ $selectedClassroom = $_GET['classroom'] ?? null;
                         <th data-col="name">ชื่อ-นามสกุล <span class="sort-arrow"><i class="fas fa-sort" aria-hidden="true"></i></span></th>
                         <th data-col="group">กลุ่ม <span class="sort-arrow"><i class="fas fa-sort" aria-hidden="true"></i></span></th>
                         <th data-col="room">ห้องเรียน <span class="sort-arrow"><i class="fas fa-sort" aria-hidden="true"></i></span></th>
+                        <th>สถานะ</th>
                         <th>จัดการ</th>
                     </tr>
                 </thead>
@@ -285,6 +304,17 @@ if (!$exportYearDefault) {
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label fw-semibold" for="exportStatus">สถานะการศึกษา</label>
+                        <select name="edu_status" id="exportStatus" class="form-select">
+                            <option value="all">ทุกสถานะ</option>
+                            <option value="กำลังศึกษา">กำลังศึกษา</option>
+                            <option value="สำเร็จการศึกษา">สำเร็จการศึกษา</option>
+                            <option value="ย้ายไปโรงเรียนอื่น">ย้ายไปโรงเรียนอื่น</option>
+                            <option value="ลาออก">ลาออก</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label fw-semibold d-block">ข้อมูลที่ส่งออก</label>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="scope" id="scopeAll" value="all" checked>
@@ -294,7 +324,7 @@ if (!$exportYearDefault) {
                         <div class="form-check mt-2">
                             <input class="form-check-input" type="radio" name="scope" id="scopeBasic" value="basic">
                             <label class="form-check-label" for="scopeBasic">เฉพาะข้อมูลพื้นฐาน</label>
-                            <div class="form-text">รหัส ชื่อ ชื่อเล่น ปีการศึกษา กลุ่ม ห้อง สถานะ</div>
+                            <div class="form-text">รหัส ชื่อ ชื่อเล่น ปีการศึกษา กลุ่ม ห้อง สถานะการศึกษา</div>
                         </div>
                     </div>
 
@@ -348,13 +378,14 @@ if (!$exportYearDefault) {
         'use strict';
 
         /* ===== STATE ===== */
-        const state = { search: '', group: 'all', room: 'all', view: 'card', sort: 'name-asc' };
+        const state = { search: '', group: 'all', room: 'all', status: 'all', view: 'card', sort: 'name-asc' };
 
         /* ===== DOM ===== */
         const searchInput    = document.getElementById('searchInput');
         const searchClear    = document.getElementById('searchClear');
         const groupFilter    = document.getElementById('groupFilter');
         const sortSelect     = document.getElementById('sortSelect');
+        const statusSelect   = document.getElementById('statusSelect');
         const viewCardBtn    = document.getElementById('viewCard');
         const viewTableBtn   = document.getElementById('viewTable');
         const cardView       = document.getElementById('cardView');
@@ -375,6 +406,18 @@ if (!$exportYearDefault) {
             return (child.img && child.img.trim() !== '')
                 ? child.img
                 : avatarPlaceholder(child.gender);
+        }
+
+        /* ===== EDUCATION STATUS BADGE ===== */
+        const EDU_CLASS = {
+            'กำลังศึกษา': 'edu-studying',
+            'สำเร็จการศึกษา': 'edu-graduated',
+            'ย้ายไปโรงเรียนอื่น': 'edu-moved',
+            'ลาออก': 'edu-quit'
+        };
+        function eduBadge(child) {
+            const label = child.edu || 'กำลังศึกษา';
+            return `<span class="edu-badge ${EDU_CLASS[label] || 'edu-other'}">${label}</span>`;
         }
 
         /* ===== HIGHLIGHT ===== */
@@ -404,6 +447,7 @@ if (!$exportYearDefault) {
             return CHILDREN.filter(c => {
                 const matchGroup  = state.group === 'all' || c.group === state.group;
                 const matchRoom   = state.room  === 'all' || c.room  === state.room;
+                const matchStatus = state.status === 'all' || (c.edu || 'กำลังศึกษา') === state.status;
                 const fullName    = `${c.prefix||''}${c.first||''} ${c.last||''}`;
                 const matchSearch = !term ||
                     (c.first||'').toLowerCase().includes(term) ||
@@ -411,7 +455,7 @@ if (!$exportYearDefault) {
                     (c.nick||'').toLowerCase().includes(term)  ||
                     (c.id||'').toLowerCase().includes(term)    ||
                     fullName.toLowerCase().includes(term);
-                return matchGroup && matchRoom && matchSearch;
+                return matchGroup && matchRoom && matchStatus && matchSearch;
             });
         }
 
@@ -455,6 +499,7 @@ if (!$exportYearDefault) {
                     <div class="child-tags">
                         <span class="tag tag-group">${child.group||''}</span>
                         <span class="tag tag-room">ห้อง ${child.room||''}</span>
+                        ${eduBadge(child)}
                     </div>
                     <a href="view_child.php?studentid=${child.id||''}" class="card-action-btn">
                         <i class="fas fa-eye me-1" aria-hidden="true"></i>ดูรายละเอียด
@@ -484,6 +529,7 @@ if (!$exportYearDefault) {
                 </td>
                 <td><span class="tbl-badge tbl-badge-group">${child.group||''}</span></td>
                 <td><span class="tbl-badge tbl-badge-room">ห้อง ${child.room||''}</span></td>
+                <td>${eduBadge(child)}</td>
                 <td>
                     <a href="view_child.php?studentid=${child.id||''}" class="action-link">
                         <i class="fas fa-eye me-1" aria-hidden="true"></i>ดูข้อมูล
@@ -601,6 +647,11 @@ if (!$exportYearDefault) {
             // Rebuild classroom pills based on the new group filter
             const filteredForPills = filterChildren();
             buildClassroomPills(filteredForPills);
+            render();
+        });
+
+        statusSelect.addEventListener('change', function () {
+            state.status = this.value;
             render();
         });
 

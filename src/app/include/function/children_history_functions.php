@@ -46,6 +46,9 @@ function getChildrenByGroupAndYear($currentTab, $academicYear) {
             c.prefix_th,
             c.nickname,
             c.qr_code,
+            c.status AS edu_status,
+            -- ประเภทการจบ/ออก (ลาออก, ย้ายไปโรงเรียนอื่น) อ่านผ่าน to_jsonb เพื่อไม่พังถ้ายังไม่มีคอลัมน์
+            (to_jsonb(c)->>'success_type') AS success_type,
             ay.name as academic_year_name,
             -- สถานะการเช็คเข้า
             CASE 
