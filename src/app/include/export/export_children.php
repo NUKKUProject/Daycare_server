@@ -60,6 +60,7 @@ const CHILD_COLUMNS_EXCLUDED = [
     'id', 'qr_code', 'created_at', 'updated_at', 'academic_year_id',
     'profile_image', 'father_image', 'mother_image', 'relative_image',
     'age_years', 'age_months', 'age_days',
+    'has_drug_allergy_history', 'has_food_allergy_history',   // ใช้ข้อมูลรายการแพ้จริงแทน
     'success_type',
     'place_birth', 'issue_at', 'issue_date', 'expiry_date',
 ];
@@ -154,13 +155,27 @@ try {
         $columns = array_values(array_filter($columns, fn($c) => in_array($c, CHILD_COLUMNS_BASIC, true)));
     }
 
-    $select = implode(', ', array_map(function ($c) use ($statusExpr) {
+    // ยา/อาหารที่แพ้: ใช้รายการจากตารางบันทึกการแพ้ (ที่แท็บประวัติประจำตัวใช้งานจริง)
+    // ถ้าไม่มีให้ใช้ค่าข้อความเดิมในตารางเด็ก
+    $hasTable = fn(string $t) => (bool) $pdo->query("SELECT to_regclass('public.$t') IS NOT NULL")->fetchColumn();
+    $allergyExpr = [];
+    if ($hasTable('drug_allergies')) {
+        $allergyExpr['allergic_medicine'] = "COALESCE((SELECT string_agg(NULLIF(BTRIM(da.drug_name), ''), ', ' ORDER BY da.created_at) FROM public.drug_allergies da WHERE da.student_id = c.studentid), NULLIF(BTRIM(c.allergic_medicine), ''))";
+    }
+    if ($hasTable('food_allergies')) {
+        $allergyExpr['allergic_food'] = "COALESCE((SELECT string_agg(NULLIF(BTRIM(fa.food_name), ''), ', ' ORDER BY fa.created_at) FROM public.food_allergies fa WHERE fa.student_id = c.studentid), NULLIF(BTRIM(c.allergic_food), ''))";
+    }
+
+    $select = implode(', ', array_map(function ($c) use ($statusExpr, $allergyExpr) {
         if ($c === 'status') {
             return "($statusExpr) AS status";
         }
+        if (isset($allergyExpr[$c])) {
+            return $allergyExpr[$c] . ' AS ' . $c;
+        }
         return '"' . str_replace('"', '""', $c) . '"';
     }, $columns));
-    $sql = "SELECT $select FROM public.children"
+    $sql = "SELECT $select FROM public.children c"
         . ($where ? ' WHERE ' . implode(' AND ', $where) : '')
         . ' ORDER BY child_group, classroom, studentid';
     $stmt = $pdo->prepare($sql);
