@@ -1296,7 +1296,24 @@ $data = getChildrenGroupedByTab($currentTab);
     color: #0f2460;
   }
 
-  @media (max-width: 480px) { #healthModal .guardian-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 576px) {
+    #healthModal .guardian-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+    #healthModal .guardian-card-inner {
+      display: grid;
+      grid-template-columns: 52px 1fr 20px;
+      grid-template-areas: "img label check" "img name check";
+      column-gap: 0.75rem;
+      row-gap: 0;
+      align-items: center;
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+    }
+    #healthModal .guardian-card-inner .g-avatar { grid-area: img; width: 52px; }
+    #healthModal .guardian-card-inner .g-label { grid-area: label; font-size: 1.15rem; font-weight: 700; color: #0f2460; align-self: end; }
+    #healthModal .guardian-card-inner .g-name { grid-area: name; font-size: 0.8rem; font-weight: 500; color: #64748b; margin-top: 0; align-self: start; }
+    #healthModal .guardian-card-inner .check-mark { grid-area: check; margin-top: 0; }
+    #healthModal .guardian-card-inner:hover { transform: none; }
+  }
 
   /* ===== Modal Footer ===== */
   #healthModal .modal-footer {
