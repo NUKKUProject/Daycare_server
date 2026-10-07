@@ -135,19 +135,35 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
     .nb-sec { background: #fff; border-radius: 16px; padding: 1.1rem 1.25rem; margin-bottom: .9rem; box-shadow: 0 2px 10px rgba(15, 36, 96, .07); }
     .nb-sec-title { font-weight: 800; color: #0f2460; font-size: .95rem; margin-bottom: .75rem; display: flex; align-items: center; gap: 8px; }
     .nb-label { display: block; font-weight: 700; color: #334155; font-size: .85rem; margin-bottom: .3rem; }
-    .nb-input { height: 44px; border-radius: 12px; border: 2px solid #e2e8f0; background: #f8faff; font-size: .95rem; box-shadow: none; }
+    .nb-input { height: 46px; border-radius: 12px; border: 2px solid #e2e8f0; background: #f8faff; font-size: .95rem; box-shadow: none; }
     textarea.nb-input { height: auto; }
     .nb-input:focus { border-color: #1e4db7; background: #fff; box-shadow: 0 0 0 4px rgba(30, 77, 183, .1); outline: none; }
     .unit { position: relative; }
     .unit .nb-input { padding-right: 3.2rem; }
     .unit::after { content: attr(data-unit); position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: .8rem; font-weight: 700; pointer-events: none; }
 
+
+    /* ช่วงเวลา (เหมือนสมุดฝั่งผู้ปกครอง) */
+    .period { border-radius: 16px; overflow: hidden; border: 2px solid; margin-bottom: .9rem; background: #fff; }
+    .period-head { display: flex; align-items: center; gap: .75rem; padding: .7rem 1rem; color: #fff; }
+    .period-head .ico { font-size: 1.9rem; line-height: 1; font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; }
+    .period-head .t { font-weight: 800; font-size: 1.05rem; line-height: 1.2; }
+    .period-head .s { font-size: .78rem; opacity: .92; }
+    .period-body { padding: 1rem; }
+    .period.morning { border-color: #f59e0b; }
+    .period.morning .period-head { background: linear-gradient(135deg, #f59e0b, #f97316); }
+    .period.noon { border-color: #0d9488; }
+    .period.noon .period-head { background: linear-gradient(135deg, #0d9488, #0891b2); }
+    .period.night { border-color: #4338ca; }
+    .period.night .period-head { background: linear-gradient(135deg, #1e3a8a, #4338ca); }
+    .sub-title { font-weight: 800; color: #0f2460; font-size: .9rem; margin: 0 0 .65rem; padding-bottom: .3rem; border-bottom: 1px dashed #cbd5e1; }
+
     .mood-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: .5rem; }
     .mood-btn {
         border: 2px solid #e2e8f0; background: #f8faff; border-radius: 14px; padding: .5rem .2rem; cursor: pointer;
         display: flex; flex-direction: column; align-items: center; gap: 2px; transition: all .15s ease;
     }
-    .mood-btn .face { font-size: 1.9rem; line-height: 1.1; font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; }
+    .mood-btn .face { font-size: 2rem; line-height: 1.1; font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; }
     .mood-btn .txt { font-size: .72rem; font-weight: 700; color: #64748b; text-align: center; }
     .mood-btn:hover { border-color: #93b4f0; }
     .mood-btn.active { border-color: #1e4db7; background: #eff3ff; box-shadow: 0 4px 14px rgba(30, 77, 183, .18); }
@@ -290,39 +306,65 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
                                 <div class="mood-group" data-mood-group="teacher"></div>
                             </div>
 
-                            <div class="nb-sec">
-                                <div class="nb-sec-title">🥛 นม</div>
-                                <div class="row g-3">
-                                    <div class="col-6"><label class="nb-label" for="cMorningMilk">ช่วงเช้า</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="cMorningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
-                                    <div class="col-6"><label class="nb-label" for="cAfternoonMilk">ช่วงบ่าย</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="cAfternoonMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                            <!-- ===== ช่วงเช้า ===== -->
+                            <div class="period morning">
+                                <div class="period-head">
+                                    <span class="ico">🌅</span>
+                                    <div><div class="t">ช่วงเช้าที่ศูนย์</div><div class="s">นมและอาหารว่างเช้า</div></div>
+                                </div>
+                                <div class="period-body">
+                                    <div class="row g-3">
+                                        <div class="col-12"><label class="nb-label" for="cMorningMilk">🥛 ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="cMorningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                                        <div class="col-12">
+                                            <label class="nb-label" for="cMorningSnack">🍎 อาหารว่างเช้า (ปริมาณที่เด็กทาน)</label>
+                                            <div class="meal-hint" id="hintMorning"></div>
+                                            <input type="text" class="form-control nb-input" id="cMorningSnack" data-quick="หมด|ครึ่งหนึ่ง|น้อย|ไม่ทาน" maxlength="200" placeholder="เช่น หมด / ครึ่งหนึ่ง / 3 ช้อน">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ===== ช่วงกลางวัน ===== -->
+                            <div class="period noon">
+                                <div class="period-head">
+                                    <span class="ico">☀️</span>
+                                    <div><div class="t">ช่วงกลางวัน</div><div class="s">อาหารกลางวันและการนอนกลางวัน</div></div>
+                                </div>
+                                <div class="period-body">
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="nb-label" for="cLunch">🍚 อาหารกลางวัน (ปริมาณที่เด็กทาน)</label>
+                                            <div class="meal-hint" id="hintLunch"></div>
+                                            <input type="text" class="form-control nb-input" id="cLunch" data-quick="หมด|ครึ่งหนึ่ง|น้อย|ไม่ทาน" maxlength="200" placeholder="เช่น หมด / ครึ่งหนึ่ง / 3 ช้อน">
+                                        </div>
+                                        <div class="col-12"><label class="nb-label" for="cNap">😴 นอนกลางวัน</label><div class="unit" data-unit="ชม."><input type="number" class="form-control nb-input" id="cNap" data-stepper="step=0.5;min=0;max=6;presets=1|1.5|2|2.5|3" min="0" max="24" step="0.5" inputmode="decimal"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ===== ช่วงบ่าย ===== -->
+                            <div class="period night">
+                                <div class="period-head">
+                                    <span class="ico">🌇</span>
+                                    <div><div class="t">ช่วงบ่าย</div><div class="s">นมและอาหารว่างบ่าย</div></div>
+                                </div>
+                                <div class="period-body">
+                                    <div class="row g-3">
+                                        <div class="col-12"><label class="nb-label" for="cAfternoonMilk">🥛 ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="cAfternoonMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                                        <div class="col-12">
+                                            <label class="nb-label" for="cAfternoonSnack">🍌 อาหารว่างบ่าย (ปริมาณที่เด็กทาน)</label>
+                                            <div class="meal-hint" id="hintAfternoon"></div>
+                                            <input type="text" class="form-control nb-input" id="cAfternoonSnack" data-quick="หมด|ครึ่งหนึ่ง|น้อย|ไม่ทาน" maxlength="200" placeholder="เช่น หมด / ครึ่งหนึ่ง / 3 ช้อน">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="nb-sec">
-                                <div class="nb-sec-title">🍽️ การรับประทานอาหาร <small class="text-muted fw-normal">(ระบุปริมาณที่เด็กทาน)</small></div>
-                                <div class="mb-3">
-                                    <label class="nb-label" for="cMorningSnack">อาหารว่างเช้า</label>
-                                    <div class="meal-hint" id="hintMorning"></div>
-                                    <input type="text" class="form-control nb-input" id="cMorningSnack" data-quick="หมด|ครึ่งหนึ่ง|น้อย|ไม่ทาน" maxlength="200" placeholder="เช่น หมด / ครึ่งหนึ่ง / 3 ช้อน">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="nb-label" for="cLunch">อาหารกลางวัน</label>
-                                    <div class="meal-hint" id="hintLunch"></div>
-                                    <input type="text" class="form-control nb-input" id="cLunch" data-quick="หมด|ครึ่งหนึ่ง|น้อย|ไม่ทาน" maxlength="200" placeholder="เช่น หมด / ครึ่งหนึ่ง / 3 ช้อน">
-                                </div>
-                                <div>
-                                    <label class="nb-label" for="cAfternoonSnack">อาหารว่างบ่าย</label>
-                                    <div class="meal-hint" id="hintAfternoon"></div>
-                                    <input type="text" class="form-control nb-input" id="cAfternoonSnack" data-quick="หมด|ครึ่งหนึ่ง|น้อย|ไม่ทาน" maxlength="200" placeholder="เช่น หมด / ครึ่งหนึ่ง / 3 ช้อน">
-                                </div>
-                            </div>
-
-                            <div class="nb-sec">
-                                <div class="nb-sec-title">😴 นอนและการขับถ่าย</div>
+                                <div class="nb-sec-title">🚽 การขับถ่ายและพัฒนาการ</div>
                                 <div class="row g-3">
-                                    <div class="col-12 col-sm-4"><label class="nb-label" for="cNap">นอนกลางวัน</label><div class="unit" data-unit="ชม."><input type="number" class="form-control nb-input" id="cNap" data-stepper="step=0.5;min=0;max=6;presets=1|1.5|2|2.5|3" min="0" max="24" step="0.5" inputmode="decimal"></div></div>
-                                    <div class="col-6 col-sm-4"><label class="nb-label" for="cUrine">ปัสสาวะ</label><div class="unit" data-unit="ครั้ง"><input type="number" class="form-control nb-input" id="cUrine" data-stepper="step=1;min=0;max=30" min="0" inputmode="numeric"></div></div>
-                                    <div class="col-6 col-sm-4"><label class="nb-label" for="cStool">อุจจาระ</label><div class="unit" data-unit="ครั้ง"><input type="number" class="form-control nb-input" id="cStool" data-stepper="step=1;min=0;max=30" min="0" inputmode="numeric"></div></div>
+                                    <div class="col-6"><label class="nb-label" for="cUrine">ปัสสาวะ</label><div class="unit" data-unit="ครั้ง"><input type="number" class="form-control nb-input" id="cUrine" data-stepper="step=1;min=0;max=30" min="0" inputmode="numeric"></div></div>
+                                    <div class="col-6"><label class="nb-label" for="cStool">อุจจาระ</label><div class="unit" data-unit="ครั้ง"><input type="number" class="form-control nb-input" id="cStool" data-stepper="step=1;min=0;max=30" min="0" inputmode="numeric"></div></div>
                                 </div>
                                 <div class="d-flex flex-wrap gap-2 mt-3">
                                     <label class="check-pill"><input type="checkbox" id="cStopDiaper"><span>เลิกใส่แพมเพิร์ส</span></label>
@@ -350,37 +392,56 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
                                 <div class="mood-group" data-mood-group="parent"></div>
                             </div>
 
-                            <div class="nb-sec">
-                                <div class="nb-sec-title">🚗 การส่งเด็ก</div>
-                                <label class="nb-label" for="pDropOff">ส่งเด็กเวลา <small class="text-muted fw-normal" id="dropOffHint"></small></label>
-                                <input type="time" class="form-control nb-input" id="pDropOff" style="max-width:200px;">
+                            <!-- ===== ช่วงเช้าก่อนมาศูนย์ ===== -->
+                            <div class="period morning">
+                                <div class="period-head">
+                                    <span class="ico">🌅</span>
+                                    <div><div class="t">ช่วงเช้าก่อนมาศูนย์</div><div class="s">ที่บ้าน ตั้งแต่ตื่นนอนจนถึงเวลาส่งเด็ก</div></div>
+                                </div>
+                                <div class="period-body">
+                                    <div class="row g-3">
+                                        <div class="col-12"><label class="nb-label" for="hMorningMilk">🥛 ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="hMorningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                                        <div class="col-12"><label class="nb-label" for="hMorningFood">🍚 อาหารเช้า (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control nb-input" id="hMorningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
+                                        <div class="col-12">
+                                            <label class="nb-label" for="pDropOff">🚗 ส่งเด็กเวลา <small class="text-muted fw-normal" id="dropOffHint"></small></label>
+                                            <input type="time" class="form-control nb-input" id="pDropOff" style="max-width:260px;">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="nb-sec">
-                                <div class="nb-sec-title">🌅 ช่วงเช้าก่อนมาศูนย์</div>
-                                <div class="row g-3">
-                                    <div class="col-12 col-sm-5"><label class="nb-label" for="hMorningMilk">ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="hMorningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
-                                    <div class="col-12 col-sm-7"><label class="nb-label" for="hMorningFood">อาหารเช้า (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control nb-input" id="hMorningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
+                            <!-- ===== ช่วงเย็นและกลางคืน ===== -->
+                            <div class="period night">
+                                <div class="period-head">
+                                    <span class="ico">🌙</span>
+                                    <div><div class="t">ช่วงเย็นและกลางคืน</div><div class="s">ที่บ้าน ตั้งแต่รับกลับจากศูนย์จนถึงเข้านอน</div></div>
+                                </div>
+                                <div class="period-body">
+                                    <div class="sub-title">🌆 ช่วงเย็น</div>
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-12"><label class="nb-label" for="hEveningMilk">🥛 ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="hEveningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
+                                        <div class="col-12"><label class="nb-label" for="hEveningFood">🍚 อาหารเย็น (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control nb-input" id="hEveningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
+                                    </div>
+
+                                    <div class="sub-title">😴 กลางคืน</div>
+                                    <div class="row g-3">
+                                        <div class="col-12"><label class="nb-label" for="hSleep">กลางคืนนอนหลับ</label><div class="unit" data-unit="ชม."><input type="number" class="form-control nb-input" id="hSleep" data-stepper="step=0.5;min=0;max=16;presets=8|9|10|11|12" min="0" max="24" step="0.5" inputmode="decimal"></div></div>
+                                        <div class="col-6"><label class="nb-label" for="hBedtime">เข้านอนเวลา</label><input type="time" class="form-control nb-input" id="hBedtime"></div>
+                                        <div class="col-6"><label class="nb-label" for="hWake">ตื่นนอนเวลา</label><input type="time" class="form-control nb-input" id="hWake"></div>
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="nb-sec">
-                                <div class="nb-sec-title">🌙 ช่วงเย็นและกลางคืน</div>
-                                <div class="row g-3">
-                                    <div class="col-12 col-sm-5"><label class="nb-label" for="hEveningMilk">ดื่มนม</label><div class="unit" data-unit="มล."><input type="number" class="form-control nb-input" id="hEveningMilk" data-stepper="step=10;min=0;max=600;presets=60|90|120|150|180|210|240" min="0" inputmode="numeric"></div></div>
-                                    <div class="col-12 col-sm-7"><label class="nb-label" for="hEveningFood">อาหารเย็น (ปริมาณ/คุณภาพ)</label><input type="text" class="form-control nb-input" id="hEveningFood" data-quick="ทานหมด|ทานได้ดี|ครึ่งหนึ่ง|ทานน้อย|ไม่ทาน" maxlength="500"></div>
-                                    <div class="col-12 col-sm-4"><label class="nb-label" for="hSleep">กลางคืนนอนหลับ</label><div class="unit" data-unit="ชม."><input type="number" class="form-control nb-input" id="hSleep" data-stepper="step=0.5;min=0;max=16;presets=8|9|10|11|12" min="0" max="24" step="0.5" inputmode="decimal"></div></div>
-                                    <div class="col-6 col-sm-4"><label class="nb-label" for="hBedtime">เข้านอนเวลา</label><input type="time" class="form-control nb-input" id="hBedtime"></div>
-                                    <div class="col-6 col-sm-4"><label class="nb-label" for="hWake">ตื่นนอนเวลา</label><input type="time" class="form-control nb-input" id="hWake"></div>
-                                </div>
-                                <div class="d-flex flex-wrap gap-2 mt-3">
+                                <div class="nb-sec-title">🧸 พัฒนาการของลูก</div>
+                                <div class="d-flex flex-wrap gap-2">
                                     <label class="check-pill"><input type="checkbox" id="hStopDiaper"><span>เลิกใส่แพมเพิร์ส</span></label>
                                     <label class="check-pill"><input type="checkbox" id="hStopBottle"><span>เลิกดื่มนมขวด</span></label>
                                 </div>
                             </div>
 
                             <div class="nb-sec">
-                                <div class="nb-sec-title">💬 สื่อสารจากผู้ปกครอง</div>
+                                <div class="nb-sec-title">💬 สื่อสารจากผู้ปกครองถึงครู</div>
                                 <textarea class="form-control nb-input" id="pMessage" rows="3" placeholder="ข้อความจากผู้ปกครองถึงครู"></textarea>
                             </div>
                         </div>
