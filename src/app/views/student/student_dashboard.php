@@ -152,20 +152,6 @@ $viewTabs = [
 ?>
 
 <style>
-    .student-dashboard-toggle {
-        background: #26648E;
-        border: 0;
-        color: #fff;
-        transition: background-color 0.2s ease, transform 0.2s ease;
-    }
-
-    .student-dashboard-toggle:hover,
-    .student-dashboard-toggle:focus-visible {
-        background: #1E4F6F;
-        color: #fff;
-        transform: translateY(-1px);
-    }
-
     .student-dashboard {
         --student-primary: #26648E;
         --student-primary-dark: #1E4F6F;
@@ -510,11 +496,6 @@ $viewTabs = [
         .student-tab-button { min-height: 155px; padding: 1rem; }
     }
 </style>
-
-<button class="btn student-dashboard-toggle d-md-none m-3" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu"
-        aria-controls="sidebarMenu" aria-label="เปิดเมนู">
-    <i class="bi bi-list"></i>
-</button>
 
 <main class="main-content">
     <div class="student-dashboard">
