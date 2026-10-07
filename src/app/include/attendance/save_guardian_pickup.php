@@ -32,6 +32,8 @@ $guardian_type_th = $guardian_type_map[$guardian_type] ?? $guardian_type;
 $guardian_name = $data['guardian_name'] ?? '';
 $other_details = $data['other_details'] ?? '';
 $pickup_time = date('Y-m-d H:i:s');
+$picked_up_by = in_array($guardian_type, ['father', 'mother', 'relative', 'other'], true) ? $guardian_type : null;
+$picked_up_detail = $picked_up_by === 'other' && $other_details !== '' ? $other_details : null;
 
 try {
     // ตรวจสอบว่ามี record การเช็คอินอยู่หรือไม่
@@ -72,26 +74,32 @@ try {
                 check_out_time = :check_out_time,
                 status_checkout = 'checked_out',
                 leave_note = :leave_note,
+                picked_up_by = :picked_up_by,
+                picked_up_detail = :picked_up_detail,
                 updated_at = NOW()
             WHERE id = :id
         ");
         $update_stmt->execute([
             'check_out_time' => $pickup_time,
             'leave_note' => $leave_note,
+            'picked_up_by' => $picked_up_by,
+            'picked_up_detail' => $picked_up_detail,
             'id' => $existing['id']
         ]);
     } else {
         // ไม่มี record เช็คอิน → สร้าง record ใหม่
         $insert_stmt = $pdo->prepare("
             INSERT INTO attendance 
-            (student_id, check_date, status, check_out_time, status_checkout, leave_note, created_at, updated_at)
+            (student_id, check_date, status, check_out_time, status_checkout, leave_note, picked_up_by, picked_up_detail, created_at, updated_at)
             VALUES 
-            (:student_id, CURRENT_DATE, 'present', :check_out_time, 'checked_out', :leave_note, NOW(), NOW())
+            (:student_id, CURRENT_DATE, 'present', :check_out_time, 'checked_out', :leave_note, :picked_up_by, :picked_up_detail, NOW(), NOW())
         ");
         $insert_stmt->execute([
             'student_id' => $student_id,
             'check_out_time' => $pickup_time,
-            'leave_note' => $leave_note
+            'leave_note' => $leave_note,
+            'picked_up_by' => $picked_up_by,
+            'picked_up_detail' => $picked_up_detail
         ]);
     }
 

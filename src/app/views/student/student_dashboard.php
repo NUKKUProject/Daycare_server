@@ -28,7 +28,9 @@ if ($child) {
     $attStmt = $pdo->prepare("
         SELECT status, TO_CHAR(check_date, 'HH24:MI') AS checkin_time,
                temperature, symptoms, other_symptoms, care_actions, care_other, caretaker_name,
-               dropped_off_by, dropped_off_detail
+               dropped_off_by, dropped_off_detail,
+               picked_up_by, picked_up_detail,
+               SUBSTRING(check_out_time::text FROM '(\d{2}:\d{2}):\d{2}') AS checkout_time
         FROM attendance
         WHERE student_id = :s AND DATE(check_date) = CURRENT_DATE
         ORDER BY check_date ASC LIMIT 1
@@ -36,23 +38,27 @@ if ($child) {
     $attStmt->execute(['s' => $studentid]);
     $todayAtt = $attStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
-    // ผู้มาส่ง: ชื่อ/รูปจากข้อมูลผู้ปกครองของเด็ก (กรณีอื่นๆ ใช้รายละเอียดที่ครูระบุ)
-    $dropOff = null;
-    if ($todayAtt && !empty($todayAtt['dropped_off_by'])) {
-        $dropLabels = ['father' => 'พ่อ', 'mother' => 'แม่', 'relative' => 'ผู้ปกครอง/ผู้ดูแล', 'other' => 'อื่นๆ'];
-        $type = $todayAtt['dropped_off_by'];
-        $dropOff = ['label' => $dropLabels[$type] ?? $type, 'name' => '', 'image' => ''];
+    // ผู้มาส่ง / ผู้มารับ: ชื่อ/รูปจากข้อมูลผู้ปกครองของเด็ก (กรณีอื่นๆ ใช้รายละเอียดที่ครูระบุ)
+    $guardianLabels = ['father' => 'พ่อ', 'mother' => 'แม่', 'relative' => 'ผู้ปกครอง/ผู้ดูแล', 'other' => 'อื่นๆ'];
+    $resolveGuardian = function (?string $type, ?string $detail) use ($pdo, $studentid, $guardianLabels) {
+        if (empty($type)) {
+            return null;
+        }
+        $person = ['label' => $guardianLabels[$type] ?? $type, 'name' => '', 'image' => ''];
         if ($type === 'other') {
-            $dropOff['name'] = $todayAtt['dropped_off_detail'] ?? '';
-        } elseif (isset($dropLabels[$type])) {
+            $person['name'] = $detail ?? '';
+        } elseif (isset($guardianLabels[$type])) {
             $gStmt = $pdo->prepare("SELECT {$type}_first_name AS first_name, {$type}_last_name AS last_name, {$type}_image AS image FROM children WHERE studentid = :s");
             $gStmt->execute(['s' => $studentid]);
             if ($g = $gStmt->fetch(PDO::FETCH_ASSOC)) {
-                $dropOff['name'] = trim(($g['first_name'] ?? '') . ' ' . ($g['last_name'] ?? ''));
-                $dropOff['image'] = $g['image'] ?? '';
+                $person['name'] = trim(($g['first_name'] ?? '') . ' ' . ($g['last_name'] ?? ''));
+                $person['image'] = $g['image'] ?? '';
             }
         }
-    }
+        return $person;
+    };
+    $dropOff = $todayAtt ? $resolveGuardian($todayAtt['dropped_off_by'] ?? null, $todayAtt['dropped_off_detail'] ?? null) : null;
+    $pickUp = $todayAtt ? $resolveGuardian($todayAtt['picked_up_by'] ?? null, $todayAtt['picked_up_detail'] ?? null) : null;
 
     if ($todayAtt) {
         require_once __DIR__ . '/../../include/function/checkin_settings.php';
@@ -102,6 +108,23 @@ if ($child) {
             error_log('student_dashboard menu: ' . $e->getMessage());
         }
     }
+}
+
+function renderGuardian(?array $person): void
+{
+    if (!$person) {
+        echo '<span class="dropoff-name">-</span>';
+        return;
+    }
+    echo '<div class="dropoff-row">';
+    if ($person['image'] !== '') {
+        echo '<img class="dropoff-avatar" src="' . htmlspecialchars($person['image']) . '" alt="รูป' . htmlspecialchars($person['label']) . '" onerror="this.src=\'../../../public/assets/images/avatar.png\'">';
+    }
+    echo '<div><span class="attendance-summary-card-value">' . htmlspecialchars($person['label']) . '</span>';
+    if ($person['name'] !== '') {
+        echo '<span class="dropoff-name">' . htmlspecialchars($person['name']) . '</span>';
+    }
+    echo '</div></div>';
 }
 
 $viewTabs = [
@@ -445,6 +468,8 @@ $viewTabs = [
     .chip-care { background: #dbeafe; color: #1e40af; }
     .chip-ok   { background: #dcfce7; color: #15803d; }
 
+    .attendance-summary-card-value.time { font-size: 1.35rem; }
+
     .dropoff-row {
         align-items: center;
         display: flex;
@@ -477,8 +502,7 @@ $viewTabs = [
         .attendance-summary-groups,
         .attendance-summary-groups.today-info,
         .attendance-summary-groups.meal-info { grid-template-columns: minmax(0, 1fr); }
-        .attendance-summary-card.dropoff,
-        .attendance-summary-card.scan { grid-column: 1 / -1; }
+        .attendance-summary-card.person { grid-column: 1 / -1; }
         .attendance-charts { grid-template-columns: minmax(0, 1fr); }
     }
 
@@ -652,28 +676,15 @@ $viewTabs = [
             <div class="student-section-title">ข้อมูลวันนี้</div>
             <div class="attendance-summary">
                 <div class="attendance-summary-groups today-info">
-                        <div class="attendance-summary-card scan">
-                            <span class="attendance-summary-card-label"><i class="bi bi-clock"></i> สแกนบัตรถึงศูนย์</span>
-                            <span class="attendance-summary-card-value"><?= $todayAtt && $todayAtt['checkin_time'] !== '00:00' ? htmlspecialchars($todayAtt['checkin_time']) . ' น.' : '-' ?></span>
+                        <div class="attendance-summary-card person">
+                            <span class="attendance-summary-card-label"><i class="bi bi-box-arrow-in-right"></i> ผู้ส่ง · สแกนบัตรถึงศูนย์</span>
+                            <span class="attendance-summary-card-value time"><?= $todayAtt && $todayAtt['checkin_time'] !== '00:00' ? htmlspecialchars($todayAtt['checkin_time']) . ' น.' : '-' ?></span>
+                            <?php renderGuardian($dropOff); ?>
                         </div>
-                        <div class="attendance-summary-card dropoff">
-                            <span class="attendance-summary-card-label"><i class="bi bi-person-heart"></i> ใครมาส่ง</span>
-                            <?php if ($dropOff): ?>
-                                <div class="dropoff-row">
-                                    <?php if ($dropOff['image'] !== ''): ?>
-                                        <img class="dropoff-avatar" src="<?= htmlspecialchars($dropOff['image']) ?>" alt="รูป<?= htmlspecialchars($dropOff['label']) ?>"
-                                             onerror="this.src='../../../public/assets/images/avatar.png'">
-                                    <?php endif; ?>
-                                    <div>
-                                        <span class="attendance-summary-card-value"><?= htmlspecialchars($dropOff['label']) ?></span>
-                                        <?php if ($dropOff['name'] !== ''): ?>
-                                            <span class="dropoff-name"><?= htmlspecialchars($dropOff['name']) ?></span>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php else: ?>
-                                <span class="attendance-summary-card-value">-</span>
-                            <?php endif; ?>
+                        <div class="attendance-summary-card person">
+                            <span class="attendance-summary-card-label"><i class="bi bi-box-arrow-right"></i> ผู้รับ · กลับบ้าน</span>
+                            <span class="attendance-summary-card-value time"><?= !empty($todayAtt['checkout_time']) ? htmlspecialchars($todayAtt['checkout_time']) . ' น.' : '-' ?></span>
+                            <?php renderGuardian($pickUp); ?>
                         </div>
                         <div class="attendance-summary-card">
                             <span class="attendance-summary-card-label"><i class="bi bi-thermometer-half"></i> อุณหภูมิ</span>
