@@ -236,10 +236,10 @@ $viewTabs = [
         border-radius: 1rem;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         flex-shrink: 0;
-        height: 72px;
+        height: 88px;
         object-fit: cover;
         position: relative;
-        width: 72px;
+        width: 88px;
     }
 
     .student-hero h1 { font-size: 1.2rem; margin-bottom: 0.4rem; }
@@ -500,11 +500,13 @@ $viewTabs = [
     }
 
     @media (max-width: 576px) {
-        .student-dashboard { padding: 0.75rem 1rem 2rem; }
+        .main-content:has(.student-dashboard) { padding-top: 0.25rem; }
+        .student-dashboard { padding: 0.25rem 0.75rem 2rem; }
+        .student-dashboard-toggle { margin: 0.5rem 0.75rem 0 !important; }
         .student-dashboard-header { border-radius: 1.25rem; padding: 1.5rem; }
         .student-dashboard-header h1::before { height: 36px; width: 36px; }
         .student-hero { gap: 0.75rem; padding: 0.85rem 1rem; }
-        .student-hero img { height: 60px; width: 60px; }
+        .student-hero img { height: 84px; width: 84px; }
         .student-hero h1 { font-size: 1.05rem; }
         .student-tab-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .student-tab-button { min-height: 155px; padding: 1rem; }
