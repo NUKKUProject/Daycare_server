@@ -468,7 +468,7 @@ $viewTabs = [
     /* จอใหญ่: การ์ดอาการเรียงต่อในแถวเดียวกับ 3 การ์ดแรก */
     @media (min-width: 1100px) {
         .attendance-summary-groups.today-info {
-            grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 2fr);
+            grid-template-columns: repeat(4, minmax(0, 1fr));
         }
         .attendance-summary-card.symptoms { grid-column: auto; }
     }
