@@ -182,9 +182,9 @@ include __DIR__ . '/../../include/auth/auth_dashboard.php';
 
     .btn-save-note {
         border-radius: 12px; padding: .6rem 1.5rem; font-weight: 800; border: none; color: #fff;
-        background: linear-gradient(135deg, #0f2460, #1e4db7); box-shadow: 0 4px 16px rgba(15, 36, 96, .3);
+        background: linear-gradient(135deg, #15803d, #22c55e); box-shadow: 0 4px 16px rgba(21, 128, 61, .3);
     }
-    .btn-save-note:hover { color: #fff; background: linear-gradient(135deg, #0a1a4f, #1a43a8); }
+    .btn-save-note:hover { color: #fff; background: linear-gradient(135deg, #116a32, #16a34a); }
     .btn-save-note:disabled { opacity: .7; color: #fff; }
     .btn-soft { border-radius: 12px; padding: .6rem 1.2rem; font-weight: 700; border: 2px solid #e2e8f0; background: #fff; color: #64748b; }
     .btn-soft:hover { background: #f1f5f9; color: #334155; }
