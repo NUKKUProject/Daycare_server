@@ -39,7 +39,7 @@ if ($child) {
     $todayAtt = $attStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
     // ผู้มาส่ง / ผู้มารับ: ชื่อ/รูปจากข้อมูลผู้ปกครองของเด็ก (กรณีอื่นๆ ใช้รายละเอียดที่ครูระบุ)
-    $guardianLabels = ['father' => 'พ่อ', 'mother' => 'แม่', 'relative' => 'ผู้ปกครอง/ผู้ดูแล', 'other' => 'อื่นๆ'];
+    $guardianLabels = ['father' => 'พ่อ', 'mother' => 'แม่', 'relative' => 'ผู้ปกครอง/ผู้ดูแล', 'other' => 'บุคคลอื่น'];
     $resolveGuardian = function (?string $type, ?string $detail) use ($pdo, $studentid, $guardianLabels) {
         if (empty($type)) {
             return null;
@@ -62,7 +62,7 @@ if ($child) {
 
     // ข้อมูลรับกลับเก่าเก็บเป็นข้อความใน leave_note เช่น "ผู้รับเด็ก: นายดำ ศรีโคตร (พ่อ)"
     if (!$pickUp && $todayAtt && preg_match('/^ผู้รับเด็ก:\s*(.*?)\s*\(([^)]+)\)(?:\s*-\s*(.*))?$/su', (string) ($todayAtt['leave_note'] ?? ''), $m)) {
-        $typeByLabel = array_flip($guardianLabels);
+        $typeByLabel = array_flip($guardianLabels) + ['อื่นๆ' => 'other']; // รองรับข้อมูลเก่าที่บันทึกว่า "อื่นๆ"
         $type = $typeByLabel[trim($m[2])] ?? null;
         $detail = trim($m[3] ?? '');
         $pickUp = $resolveGuardian($type, $detail);

@@ -1701,12 +1701,12 @@ $data = getChildrenGroupedByTab($currentTab);
                     <input type="radio" name="dropoff" value="other">
                     <div class="other-card-inner">
                     <div class="other-icon"><i class="bi bi-person-plus-fill"></i></div>
-                    <span class="other-text">อื่นๆ (โปรดระบุ)</span>
+                    <span class="other-text">บุคคลอื่น (โปรดระบุ)</span>
                     <div class="check-mark"><i class="bi bi-check"></i></div>
                     </div>
                 </label>
                 <input type="text" class="form-control mt-3" id="dropOffDetail" maxlength="200"
-                    placeholder="ระบุชื่อ-นามสกุลและความสัมพันธ์ของผู้มาส่ง" style="display:none;">
+                    placeholder="ชื่อ-นามสกุล และความสัมพันธ์กับเด็ก เช่น นางสมศรี ใจดี (ป้า)" style="display:none;">
             </div>
 
             <!-- Temperature -->
@@ -2057,7 +2057,7 @@ $data = getChildrenGroupedByTab($currentTab);
                 return;
             }
             if (droppedOffBy === 'other' && !droppedOffDetail) {
-                Swal.fire({ icon: 'warning', title: 'กรุณาระบุผู้มาส่ง', confirmButtonColor: '#1e4db7', confirmButtonText: 'ตกลง' }).then(() => { flashSection('dropoff'); document.getElementById('dropOffDetail').focus(); });
+                Swal.fire({ icon: 'warning', title: 'กรุณาระบุชื่อและความสัมพันธ์ของผู้มาส่ง', confirmButtonColor: '#1e4db7', confirmButtonText: 'ตกลง' }).then(() => { flashSection('dropoff'); document.getElementById('dropOffDetail').focus(); });
                 return;
             }
 

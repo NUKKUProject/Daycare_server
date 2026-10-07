@@ -26,7 +26,7 @@ $guardian_type_map = [
     'father' => 'พ่อ',
     'mother' => 'แม่',
     'relative' => 'ผู้ปกครอง/ผู้ดูแล',
-    'other' => 'อื่นๆ',
+    'other' => 'บุคคลอื่น',
 ];
 $guardian_type_th = $guardian_type_map[$guardian_type] ?? $guardian_type;
 $guardian_name = $data['guardian_name'] ?? '';

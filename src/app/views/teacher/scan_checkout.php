@@ -1344,7 +1344,7 @@ tbody tr:hover {
                     <input type="radio" name="guardian" value="other" id="otherRadio">
                     <div class="other-card-inner">
                     <div class="other-icon"><i class="bi bi-person-plus-fill"></i></div>
-                    <span class="other-text">อื่นๆ (โปรดระบุ)</span>
+                    <span class="other-text">บุคคลอื่น (โปรดระบุ)</span>
                     <div class="check-mark"><i class="bi bi-check"></i></div>
                     </div>
                 </label>
@@ -1354,7 +1354,7 @@ tbody tr:hover {
                     <textarea
                     class="form-control"
                     id="otherGuardianDetails"
-                    placeholder="กรุณาระบุรายละเอียดผู้รับเด็ก เช่น ชื่อ-นามสกุล และความสัมพันธ์"
+                    placeholder="ชื่อ-นามสกุล และความสัมพันธ์กับเด็ก เช่น นางสมศรี ใจดี (ป้า)"
                     ></textarea>
                 </div>
 
