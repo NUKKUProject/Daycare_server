@@ -13,6 +13,7 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
 // ข้อมูลของเด็กวันนี้: เวลาสแกนบัตร / ผู้ดูแล / อุณหภูมิ / อาการผิดปกติ / อาหารประจำวัน
 $todayAtt = null;
 $symptomList = [];
+$careList = [];
 $menuToday = [];
 $mealIcons = ['morning_snack' => 'bi-sunrise', 'lunch' => 'bi-brightness-high', 'afternoon_snack' => 'bi-sunset'];
 $mealLabels = [
@@ -26,7 +27,8 @@ if ($child) {
 
     $attStmt = $pdo->prepare("
         SELECT status, TO_CHAR(check_date, 'HH24:MI') AS checkin_time,
-               temperature, symptoms, other_symptoms, dropped_off_by, dropped_off_detail
+               temperature, symptoms, other_symptoms, care_actions, care_other, caretaker_name,
+               dropped_off_by, dropped_off_detail
         FROM attendance
         WHERE student_id = :s AND DATE(check_date) = CURRENT_DATE
         ORDER BY check_date ASC LIMIT 1
@@ -72,6 +74,19 @@ if ($child) {
         }
         if (!empty($todayAtt['other_symptoms'])) {
             $symptomList[] = $todayAtt['other_symptoms'];
+        }
+
+        $careLookup = [];
+        foreach ($options['care'] as $opt) {
+            $careLookup[$opt['code']] = $opt['label'];
+        }
+        $careActions = json_decode($todayAtt['care_actions'] ?? '[]', true);
+        foreach (is_array($careActions) ? $careActions : [] as $code) {
+            $label = $careLookup[$code] ?? $code;
+            if (!empty($todayAtt['care_other']) && $code === 'other') {
+                $label .= ' (' . $todayAtt['care_other'] . ')';
+            }
+            $careList[] = $label;
         }
     }
 
@@ -378,6 +393,17 @@ $viewTabs = [
     .meal-item.lunch           { --meal-bg: #ffedd5; --meal-fg: #c2410c; }
     .meal-item.afternoon_snack { --meal-bg: #e0e7ff; --meal-fg: #4338ca; }
 
+    .symptom-extra {
+        border-top: 1px dashed #e3c987;
+        color: var(--student-text);
+        font-size: 0.82rem;
+        line-height: 1.4;
+        padding-top: 0.4rem;
+        width: 100%;
+    }
+
+    .symptom-extra i { color: #b45309; margin-right: 0.15rem; }
+
     .dropoff-row {
         align-items: center;
         display: flex;
@@ -607,6 +633,12 @@ $viewTabs = [
                         <div class="attendance-summary-card <?= $symptomList ? 'highlight' : '' ?>">
                             <span class="attendance-summary-card-label"><i class="bi bi-heart-pulse"></i> อาการผิดปกติ</span>
                             <span class="attendance-summary-card-value"><?= $symptomList ? htmlspecialchars(implode(', ', $symptomList)) : ($todayAtt ? 'ไม่มีอาการ' : '-') ?></span>
+                            <?php if ($careList): ?>
+                                <span class="symptom-extra"><i class="bi bi-bandaid"></i> การดูแล: <?= htmlspecialchars(implode(', ', $careList)) ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($todayAtt['caretaker_name'])): ?>
+                                <span class="symptom-extra"><i class="bi bi-person-check"></i> ผู้ดูแล: <?= htmlspecialchars($todayAtt['caretaker_name']) ?></span>
+                            <?php endif; ?>
                         </div>
                 </div>
 
