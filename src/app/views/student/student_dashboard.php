@@ -222,59 +222,44 @@ $viewTabs = [
         width: 42px;
     }
 
-    .student-summary {
+    .student-hero {
         align-items: center;
-        background: #fff;
-        border: 1px solid var(--student-border);
-        border-left: 4px solid var(--student-primary);
-        border-radius: 1.25rem;
-        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
         display: flex;
-        gap: 1rem;
-        margin-bottom: 2rem;
-        padding: 1.25rem;
-        position: relative;
+        gap: 1.5rem;
     }
 
-    .student-summary img {
-        border: 4px solid #fff;
-        border-radius: 1rem;
-        box-shadow: 0 5px 14px rgba(38, 100, 142, 0.2);
-        height: 84px;
+    .student-hero img {
+        border: 4px solid rgba(255,255,255,0.85);
+        border-radius: 1.25rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        flex-shrink: 0;
+        height: 104px;
         object-fit: cover;
-        width: 84px;
+        position: relative;
+        width: 104px;
     }
 
-    .student-summary h2 {
-        color: var(--student-primary-dark);
-        font-size: 1.25rem;
-        margin: 0 0 0.35rem;
-    }
+    .student-hero h1 { margin-bottom: 0.75rem; }
+    .student-hero h1::before { content: none; }
 
-    .student-summary p {
-        color: #64748b;
-        font-size: 0.9rem;
-        margin: 0;
-    }
-
-    .student-summary .student-meta {
+    .student-meta {
         display: flex;
         flex-wrap: wrap;
         gap: 0.45rem 0.75rem;
-        margin-top: 0.5rem;
+        position: relative;
     }
 
     .student-meta span {
-        background: var(--student-primary-soft);
-        border: 1px solid #cfe0eb;
+        background: rgba(255,255,255,0.18);
+        border: 1px solid rgba(255,255,255,0.3);
         border-radius: 999px;
-        color: #34566c;
+        color: #fff;
         font-size: 0.82rem;
         padding: 0.28rem 0.65rem;
     }
 
     .student-meta i {
-        color: var(--student-primary);
+        color: #fff;
         margin-right: 0.2rem;
     }
 
@@ -515,8 +500,8 @@ $viewTabs = [
         .student-dashboard { padding: 1.25rem 1rem 2rem; }
         .student-dashboard-header { border-radius: 1.25rem; padding: 1.5rem; }
         .student-dashboard-header h1::before { height: 36px; width: 36px; }
-        .student-summary { align-items: flex-start; }
-        .student-summary img { height: 64px; width: 64px; }
+        .student-hero { gap: 1rem; }
+        .student-hero img { height: 76px; width: 76px; }
         .student-tab-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .student-tab-button { min-height: 155px; padding: 1rem; }
     }
@@ -529,22 +514,12 @@ $viewTabs = [
 
 <main class="main-content">
     <div class="student-dashboard">
-        <div class="student-dashboard-header">
-            <h1>แดชบอร์ดข้อมูลเด็ก</h1>
-            <p>เลือกหัวข้อที่ต้องการดูข้อมูลจากปุ่มด้านล่าง</p>
-        </div>
-
-        <?php if (!$child): ?>
-            <div class="student-empty">
-                <i class="bi bi-exclamation-circle me-2"></i>
-                ไม่พบข้อมูลเด็กของบัญชีนี้ กรุณาติดต่อผู้ดูแลระบบ
-            </div>
-        <?php else: ?>
-            <div class="student-summary">
+        <?php if ($child): ?>
+            <div class="student-dashboard-header student-hero">
                 <img src="<?= !empty($child['profile_image']) ? htmlspecialchars($child['profile_image']) : '../../../public/assets/images/avatar.png' ?>"
                      alt="รูปประจำตัวของ <?= htmlspecialchars(($child['firstname_th'] ?? '') . ' ' . ($child['lastname_th'] ?? '')) ?>">
                 <div>
-                    <h2><?= htmlspecialchars(($child['prefix_th'] ?? '') . ($child['firstname_th'] ?? '') . ' ' . ($child['lastname_th'] ?? '')) ?></h2>
+                    <h1><?= htmlspecialchars(($child['prefix_th'] ?? '') . ($child['firstname_th'] ?? '') . ' ' . ($child['lastname_th'] ?? '')) ?></h1>
                     <div class="student-meta">
                         <span><i class="bi bi-person-badge"></i><?= htmlspecialchars($child['studentid']) ?></span>
                         <span><i class="bi bi-people"></i><?= htmlspecialchars($child['child_group'] ?? '-') ?></span>
@@ -552,7 +527,19 @@ $viewTabs = [
                     </div>
                 </div>
             </div>
+        <?php else: ?>
+            <div class="student-dashboard-header">
+                <h1>แดชบอร์ดข้อมูลเด็ก</h1>
+                <p>เลือกหัวข้อที่ต้องการดูข้อมูลจากปุ่มด้านล่าง</p>
+            </div>
+        <?php endif; ?>
 
+        <?php if (!$child): ?>
+            <div class="student-empty">
+                <i class="bi bi-exclamation-circle me-2"></i>
+                ไม่พบข้อมูลเด็กของบัญชีนี้ กรุณาติดต่อผู้ดูแลระบบ
+            </div>
+        <?php else: ?>
             <div class="student-section-title">ข้อมูลวันนี้</div>
             <div class="attendance-summary">
                 <?php if (!$todayAtt): ?>
