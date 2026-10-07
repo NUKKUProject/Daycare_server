@@ -905,6 +905,30 @@ tbody tr:hover {
     border-color: transparent;
   }
 
+  #guardianModal .guardian-card-inner .check-mark i,
+  #guardianModal .other-card-inner .check-mark i { display: block; line-height: 1; }
+  #guardianModal .guardian-card-inner .check-mark i::before,
+  #guardianModal .other-card-inner .check-mark i::before { display: block; vertical-align: 0; line-height: 1; }
+
+  @media (max-width: 576px) {
+    #guardianModal .guardian-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+    #guardianModal .guardian-card-inner {
+      display: grid;
+      grid-template-columns: 84px 1fr 20px;
+      grid-template-areas: "img label check" "img name check";
+      column-gap: 0.75rem;
+      row-gap: 0;
+      align-items: center;
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+    }
+    #guardianModal .guardian-card-inner .g-avatar { grid-area: img; width: 84px; }
+    #guardianModal .guardian-card-inner .g-label { grid-area: label; font-size: 1.15rem; font-weight: 700; color: #0f2460; align-self: end; }
+    #guardianModal .guardian-card-inner .g-name { grid-area: name; font-size: 1rem; font-weight: 600; color: #334155; margin-top: 0; align-self: start; }
+    #guardianModal .guardian-card-inner .check-mark { grid-area: check; margin-top: 0; align-self: center; justify-self: center; }
+    #guardianModal .guardian-card-inner:hover { transform: none; }
+  }
+
   .guardian-select-card input:checked + .other-card-inner .check-mark i {
     opacity: 1;
   }

@@ -1296,6 +1296,11 @@ $data = getChildrenGroupedByTab($currentTab);
     color: #0f2460;
   }
 
+  #healthModal .guardian-card-inner .check-mark i,
+  #healthModal .other-card-inner .check-mark i { display: block; line-height: 1; }
+  #healthModal .guardian-card-inner .check-mark i::before,
+  #healthModal .other-card-inner .check-mark i::before { display: block; vertical-align: 0; line-height: 1; }
+
   @media (max-width: 576px) {
     #healthModal .guardian-grid { grid-template-columns: 1fr; gap: 0.5rem; }
     #healthModal .guardian-card-inner {
@@ -1311,7 +1316,7 @@ $data = getChildrenGroupedByTab($currentTab);
     #healthModal .guardian-card-inner .g-avatar { grid-area: img; width: 84px; }
     #healthModal .guardian-card-inner .g-label { grid-area: label; font-size: 1.15rem; font-weight: 700; color: #0f2460; align-self: end; }
     #healthModal .guardian-card-inner .g-name { grid-area: name; font-size: 1rem; font-weight: 600; color: #334155; margin-top: 0; align-self: start; }
-    #healthModal .guardian-card-inner .check-mark { grid-area: check; margin-top: 0; }
+    #healthModal .guardian-card-inner .check-mark { grid-area: check; margin-top: 0; align-self: center; justify-self: center; }
     #healthModal .guardian-card-inner:hover { transform: none; }
   }
 
