@@ -23,11 +23,7 @@ const CHILD_COLUMN_LABELS = [
     'sex' => 'เพศ',
     'birthday' => 'วันเกิด',
     'age_student' => 'อายุ (ปี)',
-    'place_birth' => 'สถานที่เกิด',
     'id_card' => 'เลขบัตรประชาชน',
-    'issue_at' => 'ออกบัตรที่',
-    'issue_date' => 'วันออกบัตร',
-    'expiry_date' => 'วันบัตรหมดอายุ',
     'race' => 'เชื้อชาติ',
     'nationality' => 'สัญชาติ',
     'religion' => 'ศาสนา',
@@ -58,8 +54,13 @@ const CHILD_COLUMN_LABELS = [
     'emergency_relation' => 'ความสัมพันธ์ผู้ติดต่อฉุกเฉิน',
 ];
 
-// คอลัมน์ภายในระบบที่ไม่ส่งออก (รหัสภายใน, QR, ไฟล์รูป, เวลาสร้าง/แก้ไข)
-const CHILD_COLUMNS_EXCLUDED = ['id', 'qr_code', 'profile_image', 'created_at', 'updated_at'];
+// คอลัมน์ที่ไม่ส่งออก (รหัสภายใน, QR, ไฟล์รูป, เวลาสร้าง/แก้ไข, อายุที่คำนวณ, ข้อมูลบัตรประชาชนเพิ่มเติม)
+const CHILD_COLUMNS_EXCLUDED = [
+    'id', 'qr_code', 'created_at', 'updated_at', 'academic_year_id',
+    'profile_image', 'father_image', 'mother_image', 'relative_image',
+    'age_years', 'age_months', 'age_days',
+    'place_birth', 'issue_at', 'issue_date', 'expiry_date',
+];
 
 // คอลัมน์พื้นฐานเมื่อเลือกส่งออกเฉพาะข้อมูลพื้นฐาน
 const CHILD_COLUMNS_BASIC = ['studentid', 'prefix_th', 'firstname_th', 'lastname_th', 'nickname', 'academic_year', 'child_group', 'classroom', 'status'];
