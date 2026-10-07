@@ -905,6 +905,28 @@ tbody tr:hover {
     border-color: transparent;
   }
 
+  /* ===== Section status (สีตามสถานะการกรอก) ===== */
+  #guardianModal .form-card[data-sec] {
+    border-left: 6px solid #cbd5e1;
+    transition: border-color 0.25s ease, background-color 0.25s ease;
+  }
+  #guardianModal .form-card[data-state="required"] { border-left-color: #f59e0b; background: #fffbeb; }
+  #guardianModal .form-card[data-state="done"]     { border-left-color: #16a34a; }
+  #guardianModal .sec-chip {
+    margin-left: auto;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+    padding: 2px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  #guardianModal .sec-chip i { color: inherit; font-size: 0.8rem; }
+  #guardianModal [data-state="required"] .sec-chip { background: #fde68a; color: #b45309; }
+  #guardianModal [data-state="done"] .sec-chip     { background: #dcfce7; color: #15803d; }
+  #guardianModal [data-state="none"] .sec-chip     { background: #f1f5f9; color: #64748b; }
+
   #guardianModal .guardian-card-inner .check-mark i,
   #guardianModal .other-card-inner .check-mark i { display: block; line-height: 1; }
   #guardianModal .guardian-card-inner .check-mark i::before,
@@ -1273,7 +1295,7 @@ tbody tr:hover {
                 </div>
 
                 <!-- Guardian Selection -->
-                <div class="form-card">
+                <div class="form-card" data-sec="pickup">
                 <div class="section-label">
                     <i class="bi bi-person-check"></i> เลือกผู้รับเด็กกลับบ้าน
                 </div>
@@ -1751,6 +1773,28 @@ tbody tr:hover {
 
     let modalHasGuardian = true;
 
+    // สีและป้ายสถานะของหัวข้อเลือกผู้รับเด็ก (เหลือง = ต้องเลือก, เขียว = เรียบร้อย)
+    function updatePickupStatus() {
+        const card = document.querySelector('#guardianModal [data-sec="pickup"]');
+        if (!card) return;
+        const sel = document.querySelector('input[name="guardian"]:checked');
+        const otherOk = sel && sel.value === 'other'
+            ? document.getElementById('otherGuardianDetails').value.trim() !== '' : true;
+        let state, icon, text;
+        if (sel && otherOk) { state = 'done'; icon = 'bi-check-circle-fill'; text = 'เรียบร้อย'; }
+        else if (!modalHasGuardian && !sel) { state = 'none'; icon = 'bi-dash-circle'; text = 'ไม่ระบุผู้รับ'; }
+        else { state = 'required'; icon = 'bi-exclamation-triangle-fill'; text = sel ? 'ต้องระบุรายละเอียด' : 'ต้องเลือก'; }
+        card.dataset.state = state;
+        let chip = card.querySelector('.sec-chip');
+        if (!chip) {
+            chip = document.createElement('span');
+            chip.className = 'sec-chip';
+            card.querySelector('.section-label').appendChild(chip);
+        }
+        chip.innerHTML = `<i class="bi ${icon}"></i> ${text}`;
+    }
+
+
          // ฟังก์ชันเปิด Modal พร้อมข้อมูล
     function openGuardianModal(studentData, guardianData) {
         // Student Info
@@ -1804,6 +1848,7 @@ tbody tr:hover {
         document.querySelectorAll('input[name="guardian"]').forEach(r => r.checked = false);
         document.getElementById('otherDetails').style.display = 'none';
         document.getElementById('otherGuardianDetails').value = '';
+        updatePickupStatus();
 
         // Open Modal
         const modal = new bootstrap.Modal(document.getElementById('guardianModal'));
@@ -1906,8 +1951,11 @@ tbody tr:hover {
         radio.addEventListener('change', function() {
             const otherDetails = document.getElementById('otherDetails');
             otherDetails.style.display = this.value === 'other' ? 'block' : 'none';
+            updatePickupStatus();
         });
     });
+
+    document.getElementById('otherGuardianDetails').addEventListener('input', updatePickupStatus);
 
     const btnSave = document.getElementById('guardianBtnSave');
     if (!btnSave) {
