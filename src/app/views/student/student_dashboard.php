@@ -576,13 +576,10 @@ $viewTabs = [
         <?php else: ?>
             <div class="student-section-title">ข้อมูลวันนี้</div>
             <div class="attendance-summary">
-                <?php if (!$todayAtt): ?>
-                    <div class="text-muted"><i class="bi bi-info-circle me-1"></i>วันนี้ยังไม่มีการสแกนบัตรเข้าศูนย์</div>
-                <?php else: ?>
-                    <div class="attendance-summary-groups today-info">
+                <div class="attendance-summary-groups today-info">
                         <div class="attendance-summary-card scan">
                             <span class="attendance-summary-card-label"><i class="bi bi-clock"></i> สแกนบัตรถึงศูนย์</span>
-                            <span class="attendance-summary-card-value"><?= $todayAtt['checkin_time'] === '00:00' ? '-' : htmlspecialchars($todayAtt['checkin_time']) . ' น.' ?></span>
+                            <span class="attendance-summary-card-value"><?= $todayAtt && $todayAtt['checkin_time'] !== '00:00' ? htmlspecialchars($todayAtt['checkin_time']) . ' น.' : '-' ?></span>
                         </div>
                         <div class="attendance-summary-card dropoff">
                             <span class="attendance-summary-card-label"><i class="bi bi-person-heart"></i> ใครมาส่ง</span>
@@ -605,20 +602,16 @@ $viewTabs = [
                         </div>
                         <div class="attendance-summary-card">
                             <span class="attendance-summary-card-label"><i class="bi bi-thermometer-half"></i> อุณหภูมิ</span>
-                            <span class="attendance-summary-card-value"><?= $todayAtt['temperature'] !== null ? htmlspecialchars(number_format((float) $todayAtt['temperature'], 1)) . ' °C' : '-' ?></span>
+                            <span class="attendance-summary-card-value"><?= $todayAtt && $todayAtt['temperature'] !== null ? htmlspecialchars(number_format((float) $todayAtt['temperature'], 1)) . ' °C' : '-' ?></span>
                         </div>
                         <div class="attendance-summary-card <?= $symptomList ? 'highlight' : '' ?>">
                             <span class="attendance-summary-card-label"><i class="bi bi-heart-pulse"></i> อาการผิดปกติ</span>
-                            <span class="attendance-summary-card-value"><?= $symptomList ? htmlspecialchars(implode(', ', $symptomList)) : 'ไม่มีอาการ' ?></span>
+                            <span class="attendance-summary-card-value"><?= $symptomList ? htmlspecialchars(implode(', ', $symptomList)) : ($todayAtt ? 'ไม่มีอาการ' : '-') ?></span>
                         </div>
-                    </div>
-                <?php endif; ?>
+                </div>
 
                 <div class="attendance-subtitle"><i class="bi bi-egg-fried"></i>รายการอาหารประจำวัน</div>
-                <?php if (!$menuToday): ?>
-                    <div class="text-muted">วันนี้ยังไม่มีการบันทึกรายการอาหาร</div>
-                <?php else: ?>
-                    <div class="attendance-summary-groups meal-info">
+                <div class="attendance-summary-groups meal-info">
                         <?php foreach ($mealLabels as $slot => $meal): ?>
                             <div class="meal-item <?= $slot ?>">
                                 <div class="meal-badge">
@@ -629,8 +622,7 @@ $viewTabs = [
                                 <div class="meal-text"><?= htmlspecialchars($menuToday[$slot] ?? '-') ?></div>
                             </div>
                         <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+                </div>
             </div>
 
             <div class="student-section-title">เลือกดูข้อมูล</div>
