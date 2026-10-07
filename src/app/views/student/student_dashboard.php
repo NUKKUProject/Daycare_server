@@ -29,7 +29,7 @@ if ($child) {
         SELECT status, TO_CHAR(check_date, 'HH24:MI') AS checkin_time,
                temperature, symptoms, other_symptoms, care_actions, care_other, caretaker_name,
                dropped_off_by, dropped_off_detail,
-               picked_up_by, picked_up_detail,
+               picked_up_by, picked_up_detail, leave_note,
                SUBSTRING(check_out_time::text FROM '(\d{2}:\d{2}):\d{2}') AS checkout_time
         FROM attendance
         WHERE student_id = :s AND DATE(check_date) = CURRENT_DATE
@@ -59,6 +59,17 @@ if ($child) {
     };
     $dropOff = $todayAtt ? $resolveGuardian($todayAtt['dropped_off_by'] ?? null, $todayAtt['dropped_off_detail'] ?? null) : null;
     $pickUp = $todayAtt ? $resolveGuardian($todayAtt['picked_up_by'] ?? null, $todayAtt['picked_up_detail'] ?? null) : null;
+
+    // ข้อมูลรับกลับเก่าเก็บเป็นข้อความใน leave_note เช่น "ผู้รับเด็ก: นายดำ ศรีโคตร (พ่อ)"
+    if (!$pickUp && $todayAtt && preg_match('/^ผู้รับเด็ก:\s*(.*?)\s*\(([^)]+)\)(?:\s*-\s*(.*))?$/su', (string) ($todayAtt['leave_note'] ?? ''), $m)) {
+        $typeByLabel = array_flip($guardianLabels);
+        $type = $typeByLabel[trim($m[2])] ?? null;
+        $detail = trim($m[3] ?? '');
+        $pickUp = $resolveGuardian($type, $detail);
+        if ($pickUp && trim($m[1]) !== '') {
+            $pickUp['name'] = trim($m[1]);
+        }
+    }
 
     if ($todayAtt) {
         require_once __DIR__ . '/../../include/function/checkin_settings.php';
