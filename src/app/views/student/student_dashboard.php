@@ -14,6 +14,7 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
 $todayAtt = null;
 $symptomList = [];
 $menuToday = [];
+$mealIcons = ['morning_snack' => 'bi-sunrise', 'lunch' => 'bi-brightness-high', 'afternoon_snack' => 'bi-sunset'];
 $mealLabels = [
     'morning_snack' => 'อาหารว่างเช้า',
     'lunch' => 'อาหารกลางวัน',
@@ -261,32 +262,18 @@ $viewTabs = [
         padding: 1.25rem;
     }
 
-    .attendance-summary-total {
-        align-items: center;
-        display: flex;
-        gap: 0.85rem;
-        margin-bottom: 1rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid var(--student-border);
-    }
-
-    .attendance-summary-total i {
-        background: var(--student-primary-soft);
-        border-radius: 0.85rem;
-        color: var(--student-primary);
-        font-size: 1.4rem;
-        padding: 0.7rem;
-    }
-
-    .attendance-summary-total strong {
+    .attendance-subtitle {
+        border-top: 1px solid var(--student-border);
         color: var(--student-primary-dark);
-        display: block;
-        font-size: 1.35rem;
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 1.1rem 0 0.75rem;
+        padding-top: 1rem;
     }
 
-    .attendance-summary-total span {
-        color: var(--student-muted);
-        font-size: 0.85rem;
+    .attendance-subtitle i {
+        color: var(--student-primary);
+        margin-right: 0.4rem;
     }
 
     .attendance-summary-groups {
@@ -296,9 +283,15 @@ $viewTabs = [
     }
 
     .attendance-summary-card {
+        align-items: center;
         background: var(--student-primary-soft);
         border-radius: 1rem;
-        padding: 0.85rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        justify-content: center;
+        min-height: 104px;
+        padding: 0.9rem 0.75rem;
         text-align: center;
     }
 
@@ -308,11 +301,16 @@ $viewTabs = [
     }
 
     .attendance-summary-card-label {
-        color: var(--student-text);
+        color: var(--student-muted);
         display: block;
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         font-weight: 600;
-        margin-bottom: 0.35rem;
+        margin: 0;
+    }
+
+    .attendance-summary-card-label i {
+        color: var(--student-primary);
+        margin-right: 0.15rem;
     }
 
     .attendance-summary-card-value {
@@ -340,21 +338,31 @@ $viewTabs = [
     .attendance-summary-groups.today-info { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .attendance-summary-groups.meal-info { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .attendance-summary-card-value { overflow-wrap: anywhere; }
+    .dropoff-row {
+        align-items: center;
+        display: flex;
+        gap: 0.65rem;
+        justify-content: center;
+        text-align: left;
+    }
+
     .dropoff-avatar {
         border: 3px solid #fff;
         border-radius: 50%;
         box-shadow: 0 3px 10px rgba(38, 100, 142, 0.25);
-        display: block;
-        height: 72px;
-        margin: 0 auto 0.4rem;
+        flex-shrink: 0;
+        height: 56px;
         object-fit: cover;
-        width: 72px;
+        width: 56px;
     }
+
+    .dropoff-name { color: var(--student-muted); display: block; font-size: 0.8rem; line-height: 1.25; }
 
     @media (max-width: 768px) {
         .attendance-summary-groups,
         .attendance-summary-groups.today-info,
         .attendance-summary-groups.meal-info { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .attendance-summary-card.dropoff { grid-column: 1 / -1; }
         .attendance-charts { grid-template-columns: minmax(0, 1fr); }
     }
 
@@ -535,17 +543,21 @@ $viewTabs = [
                             <span class="attendance-summary-card-label"><i class="bi bi-clock"></i> สแกนบัตรถึงศูนย์</span>
                             <span class="attendance-summary-card-value"><?= $todayAtt['checkin_time'] === '00:00' ? '-' : htmlspecialchars($todayAtt['checkin_time']) . ' น.' ?></span>
                         </div>
-                        <div class="attendance-summary-card">
+                        <div class="attendance-summary-card dropoff">
                             <span class="attendance-summary-card-label"><i class="bi bi-person-heart"></i> ใครมาส่ง</span>
                             <?php if ($dropOff): ?>
-                                <?php if ($dropOff['image'] !== ''): ?>
-                                    <img class="dropoff-avatar" src="<?= htmlspecialchars($dropOff['image']) ?>" alt="รูป<?= htmlspecialchars($dropOff['label']) ?>"
-                                         onerror="this.src='../../../public/assets/images/avatar.png'">
-                                <?php endif; ?>
-                                <span class="attendance-summary-card-value"><?= htmlspecialchars($dropOff['label']) ?></span>
-                                <?php if ($dropOff['name'] !== ''): ?>
-                                    <small class="d-block text-muted"><?= htmlspecialchars($dropOff['name']) ?></small>
-                                <?php endif; ?>
+                                <div class="dropoff-row">
+                                    <?php if ($dropOff['image'] !== ''): ?>
+                                        <img class="dropoff-avatar" src="<?= htmlspecialchars($dropOff['image']) ?>" alt="รูป<?= htmlspecialchars($dropOff['label']) ?>"
+                                             onerror="this.src='../../../public/assets/images/avatar.png'">
+                                    <?php endif; ?>
+                                    <div>
+                                        <span class="attendance-summary-card-value"><?= htmlspecialchars($dropOff['label']) ?></span>
+                                        <?php if ($dropOff['name'] !== ''): ?>
+                                            <span class="dropoff-name"><?= htmlspecialchars($dropOff['name']) ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
                             <?php else: ?>
                                 <span class="attendance-summary-card-value">-</span>
                             <?php endif; ?>
@@ -561,17 +573,14 @@ $viewTabs = [
                     </div>
                 <?php endif; ?>
 
-                <div class="attendance-summary-total mt-3 mb-2 pb-2">
-                    <i class="bi bi-egg-fried"></i>
-                    <div><strong>รายการอาหารประจำวัน</strong></div>
-                </div>
+                <div class="attendance-subtitle"><i class="bi bi-egg-fried"></i>รายการอาหารประจำวัน</div>
                 <?php if (!$menuToday): ?>
                     <div class="text-muted">วันนี้ยังไม่มีการบันทึกรายการอาหาร</div>
                 <?php else: ?>
                     <div class="attendance-summary-groups meal-info">
                         <?php foreach ($mealLabels as $slot => $label): ?>
                             <div class="attendance-summary-card">
-                                <span class="attendance-summary-card-label"><?= $label ?></span>
+                                <span class="attendance-summary-card-label"><i class="bi <?= $mealIcons[$slot] ?? 'bi-egg-fried' ?>"></i> <?= $label ?></span>
                                 <span class="attendance-summary-card-value"><?= htmlspecialchars($menuToday[$slot] ?? '-') ?></span>
                             </div>
                         <?php endforeach; ?>
