@@ -881,7 +881,7 @@ $data = getChildrenGroupedByTab($currentTab);
     border-left: 6px solid #cbd5e1;
     transition: border-color 0.25s ease, background-color 0.25s ease;
   }
-  #healthModal .form-card[data-state="required"] { border-left-color: #dc2626; background: #fff5f5; }
+  #healthModal .form-card[data-state="required"],
   #healthModal .form-card[data-state="todo"]     { border-left-color: #f59e0b; background: #fffbeb; }
   #healthModal .form-card[data-state="done"]     { border-left-color: #16a34a; }
   #healthModal .form-card[data-state="none"]     { border-left-color: #cbd5e1; }
@@ -896,8 +896,9 @@ $data = getChildrenGroupedByTab($currentTab);
     white-space: nowrap;
   }
   .sec-chip i { color: inherit; font-size: 0.8rem; }
-  [data-state="required"] .sec-chip { background: #fee2e2; color: #b91c1c; }
+  [data-state="required"] .sec-chip,
   [data-state="todo"] .sec-chip     { background: #fef3c7; color: #b45309; }
+  [data-state="required"] .sec-chip { background: #fde68a; }
   [data-state="done"] .sec-chip     { background: #dcfce7; color: #15803d; }
   [data-state="none"] .sec-chip     { background: #f1f5f9; color: #64748b; }
   @keyframes secFlash {
@@ -2152,7 +2153,7 @@ $data = getChildrenGroupedByTab($currentTab);
 
         // ===== สีและป้ายสถานะของแต่ละหัวข้อ =====
         const SEC_CHIP = {
-            required: ['bi-exclamation-circle-fill', 'ต้องกรอก'],
+            required: ['bi-exclamation-triangle-fill', 'ต้องกรอก'],
             todo: ['bi-exclamation-triangle-fill', 'ยังไม่กรอก'],
             done: ['bi-check-circle-fill', 'เรียบร้อย'],
             none: ['bi-dash-circle', 'ไม่มี'],
