@@ -237,34 +237,70 @@ $selectedClassroom = $_GET['classroom'] ?? null;
 </div>
 
 <!-- Modal: Export -->
+<?php
+$exportYearDefault = $currentAcademicYear;
+if (!$exportYearDefault) {
+    foreach ($academicYears as $y) {
+        if (!empty($y['is_active'])) { $exportYearDefault = $y['name']; break; }
+    }
+}
+?>
 <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content" style="border-radius:15px; border:none;">
             <div class="modal-header" style="background:#198754; color:white; border-radius:15px 15px 0 0;">
-                <h5 class="modal-title" id="exportModalLabel">Export ข้อมูลเด็ก</h5>
+                <h5 class="modal-title" id="exportModalLabel"><i class="fas fa-file-export me-2" aria-hidden="true"></i>Export ข้อมูลเด็ก (CSV)</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form action="../../include/export/export_children.php" method="post">
+            <form action="../../include/export/export_children.php" method="post" id="exportForm">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">กลุ่มเด็ก</label>
-                        <select name="child_group" class="form-select" required>
-                            <option value="all">ทั้งหมด</option>
-                            <option value="medium">เด็กกลาง</option>
-                            <option value="big">เด็กโต</option>
-                            <option value="prep">เตรียมอนุบาล</option>
+                        <label class="form-label fw-semibold" for="exportYear">ปีการศึกษา</label>
+                        <select name="academic_year" id="exportYear" class="form-select">
+                            <option value="">ทุกปีการศึกษา</option>
+                            <?php foreach ($academicYears as $y): ?>
+                                <option value="<?= htmlspecialchars($y['name']) ?>" <?= (string) $y['name'] === (string) $exportYearDefault ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($y['name']) ?><?= !empty($y['is_active']) ? ' (เปิดใช้งาน)' : '' ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
-                    <input type="hidden" name="fields[]" value="student_id">
-                    <input type="hidden" name="fields[]" value="name">
-                    <input type="hidden" name="fields[]" value="nickname">
-                    <input type="hidden" name="fields[]" value="classroom">
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label fw-semibold" for="exportGroup">กลุ่มเด็ก</label>
+                            <select name="child_group" id="exportGroup" class="form-select">
+                                <option value="all">ทุกกลุ่ม</option>
+                                <option value="เด็กกลาง">เด็กกลาง</option>
+                                <option value="เด็กโต">เด็กโต</option>
+                                <option value="เตรียมอนุบาล">เตรียมอนุบาล</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label fw-semibold" for="exportRoom">ห้องเรียน</label>
+                            <select name="classroom" id="exportRoom" class="form-select">
+                                <option value="all">ทุกห้อง</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">รูปแบบไฟล์</label>
-                        <select name="format" class="form-select" disabled>
-                            <option value="csv">CSV</option>
-                        </select>
-                        <small class="text-muted">รองรับเฉพาะ CSV ในขณะนี้</small>
+                        <label class="form-label fw-semibold d-block">ข้อมูลที่ส่งออก</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="scope" id="scopeAll" value="all" checked>
+                            <label class="form-check-label" for="scopeAll">ข้อมูลทั้งหมด (รวมข้อมูลส่วนตัว)</label>
+                            <div class="form-text">เลขบัตรประชาชน วันเกิด ที่อยู่ โรคประจำตัว ข้อมูลผู้ปกครองและเบอร์โทร ฯลฯ</div>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="radio" name="scope" id="scopeBasic" value="basic">
+                            <label class="form-check-label" for="scopeBasic">เฉพาะข้อมูลพื้นฐาน</label>
+                            <div class="form-text">รหัส ชื่อ ชื่อเล่น ปีการศึกษา กลุ่ม ห้อง สถานะ</div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning py-2 small mb-0">
+                        <i class="fas fa-triangle-exclamation me-1" aria-hidden="true"></i>
+                        ไฟล์ที่ส่งออกมีข้อมูลส่วนบุคคลของเด็กและผู้ปกครอง โปรดเก็บรักษาและไม่เผยแพร่โดยไม่จำเป็น
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -275,6 +311,32 @@ $selectedClassroom = $_GET['classroom'] ?? null;
         </div>
     </div>
 </div>
+
+<script>
+    // ห้องเรียนใน Export เปลี่ยนตามกลุ่มที่เลือก
+    (function () {
+        const group = document.getElementById('exportGroup');
+        const room = document.getElementById('exportRoom');
+        if (!group || !room) return;
+        async function loadRooms() {
+            room.innerHTML = '<option value="all">ทุกห้อง</option>';
+            const url = '../../include/function/get_classrooms.php' +
+                (group.value !== 'all' ? '?child_group=' + encodeURIComponent(group.value) : '');
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                const names = [...new Set((Array.isArray(data) ? data : []).map((c) => c.classroom_name))];
+                names.forEach((name) => {
+                    const o = document.createElement('option');
+                    o.value = o.textContent = name;
+                    room.appendChild(o);
+                });
+            } catch (e) { console.error(e); }
+        }
+        group.addEventListener('change', loadRooms);
+        loadRooms();
+    })();
+</script>
 
 <!-- ===== DATA จาก PHP ===== -->
 <?php if ($currentAcademicYear): ?>
