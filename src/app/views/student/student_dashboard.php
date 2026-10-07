@@ -675,6 +675,71 @@ $viewTabs = [
         .student-tab-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .student-tab-button { min-height: 155px; padding: 1rem; }
     }
+
+    /* ===== Simple look: การ์ดสีขาว ขอบบาง จัดชิดซ้าย ===== */
+    .attendance-summary { box-shadow: none; padding: 1.1rem; }
+
+    .attendance-summary-card {
+        align-items: flex-start;
+        background: #fff;
+        border: 1px solid var(--student-border);
+        justify-content: flex-start;
+        min-height: 0;
+        text-align: left;
+    }
+
+    .attendance-summary-card.highlight { background: #fffbeb; border-color: #f3d9a3; }
+
+    .attendance-summary-card-label {
+        color: var(--student-muted);
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .attendance-summary-card.person .attendance-summary-card-label { color: var(--student-muted); font-size: 0.8rem; }
+
+    .time-chip {
+        background: none;
+        border: 0;
+        color: var(--student-muted);
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 0;
+    }
+
+    .time-chip i { display: none; }
+
+    .dropoff-row { justify-content: flex-start; }
+    .attendance-summary-card.person .dropoff-avatar { height: 52px; width: 52px; }
+    .attendance-summary-card.person .dropoff-row .attendance-summary-card-value { font-size: 1.15rem; }
+    .attendance-summary-card.person .dropoff-name { font-size: 0.8rem; }
+
+    .attendance-summary-card.symptoms .attendance-summary-card-label {
+        border-bottom: 0;
+        color: var(--student-muted);
+        font-size: 0.8rem;
+        padding-bottom: 0;
+    }
+
+    .symptom-row-label { font-size: 0.8rem; }
+    .chip { font-size: 0.85rem; }
+    .chip-care { background: #eef2f6; color: #334155; }
+
+    .attendance-subtitle { border-top: 0; margin-top: 1rem; padding-top: 0; }
+
+    .meal-item { background: #fff; }
+    .meal-badge {
+        background: none;
+        color: var(--student-primary-dark);
+        flex-direction: row;
+        gap: 0.4rem;
+        padding: 0.75rem 0 0.75rem 1rem;
+        width: auto;
+    }
+    .meal-badge i { color: var(--student-primary); font-size: 1.1rem; }
+    .meal-badge strong { font-size: 0.95rem; }
+    .meal-badge small { display: none; }
+    .meal-text { font-size: 1rem; padding: 0.75rem 1rem 0.75rem 0.5rem; justify-content: flex-end; text-align: right; }
 </style>
 
 <main class="main-content">
