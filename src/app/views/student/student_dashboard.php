@@ -393,16 +393,49 @@ $viewTabs = [
     .meal-item.lunch           { --meal-bg: #ffedd5; --meal-fg: #c2410c; }
     .meal-item.afternoon_snack { --meal-bg: #e0e7ff; --meal-fg: #4338ca; }
 
-    .symptom-extra {
-        border-top: 1px dashed #e3c987;
-        color: var(--student-text);
-        font-size: 0.82rem;
-        line-height: 1.4;
-        padding-top: 0.4rem;
-        width: 100%;
+    .attendance-summary-card.symptoms {
+        align-items: stretch;
+        grid-column: 1 / -1;
+        min-height: 0;
+        text-align: left;
     }
 
-    .symptom-extra i { color: #b45309; margin-right: 0.15rem; }
+    .attendance-summary-card.symptoms .attendance-summary-card-label { text-align: left; }
+
+    .symptom-rows { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .symptom-row {
+        align-items: baseline;
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .symptom-row-label {
+        color: var(--student-muted);
+        flex-shrink: 0;
+        font-size: 0.82rem;
+        font-weight: 600;
+        width: 62px;
+    }
+
+    .symptom-row-value {
+        color: var(--student-primary-dark);
+        display: flex;
+        flex-wrap: wrap;
+        font-weight: 700;
+        gap: 0.35rem;
+    }
+
+    .chip {
+        border-radius: 999px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        padding: 0.15rem 0.7rem;
+    }
+
+    .chip-warn { background: #fde68a; color: #92400e; }
+    .chip-care { background: #dbeafe; color: #1e40af; }
+    .chip-ok   { background: #dcfce7; color: #15803d; }
 
     .dropoff-row {
         align-items: center;
@@ -630,15 +663,34 @@ $viewTabs = [
                             <span class="attendance-summary-card-label"><i class="bi bi-thermometer-half"></i> อุณหภูมิ</span>
                             <span class="attendance-summary-card-value"><?= $todayAtt && $todayAtt['temperature'] !== null ? htmlspecialchars(number_format((float) $todayAtt['temperature'], 1)) . ' °C' : '-' ?></span>
                         </div>
-                        <div class="attendance-summary-card <?= $symptomList ? 'highlight' : '' ?>">
+                        <div class="attendance-summary-card symptoms <?= $symptomList ? 'highlight' : '' ?>">
                             <span class="attendance-summary-card-label"><i class="bi bi-heart-pulse"></i> อาการผิดปกติ</span>
-                            <span class="attendance-summary-card-value"><?= $symptomList ? htmlspecialchars(implode(', ', $symptomList)) : ($todayAtt ? 'ไม่มีอาการ' : '-') ?></span>
-                            <?php if ($careList): ?>
-                                <span class="symptom-extra"><i class="bi bi-bandaid"></i> การดูแล: <?= htmlspecialchars(implode(', ', $careList)) ?></span>
-                            <?php endif; ?>
-                            <?php if (!empty($todayAtt['caretaker_name'])): ?>
-                                <span class="symptom-extra"><i class="bi bi-person-check"></i> ผู้ดูแล: <?= htmlspecialchars($todayAtt['caretaker_name']) ?></span>
-                            <?php endif; ?>
+                            <div class="symptom-rows">
+                                <div class="symptom-row">
+                                    <span class="symptom-row-label">อาการ</span>
+                                    <span class="symptom-row-value">
+                                        <?php if ($symptomList): ?>
+                                            <?php foreach ($symptomList as $item): ?><span class="chip chip-warn"><?= htmlspecialchars($item) ?></span><?php endforeach; ?>
+                                        <?php else: ?>
+                                            <?= $todayAtt ? '<span class="chip chip-ok"><i class="bi bi-check-circle"></i> ไม่มีอาการ</span>' : '-' ?>
+                                        <?php endif; ?>
+                                    </span>
+                                </div>
+                                <?php if ($careList): ?>
+                                    <div class="symptom-row">
+                                        <span class="symptom-row-label">การดูแล</span>
+                                        <span class="symptom-row-value">
+                                            <?php foreach ($careList as $item): ?><span class="chip chip-care"><?= htmlspecialchars($item) ?></span><?php endforeach; ?>
+                                        </span>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if (!empty($todayAtt['caretaker_name'])): ?>
+                                    <div class="symptom-row">
+                                        <span class="symptom-row-label">ผู้ดูแล</span>
+                                        <span class="symptom-row-value"><?= htmlspecialchars($todayAtt['caretaker_name']) ?></span>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         </div>
                 </div>
 
