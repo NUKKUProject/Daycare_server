@@ -159,9 +159,9 @@ $studentid = $_SESSION['username'] ?? '';
     .draft-note a { font-weight: 700; margin-left: .4rem; }
     .btn-save-note {
         width: 100%; border-radius: 12px; padding: .8rem 1.5rem; font-weight: 800; border: none; color: #fff; font-size: 1rem;
-        background: linear-gradient(135deg, #0f2460, #1e4db7); box-shadow: 0 4px 16px rgba(15, 36, 96, .3);
+        background: #15803d; box-shadow: 0 4px 16px rgba(21, 128, 61, .3);
     }
-    .btn-save-note:hover { color: #fff; background: linear-gradient(135deg, #0a1a4f, #1a43a8); }
+    .btn-save-note:hover { color: #fff; background: #166534; }
     .btn-save-note:disabled { opacity: .7; color: #fff; }
 
     .hist-list { display: flex; flex-direction: column; }
