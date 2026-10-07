@@ -350,7 +350,7 @@ $viewTabs = [
         max-height: 300px;
     }
 
-    .attendance-summary-groups.today-info { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .attendance-summary-groups.today-info { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .attendance-summary-groups.meal-info { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .attendance-summary-card-value { overflow-wrap: anywhere; }
     .meal-item {
@@ -396,11 +396,19 @@ $viewTabs = [
     .attendance-summary-card.symptoms {
         align-items: stretch;
         grid-column: 1 / -1;
+        gap: 0.75rem;
         min-height: 0;
+        padding: 1rem 1.25rem;
         text-align: left;
     }
 
-    .attendance-summary-card.symptoms .attendance-summary-card-label { text-align: left; }
+    .attendance-summary-card.symptoms .attendance-summary-card-label {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        color: var(--student-primary-dark);
+        font-size: 0.95rem;
+        padding-bottom: 0.5rem;
+        text-align: left;
+    }
 
     .symptom-rows { display: flex; flex-direction: column; gap: 0.5rem; }
 
