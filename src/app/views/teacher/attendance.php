@@ -858,6 +858,54 @@ $data = getChildrenGroupedByTab($currentTab);
     font-weight: 400;
   }
 
+  .temp-quick {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+  }
+  .btn-temp-normal {
+    border: 2px solid #1e4db7;
+    background: #eff3ff;
+    color: #0f2460;
+    font-weight: 700;
+    font-size: 1.05rem;
+    border-radius: 12px;
+    padding: 0.55rem 0.5rem;
+    transition: all 0.2s ease;
+  }
+  .btn-temp-normal.active { background: #1e4db7; color: #fff; }
+
+  /* ===== Section status (สีตามสถานะการกรอก) ===== */
+  #healthModal .form-card[data-sec] {
+    border-left: 6px solid #cbd5e1;
+    transition: border-color 0.25s ease, background-color 0.25s ease;
+  }
+  #healthModal .form-card[data-state="required"] { border-left-color: #dc2626; background: #fff5f5; }
+  #healthModal .form-card[data-state="todo"]     { border-left-color: #f59e0b; background: #fffbeb; }
+  #healthModal .form-card[data-state="done"]     { border-left-color: #16a34a; }
+  #healthModal .form-card[data-state="none"]     { border-left-color: #cbd5e1; }
+  .sec-chip {
+    margin-left: auto;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+    padding: 2px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .sec-chip i { color: inherit; font-size: 0.8rem; }
+  [data-state="required"] .sec-chip { background: #fee2e2; color: #b91c1c; }
+  [data-state="todo"] .sec-chip     { background: #fef3c7; color: #b45309; }
+  [data-state="done"] .sec-chip     { background: #dcfce7; color: #15803d; }
+  [data-state="none"] .sec-chip     { background: #f1f5f9; color: #64748b; }
+  @keyframes secFlash {
+    0%, 100% { box-shadow: 0 2px 10px rgba(15, 36, 96, 0.07); }
+    50% { box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.45); }
+  }
+  .sec-flash { animation: secFlash 0.5s ease 3; }
+
   .temp-input-group .unit-badge {
     position: absolute;
     right: 12px;
@@ -1615,7 +1663,7 @@ $data = getChildrenGroupedByTab($currentTab);
             <input type="hidden" id="healthAttendanceIdInput" value="">
 
             <!-- Drop-off person -->
-            <div class="form-card">
+            <div data-sec="dropoff" class="form-card">
                 <div class="section-label">
                 <i class="bi bi-person-heart"></i> ผู้มาส่งเด็ก
                 </div>
@@ -1661,7 +1709,7 @@ $data = getChildrenGroupedByTab($currentTab);
             </div>
 
             <!-- Temperature -->
-            <div class="form-card">
+            <div data-sec="temp" class="form-card">
                 <div class="section-label">
                 <i class="bi bi-thermometer-half"></i> อุณหภูมิร่างกาย
                 </div>
@@ -1677,10 +1725,15 @@ $data = getChildrenGroupedByTab($currentTab);
                 >
                 <span class="unit-badge">°C</span>
                 </div>
+                <div class="temp-quick" id="healthTempQuick">
+                <button type="button" class="btn-temp-normal" data-temp="36.5">36.5</button>
+                <button type="button" class="btn-temp-normal" data-temp="36.8">36.8</button>
+                <button type="button" class="btn-temp-normal" data-temp="37.2">37.2</button>
+                </div>
             </div>
 
             <!-- Symptoms -->
-            <div class="form-card">
+            <div data-sec="symptoms" class="form-card">
                 <div class="section-label">
                 <i class="bi bi-exclamation-triangle"></i> อาการผิดปกติ
                 <span class="ms-1 text-muted fw-normal"
@@ -1692,7 +1745,7 @@ $data = getChildrenGroupedByTab($currentTab);
             </div>
 
             <!-- Other Symptoms -->
-            <div class="form-card">
+            <div data-sec="other" class="form-card">
                 <div class="section-label">
                 <i class="bi bi-pencil-square"></i> อาการอื่นๆ
                 </div>
@@ -1704,7 +1757,7 @@ $data = getChildrenGroupedByTab($currentTab);
             </div>
 
             <!-- Care / Help -->
-            <div class="form-card">
+            <div data-sec="care" class="form-card">
                 <div class="section-label">
                 <i class="bi bi-bandaid"></i> การดูแล/ช่วยเหลือ
                 <span class="ms-1 text-muted fw-normal"
@@ -1718,7 +1771,7 @@ $data = getChildrenGroupedByTab($currentTab);
             </div>
 
             <!-- Caretaker -->
-            <div class="form-card mb-0">
+            <div data-sec="caretaker" class="form-card mb-0">
                 <div class="section-label">
                 <i class="bi bi-person-check"></i> ผู้ดูแลชื่อ
                 </div>
@@ -1972,6 +2025,8 @@ $data = getChildrenGroupedByTab($currentTab);
                 })
                 .catch(err => console.error('Error loading guardians:', err));
 
+            updateSectionStatus();
+
             // Show Bootstrap modal
             getHealthModal().show();
         }
@@ -1997,12 +2052,11 @@ $data = getChildrenGroupedByTab($currentTab);
             const droppedOffDetail = document.getElementById('dropOffDetail').value.trim();
 
             if (!droppedOffBy) {
-                Swal.fire({ icon: 'warning', title: 'กรุณาเลือกผู้มาส่งเด็ก', confirmButtonColor: '#1e4db7', confirmButtonText: 'ตกลง' });
+                Swal.fire({ icon: 'warning', title: 'กรุณาเลือกผู้มาส่งเด็ก', confirmButtonColor: '#1e4db7', confirmButtonText: 'ตกลง' }).then(() => flashSection('dropoff'));
                 return;
             }
             if (droppedOffBy === 'other' && !droppedOffDetail) {
-                Swal.fire({ icon: 'warning', title: 'กรุณาระบุผู้มาส่ง', confirmButtonColor: '#1e4db7', confirmButtonText: 'ตกลง' });
-                document.getElementById('dropOffDetail').focus();
+                Swal.fire({ icon: 'warning', title: 'กรุณาระบุผู้มาส่ง', confirmButtonColor: '#1e4db7', confirmButtonText: 'ตกลง' }).then(() => { flashSection('dropoff'); document.getElementById('dropOffDetail').focus(); });
                 return;
             }
 
@@ -2014,8 +2068,7 @@ $data = getChildrenGroupedByTab($currentTab);
                     text: 'เลือกการดูแล/ช่วยเหลือแล้ว กรุณากรอกชื่อผู้ดูแล',
                     confirmButtonColor: '#1e4db7',
                     confirmButtonText: 'ตกลง'
-                });
-                document.getElementById('healthCaretakerName').focus();
+                }).then(() => { flashSection('caretaker'); document.getElementById('healthCaretakerName').focus(); });
                 return;
             }
 
@@ -2088,6 +2141,61 @@ $data = getChildrenGroupedByTab($currentTab);
 
         // ====== Event Listeners สำหรับ Health Modal ======
         document.getElementById('healthBtnSave').addEventListener('click', submitHealthData);
+        // ปุ่มลัดอุณหภูมิ: กดซ้ำที่ปุ่มเดิมเพื่อล้างค่า
+        document.getElementById('healthTempQuick').addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-temp]');
+            if (!btn) return;
+            const input = document.getElementById('healthTemperature');
+            input.value = input.value === btn.dataset.temp ? '' : btn.dataset.temp;
+            updateSectionStatus();
+        });
+
+        // ===== สีและป้ายสถานะของแต่ละหัวข้อ =====
+        const SEC_CHIP = {
+            required: ['bi-exclamation-circle-fill', 'ต้องกรอก'],
+            todo: ['bi-exclamation-triangle-fill', 'ยังไม่กรอก'],
+            done: ['bi-check-circle-fill', 'เรียบร้อย'],
+            none: ['bi-dash-circle', 'ไม่มี'],
+        };
+        function setSectionState(sec, state, extra) {
+            const card = document.querySelector(`#healthModal [data-sec="${sec}"]`);
+            if (!card) return;
+            card.dataset.state = state;
+            let chip = card.querySelector('.sec-chip');
+            if (!chip) {
+                chip = document.createElement('span');
+                chip.className = 'sec-chip';
+                card.querySelector('.section-label').appendChild(chip);
+            }
+            const [icon, text] = SEC_CHIP[state];
+            chip.innerHTML = `<i class="bi ${icon}"></i> ${extra || text}`;
+        }
+        function updateSectionStatus() {
+            const { symptoms, careActions } = collectHealthChoices();
+            const symCount = Object.keys(symptoms).length;
+            const caretaker = document.getElementById('healthCaretakerName').value.trim();
+
+            setSectionState('dropoff', document.querySelector('input[name="dropoff"]:checked') ? 'done' : 'required');
+            setSectionState('temp', document.getElementById('healthTemperature').value !== '' ? 'done' : 'todo');
+            setSectionState('symptoms', symCount ? 'done' : 'none', symCount ? `เลือก ${symCount}` : 'ไม่มีอาการ');
+            setSectionState('other', document.getElementById('healthOtherSymptoms').value.trim() ? 'done' : 'none');
+            setSectionState('care', careActions.length ? 'done' : 'none');
+            setSectionState('caretaker', caretaker ? 'done' : (careActions.length ? 'required' : 'none'));
+
+            document.querySelectorAll('#healthTempQuick [data-temp]').forEach(b => {
+                b.classList.toggle('active', b.dataset.temp === document.getElementById('healthTemperature').value);
+            });
+        }
+        function flashSection(sec) {
+            const card = document.querySelector(`#healthModal [data-sec="${sec}"]`);
+            if (!card) return;
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.classList.remove('sec-flash');
+            void card.offsetWidth;
+            card.classList.add('sec-flash');
+        }
+        ['input', 'change'].forEach(evt =>
+            document.getElementById('healthForm').addEventListener(evt, updateSectionStatus));
 
         // No overlay needed with Bootstrap modal; closing handled by modal's built‑in mechanisms.
 
