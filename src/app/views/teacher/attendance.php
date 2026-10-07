@@ -1300,7 +1300,7 @@ $data = getChildrenGroupedByTab($currentTab);
     #healthModal .guardian-grid { grid-template-columns: 1fr; gap: 0.5rem; }
     #healthModal .guardian-card-inner {
       display: grid;
-      grid-template-columns: 52px 1fr 20px;
+      grid-template-columns: 84px 1fr 20px;
       grid-template-areas: "img label check" "img name check";
       column-gap: 0.75rem;
       row-gap: 0;
@@ -1308,9 +1308,9 @@ $data = getChildrenGroupedByTab($currentTab);
       padding: 0.5rem 0.75rem;
       text-align: left;
     }
-    #healthModal .guardian-card-inner .g-avatar { grid-area: img; width: 52px; }
+    #healthModal .guardian-card-inner .g-avatar { grid-area: img; width: 84px; }
     #healthModal .guardian-card-inner .g-label { grid-area: label; font-size: 1.15rem; font-weight: 700; color: #0f2460; align-self: end; }
-    #healthModal .guardian-card-inner .g-name { grid-area: name; font-size: 0.8rem; font-weight: 500; color: #64748b; margin-top: 0; align-self: start; }
+    #healthModal .guardian-card-inner .g-name { grid-area: name; font-size: 1rem; font-weight: 600; color: #334155; margin-top: 0; align-self: start; }
     #healthModal .guardian-card-inner .check-mark { grid-area: check; margin-top: 0; }
     #healthModal .guardian-card-inner:hover { transform: none; }
   }
