@@ -16,9 +16,9 @@ $symptomList = [];
 $menuToday = [];
 $mealIcons = ['morning_snack' => 'bi-sunrise', 'lunch' => 'bi-brightness-high', 'afternoon_snack' => 'bi-sunset'];
 $mealLabels = [
-    'morning_snack' => 'อาหารว่างเช้า',
-    'lunch' => 'อาหารกลางวัน',
-    'afternoon_snack' => 'อาหารว่างบ่าย',
+    'morning_snack' => ['time' => 'เช้า', 'kind' => 'อาหารว่าง'],
+    'lunch' => ['time' => 'กลางวัน', 'kind' => 'อาหารหลัก'],
+    'afternoon_snack' => ['time' => 'บ่าย', 'kind' => 'อาหารว่าง'],
 ];
 
 if ($child) {
@@ -338,6 +338,46 @@ $viewTabs = [
     .attendance-summary-groups.today-info { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .attendance-summary-groups.meal-info { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .attendance-summary-card-value { overflow-wrap: anywhere; }
+    .meal-item {
+        align-items: stretch;
+        background: #f8fbfd;
+        border: 1px solid var(--student-border);
+        border-radius: 1rem;
+        display: flex;
+        overflow: hidden;
+    }
+
+    .meal-badge {
+        align-items: center;
+        background: var(--meal-bg);
+        color: var(--meal-fg);
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        gap: 0.15rem;
+        justify-content: center;
+        padding: 0.75rem 0.5rem;
+        width: 92px;
+    }
+
+    .meal-badge i { font-size: 1.4rem; line-height: 1; }
+    .meal-badge strong { font-size: 1.05rem; line-height: 1.1; }
+    .meal-badge small { font-size: 0.7rem; font-weight: 600; opacity: 0.85; }
+
+    .meal-text {
+        align-items: center;
+        color: var(--student-primary-dark);
+        display: flex;
+        flex: 1;
+        font-size: 1.1rem;
+        font-weight: 700;
+        padding: 0.75rem 1rem;
+    }
+
+    .meal-item.morning_snack   { --meal-bg: #fef3c7; --meal-fg: #b45309; }
+    .meal-item.lunch           { --meal-bg: #ffedd5; --meal-fg: #c2410c; }
+    .meal-item.afternoon_snack { --meal-bg: #e0e7ff; --meal-fg: #4338ca; }
+
     .dropoff-row {
         align-items: center;
         display: flex;
@@ -361,8 +401,9 @@ $viewTabs = [
     @media (max-width: 768px) {
         .attendance-summary-groups,
         .attendance-summary-groups.today-info,
-        .attendance-summary-groups.meal-info { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .attendance-summary-card.dropoff { grid-column: 1 / -1; }
+        .attendance-summary-groups.meal-info { grid-template-columns: minmax(0, 1fr); }
+        .attendance-summary-card.dropoff,
+        .attendance-summary-card.scan { grid-column: 1 / -1; }
         .attendance-charts { grid-template-columns: minmax(0, 1fr); }
     }
 
@@ -539,7 +580,7 @@ $viewTabs = [
                     <div class="text-muted"><i class="bi bi-info-circle me-1"></i>วันนี้ยังไม่มีการสแกนบัตรเข้าศูนย์</div>
                 <?php else: ?>
                     <div class="attendance-summary-groups today-info">
-                        <div class="attendance-summary-card">
+                        <div class="attendance-summary-card scan">
                             <span class="attendance-summary-card-label"><i class="bi bi-clock"></i> สแกนบัตรถึงศูนย์</span>
                             <span class="attendance-summary-card-value"><?= $todayAtt['checkin_time'] === '00:00' ? '-' : htmlspecialchars($todayAtt['checkin_time']) . ' น.' ?></span>
                         </div>
@@ -578,10 +619,14 @@ $viewTabs = [
                     <div class="text-muted">วันนี้ยังไม่มีการบันทึกรายการอาหาร</div>
                 <?php else: ?>
                     <div class="attendance-summary-groups meal-info">
-                        <?php foreach ($mealLabels as $slot => $label): ?>
-                            <div class="attendance-summary-card">
-                                <span class="attendance-summary-card-label"><i class="bi <?= $mealIcons[$slot] ?? 'bi-egg-fried' ?>"></i> <?= $label ?></span>
-                                <span class="attendance-summary-card-value"><?= htmlspecialchars($menuToday[$slot] ?? '-') ?></span>
+                        <?php foreach ($mealLabels as $slot => $meal): ?>
+                            <div class="meal-item <?= $slot ?>">
+                                <div class="meal-badge">
+                                    <i class="bi <?= $mealIcons[$slot] ?>"></i>
+                                    <strong><?= $meal['time'] ?></strong>
+                                    <small><?= $meal['kind'] ?></small>
+                                </div>
+                                <div class="meal-text"><?= htmlspecialchars($menuToday[$slot] ?? '-') ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>
