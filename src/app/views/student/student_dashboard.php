@@ -500,7 +500,7 @@ $viewTabs = [
     }
 
     @media (max-width: 576px) {
-        .student-dashboard { padding: 1rem 0 2rem; }
+        .student-dashboard { padding: 1rem 1rem 2rem; }
         .student-dashboard-header { border-radius: 1.25rem; padding: 1.5rem; }
         .student-dashboard-header h1::before { height: 36px; width: 36px; }
         .student-hero { gap: 0.75rem; padding: 0.85rem 1rem; }
