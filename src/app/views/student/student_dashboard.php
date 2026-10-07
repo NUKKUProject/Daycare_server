@@ -175,7 +175,7 @@ $viewTabs = [
         --student-border: #d9e6ee;
         max-width: 1280px;
         margin: 0 auto;
-        padding: 2rem 1.75rem 3.5rem;
+        padding: 1rem 1.25rem 2.5rem;
     }
 
     .student-dashboard-header {
@@ -224,28 +224,31 @@ $viewTabs = [
 
     .student-hero {
         align-items: center;
+        border-radius: 1.25rem;
         display: flex;
-        gap: 1.5rem;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding: 1rem 1.25rem;
     }
 
     .student-hero img {
         border: 4px solid rgba(255,255,255,0.85);
-        border-radius: 1.25rem;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        border-radius: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         flex-shrink: 0;
-        height: 104px;
+        height: 72px;
         object-fit: cover;
         position: relative;
-        width: 104px;
+        width: 72px;
     }
 
-    .student-hero h1 { margin-bottom: 0.75rem; }
+    .student-hero h1 { font-size: 1.2rem; margin-bottom: 0.4rem; }
     .student-hero h1::before { content: none; }
 
     .student-meta {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.45rem 0.75rem;
+        gap: 0.3rem 0.5rem;
         position: relative;
     }
 
@@ -254,8 +257,8 @@ $viewTabs = [
         border: 1px solid rgba(255,255,255,0.3);
         border-radius: 999px;
         color: #fff;
-        font-size: 0.82rem;
-        padding: 0.28rem 0.65rem;
+        font-size: 0.75rem;
+        padding: 0.15rem 0.55rem;
     }
 
     .student-meta i {
@@ -497,11 +500,12 @@ $viewTabs = [
     }
 
     @media (max-width: 576px) {
-        .student-dashboard { padding: 1.25rem 1rem 2rem; }
+        .student-dashboard { padding: 0.75rem 1rem 2rem; }
         .student-dashboard-header { border-radius: 1.25rem; padding: 1.5rem; }
         .student-dashboard-header h1::before { height: 36px; width: 36px; }
-        .student-hero { gap: 1rem; }
-        .student-hero img { height: 76px; width: 76px; }
+        .student-hero { gap: 0.75rem; padding: 0.85rem 1rem; }
+        .student-hero img { height: 60px; width: 60px; }
+        .student-hero h1 { font-size: 1.05rem; }
         .student-tab-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .student-tab-button { min-height: 155px; padding: 1rem; }
     }
