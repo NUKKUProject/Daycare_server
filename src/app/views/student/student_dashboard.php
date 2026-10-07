@@ -10,52 +10,81 @@
 $studentid = $_SESSION['username'] ?? '';
 $child = $studentid !== '' ? getChildById($studentid) : false;
 
-// สรุปยอดมาเรียนวันนี้ ทั้งศูนย์ / แยกตามกลุ่ม / ห้องของตัวเอง
-$attendanceTodayTotal = 0;
-$childrenTotal = 0;
-$groupSummary = [];
-$classroomSummary = null;
+// ข้อมูลของเด็กวันนี้: เวลาสแกนบัตร / ผู้ดูแล / อุณหภูมิ / อาการผิดปกติ / อาหารประจำวัน
+$todayAtt = null;
+$symptomList = [];
+$menuToday = [];
+$mealLabels = [
+    'morning_snack' => 'อาหารว่างเช้า',
+    'lunch' => 'อาหารกลางวัน',
+    'afternoon_snack' => 'อาหารว่างบ่าย',
+];
 
 if ($child) {
-    $attendanceTodayTotal = (int) attendanceTodayCount();
-    $childrenTotal = (int) getTotalStudents();
+    $pdo = getDatabaseConnection();
 
-    $presentByGroup = getStudentAttendanceTodayByGroup();
-    $totalByGroup = getStudentsByGroup();
+    $attStmt = $pdo->prepare("
+        SELECT status, TO_CHAR(check_date, 'HH24:MI') AS checkin_time,
+               temperature, symptoms, other_symptoms, dropped_off_by, dropped_off_detail
+        FROM attendance
+        WHERE student_id = :s AND DATE(check_date) = CURRENT_DATE
+        ORDER BY check_date ASC LIMIT 1
+    ");
+    $attStmt->execute(['s' => $studentid]);
+    $todayAtt = $attStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
-    foreach (['เด็กกลาง' => 'เด็กกลาง', 'เด็กโต' => 'เด็กโต', 'เตรียมอนุบาล' => 'เตรียมอนุบาล'] as $label => $groupKey) {
-        $groupSummary[] = [
-            'label' => $label,
-            'present' => (int) ($presentByGroup[$groupKey] ?? 0),
-            'total' => (int) ($totalByGroup[$groupKey] ?? 0),
-        ];
+    // ผู้มาส่ง: ชื่อ/รูปจากข้อมูลผู้ปกครองของเด็ก (กรณีอื่นๆ ใช้รายละเอียดที่ครูระบุ)
+    $dropOff = null;
+    if ($todayAtt && !empty($todayAtt['dropped_off_by'])) {
+        $dropLabels = ['father' => 'พ่อ', 'mother' => 'แม่', 'relative' => 'ผู้ปกครอง/ผู้ดูแล', 'other' => 'อื่นๆ'];
+        $type = $todayAtt['dropped_off_by'];
+        $dropOff = ['label' => $dropLabels[$type] ?? $type, 'name' => '', 'image' => ''];
+        if ($type === 'other') {
+            $dropOff['name'] = $todayAtt['dropped_off_detail'] ?? '';
+        } elseif (isset($dropLabels[$type])) {
+            $gStmt = $pdo->prepare("SELECT {$type}_first_name AS first_name, {$type}_last_name AS last_name, {$type}_image AS image FROM children WHERE studentid = :s");
+            $gStmt->execute(['s' => $studentid]);
+            if ($g = $gStmt->fetch(PDO::FETCH_ASSOC)) {
+                $dropOff['name'] = trim(($g['first_name'] ?? '') . ' ' . ($g['last_name'] ?? ''));
+                $dropOff['image'] = $g['image'] ?? '';
+            }
+        }
+    }
+
+    if ($todayAtt) {
+        require_once __DIR__ . '/../../include/function/checkin_settings.php';
+        $options = checkin_load_options(false, true);
+        $lookup = [];
+        foreach ($options['symptoms'] as $opt) {
+            $subs = [];
+            foreach ($opt['subs'] ?? [] as $sub) {
+                $subs[$sub['code']] = $sub['label'];
+            }
+            $lookup[$opt['code']] = ['label' => $opt['label'], 'subs' => $subs];
+        }
+
+        $symptoms = json_decode($todayAtt['symptoms'] ?? '{}', true);
+        foreach (is_array($symptoms) ? $symptoms : [] as $code => $subCodes) {
+            $label = $lookup[$code]['label'] ?? $code;
+            $subLabels = array_map(fn($c) => $lookup[$code]['subs'][$c] ?? $c, is_array($subCodes) ? $subCodes : []);
+            $symptomList[] = $subLabels ? $label . ' (' . implode(', ', $subLabels) . ')' : $label;
+        }
+        if (!empty($todayAtt['other_symptoms'])) {
+            $symptomList[] = $todayAtt['other_symptoms'];
+        }
     }
 
     $classroom = $child['classroom'] ?? '';
     if ($classroom !== '') {
-        $pdo = getDatabaseConnection();
-
-        $totalStmt = $pdo->prepare("SELECT COUNT(*) FROM children WHERE classroom = :classroom AND status = 'กำลังศึกษา'");
-        $totalStmt->execute(['classroom' => $classroom]);
-        $classroomTotal = (int) $totalStmt->fetchColumn();
-
-        $presentStmt = $pdo->prepare("
-            SELECT COUNT(DISTINCT a.student_id)
-            FROM attendance a
-            JOIN children c ON a.student_id = c.studentid
-            WHERE DATE(a.check_date) = CURRENT_DATE
-              AND a.status IN ('present','late')
-              AND c.classroom = :classroom
-              AND c.status = 'กำลังศึกษา'
-        ");
-        $presentStmt->execute(['classroom' => $classroom]);
-        $classroomPresent = (int) $presentStmt->fetchColumn();
-
-        $classroomSummary = [
-            'classroom' => $classroom,
-            'present' => $classroomPresent,
-            'total' => $classroomTotal,
-        ];
+        try {
+            $menuStmt = $pdo->prepare("SELECT meal_slot, menu_text FROM daily_menus WHERE menu_date = CURRENT_DATE AND classroom = :c");
+            $menuStmt->execute(['c' => $classroom]);
+            foreach ($menuStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $menuToday[$row['meal_slot']] = $row['menu_text'];
+            }
+        } catch (PDOException $e) {
+            error_log('student_dashboard menu: ' . $e->getMessage());
+        }
     }
 }
 
@@ -334,8 +363,24 @@ $viewTabs = [
         max-height: 300px;
     }
 
+    .attendance-summary-groups.today-info { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .attendance-summary-groups.meal-info { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .attendance-summary-card-value { overflow-wrap: anywhere; }
+    .dropoff-avatar {
+        border: 3px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 3px 10px rgba(38, 100, 142, 0.25);
+        display: block;
+        height: 72px;
+        margin: 0 auto 0.4rem;
+        object-fit: cover;
+        width: 72px;
+    }
+
     @media (max-width: 768px) {
-        .attendance-summary-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .attendance-summary-groups,
+        .attendance-summary-groups.today-info,
+        .attendance-summary-groups.meal-info { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .attendance-charts { grid-template-columns: minmax(0, 1fr); }
     }
 
@@ -508,46 +553,58 @@ $viewTabs = [
                 </div>
             </div>
 
-            <div class="student-section-title">จำนวนเด็กมาเรียนวันนี้</div>
+            <div class="student-section-title">ข้อมูลวันนี้</div>
             <div class="attendance-summary">
-                <div class="attendance-summary-total">
-                    <i class="bi bi-people-fill"></i>
-                    <div>
-                        <strong><?= $attendanceTodayTotal ?> / <?= $childrenTotal ?></strong>
-                        <span>มาเรียนวันนี้ทั้งศูนย์</span>
-                    </div>
-                </div>
-
-                <div class="attendance-summary-groups">
-                    <?php foreach ($groupSummary as $group): ?>
+                <?php if (!$todayAtt): ?>
+                    <div class="text-muted"><i class="bi bi-info-circle me-1"></i>วันนี้ยังไม่มีการสแกนบัตรเข้าศูนย์</div>
+                <?php else: ?>
+                    <div class="attendance-summary-groups today-info">
                         <div class="attendance-summary-card">
-                            <span class="attendance-summary-card-label"><?= htmlspecialchars($group['label']) ?></span>
-                            <span class="attendance-summary-card-value"><?= $group['present'] ?> / <?= $group['total'] ?></span>
+                            <span class="attendance-summary-card-label"><i class="bi bi-clock"></i> สแกนบัตรถึงศูนย์</span>
+                            <span class="attendance-summary-card-value"><?= $todayAtt['checkin_time'] === '00:00' ? '-' : htmlspecialchars($todayAtt['checkin_time']) . ' น.' ?></span>
                         </div>
-                    <?php endforeach; ?>
-
-                    <?php if ($classroomSummary): ?>
-                        <div class="attendance-summary-card highlight">
-                            <span class="attendance-summary-card-label"><i class="bi bi-door-open"></i> ห้องของคุณ (<?= htmlspecialchars($classroomSummary['classroom']) ?>)</span>
-                            <span class="attendance-summary-card-value"><?= $classroomSummary['present'] ?> / <?= $classroomSummary['total'] ?></span>
+                        <div class="attendance-summary-card">
+                            <span class="attendance-summary-card-label"><i class="bi bi-person-heart"></i> ใครมาส่ง</span>
+                            <?php if ($dropOff): ?>
+                                <?php if ($dropOff['image'] !== ''): ?>
+                                    <img class="dropoff-avatar" src="<?= htmlspecialchars($dropOff['image']) ?>" alt="รูป<?= htmlspecialchars($dropOff['label']) ?>"
+                                         onerror="this.src='../../../public/assets/images/avatar.png'">
+                                <?php endif; ?>
+                                <span class="attendance-summary-card-value"><?= htmlspecialchars($dropOff['label']) ?></span>
+                                <?php if ($dropOff['name'] !== ''): ?>
+                                    <small class="d-block text-muted"><?= htmlspecialchars($dropOff['name']) ?></small>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <span class="attendance-summary-card-value">-</span>
+                            <?php endif; ?>
                         </div>
-                    <?php endif; ?>
-                </div>
-
-                <div class="attendance-charts">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title-graph">สัดส่วนนักเรียนแต่ละระดับชั้น</h5>
-                            <canvas id="studentsPieChart"></canvas>
+                        <div class="attendance-summary-card">
+                            <span class="attendance-summary-card-label"><i class="bi bi-thermometer-half"></i> อุณหภูมิ</span>
+                            <span class="attendance-summary-card-value"><?= $todayAtt['temperature'] !== null ? htmlspecialchars(number_format((float) $todayAtt['temperature'], 1)) . ' °C' : '-' ?></span>
+                        </div>
+                        <div class="attendance-summary-card <?= $symptomList ? 'highlight' : '' ?>">
+                            <span class="attendance-summary-card-label"><i class="bi bi-heart-pulse"></i> อาการผิดปกติ</span>
+                            <span class="attendance-summary-card-value"><?= $symptomList ? htmlspecialchars(implode(', ', $symptomList)) : 'ไม่มีอาการ' ?></span>
                         </div>
                     </div>
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title-graph">สัดส่วนการมาเรียนตามระดับชั้น</h5>
-                            <canvas id="attTodayDoughnut"></canvas>
-                        </div>
-                    </div>
+                <?php endif; ?>
+
+                <div class="attendance-summary-total mt-3 mb-2 pb-2">
+                    <i class="bi bi-egg-fried"></i>
+                    <div><strong>รายการอาหารประจำวัน</strong></div>
                 </div>
+                <?php if (!$menuToday): ?>
+                    <div class="text-muted">วันนี้ยังไม่มีการบันทึกรายการอาหาร</div>
+                <?php else: ?>
+                    <div class="attendance-summary-groups meal-info">
+                        <?php foreach ($mealLabels as $slot => $label): ?>
+                            <div class="attendance-summary-card">
+                                <span class="attendance-summary-card-label"><?= $label ?></span>
+                                <span class="attendance-summary-card-value"><?= htmlspecialchars($menuToday[$slot] ?? '-') ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <div class="student-section-title">เลือกดูข้อมูล</div>
@@ -567,50 +624,6 @@ $viewTabs = [
         <?php endif; ?>
     </div>
 </main>
-
-<?php if ($child): ?>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const todayGroups = <?= json_encode($groupSummary, JSON_UNESCAPED_UNICODE) ?>;
-    const groupColors = ['rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 205, 86)'];
-
-    new Chart(document.getElementById('studentsPieChart'), {
-        type: 'pie',
-        data: {
-            labels: todayGroups.map(g => g.label),
-            datasets: [{
-                data: todayGroups.map(g => g.total),
-                backgroundColor: groupColors
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'bottom' }
-            }
-        }
-    });
-
-    new Chart(document.getElementById('attTodayDoughnut'), {
-        type: 'doughnut',
-        data: {
-            labels: todayGroups.map(g => g.label),
-            datasets: [{
-                data: todayGroups.map(g => g.present),
-                backgroundColor: groupColors
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'bottom' }
-            }
-        }
-    });
-});
-</script>
-<?php endif; ?>
 
 </body>
 </html>

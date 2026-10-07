@@ -1114,6 +1114,190 @@ $data = getChildrenGroupedByTab($currentTab);
     color: #c4cdd9;
   }
 
+  /* ===== Guardian Cards ===== */
+  #healthModal .guardian-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+
+  .guardian-select-card {
+    position: relative;
+    cursor: pointer;
+    margin: 0;
+  }
+
+  .guardian-select-card input[type="radio"] {
+    display: none;
+  }
+
+  .guardian-card-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    background: #f8faff;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1rem 0.5rem 0.75rem;
+    transition: all 0.25s ease;
+    user-select: none;
+    text-align: center;
+  }
+
+  .guardian-card-inner .g-avatar {
+    width: 96px;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e2e8f0;
+    transition: all 0.25s ease;
+  }
+
+  .guardian-card-inner .g-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+    transition: color 0.25s ease;
+    line-height: 1.3;
+  }
+
+  .guardian-card-inner .g-name {
+    font-size: 0.95rem;
+    color: #0f2460;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-top: -2px;
+    word-break: break-word;
+  }
+
+  .guardian-card-inner .check-mark {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .guardian-card-inner .check-mark i {
+    font-size: 0.68rem;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  /* Checked State */
+  .guardian-select-card input:checked + .guardian-card-inner {
+    border-color: #1e4db7;
+    background: #eff3ff;
+    box-shadow: 0 4px 14px rgba(30, 77, 183, 0.15);
+  }
+
+  .guardian-select-card input:checked + .guardian-card-inner .g-avatar {
+    border-color: #1e4db7;
+    box-shadow: 0 4px 12px rgba(30, 77, 183, 0.25);
+  }
+
+  .guardian-select-card input:checked + .guardian-card-inner .g-label {
+    color: #0f2460;
+    font-weight: 700;
+  }
+
+  .guardian-select-card input:checked + .guardian-card-inner .check-mark {
+    background: linear-gradient(135deg, #0f2460, #1e4db7);
+    border-color: transparent;
+  }
+
+  .guardian-select-card input:checked + .guardian-card-inner .check-mark i {
+    opacity: 1;
+  }
+
+  .guardian-card-inner:hover {
+    border-color: #1e4db750;
+    background: #f0f5ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 77, 183, 0.1);
+  }
+
+  /* ===== Other Option Card ===== */
+  .other-card-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: #f8faff;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 0.8rem 1.1rem;
+    transition: all 0.25s ease;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .other-card-inner .other-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #eff3ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #1e4db7;
+    flex-shrink: 0;
+    transition: all 0.25s ease;
+  }
+
+  .other-card-inner .other-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    transition: color 0.25s ease;
+  }
+
+  .other-card-inner .check-mark {
+    margin-left: auto;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+  }
+
+  .other-card-inner .check-mark i {
+    font-size: 0.68rem;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .guardian-select-card input:checked + .other-card-inner {
+    border-color: #1e4db7;
+    background: #eff3ff;
+    box-shadow: 0 4px 14px rgba(30, 77, 183, 0.15);
+  }
+
+  .guardian-select-card input:checked + .other-card-inner .other-icon {
+    background: linear-gradient(135deg, #0f2460, #1e4db7);
+    color: #fff;
+  }
+
+  .guardian-select-card input:checked + .other-card-inner .other-text {
+    color: #0f2460;
+  }
+
+  @media (max-width: 480px) { #healthModal .guardian-grid { grid-template-columns: 1fr; } }
+
   /* ===== Modal Footer ===== */
   #healthModal .modal-footer {
     background: #f0f4f8;
@@ -1408,6 +1592,52 @@ $data = getChildrenGroupedByTab($currentTab);
             <input type="hidden" id="healthStudentIdInput" value="">
             <input type="hidden" id="healthAttendanceIdInput" value="">
 
+            <!-- Drop-off person -->
+            <div class="form-card">
+                <div class="section-label">
+                <i class="bi bi-person-heart"></i> ผู้มาส่งเด็ก
+                </div>
+                <div class="guardian-grid mb-3">
+                    <label class="guardian-select-card">
+                    <input type="radio" name="dropoff" value="father">
+                    <div class="guardian-card-inner">
+                        <img id="dropFatherImg" src="" alt="รูปพ่อ" class="g-avatar" onerror="this.src=DROP_DEFAULT_AVATAR">
+                        <span class="g-label">พ่อ</span>
+                        <span class="g-name" id="dropFatherName">-</span>
+                        <div class="check-mark"><i class="bi bi-check"></i></div>
+                    </div>
+                    </label>
+                    <label class="guardian-select-card">
+                    <input type="radio" name="dropoff" value="mother">
+                    <div class="guardian-card-inner">
+                        <img id="dropMotherImg" src="" alt="รูปแม่" class="g-avatar" onerror="this.src=DROP_DEFAULT_AVATAR">
+                        <span class="g-label">แม่</span>
+                        <span class="g-name" id="dropMotherName">-</span>
+                        <div class="check-mark"><i class="bi bi-check"></i></div>
+                    </div>
+                    </label>
+                    <label class="guardian-select-card">
+                    <input type="radio" name="dropoff" value="relative">
+                    <div class="guardian-card-inner">
+                        <img id="dropRelativeImg" src="" alt="รูปผู้ปกครอง/ผู้ดูแล" class="g-avatar" onerror="this.src=DROP_DEFAULT_AVATAR">
+                        <span class="g-label">ผู้ปกครอง/ผู้ดูแล</span>
+                        <span class="g-name" id="dropRelativeName">-</span>
+                        <div class="check-mark"><i class="bi bi-check"></i></div>
+                    </div>
+                    </label>
+                </div>
+                <label class="guardian-select-card w-100">
+                    <input type="radio" name="dropoff" value="other">
+                    <div class="other-card-inner">
+                    <div class="other-icon"><i class="bi bi-person-plus-fill"></i></div>
+                    <span class="other-text">อื่นๆ (โปรดระบุ)</span>
+                    <div class="check-mark"><i class="bi bi-check"></i></div>
+                    </div>
+                </label>
+                <input type="text" class="form-control mt-3" id="dropOffDetail" maxlength="200"
+                    placeholder="ระบุชื่อ-นามสกุลและความสัมพันธ์ของผู้มาส่ง" style="display:none;">
+            </div>
+
             <!-- Temperature -->
             <div class="form-card">
                 <div class="section-label">
@@ -1571,6 +1801,7 @@ $data = getChildrenGroupedByTab($currentTab);
             return { symptoms, careActions };
         }
 
+        const DROP_DEFAULT_AVATAR = '../../../public/assets/images/avatar.png';
         const CARETAKER_STORAGE_KEY = 'healthCaretakerName';
         function loadCaretakerName() {
             try { return localStorage.getItem(CARETAKER_STORAGE_KEY) || ''; } catch (e) { return ''; }
@@ -1583,6 +1814,12 @@ $data = getChildrenGroupedByTab($currentTab);
 
         document.getElementById('healthModal').addEventListener('change', (e) => {
             const el = e.target;
+            if (el.name === 'dropoff') {
+                const detailEl = document.getElementById('dropOffDetail');
+                detailEl.style.display = el.value === 'other' ? '' : 'none';
+                if (el.value === 'other') detailEl.focus(); else detailEl.value = '';
+                return;
+            }
             if (el.dataset.symptom) {
                 syncSubOptions(el.dataset.symptom);
             } else if (el.dataset.care !== undefined && el.dataset.allowsText === '1') {
@@ -1691,6 +1928,28 @@ $data = getChildrenGroupedByTab($currentTab);
             careOtherInput.style.display = 'none';
             document.getElementById('healthCaretakerName').value = loadCaretakerName();
 
+            // ผู้มาส่ง: โหลดรูป/ชื่อผู้ปกครองจากข้อมูลเด็ก
+            document.querySelectorAll('input[name="dropoff"]').forEach(r => r.checked = false);
+            const dropDetail = document.getElementById('dropOffDetail');
+            dropDetail.value = '';
+            dropDetail.style.display = 'none';
+            ['Father', 'Mother', 'Relative'].forEach(k => {
+                document.getElementById('drop' + k + 'Img').src = DROP_DEFAULT_AVATAR;
+                document.getElementById('drop' + k + 'Name').textContent = '-';
+            });
+            fetch(`../../include/attendance/get_student_guardians.php?student_id=${encodeURIComponent(studentData.student_id)}`)
+                .then(r => r.json())
+                .then(res => {
+                    if (res.status !== 'success') return;
+                    const g = res.data;
+                    const full = (f, l) => [f, l].filter(Boolean).join(' ') || '-';
+                    [['Father', 'father'], ['Mother', 'mother'], ['Relative', 'relative']].forEach(([k, key]) => {
+                        document.getElementById('drop' + k + 'Img').src = g[key + '_image'] || DROP_DEFAULT_AVATAR;
+                        document.getElementById('drop' + k + 'Name').textContent = full(g[key + '_first_name'], g[key + '_last_name']);
+                    });
+                })
+                .catch(err => console.error('Error loading guardians:', err));
+
             // Show Bootstrap modal
             getHealthModal().show();
         }
@@ -1711,6 +1970,19 @@ $data = getChildrenGroupedByTab($currentTab);
                 ? document.getElementById('healthCareOther').value.trim()
                 : '';
             const caretakerName = document.getElementById('healthCaretakerName').value.trim();
+            const dropSel = document.querySelector('input[name="dropoff"]:checked');
+            const droppedOffBy = dropSel ? dropSel.value : '';
+            const droppedOffDetail = document.getElementById('dropOffDetail').value.trim();
+
+            if (!droppedOffBy) {
+                Swal.fire({ icon: 'warning', title: 'กรุณาเลือกผู้มาส่งเด็ก', confirmButtonColor: '#1e4db7', confirmButtonText: 'ตกลง' });
+                return;
+            }
+            if (droppedOffBy === 'other' && !droppedOffDetail) {
+                Swal.fire({ icon: 'warning', title: 'กรุณาระบุผู้มาส่ง', confirmButtonColor: '#1e4db7', confirmButtonText: 'ตกลง' });
+                document.getElementById('dropOffDetail').focus();
+                return;
+            }
 
             // ถ้ามีการดูแล/ช่วยเหลือ ต้องระบุชื่อผู้ดูแล
             if (careActions.length > 0 && !caretakerName) {
@@ -1756,6 +2028,8 @@ $data = getChildrenGroupedByTab($currentTab);
                     care_actions: careActions,
                     care_other: careOther,
                     caretaker_name: caretakerName,
+                    dropped_off_by: droppedOffBy,
+                    dropped_off_detail: droppedOffDetail,
                     scan_time: currentScanTime
                 })
             })

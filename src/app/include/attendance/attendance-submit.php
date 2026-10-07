@@ -32,6 +32,9 @@ $has_cough = $health['has_cough'];
 $has_rash = $health['has_rash'];
 $has_red_eyes = $health['has_red_eyes'];
 $symptoms_json = $health['symptoms_json'];
+$dropped_off_by = in_array($data['dropped_off_by'] ?? '', ['father', 'mother', 'relative', 'other'], true) ? $data['dropped_off_by'] : null;
+$dropped_off_detail = $dropped_off_by === 'other' && !empty($data['dropped_off_detail'])
+    ? mb_substr(trim($data['dropped_off_detail']), 0, 200) : null;
 $care_actions_json = $health['care_actions_json'];
 
 // Determine attendance status based on current time (same logic as attendance-submit.php)
@@ -65,6 +68,8 @@ if ($attendance_id) {
             care_actions = :care_actions::jsonb,
             care_other = :care_other,
             caretaker_name = :caretaker_name,
+            dropped_off_by = :dropped_off_by,
+            dropped_off_detail = :dropped_off_detail,
             health_checked = 't'::boolean,
             status = :status,
             check_date = CURRENT_TIMESTAMP
@@ -82,6 +87,8 @@ if ($attendance_id) {
         'care_actions' => $care_actions_json,
         'care_other' => $care_other,
         'caretaker_name' => $caretaker_name,
+        'dropped_off_by' => $dropped_off_by,
+        'dropped_off_detail' => $dropped_off_detail,
         'status' => $status,
         'id' => $attendance_id,
         'student_id' => $student_id
@@ -97,11 +104,11 @@ if ($attendance_id) {
         INSERT INTO attendance (
             student_id, check_date, status,
             temperature, has_runny_nose, has_cough, has_rash, has_red_eyes, other_symptoms,
-            symptoms, care_actions, care_other, caretaker_name, health_checked
+            symptoms, care_actions, care_other, caretaker_name, dropped_off_by, dropped_off_detail, health_checked
         ) VALUES (
             :student_id::varchar, CURRENT_TIMESTAMP, :status::varchar,
             :temperature, :has_runny_nose::boolean, :has_cough::boolean, :has_rash::boolean, :has_red_eyes::boolean, :other_symptoms,
-            :symptoms::jsonb, :care_actions::jsonb, :care_other, :caretaker_name, 't'::boolean
+            :symptoms::jsonb, :care_actions::jsonb, :care_other, :caretaker_name, :dropped_off_by, :dropped_off_detail, 't'::boolean
         ) RETURNING id
     ";
     $stmt = $pdo->prepare($insert_sql);
@@ -117,7 +124,9 @@ if ($attendance_id) {
         'symptoms' => $symptoms_json,
         'care_actions' => $care_actions_json,
         'care_other' => $care_other,
-        'caretaker_name' => $caretaker_name
+        'caretaker_name' => $caretaker_name,
+        'dropped_off_by' => $dropped_off_by,
+        'dropped_off_detail' => $dropped_off_detail
     ]);
     $new_id = $stmt->fetch(PDO::FETCH_ASSOC)['id'];
     echo json_encode([
