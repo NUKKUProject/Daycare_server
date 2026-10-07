@@ -128,9 +128,9 @@ function renderGuardian(?array $person): void
         return;
     }
     echo '<div class="dropoff-row">';
-    if ($person['image'] !== '') {
-        echo '<img class="dropoff-avatar" src="' . htmlspecialchars($person['image']) . '" alt="รูป' . htmlspecialchars($person['label']) . '" onerror="this.src=\'../../../public/assets/images/avatar.png\'">';
-    }
+    // บุคคลอื่น / ไม่มีรูปในระบบ ใช้รูปเริ่มต้น เพื่อให้หน้าตาการ์ดเหมือนกัน
+    $src = $person['image'] !== '' ? $person['image'] : '../../../public/assets/images/avatar.png';
+    echo '<img class="dropoff-avatar" src="' . htmlspecialchars($src) . '" alt="รูป' . htmlspecialchars($person['label']) . '" onerror="this.src=\'../../../public/assets/images/avatar.png\'">';
     echo '<div><span class="attendance-summary-card-value">' . htmlspecialchars($person['label']) . '</span>';
     if ($person['name'] !== '') {
         echo '<span class="dropoff-name">' . htmlspecialchars($person['name']) . '</span>';
