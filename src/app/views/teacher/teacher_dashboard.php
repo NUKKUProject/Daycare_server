@@ -216,7 +216,7 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
     </div>
 
     <div class="container mt-3">
-        <?php include __DIR__ . '/../partials/tooth_followup_card.php'; ?>
+        <?php include __DIR__ . '/../partials/health_followup_card.php'; ?>
     </div>
 
     <div class="container mt-4">
