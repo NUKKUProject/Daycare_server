@@ -63,9 +63,6 @@ try {
 
     $childStmt = $pdo->prepare("SELECT studentid, prefix_th, firstname_th, lastname_th, nickname, classroom, birthday
                                 FROM children WHERE studentid = :sid");
-    $findStmt = $pdo->prepare("SELECT id FROM health_tooth_external
-                               WHERE student_id = :sid AND round_id = :rid AND exam_type = :t ORDER BY id DESC LIMIT 1");
-
     $update = $pdo->prepare("UPDATE health_tooth_external SET
             prefix_th = :prefix_th, first_name = :first_name, last_name = :last_name, nickname = :nickname,
             classroom = :classroom, doctor_name = :doctor_name,
@@ -74,7 +71,7 @@ try {
             teeth_status = :teeth_status, missing_teeth_detail = :missing_teeth_detail,
             decayed_teeth_positions = :positions, treatments = :treatments,
             other_treatment_detail = :other_detail, urgency = :urgency, updated_at = :stamp,
-            examined_by = :by, examined_at = :exam_day
+            examined_by = :by, examined_at = :exam_day, exam_type = :t
         WHERE id = :id");
 
     $insert = $pdo->prepare("INSERT INTO health_tooth_external (
@@ -162,10 +159,14 @@ try {
             ':exam_day' => $examDate->format('Y-m-d'),
         ];
 
-        $findStmt->execute([':sid' => $sid, ':rid' => $round['id'], ':t' => $examType]);
-        $existingId = $findStmt->fetchColumn();
-        if ($existingId) {
-            $update->execute($params + [':id' => $existingId]);
+        // เด็ก 1 คน 1 รอบ มีแถวเดียว: ถ้ามีแล้วอัปเดตแถวเดิม (แพทย์อัปเดตผลที่ครูคัดกรองไว้) ไม่เพิ่มแถวซ้ำ
+        $existing = tooth_find_existing($pdo, $sid, (int) $round['id']);
+        if ($existing && $existing['exam_type'] === 'doctor' && $examType !== 'doctor') {
+            $errors[] = ['student_id' => $sid, 'message' => 'แพทย์ตรวจแล้ว ครูแก้ไขไม่ได้'];
+            continue;
+        }
+        if ($existing) {
+            $update->execute($params + [':id' => $existing['id'], ':t' => $examType]);
         } else {
             $insert->execute($params + [':sid' => $sid, ':academic_year' => $academicYear, ':rid' => $round['id'], ':t' => $examType]);
         }

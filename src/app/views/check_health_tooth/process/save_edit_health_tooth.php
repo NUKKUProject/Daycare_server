@@ -42,10 +42,16 @@ try {
         throw new Exception('รอบตรวจนี้ถูกปิดแล้ว ไม่สามารถแก้ไขได้');
     }
 
-    // ผลคัดกรองของครูไม่เก็บชื่อแพทย์
+    // แพทย์แก้แล้วผลนั้นเป็นของแพทย์ ครูแก้ผลที่แพทย์ตรวจแล้วไม่ได้ ผลคัดกรองของครูไม่เก็บชื่อแพทย์
     $typeStmt = $pdo->prepare('SELECT exam_type FROM health_tooth_external WHERE id = :id');
     $typeStmt->execute([':id' => $data['data_id'] ?? 0]);
-    if ($typeStmt->fetchColumn() !== 'doctor') {
+    $currentType = (string) $typeStmt->fetchColumn();
+    $role = $_SESSION['role'] ?? '';
+    if ($currentType === 'doctor' && $role === 'teacher') {
+        throw new Exception('แพทย์ตรวจแล้ว ครูแก้ไขไม่ได้');
+    }
+    $newType = $role === 'doctor' ? 'doctor' : ($currentType ?: 'teacher');
+    if ($newType !== 'doctor') {
         $data['doctor_name'] = null;
     }
 
@@ -71,6 +77,7 @@ try {
         treatments = :treatments,
         other_treatment_detail = :other_treatment_detail,
         urgency = :urgency,
+        exam_type = :exam_type,
         updated_at = NOW()
     WHERE id = :data_id");
 
@@ -104,6 +111,7 @@ try {
 
     $stmt->bindParam(':other_treatment_detail', $data['other_treatment_detail']);
     $stmt->bindParam(':urgency', $data['urgency']);
+    $stmt->bindParam(':exam_type', $newType);
     $stmt->bindParam(':data_id', $data['data_id']);
 
     // ประมวลผลคำสั่ง SQL

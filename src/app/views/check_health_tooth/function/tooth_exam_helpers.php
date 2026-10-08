@@ -86,3 +86,15 @@ function tooth_effective_sql(bool $withRound, bool $doctorOnly = false): string
             WHERE academic_year = :year" . ($withRound ? ' AND round_id = :round' : '') . ($doctorOnly ? " AND exam_type = 'doctor'" : '') . "
             ORDER BY student_id, round_id DESC NULLS LAST, " . TOOTH_TYPE_ORDER_SQL . ", id DESC";
 }
+
+/**
+ * ผลตรวจของเด็กในรอบ: 1 คน 1 รอบ มีแถวเดียว (ครูบันทึกก่อน แพทย์มาอัปเดตแถวเดิม)
+ * คืนแถวที่ใช้ (ถ้ามีหลายแถวจากข้อมูลเก่า เลือกแพทย์ก่อน แล้วตัวล่าสุด)
+ */
+function tooth_find_existing(PDO $pdo, string $studentId, int $roundId): ?array
+{
+    $stmt = $pdo->prepare('SELECT id, exam_type FROM health_tooth_external WHERE student_id = :sid AND round_id = :rid
+                           ORDER BY ' . TOOTH_TYPE_ORDER_SQL . ', id DESC LIMIT 1');
+    $stmt->execute([':sid' => $studentId, ':rid' => $roundId]);
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+}

@@ -62,9 +62,12 @@ try {
         ':by' => tooth_current_user_label(),
     ];
 
-    $find = $pdo->prepare('SELECT id FROM health_tooth_external WHERE student_id = :sid AND round_id = :rid AND exam_type = :t ORDER BY id DESC LIMIT 1');
-    $find->execute([':sid' => $data['student_id'], ':rid' => $round['id'], ':t' => $examType]);
-    $existingId = $find->fetchColumn();
+    // เด็ก 1 คน 1 รอบ มีแถวเดียว: ถ้ามีแล้วอัปเดตแถวเดิม (แพทย์อัปเดตผลที่ครูคัดกรองไว้) ไม่เพิ่มแถวซ้ำ
+    $existing = tooth_find_existing($pdo, (string) $data['student_id'], (int) $round['id']);
+    if ($existing && $existing['exam_type'] === 'doctor' && $examType !== 'doctor') {
+        throw new Exception('แพทย์ตรวจแล้ว ครูแก้ไขไม่ได้');
+    }
+    $existingId = $existing['id'] ?? null;
 
     if ($existingId) {
         $stmt = $pdo->prepare("UPDATE health_tooth_external SET
@@ -75,9 +78,9 @@ try {
             teeth_status = :teeth_status, missing_teeth_detail = :missing_teeth_detail,
             decayed_teeth_positions = :positions, treatments = :treatments,
             other_treatment_detail = :other_detail, urgency = :urgency,
-            examined_by = :by, examined_at = CURRENT_DATE, updated_at = NOW()
+            examined_by = :by, examined_at = CURRENT_DATE, updated_at = NOW(), exam_type = :t
             WHERE id = :id");
-        $stmt->execute($params + [':id' => $existingId]);
+        $stmt->execute($params + [':id' => $existingId, ':t' => $examType]);
     } else {
         $stmt = $pdo->prepare("INSERT INTO health_tooth_external (
             student_id, prefix_th, first_name, last_name, nickname, classroom, doctor_name,
