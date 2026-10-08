@@ -10,14 +10,6 @@ require_once __DIR__ . '/../../include/function/children_history_functions.php';
 require_once __DIR__ . '/function/tooth_exam_helpers.php';
 
 $academicYears = getAcademicYears();
-$currentTop = isset($academicYears[0]['name']) ? (int) $academicYears[0]['name'] : null;
-$examYears = [];
-if ($currentTop) {
-    $examYears[] = $currentTop + 1;
-    foreach ($academicYears as $y) {
-        $examYears[] = (int) $y['name'];
-    }
-}
 $groups = get_childgroup();
 $defaultDoctor = getFullName();
 $allowedTypes = tooth_allowed_types($_SESSION['role'] ?? '');
@@ -25,32 +17,43 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
 ?>
 
 <style>
-    .tg-bar label { font-size: .8rem; font-weight: 700; color: #475569; margin-bottom: .2rem; }
-    .tg-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, .06); padding: 1rem 1.25rem; margin-bottom: 1rem; }
-    .tg-summary { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: .6rem; font-size: .85rem; }
-    .tg-pill { border-radius: 999px; padding: 2px 12px; font-weight: 700; font-size: .8rem; }
-    .tg-pill.saved { background: #dcfce7; color: #15803d; }
-    .tg-pill.ready { background: #dbeafe; color: #1d4ed8; }
-    .tg-pill.todo { background: #fef3c7; color: #b45309; }
-    .tg-pill.prefill { background: #ede9fe; color: #6d28d9; }
+    .tg-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, .06); padding: .9rem 1.25rem; margin-bottom: .85rem; }
+    .tg-card label, .tg-ctx label { font-size: .78rem; font-weight: 700; color: #475569; margin-bottom: .15rem; }
     .gs { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: #1e4db7; color: #fff; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; }
+    .tg-ctx { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1rem; align-items: end; }
+    @media (max-width: 992px) { .tg-ctx { grid-template-columns: 1fr; } }
+    .ctx-title { font-size: .75rem; font-weight: 700; color: #64748b; margin-bottom: .35rem; }
+    .chip { border-radius: 999px; padding: 2px 10px; font-weight: 700; font-size: .78rem; background: #f1f5f9; color: #475569; white-space: nowrap; }
+    .chip.open { background: #dcfce7; color: #15803d; }
+    .chip.closed { background: #fee2e2; color: #b91c1c; }
+    .chip.teacher { background: #fef3c7; color: #b45309; }
+    .chip.doctor { background: #dbeafe; color: #1d4ed8; }
     .tg-closed { background: #fee2e2; color: #b91c1c; border-radius: 8px; padding: .5rem .9rem; font-weight: 700; margin-bottom: .6rem; }
 
-    .tg-wrap { overflow: auto; max-height: 70vh; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; }
-    table.tg { border-collapse: separate; border-spacing: 0; min-width: 1600px; width: 100%; font-size: .85rem; }
-    .tg th { position: sticky; top: 0; z-index: 3; background: #f1f5f9; color: #475569; font-weight: 700; font-size: .75rem;
-        padding: 6px 4px; border-bottom: 1px solid #cbd5e1; text-align: center; white-space: nowrap; }
+    .tg-progress { display: flex; align-items: center; gap: .75rem; margin-bottom: .6rem; flex-wrap: wrap; }
+    .tg-progress .bar { flex: 1 1 200px; height: 10px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+    .tg-progress .bar > span { display: block; height: 100%; background: #22c55e; transition: width .25s ease; }
+    .tg-legend { display: flex; flex-wrap: wrap; gap: .75rem; font-size: .75rem; color: #64748b; margin-bottom: .5rem; align-items: center; }
+    .tg-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; }
+
+    .tg-wrap { overflow: auto; max-height: 68vh; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; }
+    table.tg { border-collapse: separate; border-spacing: 0; width: 100%; font-size: .85rem; --h1: 28px; }
+    .tg th { position: sticky; background: #f1f5f9; color: #475569; font-weight: 700; font-size: .75rem; padding: 5px 4px; border-bottom: 1px solid #cbd5e1; text-align: center; white-space: nowrap; z-index: 3; }
+    .tg tr.h1 th { top: 0; height: var(--h1); font-size: .74rem; letter-spacing: .2px; border-bottom: 1px solid #fff; }
+    .tg tr.h2 th { top: var(--h1); }
+    .tg th.g-child { background: #e2e8f0; } .tg th.g-count { background: #dbeafe; } .tg th.g-pos { background: #fde68a; }
+    .tg th.g-result { background: #fecaca; } .tg th.g-treat { background: #bbf7d0; } .tg th.g-note { background: #e9d5ff; } .tg th.g-state { background: #e2e8f0; }
     .tg td { padding: 3px; border-bottom: 1px solid #e2e8f0; text-align: center; background: #fff; }
-    .tg .c-no { position: sticky; left: 0; z-index: 2; min-width: 38px; background: #fff; }
-    .tg .c-nm { position: sticky; left: 38px; z-index: 2; min-width: 170px; text-align: left; padding: 3px 8px; background: #fff; border-right: 1px solid #cbd5e1; }
-    .tg th.c-no, .tg th.c-nm { z-index: 4; background: #f1f5f9; }
+    .tg .c-no { position: sticky; left: 0; z-index: 2; min-width: 36px; background: #fff; }
+    .tg .c-nm { position: sticky; left: 36px; z-index: 2; min-width: 160px; text-align: left; padding: 3px 8px; background: #fff; border-right: 1px solid #cbd5e1; }
+    .tg th.c-no, .tg th.c-nm { z-index: 5; }
     .tg .nick { font-weight: 700; color: #0f2460; line-height: 1.15; }
     .tg .full { font-size: .72rem; color: #64748b; line-height: 1.15; }
     .tg input.f, .tg select.f { height: 30px; font-size: .85rem; padding: 0 4px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; width: 100%; }
     .tg input.f:focus, .tg select.f:focus { outline: 2px solid #3b82f6; outline-offset: -1px; }
     .tg input.f:disabled, .tg select.f:disabled { background: #f1f5f9; color: #64748b; }
     .tg input.n { width: 46px; text-align: center; }
-    .tg input.t { min-width: 130px; }
+    .tg input.t { min-width: 120px; }
     .tg select.f { min-width: 92px; }
     .tg td.pos.bad input { background: #fef3c7; border-color: #f59e0b; }
     .tg .diff { background: #fef9c3 !important; border-color: #eab308 !important; }
@@ -75,10 +78,18 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     .tg .rowact { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; font-size: .72rem; padding: 2px 8px; cursor: pointer; white-space: nowrap; }
     .tg .rowact:hover { background: #f1f5f9; }
     .tg-empty { text-align: center; padding: 2.5rem 1rem; color: #64748b; }
+    .tg-empty .big { font-size: 1.05rem; font-weight: 700; color: #334155; margin-bottom: .35rem; }
     .tg-hint { font-size: .78rem; color: #64748b; margin-top: .5rem; }
-    .tg-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
-    .btn-save-grid { background: #15803d; border-color: #15803d; color: #fff; font-weight: 700; }
-    .btn-save-grid:hover { background: #166534; border-color: #166534; color: #fff; }
+
+    .tg-dock { position: sticky; bottom: 0; z-index: 30; background: #fff; border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 16px rgba(15, 36, 96, .08);
+        border-radius: 12px 12px 0 0; padding: .6rem 1.25rem; margin: 0 -.25rem; display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+    .tg-dock .pills { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; font-size: .82rem; }
+    .tg-pill { border-radius: 999px; padding: 2px 12px; font-weight: 700; font-size: .78rem; }
+    .tg-pill.saved { background: #dcfce7; color: #15803d; } .tg-pill.ready { background: #dbeafe; color: #1d4ed8; }
+    .tg-pill.todo { background: #fef3c7; color: #b45309; } .tg-pill.prefill { background: #ede9fe; color: #6d28d9; }
+    .tg-dock .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+    .btn-save-grid { background: #15803d; border-color: #15803d; color: #fff; font-weight: 700; min-width: 170px; }
+    .btn-save-grid:hover:not(:disabled) { background: #166534; border-color: #166534; color: #fff; }
 </style>
 
 <main class="main-content">
@@ -87,15 +98,52 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
             <div>
                 <h2 class="mb-1">กรอกผลตรวจสุขภาพช่องปากทั้งห้อง</h2>
                 <div class="text-muted">
-                    <span class="gs">1</span> เลือกรอบ (เลือกมาจากหน้าก่อนแล้ว เปลี่ยนได้) → <span class="gs">2</span> เลือกกลุ่ม/ห้อง หรือค้นหาชื่อ แล้วกด "โหลดรายชื่อ" → <span class="gs">3</span> กรอกในตาราง แล้วกด "บันทึกทั้งห้อง"
+                    <span class="gs">1</span> ตรวจสอบรอบและข้อมูลการตรวจ → <span class="gs">2</span> เลือกกลุ่ม/ห้อง หรือค้นหาชื่อ (รายชื่อขึ้นเอง) → <span class="gs">3</span> กรอกในตาราง แล้วกด "บันทึกทั้งห้อง"
                 </div>
             </div>
-            <a href="checklist_name.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>กลับหน้ารายชื่อ</a>
+            <a href="checklist_name.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>กลับหน้าเลือกรอบ</a>
         </div>
 
-        <div class="tg-card tg-bar">
+        <!-- 1) รอบ + ข้อมูลการตรวจ -->
+        <div class="tg-card tg-ctx">
+            <div>
+                <div class="ctx-title"><span class="gs">1</span> รอบตรวจ</div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <select id="gRound" class="form-select" style="max-width:280px" aria-label="รอบตรวจ"></select>
+                    <span id="gRoundChips" class="d-flex flex-wrap gap-1"></span>
+                </div>
+            </div>
+            <div class="row g-2">
+                <div class="col-5">
+                    <label for="gDate">วันที่ตรวจ</label>
+                    <input type="date" id="gDate" class="form-control">
+                </div>
+                <div class="col-7">
+                    <label for="gDoctor">ชื่อผู้ตรวจ</label>
+                    <input type="text" id="gDoctor" class="form-control" value="<?= htmlspecialchars($defaultDoctor) ?>" maxlength="100">
+                </div>
+                <div class="col-12 d-flex align-items-center gap-2">
+                    <label class="mb-0">บันทึกในฐานะ</label>
+                    <?php if (count($allowedTypes) === 1): ?>
+                        <input type="hidden" id="gType" value="<?= $allowedTypes[0] ?>">
+                        <span class="chip <?= $allowedTypes[0] ?>" title="กำหนดตามสิทธิ์ที่เข้าสู่ระบบ"><?= $typeLabels[$allowedTypes[0]] ?></span>
+                        <span class="text-muted small">(ตามสิทธิ์ของคุณ)</span>
+                    <?php else: ?>
+                        <select id="gType" class="form-select form-select-sm" style="max-width:160px" aria-label="บันทึกในฐานะ">
+                            <?php foreach ($allowedTypes as $t): ?>
+                                <option value="<?= $t ?>"><?= $typeLabels[$t] ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2) เลือกกลุ่ม/ห้อง -->
+        <div class="tg-card">
+            <div class="ctx-title"><span class="gs">2</span> เลือกเด็ก</div>
             <div class="row g-3 align-items-end">
-                <div class="col-6 col-md-2">
+                <div class="col-6 col-md-3">
                     <label for="gGroup">กลุ่มเรียน</label>
                     <select id="gGroup" class="form-select">
                         <option value="">-- เลือก --</option>
@@ -104,66 +152,71 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
                         <?php endif; endforeach; ?>
                     </select>
                 </div>
-                <div class="col-6 col-md-2">
+                <div class="col-6 col-md-3">
                     <label for="gRoom">ห้องเรียน</label>
-                    <select id="gRoom" class="form-select"><option value="">ทุกห้อง</option></select>
+                    <select id="gRoom" class="form-select"><option value="">ทุกห้องในกลุ่ม</option></select>
                 </div>
-                <div class="col-6 col-md-2">
-                    <label for="gSearch">ค้นหาชื่อ / รหัส</label>
-                    <input type="text" id="gSearch" class="form-control" placeholder="ไม่บังคับ" autocomplete="off">
+                <div class="col-12 col-md-4">
+                    <label for="gSearch">หรือค้นหาชื่อ / รหัส</label>
+                    <input type="text" id="gSearch" class="form-control" placeholder="พิมพ์แล้วรายชื่อขึ้นเอง" autocomplete="off">
                 </div>
-                <div class="col-6 col-md-3">
-                    <label for="gRound">รอบตรวจ</label>
-                    <select id="gRound" class="form-select"></select>
+                <div class="col-12 col-md-2 d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary flex-fill" id="gLoad" title="โหลดรายชื่อใหม่"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button>
                 </div>
-                <div class="col-6 col-md-2">
-                    <label for="gType">ผู้ตรวจ</label>
-                    <?php if (count($allowedTypes) === 1): ?>
-                        <input type="hidden" id="gType" value="<?= $allowedTypes[0] ?>">
-                        <div class="form-control bg-light fw-bold" title="กำหนดตามสิทธิ์ที่เข้าสู่ระบบ"><?= $typeLabels[$allowedTypes[0]] ?></div>
-                    <?php else: ?>
-                        <select id="gType" class="form-select">
-                            <?php foreach ($allowedTypes as $t): ?>
-                                <option value="<?= $t ?>"><?= $typeLabels[$t] ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    <?php endif; ?>
-                </div>
-                <div class="col-6 col-md-2">
-                    <label for="gStudentYear">ปีการศึกษาของเด็ก</label>
-                    <select id="gStudentYear" class="form-select">
-                        <option value="all">ทั้งหมด</option>
-                        <?php foreach ($academicYears as $y): ?>
-                            <option value="<?= htmlspecialchars($y['name']) ?>"><?= htmlspecialchars($y['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-6 col-md-2">
-                    <label for="gDate">วันที่ตรวจ</label>
-                    <input type="date" id="gDate" class="form-control">
-                </div>
-                <div class="col-6 col-md-3">
-                    <label for="gDoctor">ชื่อผู้ตรวจ (แพทย์/ครู)</label>
-                    <input type="text" id="gDoctor" class="form-control" value="<?= htmlspecialchars($defaultDoctor) ?>" maxlength="100">
-                </div>
-                <div class="col-12 tg-actions">
-                    <button type="button" class="btn btn-primary" id="gLoad"><i class="bi bi-search me-1"></i>โหลดรายชื่อ</button>
-                    <button type="button" class="btn btn-outline-primary" id="gFillNormal" disabled><i class="bi bi-magic me-1"></i>เติมค่าปกติให้แถวที่ยังว่าง</button>
-                    <button type="button" class="btn btn-outline-secondary" id="gConfirmAll" disabled style="display:none"><i class="bi bi-check2-all me-1"></i>ยืนยันตามผลครูทั้งหมด</button>
-                    <button type="button" class="btn btn-save-grid ms-auto" id="gSave" disabled><i class="bi bi-check-circle me-1"></i>บันทึกทั้งห้อง</button>
+                <div class="col-12">
+                    <a class="small text-decoration-none" data-bs-toggle="collapse" href="#gMore" role="button" aria-expanded="false"><i class="bi bi-sliders"></i> ตัวกรองเพิ่มเติม</a>
+                    <div class="collapse mt-2" id="gMore">
+                        <div class="row g-3">
+                            <div class="col-6 col-md-3">
+                                <label for="gStudentYear">เฉพาะเด็กที่เข้าเรียนปีการศึกษา</label>
+                                <select id="gStudentYear" class="form-select">
+                                    <option value="all">ทั้งหมด</option>
+                                    <?php foreach ($academicYears as $y): ?>
+                                        <option value="<?= htmlspecialchars($y['name']) ?>"><?= htmlspecialchars($y['name']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
+        <!-- 3) ตาราง -->
         <div class="tg-card">
+            <div class="ctx-title"><span class="gs">3</span> กรอกผลตรวจ</div>
             <div id="gClosed" class="tg-closed" style="display:none"><i class="bi bi-lock-fill me-1"></i>รอบตรวจนี้ถูกปิดแล้ว ดูข้อมูลได้อย่างเดียว (ให้ผู้ดูแลระบบเปิดรอบอีกครั้งถ้าต้องแก้)</div>
-            <div class="tg-summary" id="gSummary"></div>
-            <div class="tg-wrap" id="gWrap"><div class="tg-empty">เลือกกลุ่ม/ห้องเรียน หรือค้นหาชื่อเด็ก แล้วกด "โหลดรายชื่อ"</div></div>
+            <div class="tg-progress" id="gProgress" style="display:none">
+                <span id="gProgressText" class="fw-bold"></span>
+                <div class="bar"><span id="gProgressBar" style="width:0%"></span></div>
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="gExtra">
+                    <label class="form-check-label small" for="gExtra">แสดงช่องหมายเหตุ (ช่องปาก / รายละเอียด)</label>
+                </div>
+            </div>
+            <div class="tg-legend" id="gLegend" style="display:none">
+                <span><i style="background:#22c55e"></i>บันทึกแล้ว</span><span><i style="background:#3b82f6"></i>พร้อมบันทึก</span>
+                <span><i style="background:#f59e0b"></i>ยังไม่ครบ</span><span id="gLegendPrefill"><i style="background:#8b5cf6"></i>ผลครู รอแพทย์ยืนยัน</span>
+                <span><i style="background:#eab308"></i>ช่องที่แพทย์แก้ต่างจากครู</span>
+            </div>
+            <div class="tg-wrap" id="gWrap">
+                <div class="tg-empty">
+                    <div class="big">เลือกกลุ่มหรือห้องเรียนด้านบน</div>
+                    รายชื่อเด็กจะขึ้นให้อัตโนมัติ แล้วกรอกต่อในตารางได้เลย
+                </div>
+            </div>
             <div class="tg-hint">
-                Tab ไปช่องถัดไป · Enter ลงแถวถัดไปในคอลัมน์เดียวกัน · เลือก "ไม่มีฟันผุ" ระบบเติมฟันผุและตำแหน่งเป็น 0 ให้ ·
-                ช่องตำแหน่งขึ้นเหลืองเมื่อยอดรวมไม่เท่ากับจำนวนฟันผุ · อายุคำนวณจากวันเกิด ณ วันที่ตรวจ ·
-                โหมดแพทย์: แถวสีม่วงคือผลคัดกรองของครู กด "ยืนยัน" ถ้าถูกต้อง หรือแก้ไขแล้วบันทึก (ช่องที่แก้ต่างจากครูจะขึ้นสีเหลือง) ·
+                Tab ไปช่องถัดไป · Enter ลงแถวถัดไป · เลือก "ไม่มีฟันผุ" ระบบเติมฟันผุและตำแหน่งเป็น 0 ให้ · ช่องตำแหน่งขึ้นเหลืองเมื่อยอดรวมไม่เท่ากับจำนวนฟันผุ · อายุคำนวณจากวันเกิดให้ ·
                 ตัวย่อการรักษา: อุด = อุดฟัน, ฟล = เคลือบฟลูออไรด์, รา = รักษาคลองรากฟัน, กร = เคลือบหลุมร่องฟันที่ฟันกราม, คร = ครอบฟัน, ถอ = ถอนฟัน, อื่ = อื่นๆ
+            </div>
+        </div>
+
+        <div class="tg-dock" id="gDock">
+            <div class="pills" id="gSummary"><span class="text-muted">ยังไม่ได้โหลดรายชื่อ</span></div>
+            <div class="acts">
+                <button type="button" class="btn btn-outline-primary btn-sm" id="gFillNormal" disabled title="เติมค่าปกติ (ไม่มีฟันผุ) ให้เด็กที่ยังไม่มีข้อมูล"><i class="bi bi-magic me-1"></i>เติมค่าปกติให้ที่ยังว่าง</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="gConfirmAll" disabled style="display:none"><i class="bi bi-check2-all me-1"></i>ยืนยันตามผลครูทั้งหมด</button>
+                <button type="button" class="btn btn-save-grid" id="gSave" disabled><i class="bi bi-check-circle me-1"></i>บันทึกทั้งห้อง</button>
             </div>
         </div>
     </div>
@@ -187,12 +240,16 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
 
     const PRE = Object.fromEntries(new URLSearchParams(location.search));
     let rows = [];
+    let rounds = [];
     let roundClosed = false;
     let loadedRoundId = null;
+    let showExtra = false;
+    try { showExtra = localStorage.getItem('toothGridExtra') === '1'; } catch (e) { /* ใช้งานต่อได้แม้ไม่มี localStorage */ }
     const byId = (id) => document.getElementById(id);
     const mode = () => byId('gType').value;
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const num = (v) => (v === null || v === undefined || v === '' ? null : Math.max(0, parseInt(v, 10)));
+    const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 
     function todayStr() {
         const n = new Date();
@@ -210,7 +267,6 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         return `${y} ปี ${m} ด.`;
     }
 
-    // แปลงผลตรวจ 1 แถวจากฐานข้อมูลเป็นค่าที่ใช้ในตาราง
     function recToVals(rec) {
         const p = rec.decayed_teeth_positions || {};
         return {
@@ -225,7 +281,6 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         const recs = c.records || {};
         const m = mode();
         const own = recs[m];
-        // โหมดแพทย์: ถ้ายังไม่มีผลของแพทย์ ใช้ผลครู (หรือข้อมูลเดิม) เป็นค่าตั้งต้นรอยืนยัน
         const source = recs.teacher || recs.legacy || null;
         const ref = m === 'doctor' && source ? recToVals(source) : null;
         const base = own ? recToVals(own) : (m === 'doctor' && source ? recToVals(source) : emptyVals());
@@ -245,7 +300,6 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     const rowState = (r) => (r.dirty ? (complete(r) ? 'ready' : 'todo') : (r.saved ? 'saved' : (r.prefill ? 'prefill' : 'todo')));
     const STATE_TEXT = { saved: 'บันทึกแล้ว', ready: 'พร้อมบันทึก', todo: 'ยังไม่ครบ', prefill: 'ผลครู · รอยืนยัน' };
 
-    // ช่องที่ต่างจากผลครู (โหมดแพทย์)
     function diffOf(r, key, idx) {
         if (!r.ref) return false;
         if (key === 'p') return (r.p[idx] ?? 0) !== (r.ref.p[idx] ?? 0);
@@ -254,11 +308,21 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     }
     const dcls = (r, key, idx) => (diffOf(r, key, idx) && !r.prefill ? ' diff' : '');
 
+    // ช่องรักษาอื่นๆ (ระบุ) แสดงเมื่อเปิดช่องหมายเหตุ หรือมีเด็กที่เลือก "อื่น"
+    const showOtherCol = () => showExtra || rows.some((r) => r.t.includes('other'));
+
     function header() {
-        return '<thead><tr><th class="c-no">#</th><th class="c-nm">ชื่อ</th><th>อายุ</th><th>ฟันทั้งหมด</th><th>ฟันผุ</th>' +
+        const nTreat = TR.length + (showOtherCol() ? 1 : 0);
+        return '<thead><tr class="h1">' +
+            '<th class="g-child" colspan="3">เด็ก</th><th class="g-count" colspan="2">จำนวนฟัน (ซี่)</th><th class="g-pos" colspan="6">ฟันผุแต่ละตำแหน่ง (ซี่)</th>' +
+            '<th class="g-result" colspan="2">ผลตรวจ</th><th class="g-treat" colspan="' + nTreat + '">การรักษา</th>' +
+            (showExtra ? '<th class="g-note" colspan="2">หมายเหตุ</th>' : '') + '<th class="g-state" colspan="3">สถานะ</th></tr>' +
+            '<tr class="h2"><th class="c-no">#</th><th class="c-nm">ชื่อ</th><th>อายุ</th><th>ทั้งหมด</th><th>ผุ</th>' +
             POS.map((p) => `<th>${p[1]}</th>`).join('') + '<th>สภาพฟัน</th><th>ความเร่งด่วน</th>' +
             TR.map((t) => `<th title="${esc(t[2])}">${t[1]}</th>`).join('') +
-            '<th>รักษาอื่นๆ (ระบุ)</th><th>ช่องปาก</th><th>รายละเอียดอื่น</th><th>ผลของรอบนี้</th><th>การกรอก</th><th></th></tr></thead>';
+            (showOtherCol() ? '<th>อื่นๆ (ระบุ)</th>' : '') +
+            (showExtra ? '<th>ช่องปาก</th><th>รายละเอียด</th>' : '') +
+            '<th>ผลของรอบนี้</th><th>การกรอก</th><th></th></tr></thead>';
     }
 
     function rowHtml(r, i) {
@@ -267,16 +331,18 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         let h = `<tr class="${st}" data-i="${i}"><td class="c-no">${i + 1}</td>` +
             `<td class="c-nm"><div class="nick">${r.nick ? esc(r.nick) : esc(r.name)}</div>${r.nick ? `<div class="full">${esc(r.name)}</div>` : ''}</td>` +
             `<td>${esc(ageText(r.birthday))}</td>` +
-            `<td><input class="f n${dcls(r, 'tt')}" type="number" min="0" max="32" data-f="tt" value="${v(r.tt)}"${d}></td>` +
-            `<td><input class="f n${dcls(r, 'dc')}" type="number" min="0" max="32" data-f="dc" value="${v(r.dc)}"${d}></td>`;
-        r.p.forEach((x, k) => { h += `<td class="pos${bad ? ' bad' : ''}"><input class="f n${dcls(r, 'p', k)}" type="number" min="0" data-p="${k}" value="${v(x)}"${d}></td>`; });
+            `<td><input class="f n${dcls(r, 'tt')}" type="number" min="0" max="32" data-f="tt" value="${v(r.tt)}"${d} aria-label="ฟันทั้งหมด"></td>` +
+            `<td><input class="f n${dcls(r, 'dc')}" type="number" min="0" max="32" data-f="dc" value="${v(r.dc)}"${d} aria-label="ฟันผุ"></td>`;
+        r.p.forEach((x, k) => { h += `<td class="pos${bad ? ' bad' : ''}"><input class="f n${dcls(r, 'p', k)}" type="number" min="0" data-p="${k}" value="${v(x)}"${d} aria-label="${POS[k][1]}"></td>`; });
         h += `<td><select class="f${dcls(r, 's')}" data-f="s" data-key="s"${d}><option value="">-</option><option value="normal"${r.s === 'normal' ? ' selected' : ''}>ไม่มีฟันผุ</option><option value="abnormal"${r.s === 'abnormal' ? ' selected' : ''}>มีฟันผุ</option></select></td>`;
         h += `<td><select class="f${dcls(r, 'u')}" data-f="u"${d}><option value="">-</option>${URG.map((u) => `<option value="${u[0]}"${r.u === u[0] ? ' selected' : ''}>${u[1]}</option>`).join('')}</select></td>`;
         TR.forEach((t) => { const on = r.t.includes(t[0]); h += `<td><button type="button" class="tgl${on ? ' on' : ''}${dcls(r, 't', t[0])}" data-t="${t[0]}" title="${esc(t[2])}" aria-label="${esc(t[2])}" aria-pressed="${on}"${d}>${on ? '✓' : ''}</button></td>`; });
-        h += `<td><input class="f t${dcls(r, 'other')}" type="text" maxlength="200" data-f="other" value="${esc(r.other)}"${r.t.includes('other') && !roundClosed ? '' : ' disabled'}></td>` +
-            `<td><input class="f t${dcls(r, 'oral')}" type="text" maxlength="100" data-f="oral" value="${esc(r.oral)}"${d}></td>` +
-            `<td><input class="f t${dcls(r, 'miss')}" type="text" maxlength="100" data-f="miss" value="${esc(r.miss)}"${d}></td>` +
-            `<td>${r.exam ? `<span class="ex ${r.exam}">${EXAM_TEXT[r.exam]}</span>` : '<span class="ex">ยังไม่มี</span>'}</td>` +
+        if (showOtherCol()) h += `<td><input class="f t${dcls(r, 'other')}" type="text" maxlength="200" data-f="other" value="${esc(r.other)}"${r.t.includes('other') && !roundClosed ? '' : ' disabled'}></td>`;
+        if (showExtra) {
+            h += `<td><input class="f t${dcls(r, 'oral')}" type="text" maxlength="100" data-f="oral" value="${esc(r.oral)}"${d}></td>` +
+                `<td><input class="f t${dcls(r, 'miss')}" type="text" maxlength="100" data-f="miss" value="${esc(r.miss)}"${d}></td>`;
+        }
+        h += `<td>${r.exam ? `<span class="ex ${r.exam}">${EXAM_TEXT[r.exam]}</span>` : '<span class="ex">ยังไม่มี</span>'}</td>` +
             `<td><span class="st ${st}">${STATE_TEXT[st]}</span></td>` +
             `<td>${roundClosed ? '' : (r.prefill ? '<button type="button" class="rowact" data-confirm="1" title="ยืนยันตามผลของครู">ยืนยัน</button> ' : '') + '<button type="button" class="rowact" data-normal="1" title="เติมค่าปกติ: ไม่มีฟันผุ (ถ้ายังไม่กรอกจำนวนฟันทั้งหมด จะใส่ 20 ซี่)">ปกติ</button>'}</td></tr>`;
         return h;
@@ -284,7 +350,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
 
     function render(keepFocus) {
         const wrap = byId('gWrap');
-        if (!rows.length) { wrap.innerHTML = '<div class="tg-empty">ไม่พบรายชื่อเด็กตามเงื่อนไข</div>'; summary(); return; }
+        if (!rows.length) { wrap.innerHTML = '<div class="tg-empty"><div class="big">ไม่พบรายชื่อเด็กตามเงื่อนไข</div>ลองเปลี่ยนกลุ่ม ห้อง หรือคำค้นหา</div>'; summary(); return; }
         const sc = { top: wrap.scrollTop, left: wrap.scrollLeft };
         wrap.innerHTML = '<table class="tg">' + header() + '<tbody>' + rows.map(rowHtml).join('') + '</tbody></table>';
         wrap.scrollTop = sc.top; wrap.scrollLeft = sc.left;
@@ -295,7 +361,6 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         summary();
     }
 
-    // อัปเดตเฉพาะแถวเดียว เพื่อไม่ให้ช่องที่กำลังพิมพ์หลุดโฟกัส
     function refreshRow(i) {
         const tr = byId('gWrap').querySelector(`tr[data-i="${i}"]`);
         if (!tr) return;
@@ -303,7 +368,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         tr.className = st;
         const chip = tr.querySelector('.st'); chip.className = 'st ' + st; chip.textContent = STATE_TEXT[st];
         tr.querySelectorAll('td.pos').forEach((td) => td.classList.toggle('bad', bad));
-        tr.querySelector('[data-f="other"]').disabled = !r.t.includes('other') || roundClosed;
+        const other = tr.querySelector('[data-f="other"]'); if (other) other.disabled = !r.t.includes('other') || roundClosed;
         tr.querySelectorAll('[data-f],[data-p]').forEach((el) => {
             const d = el.dataset.p !== undefined ? diffOf(r, 'p', +el.dataset.p) : diffOf(r, el.dataset.f);
             el.classList.toggle('diff', d && !r.prefill);
@@ -315,15 +380,29 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     function summary() {
         const c = { saved: 0, ready: 0, todo: 0, prefill: 0 };
         rows.forEach((r) => c[rowState(r)]++);
+        const doctor = mode() === 'doctor';
         byId('gSummary').innerHTML = rows.length
-            ? `<span>ทั้งหมด ${rows.length} คน</span><span class="tg-pill saved">บันทึกแล้ว ${c.saved}</span><span class="tg-pill ready">พร้อมบันทึก ${c.ready}</span>` +
-              (mode() === 'doctor' ? `<span class="tg-pill prefill">ผลครูรอยืนยัน ${c.prefill}</span>` : '') + `<span class="tg-pill todo">ยังไม่ครบ ${c.todo}</span>`
-            : '';
+            ? `<span>${rows.length} คน</span><span class="tg-pill saved">บันทึกแล้ว ${c.saved}</span><span class="tg-pill ready">พร้อมบันทึก ${c.ready}</span>` +
+              (doctor ? `<span class="tg-pill prefill">ผลครูรอยืนยัน ${c.prefill}</span>` : '') + `<span class="tg-pill todo">ยังไม่ครบ ${c.todo}</span>`
+            : '<span class="text-muted">ยังไม่ได้โหลดรายชื่อ</span>';
+
+        const pr = byId('gProgress'), lg = byId('gLegend');
+        pr.style.display = lg.style.display = rows.length ? '' : 'none';
+        byId('gLegendPrefill').style.display = doctor ? '' : 'none';
+        if (rows.length) {
+            const done = c.saved + c.ready;
+            byId('gProgressText').textContent = `ตรวจแล้ว ${done} / ${rows.length} คน`;
+            byId('gProgressBar').style.width = Math.round(done * 100 / rows.length) + '%';
+        }
+
         const anyDirty = rows.some((r) => r.dirty);
-        byId('gSave').disabled = !anyDirty || roundClosed;
+        const ready = rows.filter((r) => r.dirty && complete(r)).length;
+        const saveBtn = byId('gSave');
+        saveBtn.disabled = !anyDirty || roundClosed;
+        saveBtn.innerHTML = `<i class="bi bi-check-circle me-1"></i>บันทึกทั้งห้อง${ready ? ` (${ready} คน)` : ''}`;
         byId('gFillNormal').disabled = !rows.length || roundClosed;
         const ca = byId('gConfirmAll');
-        ca.style.display = mode() === 'doctor' ? '' : 'none';
+        ca.style.display = doctor ? '' : 'none';
         ca.disabled = roundClosed || !rows.some((r) => r.prefill && complete(r));
         window.__dirty = anyDirty;
     }
@@ -332,28 +411,47 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         r.tt = r.tt === null ? 20 : r.tt; r.dc = 0; r.p = POS.map(() => 0); r.s = 'normal'; r.u = ''; r.t = []; r.other = ''; r.dirty = true; r.prefill = false;
     }
 
+    function roundChips() {
+        const r = rounds.find((x) => String(x.id) === String(byId('gRound').value));
+        byId('gRoundChips').innerHTML = r
+            ? `<span class="chip ${r.status === 'open' ? 'open' : 'closed'}">${r.status === 'open' ? 'เปิดอยู่' : 'ปิดแล้ว'}</span>` +
+              `<span class="chip teacher">ครู ${r.teacher_count} คน</span><span class="chip doctor">แพทย์ ${r.doctor_count} คน</span>`
+            : '';
+    }
+
     async function loadRounds() {
         const sel = byId('gRound');
+        const keep = sel.value;
         try {
             const res = await fetch(`${API_ROUNDS}?action=list`, { headers: XHR });
             const data = await res.json();
-            const list = data.data || [];
-            sel.innerHTML = list.length
-                ? list.map((r) => `<option value="${r.id}">${esc(r.academic_year)} · ${esc(r.title)}${r.status === 'closed' ? ' (ปิดแล้ว)' : ''}</option>`).join('')
+            rounds = data.data || [];
+            sel.innerHTML = rounds.length
+                ? rounds.map((r) => `<option value="${r.id}">${esc(r.academic_year)} · ${esc(r.title)}${r.status === 'closed' ? ' (ปิดแล้ว)' : ''}</option>`).join('')
                 : '<option value="">ยังไม่มีรอบ — ให้ admin เปิดรอบ</option>';
-            const firstOpen = list.find((r) => r.status === 'open');
+            const firstOpen = rounds.find((r) => r.status === 'open');
             if (firstOpen) sel.value = firstOpen.id;
-            // ค่าที่ส่งมาจากหน้ารายชื่อ (ถ้ามี)
-            if (PRE.round_id && list.some((r) => String(r.id) === PRE.round_id)) sel.value = PRE.round_id;
+            if (PRE.round_id && rounds.some((r) => String(r.id) === PRE.round_id) && !keep) sel.value = PRE.round_id;
+            if (keep && rounds.some((r) => String(r.id) === keep)) sel.value = keep;
         } catch (e) { sel.innerHTML = '<option value="">โหลดรอบไม่สำเร็จ</option>'; }
+        roundChips();
     }
 
-    async function loadList() {
-        const group = byId('gGroup').value, room = byId('gRoom').value, round = byId('gRound').value;
-        if (!round) { Swal.fire({ icon: 'info', title: 'เลือกรอบตรวจก่อน', text: 'ถ้ายังไม่มีรอบ ให้ผู้ดูแลระบบเปิดรอบจากหน้ารายชื่อ', confirmButtonText: 'ตกลง' }); return; }
-        const search = byId('gSearch').value.trim();
-        if (!group && !room && !search) { Swal.fire({ icon: 'info', title: 'เลือกกลุ่ม/ห้องเรียน หรือค้นหาชื่อเด็กก่อน', confirmButtonText: 'ตกลง' }); return; }
-        if (window.__dirty && !(await Swal.fire({ icon: 'warning', title: 'มีข้อมูลที่ยังไม่บันทึก', text: 'โหลดรายชื่อใหม่จะทิ้งข้อมูลที่กรอกค้างไว้', showCancelButton: true, confirmButtonText: 'โหลดใหม่', cancelButtonText: 'กลับไปกรอกต่อ' })).isConfirmed) return;
+    async function confirmDiscard() {
+        if (!window.__dirty) return true;
+        const r = await Swal.fire({ icon: 'warning', title: 'มีข้อมูลที่ยังไม่บันทึก', text: 'โหลดรายชื่อใหม่จะทิ้งข้อมูลที่กรอกค้างไว้', showCancelButton: true, confirmButtonText: 'โหลดใหม่', cancelButtonText: 'กลับไปกรอกต่อ' });
+        return r.isConfirmed;
+    }
+
+    // userClick = กดปุ่ม "โหลดใหม่" เอง (ถ้ายังไม่เลือกเงื่อนไข จะเตือน) นอกนั้นโหลดอัตโนมัติเมื่อเปลี่ยนตัวกรอง
+    async function loadList(userClick) {
+        const group = byId('gGroup').value, room = byId('gRoom').value, round = byId('gRound').value, search = byId('gSearch').value.trim();
+        if (!round) { if (userClick) Swal.fire({ icon: 'info', title: 'ยังไม่มีรอบตรวจ', text: 'ให้ผู้ดูแลระบบเปิดรอบจากหน้าเลือกรอบก่อน', confirmButtonText: 'ตกลง' }); return; }
+        if (!group && !room && !search) {
+            if (userClick) Swal.fire({ icon: 'info', title: 'เลือกกลุ่ม/ห้องเรียน หรือค้นหาชื่อเด็กก่อน', confirmButtonText: 'ตกลง' });
+            return;
+        }
+        if (!(await confirmDiscard())) return;
         byId('gWrap').innerHTML = '<div class="tg-empty"><div class="spinner-border text-primary"></div></div>';
         try {
             const q = new URLSearchParams({ round_id: round, student_year: byId('gStudentYear').value, child_group: group, classroom: room, search: search });
@@ -366,14 +464,14 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
             rows = data.data.map(toRow);
             render();
         } catch (e) {
-            rows = []; byId('gWrap').innerHTML = `<div class="tg-empty">${esc(e.message)}</div>`; summary();
+            rows = []; byId('gWrap').innerHTML = `<div class="tg-empty"><div class="big">โหลดไม่สำเร็จ</div>${esc(e.message)}</div>`; summary();
         }
     }
 
     async function saveAll() {
         const dirty = rows.filter((r) => r.dirty);
         const ready = dirty.filter(complete), notReady = dirty.filter((r) => !complete(r));
-        if (!ready.length) { Swal.fire({ icon: 'warning', title: 'ยังไม่มีแถวที่พร้อมบันทึก', text: 'กรอกให้ครบทุกช่องที่จำเป็นของแถวที่แก้ไข', confirmButtonText: 'ตกลง' }); return; }
+        if (!ready.length) { Swal.fire({ icon: 'warning', title: 'ยังไม่มีแถวที่พร้อมบันทึก', text: 'กรอกให้ครบทุกช่องที่จำเป็นของแถวที่แก้ไข (แถวสีเหลืองยังไม่ครบ)', confirmButtonText: 'ตกลง' }); return; }
         if (!byId('gDoctor').value.trim()) { Swal.fire({ icon: 'warning', title: 'กรุณาระบุชื่อผู้ตรวจ', confirmButtonText: 'ตกลง' }); byId('gDoctor').focus(); return; }
         const who = mode() === 'doctor' ? 'ผลตรวจของแพทย์' : 'ผลคัดกรองของครู';
         const ok = await Swal.fire({
@@ -402,6 +500,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
             render();
             Swal.fire({ icon: failed.size ? 'warning' : 'success', title: data.message, timer: failed.size ? undefined : 1800, showConfirmButton: !!failed.size, confirmButtonText: 'ตกลง',
                 text: failed.size ? data.errors.map((e) => `${e.student_id}: ${e.message}`).join('\n') : '' });
+            loadRounds().then(roundChips);   // อัปเดตจำนวนครู/แพทย์ในป้ายรอบ
         } catch (e) {
             Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: e.message, confirmButtonText: 'ตกลง' });
         } finally { summary(); }
@@ -418,7 +517,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         r.dirty = true; r.prefill = false;
         if (el.dataset.f === 's') {
             if (el.value === 'normal') { r.dc = 0; r.p = POS.map(() => 0); r.u = ''; }
-            render({ i, key: 's' });   // ช่องอื่นในแถวเปลี่ยนค่า จึงวาดใหม่
+            render({ i, key: 's' });
         } else {
             refreshRow(i);
         }
@@ -426,10 +525,20 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
 
     function init() {
         byId('gDate').value = todayStr();
-        byId('gGroup').addEventListener('change', loadRooms);
-        byId('gSearch').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); loadList(); } });
-        byId('gType').addEventListener('change', () => { if (rows.length) loadList(); });
-        byId('gLoad').addEventListener('click', loadList);
+        byId('gExtra').checked = showExtra;
+        byId('gExtra').addEventListener('change', (e) => {
+            showExtra = e.target.checked;
+            try { localStorage.setItem('toothGridExtra', showExtra ? '1' : '0'); } catch (err) { /* ไม่เป็นไร */ }
+            if (rows.length) render();
+        });
+        // เปลี่ยนตัวกรอง = โหลดรายชื่อใหม่เอง
+        byId('gGroup').addEventListener('change', async () => { await loadRooms(); loadList(false); });
+        byId('gRoom').addEventListener('change', () => loadList(false));
+        byId('gStudentYear').addEventListener('change', () => loadList(false));
+        byId('gRound').addEventListener('change', () => { roundChips(); loadList(false); });
+        byId('gType').addEventListener('change', () => { if (rows.length) loadList(false); });
+        byId('gSearch').addEventListener('input', debounce(() => loadList(false), 450));
+        byId('gLoad').addEventListener('click', () => loadList(true));
         byId('gSave').addEventListener('click', saveAll);
         byId('gFillNormal').addEventListener('click', () => { rows.forEach((r) => { if (!r.saved && !r.dirty && !r.prefill) setNormal(r); }); render(); });
         byId('gConfirmAll').addEventListener('click', () => { rows.forEach((r) => { if (r.prefill && complete(r)) { r.dirty = true; r.prefill = false; } }); render(); });
@@ -455,19 +564,19 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         applyPreselect();
     }
 
-    // มาจากหน้ารายชื่อ: ใส่ค่าที่เลือกไว้ให้ แล้วโหลดรายชื่อต่อเลย
+    // มาจากหน้าเลือกรอบ: ใส่รอบ/ตัวกรองที่เลือกไว้ให้ แล้วโหลดรายชื่อต่อเลย
     async function applyPreselect() {
         if (PRE.student_year && [...byId('gStudentYear').options].some((o) => o.value === PRE.student_year)) byId('gStudentYear').value = PRE.student_year;
         if (PRE.child_group) { byId('gGroup').value = PRE.child_group; await loadRooms(); }
         if (PRE.classroom) byId('gRoom').value = PRE.classroom;
         if (PRE.search) byId('gSearch').value = PRE.search;
         await loadRounds();
-        if (byId('gRound').value && (byId('gGroup').value || byId('gRoom').value || byId('gSearch').value.trim())) loadList();
+        loadList(false);
     }
 
     function loadRooms() {
         const group = byId('gGroup').value, sel = byId('gRoom');
-        sel.innerHTML = '<option value="">ทุกห้อง</option>';
+        sel.innerHTML = '<option value="">ทุกห้องในกลุ่ม</option>';
         if (!group) return Promise.resolve();
         return fetch(`../../include/function/get_classrooms.php?child_group=${encodeURIComponent(group)}`)
             .then((r) => r.json())
