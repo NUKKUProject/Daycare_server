@@ -250,8 +250,8 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
                 </div>
             </div>
             <div class="tg-legend" id="gLegend" style="display:none">
-                <span><i style="background:#22c55e"></i>ตรวจแล้ว</span><span><i style="background:#3b82f6"></i>พร้อมบันทึก</span>
-                <span><i style="background:#fb923c"></i>กรอกบางส่วน (บันทึกได้)</span><span><i style="background:#cbd5e1"></i>ยังไม่ได้กรอก</span>
+                <span><i style="background:#22c55e"></i>ตรวจแล้ว / บันทึกแล้ว</span><span><i style="background:#3b82f6"></i>พร้อมบันทึก</span>
+                <span><i style="background:#fb923c"></i>กรอกบางส่วน (บันทึกได้)</span><span><i style="background:#cbd5e1"></i>ยังไม่ได้กรอก</span><span id="gLegendPrefill"><i style="background:#8b5cf6"></i>รอแพทย์ตรวจ (ผลที่ครูคัดกรองไว้)</span>
             </div>
             <div class="tg-wrap" id="gWrap">
                 <div class="tg-empty">
@@ -268,6 +268,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
             <div class="pills" id="gSummary"><span class="text-muted">ยังไม่ได้โหลดรายชื่อ</span></div>
             <div class="acts">
                 <button type="button" class="btn btn-outline-primary btn-sm" id="gFillNormal" disabled title="เติมค่าปกติ (ไม่มีฟันผุ) ให้เด็กที่ยังไม่มีข้อมูล"><i class="bi bi-magic me-1"></i>เติมค่าปกติให้ที่ยังว่าง</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="gConfirmAll" disabled style="display:none" title="ยืนยันผลที่ครูคัดกรองไว้ (ที่กรอกครบ) ให้เป็นผลของแพทย์"><i class="bi bi-check2-all me-1"></i>ยืนยันตามผลครูทั้งหมด</button>
                 <button type="button" class="btn btn-save-grid" id="gSave" disabled><i class="bi bi-check-circle me-1"></i>บันทึกทั้งห้อง</button>
             </div>
         </div>
@@ -332,15 +333,17 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     function toRow(c) {
         const recs = c.records || {};
         const m = mode();
-        // สถานะเดียว: มีผลตรวจแล้ว / ยังไม่มี ผลที่แสดงคือผลที่ใช้ (แพทย์ > ครู > ข้อมูลเดิม)
+        // "ตรวจแล้ว" = มีผลของแพทย์เท่านั้น ผลที่ครูคัดกรองไว้ใช้เป็นค่าตั้งต้นให้แพทย์ยืนยัน (ยังไม่นับว่าตรวจแล้ว)
         const source = recs.doctor || recs.teacher || recs.legacy || null;
         const base = source ? recToVals(source) : emptyVals();
+        const doctorDone = !!recs.doctor;
         return Object.assign(base, {
             sid: c.studentid, nick: c.nickname || '', name: [c.prefix_th, c.firstname_th, c.lastname_th].filter(Boolean).join(' '),
-            birthday: c.birthday, exam: '',
+            birthday: c.birthday, exam: '', doctorDone: doctorDone,
             // ครูแก้ผลที่แพทย์ตรวจแล้วไม่ได้ (ผลของแพทย์ใช้แทนเสมอ จึงล็อกไว้กันแก้แล้วไม่มีผล)
-            locked: m === 'teacher' && !!recs.doctor,
-            saved: !!source, prefill: false, ref: null, dirty: false
+            locked: m === 'teacher' && doctorDone,
+            saved: m === 'doctor' ? doctorDone : !!source,
+            prefill: m === 'doctor' && !doctorDone && !!source, ref: null, dirty: false
         });
     }
 
@@ -357,7 +360,9 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     const rowState = (r) => (r.dirty
         ? (complete(r) ? 'ready' : (hasData(r) ? 'partial' : 'todo'))
         : (r.saved ? 'saved' : (r.prefill ? 'prefill' : 'todo')));
-    const STATE_TEXT = { saved: 'ตรวจแล้ว', ready: 'พร้อมบันทึก', partial: 'กรอกบางส่วน', todo: 'ยังไม่ได้กรอก', prefill: 'ผลครู · รอยืนยัน' };
+    const STATE_TEXT = { saved: 'ตรวจแล้ว', ready: 'พร้อมบันทึก', partial: 'กรอกบางส่วน', todo: 'ยังไม่ได้กรอก', prefill: 'รอแพทย์ตรวจ' };
+    // แถวที่บันทึกแล้ว: ถ้าเป็นผลของแพทย์ = "ตรวจแล้ว" ถ้าเป็นผลที่ครูคัดกรอง = "บันทึกแล้ว"
+    const stateText = (r, st) => (st === 'saved' ? (r.doctorDone ? 'ตรวจแล้ว' : 'บันทึกแล้ว') : STATE_TEXT[st]);
 
     function diffOf(r, key, idx) {
         if (!r.ref) return false;
@@ -403,7 +408,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
             h += td('gc-note', `<input class="f t${dcls(r, 'oral')}" type="text" maxlength="100" data-f="oral" value="${esc(r.oral)}"${d}>`) +
                 td('gc-note', `<input class="f t${dcls(r, 'miss')}" type="text" maxlength="100" data-f="miss" value="${esc(r.miss)}"${d}>`);
         }
-        h += td('gc-state', `<span class="st ${st}">${STATE_TEXT[st]}</span>`) +
+        h += td('gc-state', `<span class="st ${st}">${stateText(r, st)}</span>`) +
             td('gc-state', roundClosed || r.locked ? (r.locked ? '<span class="text-muted small">🔒 แพทย์ตรวจแล้ว</span>' : '') : (r.prefill ? '<button type="button" class="rowact confirm" data-confirm="1" title="ยืนยันตามผลของครู">ยืนยัน</button> ' : '') + '<button type="button" class="rowact" data-normal="1" title="เติมค่าปกติ: ไม่มีฟันผุ (ถ้ายังไม่กรอกจำนวนฟันทั้งหมด จะใส่ 20 ซี่)">ปกติ</button>') + '</tr>';
         return h;
     }
@@ -426,7 +431,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         if (!tr) return;
         const r = rows[i], st = rowState(r), bad = r.s === 'abnormal' && r.dc !== null && posSum(r) !== r.dc;
         tr.className = st;
-        const chip = tr.querySelector('.st'); chip.className = 'st ' + st; chip.textContent = STATE_TEXT[st];
+        const chip = tr.querySelector('.st'); chip.className = 'st ' + st; chip.textContent = stateText(r, st);
         tr.querySelectorAll('td.pos').forEach((td) => td.classList.toggle('bad', bad));
         const other = tr.querySelector('[data-f="other"]'); if (other) other.disabled = !r.t.includes('other') || roundClosed;
         tr.querySelectorAll('[data-f],[data-p]').forEach((el) => {
@@ -441,17 +446,20 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         const c = { saved: 0, ready: 0, partial: 0, todo: 0, prefill: 0 };
         rows.forEach((r) => c[rowState(r)]++);
         const doctor = mode() === 'doctor';
+        const doneWord = doctor ? 'ตรวจแล้ว' : 'บันทึกแล้ว';
         byId('gSummary').innerHTML = rows.length
-            ? `<span>${rows.length} คน</span><span class="tg-pill saved">ตรวจแล้ว ${c.saved}</span><span class="tg-pill ready">พร้อมบันทึก ${c.ready}</span>` +
+            ? `<span>${rows.length} คน</span><span class="tg-pill saved">${doneWord} ${c.saved}</span><span class="tg-pill ready">พร้อมบันทึก ${c.ready}</span>` +
               (c.partial ? `<span class="tg-pill partial">กรอกบางส่วน ${c.partial}</span>` : '') +
+              (c.prefill ? `<span class="tg-pill prefill">รอแพทย์ตรวจ ${c.prefill}</span>` : '') +
               `<span class="tg-pill todo">ยังไม่ได้กรอก ${c.todo}</span>`
             : '<span class="text-muted">ยังไม่ได้โหลดรายชื่อ</span>';
 
         const pr = byId('gProgress'), lg = byId('gLegend');
         pr.style.display = lg.style.display = rows.length ? '' : 'none';
+        byId('gLegendPrefill').style.display = doctor ? '' : 'none';
         if (rows.length) {
-            const done = c.saved + c.ready + c.partial;
-            byId('gProgressText').textContent = `ตรวจแล้ว ${done} / ${rows.length} คน`;
+            const done = c.saved;
+            byId('gProgressText').textContent = `${doneWord} ${done} / ${rows.length} คน`;
             byId('gProgressBar').style.width = Math.round(done * 100 / rows.length) + '%';
         }
 
@@ -461,6 +469,9 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         saveBtn.disabled = !anyDirty || roundClosed;
         saveBtn.innerHTML = `<i class="bi bi-check-circle me-1"></i>บันทึกทั้งห้อง${ready ? ` (${ready} คน)` : ''}`;
         byId('gFillNormal').disabled = !rows.length || roundClosed;
+        const ca = byId('gConfirmAll');
+        ca.style.display = doctor ? '' : 'none';
+        ca.disabled = roundClosed || !rows.some((r) => r.prefill && complete(r));
         window.__dirty = anyDirty;
     }
 
@@ -472,7 +483,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         const r = rounds.find((x) => String(x.id) === String(byId('gRound').value));
         byId('gRoundChips').innerHTML = r
             ? `<span class="chip ${r.status === 'open' ? 'open' : 'closed'}">${r.status === 'open' ? 'เปิดอยู่' : 'ปิดแล้ว'}</span>` +
-              `<span class="chip">ตรวจแล้ว ${r.child_count} คน</span>`
+              `<span class="chip">ตรวจแล้ว ${r.doctor_count} คน</span>`
             : '';
     }
 
@@ -555,7 +566,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
             const data = await res.json();
             if (data.status !== 'success') throw new Error(data.message || 'บันทึกไม่สำเร็จ');
             const failed = new Set((data.errors || []).map((e) => e.student_id));
-            ready.forEach((r) => { if (!failed.has(r.sid)) { r.saved = true; r.dirty = false; } });
+            ready.forEach((r) => { if (!failed.has(r.sid)) { r.saved = true; r.dirty = false; r.prefill = false; if (mode() === 'doctor') r.doctorDone = true; } });
             render();
             Swal.fire({ icon: failed.size ? 'warning' : 'success', title: data.message, timer: failed.size ? undefined : 1800, showConfirmButton: !!failed.size, confirmButtonText: 'ตกลง',
                 text: failed.size ? data.errors.map((e) => `${e.student_id}: ${e.message}`).join('\n') : '' });
@@ -623,6 +634,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         byId('gSearch').addEventListener('input', debounce(() => loadList(false), 450));
         byId('gLoad').addEventListener('click', () => loadList(true));
         byId('gSave').addEventListener('click', saveAll);
+        byId('gConfirmAll').addEventListener('click', () => { rows.forEach((r) => { if (r.prefill && complete(r)) { r.dirty = true; r.prefill = false; } }); render(); });
         byId('gFillNormal').addEventListener('click', () => { rows.forEach((r) => { if (!r.saved && !r.dirty && !r.prefill) setNormal(r); }); render(); });
         byId('gDate').addEventListener('change', () => { if (rows.length) render(); });
         const wrap = byId('gWrap');

@@ -51,7 +51,7 @@ $currentTop = isset($academicYears[0]['name']) ? (int) $academicYears[0]['name']
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>ปีการศึกษา</th><th>รอบ</th><th>ช่วงวันที่</th><th class="text-center">เด็กที่ตรวจแล้ว (คน)</th><th>สถานะ</th><th></th>
+                            <th>ปีการศึกษา</th><th>รอบ</th><th>ช่วงวันที่</th><th class="text-center">แพทย์ตรวจแล้ว (คน)</th><th>สถานะ</th><th></th>
                         </tr>
                     </thead>
                     <tbody id="rBody"><tr><td colspan="6" class="text-center text-muted py-4">กำลังโหลด...</td></tr></tbody>
@@ -84,7 +84,7 @@ $currentTop = isset($academicYears[0]['name']) ? (int) $academicYears[0]['name']
             const range = r.start_date || r.end_date ? `${thaiDate(r.start_date)} – ${thaiDate(r.end_date)}` : '-';
             const open = r.status === 'open';
             return `<tr><td>${esc(r.academic_year)}</td><td>${esc(r.title)}</td><td>${range}</td>
-                <td class="text-center">${r.child_count}</td>
+                <td class="text-center">${r.doctor_count}</td>
                 <td><span class="rd-badge ${open ? 'rd-open' : 'rd-closed'}">${open ? 'เปิดอยู่' : 'ปิดแล้ว'}</span></td>
                 <td class="text-end"><button class="btn btn-sm ${open ? 'btn-outline-danger' : 'btn-outline-success'}" data-act="${open ? 'close' : 'reopen'}" data-id="${r.id}" data-title="${esc(r.title)}">
                     <i class="bi ${open ? 'bi-lock' : 'bi-unlock'} me-1"></i>${open ? 'ปิดรอบ' : 'เปิดรอบอีกครั้ง'}</button></td></tr>`;

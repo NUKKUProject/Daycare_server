@@ -440,7 +440,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                     <div class="rc-date">วันที่ ${roundDateText(r)}</div>
                     <div class="rc-chips">
                         <span class="rchip ${open ? 'open' : 'closed'}">${open ? 'เปิดอยู่' : 'ปิดแล้ว'}</span>
-                        <span class="rchip">ตรวจแล้ว ${r.child_count} คน</span>
+                        <span class="rchip">ตรวจแล้ว ${r.doctor_count} คน</span>
                     </div>
                     <div class="rc-go">กรอกผลเป็นตาราง <i class="fas fa-arrow-right"></i></div>
                     <span class="rc-more" data-more="${r.id}">รายคน / ส่งออก</span>
@@ -655,14 +655,16 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                 }
 
                 // สรุปสถานะของรอบนี้ในรายชื่อที่แสดง
-                const done = data.filter(st => st.id != null).length;
-                const none = data.length - done;
+                const done = data.filter(st => st.id != null && st.exam_type === 'doctor').length;
+                const waiting = data.filter(st => st.id != null && st.exam_type !== 'doctor').length;
+                const none = data.length - done - waiting;
                 document.getElementById('sumRow').innerHTML =
                     `<span class="rchip">ทั้งหมด ${data.length} คน</span>` +
                     `<span class="rchip open">ตรวจแล้ว ${done}</span>` +
+                    (waiting ? `<span class="rchip teacher">รอแพทย์ตรวจ ${waiting}</span>` : '') +
                     `<span class="rchip">ยังไม่ตรวจ ${none}</span>`;
                 const cnt = {
-                    none: none
+                    none: data.length - done
                 };
                 resultsLoaded = true;
                 updateSteps();
@@ -789,10 +791,14 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     }
 
     // ป้ายสถานะการตรวจ: แพทย์ตรวจแล้ว / ครูคัดกรองแล้ว (รอแพทย์) / ข้อมูลเดิม / ยังไม่มีการบันทึก
+    // "ตรวจแล้ว" = แพทย์ตรวจเท่านั้น ถ้าครูคัดกรองไว้แต่แพทย์ยังไม่ตรวจ = "รอแพทย์ตรวจ"
     function examStatusBadge(student, hasRecord) {
-        return hasRecord ?
+        if (!hasRecord) {
+            return '<span class="badge bg-secondary">ยังไม่มีการบันทึก</span>';
+        }
+        return student.exam_type === 'doctor' ?
             '<span class="badge bg-success">ตรวจแล้ว</span>' :
-            '<span class="badge bg-secondary">ยังไม่มีการบันทึก</span>';
+            '<span class="badge bg-warning text-dark">รอแพทย์ตรวจ</span>';
     }
 
     // เพิ่มฟังก์ชันจัดกลุ่มข้อมูล
