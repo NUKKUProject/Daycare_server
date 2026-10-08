@@ -1,40 +1,57 @@
 <?php
-require_once(__DIR__ . '../../../../../config/database.php');
+// รายชื่อเด็ก + ผลตรวจฟันที่ใช้ของรอบที่เลือก (ในรอบเดียวกัน ผลแพทย์มาก่อนผลครู)
+require_once __DIR__ . '/../../../include/auth/auth.php';
+checkUserRole(['admin', 'teacher', 'doctor']);
+require_once __DIR__ . '/../../../../config/database.php';
+require_once __DIR__ . '/tooth_exam_helpers.php';
+
+header('Content-Type: application/json; charset=utf-8');
 
 try {
     $pdo = getDatabaseConnection();
 
-    $sql = "SELECT h.id, h.academic_year, h.student_id AS health_student_id, h.doctor_name,h.updated_at,
-       c.studentid AS student_id, 
-       c.prefix_th, 
-       c.firstname_th AS first_name_th, 
+    // ปีการศึกษาที่ตรวจ และรอบ (ไม่ส่งรอบมา = รอบล่าสุดของปีนั้น)
+    $healthAcademicYear = $_GET['academic_year'] ?? (date('Y') + 543);
+    $roundId = !empty($_GET['round_id']) ? (int) $_GET['round_id'] : null;
+    if (!$roundId) {
+        $rounds = tooth_get_rounds($pdo, (string) $healthAcademicYear);
+        $roundId = $rounds ? (int) $rounds[0]['id'] : null;
+    }
+
+    $params = [':health_academic_year' => $healthAcademicYear];
+    // ถ้าปีนี้ยังไม่มีรอบ จะไม่มีผลตรวจให้ join (เงื่อนไข false) ทุกคนเป็น "ยังไม่มีการบันทึก"
+    $roundCond = $roundId ? ' AND x.round_id = :round_id' : ' AND FALSE';
+    if ($roundId) {
+        $params[':round_id'] = $roundId;
+    }
+
+    $sql = "SELECT h.id, h.academic_year, h.student_id AS health_student_id, h.doctor_name, h.updated_at,
+       h.exam_type, h.round_id, h.examined_by,
+       (SELECT COUNT(*) FROM health_tooth_external y WHERE y.student_id = c.studentid AND y.round_id = h.round_id AND y.exam_type = 'doctor') > 0 AS has_doctor,
+       (SELECT COUNT(*) FROM health_tooth_external y WHERE y.student_id = c.studentid AND y.round_id = h.round_id AND y.exam_type = 'teacher') > 0 AS has_teacher,
+       c.studentid AS student_id,
+       c.prefix_th,
+       c.firstname_th AS first_name_th,
        c.lastname_th AS last_name_th,
        c.nickname,
-       c.child_group, 
+       c.child_group,
        c.classroom,
        c.academic_year AS academic_year,
-       CASE 
-            WHEN h.id IS NOT NULL THEN 'recorded'
-            ELSE 'not_recorded'
-       END AS check_status
+       CASE WHEN h.id IS NOT NULL THEN 'recorded' ELSE 'not_recorded' END AS check_status
 FROM children c
-LEFT JOIN health_tooth_external h
-    ON c.studentid = h.student_id 
-    AND h.academic_year = :health_academic_year
+LEFT JOIN LATERAL (
+    SELECT x.* FROM health_tooth_external x
+    WHERE x.student_id = c.studentid AND x.academic_year = :health_academic_year" . $roundCond . "
+    ORDER BY " . str_replace('exam_type', 'x.exam_type', TOOTH_TYPE_ORDER_SQL) . ", x.id DESC
+    LIMIT 1
+) h ON TRUE
 WHERE 1=1 AND c.status = 'กำลังศึกษา'";
-
-    $params = [];
-
-    // กำหนดค่าเริ่มต้นสำหรับปีการศึกษา
-    $healthAcademicYear = $_GET['academic_year'] ?? (date('Y') + 543);
-    $params[':health_academic_year'] = $healthAcademicYear;
 
     // เงื่อนไขสำหรับ student_year
     if (!empty($_GET['student_year']) && $_GET['student_year'] !== 'all') {
         $sql .= " AND c.academic_year = :children_academic_year";
         $params[':children_academic_year'] = $_GET['student_year'];
     }
-    // ถ้าส่ง 'all' มาหรือไม่ส่งมา จะไม่กรองปีการศึกษา (แสดงทั้งหมด)
 
     // เงื่อนไขสำหรับ child_group
     if (!empty($_GET['child_group'])) {
@@ -47,7 +64,6 @@ WHERE 1=1 AND c.status = 'กำลังศึกษา'";
         $sql .= " AND c.classroom = :classroom";
         $params[':classroom'] = $_GET['classroom'];
     }
-    // ถ้าไม่ได้เลือก classroom จะไม่เพิ่มเงื่อนไข = แสดงทุกห้องในกลุ่ม
 
     // เงื่อนไขการค้นหา
     if (!empty($_GET['search'])) {
@@ -59,9 +75,7 @@ WHERE 1=1 AND c.status = 'กำลังศึกษา'";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
-    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    echo json_encode($results);
+    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC), JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([

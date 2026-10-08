@@ -1,42 +1,34 @@
 <?php
-// รายชื่อเด็กพร้อมผลตรวจฟันเดิมของปีการศึกษานั้น (ถ้ามี) สำหรับหน้ากรอกทั้งห้องแบบตาราง
+// รายชื่อเด็ก + ผลตรวจของรอบที่เลือก แยกตามผู้ตรวจ (ครู / แพทย์ / ข้อมูลเดิม) สำหรับหน้ากรอกทั้งห้องแบบตาราง
 require_once __DIR__ . '/../../../include/auth/auth.php';
 checkUserRole(['admin', 'teacher', 'doctor']);
 require_once __DIR__ . '/../../../../config/database.php';
+require_once __DIR__ . '/tooth_exam_helpers.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
 try {
     $pdo = getDatabaseConnection();
 
-    $examYear = trim($_GET['academic_year'] ?? '');
+    $roundId = (int) ($_GET['round_id'] ?? 0);
     $group = trim($_GET['child_group'] ?? '');
     $classroom = trim($_GET['classroom'] ?? '');
     $studentYear = trim($_GET['student_year'] ?? '');
 
-    if ($examYear === '') {
-        throw new Exception('กรุณาเลือกปีการศึกษาที่ตรวจ');
+    $round = $roundId ? tooth_get_round($pdo, $roundId) : null;
+    if (!$round) {
+        throw new Exception('กรุณาเลือกรอบตรวจ');
     }
     // กันดึงทั้งศูนย์โดยไม่ตั้งใจ ต้องเลือกกลุ่มหรือห้องอย่างน้อยหนึ่งอย่าง
     if ($group === '' && $classroom === '') {
         throw new Exception('กรุณาเลือกกลุ่มเรียนหรือห้องเรียน');
     }
 
-    $sql = "
-        SELECT c.studentid, c.prefix_th, c.firstname_th, c.lastname_th, c.nickname,
-               c.child_group, c.classroom, c.birthday,
-               h.id AS record_id, h.total_teeth, h.decayed_teeth, h.oral_components, h.teeth_status,
-               h.missing_teeth_detail, h.decayed_teeth_positions::text AS decayed_teeth_positions,
-               h.treatments::text AS treatments, h.other_treatment_detail, h.urgency, h.doctor_name
-        FROM children c
-        LEFT JOIN LATERAL (
-            SELECT * FROM health_tooth_external
-            WHERE student_id = c.studentid AND academic_year = :exam_year
-            ORDER BY id DESC LIMIT 1
-        ) h ON TRUE
-        WHERE c.status = 'กำลังศึกษา'";
-    $params = [':exam_year' => $examYear];
-
+    $sql = "SELECT c.studentid, c.prefix_th, c.firstname_th, c.lastname_th, c.nickname,
+                   c.child_group, c.classroom, c.birthday
+            FROM children c
+            WHERE c.status = 'กำลังศึกษา'";
+    $params = [];
     if ($studentYear !== '' && $studentYear !== 'all') {
         $sql .= ' AND c.academic_year = :student_year';
         $params[':student_year'] = $studentYear;
@@ -53,22 +45,44 @@ try {
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $children = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $decode = function ($v, $default) {
-        if ($v === null || $v === '') {
-            return $default;
+    // ผลตรวจทุกประเภทของเด็กกลุ่มนี้ในรอบนี้ (เรียงเก่า -> ใหม่ ตัวหลังทับตัวก่อน = ใช้แถวล่าสุดของแต่ละประเภท)
+    $records = [];
+    if ($children) {
+        $ids = array_column($children, 'studentid');
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        $recStmt = $pdo->prepare("SELECT id, student_id, exam_type, total_teeth, decayed_teeth, oral_components, teeth_status,
+                   missing_teeth_detail, decayed_teeth_positions::text AS decayed_teeth_positions,
+                   treatments::text AS treatments, other_treatment_detail, urgency, doctor_name, examined_by, updated_at
+            FROM health_tooth_external
+            WHERE round_id = ? AND student_id IN ($in)
+            ORDER BY id");
+        $recStmt->execute(array_merge([$roundId], $ids));
+        $decode = function ($v, $default) {
+            if ($v === null || $v === '') {
+                return $default;
+            }
+            $d = json_decode($v, true);
+            return is_array($d) ? $d : $default;
+        };
+        foreach ($recStmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $r['decayed_teeth_positions'] = $decode($r['decayed_teeth_positions'], null);
+            $r['treatments'] = $decode($r['treatments'], []);
+            $records[$r['student_id']][$r['exam_type']] = $r;
         }
-        $d = json_decode($v, true);
-        return is_array($d) ? $d : $default;
-    };
-    foreach ($rows as &$r) {
-        $r['decayed_teeth_positions'] = $decode($r['decayed_teeth_positions'], null);
-        $r['treatments'] = $decode($r['treatments'], []);
     }
-    unset($r);
+    foreach ($children as &$c) {
+        $c['records'] = $records[$c['studentid']] ?? new stdClass();
+    }
+    unset($c);
 
-    echo json_encode(['status' => 'success', 'data' => $rows], JSON_UNESCAPED_UNICODE);
+    echo json_encode([
+        'status' => 'success',
+        'round' => $round,
+        'allowed_types' => tooth_allowed_types($_SESSION['role'] ?? ''),
+        'data' => $children,
+    ], JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) {
     http_response_code(400);
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);

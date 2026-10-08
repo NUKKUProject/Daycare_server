@@ -213,7 +213,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
                     <div class="col-md-2">
                         <label for="date" class="form-label">ตรวจประจำปีการศึกษา</label>
-                       <select name="academic_year" class="form-select">
+                       <select name="academic_year" id="exam_academic_year" class="form-select" onchange="loadRounds()">
                             <?php
                                 // สมมติ $academicYears เรียงจากมาก -> น้อย อยู่แล้ว (2568, 2567, 2566)
                                 $currentTop = isset($academicYears[0]['name']) ? (int)$academicYears[0]['name'] : null;
@@ -229,6 +229,12 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                 <?= htmlspecialchars($year['name']) ?>
                                 </option>
                             <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="round_id" class="form-label">รอบตรวจ</label>
+                        <select name="round_id" id="round_id" class="form-select">
+                            <option value="">รอบล่าสุด</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -256,6 +262,9 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                         <button type="submit" class="btn btn-primary">ค้นหา</button>
                         <button type="button" class="btn btn-secondary" onclick="resetForm()">รีเซ็ต</button>
                         <a href="checklist_grid.php" class="btn btn-outline-success"><i class="fas fa-table"></i> กรอกทั้งห้อง (ตาราง)</a>
+                        <?php if ($is_admin): ?>
+                            <a href="tooth_rounds.php" class="btn btn-outline-primary"><i class="fas fa-calendar-check"></i> จัดการรอบตรวจ</a>
+                        <?php endif; ?>
                         <button type="button" class="btn btn-danger" onclick="exportToPdf()">
                             <i class="fas fa-file-pdf"></i> Export Pdf
                         </button>
@@ -291,8 +300,31 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     }
 
 
+    // โหลดรายการรอบตรวจของปีการศึกษาที่เลือก (ค่าว่าง = รอบล่าสุด)
+    function loadRounds() {
+        const year = document.getElementById('exam_academic_year').value;
+        const sel = document.getElementById('round_id');
+        return fetch(`./process/manage_tooth_rounds.php?action=list&academic_year=${encodeURIComponent(year)}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(r => r.json())
+            .then(res => {
+                sel.innerHTML = '<option value="">รอบล่าสุด</option>';
+                (res.data || []).forEach(r => {
+                    const o = document.createElement('option');
+                    o.value = r.id;
+                    o.textContent = `${r.title}${r.status === 'closed' ? ' (ปิดแล้ว)' : ''}`;
+                    sel.appendChild(o);
+                });
+            })
+            .catch(e => console.error('Error loading rounds:', e));
+    }
+
     // เพิ่มฟังก์ชันเมื่อโหลดหน้า
     document.addEventListener('DOMContentLoaded', () => {
+        loadRounds();
         // ถ้ามี URL parameters ให้กรอกข้อมูลในฟอร์มและค้นหา
         const urlParams = new URLSearchParams(window.location.search);
 
@@ -433,18 +465,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                                 <td>${student.nickname}</td>
                                 <td>${student.academic_year}</td>
                                <td>
-                                <span class="badge 
-                                    ${student.doctor_name 
-                                        ? 'bg-success' 
-                                        : hasRecord 
-                                            ? 'bg-warning text-dark' 
-                                            : 'bg-secondary'}">
-                                    ${student.doctor_name 
-                                        ? 'หมอตรวจแล้ว' 
-                                        : hasRecord 
-                                            ? 'รอแพทย์ตรวจ' 
-                                            : 'ยังไม่มีการบันทึก'}
-                                </span>
+                                ${examStatusBadge(student, hasRecord)}
                             </td>
 
                                 
@@ -520,6 +541,21 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                 console.error('Error:', error);
                 table.innerHTML = '<div class="alert alert-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
             });
+    }
+
+    // ป้ายสถานะการตรวจ: แพทย์ตรวจแล้ว / ครูคัดกรองแล้ว (รอแพทย์) / ข้อมูลเดิม / ยังไม่มีการบันทึก
+    function examStatusBadge(student, hasRecord) {
+        if (!hasRecord) {
+            return '<span class="badge bg-secondary">ยังไม่มีการบันทึก</span>';
+        }
+        if (student.exam_type === 'doctor') {
+            return '<span class="badge bg-success">แพทย์ตรวจแล้ว</span>' +
+                (student.has_teacher ? '<div class="small text-muted">มีผลคัดกรองของครูด้วย</div>' : '');
+        }
+        if (student.exam_type === 'teacher') {
+            return '<span class="badge bg-warning text-dark">ครูคัดกรองแล้ว · รอแพทย์ตรวจ</span>';
+        }
+        return '<span class="badge bg-light text-dark border">ข้อมูลเดิม</span>';
     }
 
     // เพิ่มฟังก์ชันจัดกลุ่มข้อมูล
@@ -1532,6 +1568,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
         // รวบรวมข้อมูลความเร่งด่วน
         formData.urgency = form.querySelector('input[name="urgency"]:checked')?.value || null;
+        formData.round_id = document.getElementById('round_id')?.value || '';
 
         return formData;
     }

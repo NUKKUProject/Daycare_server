@@ -1,6 +1,8 @@
 <?php
 // เชื่อมต่อฐานข้อมูล
-require_once(__DIR__ . '../../../../../config/database.php');
+require_once __DIR__ . '/../../../include/auth/auth.php';
+checkUserRole(['admin', 'teacher', 'doctor']);
+require_once __DIR__ . '/../../../../config/database.php';
 
 try {
     $pdo = getDatabaseConnection();
@@ -33,6 +35,13 @@ try {
         throw new Exception('ไม่มีข้อมูลที่ส่งมา');
     }
 
+    // รอบที่ปิดแล้วแก้ไขไม่ได้ (ต้องให้ admin เปิดรอบอีกครั้งก่อน)
+    $lock = $pdo->prepare('SELECT r.status FROM health_tooth_external h LEFT JOIN tooth_exam_rounds r ON r.id = h.round_id WHERE h.id = :id');
+    $lock->execute([':id' => $data['data_id'] ?? 0]);
+    if ($lock->fetchColumn() === 'closed') {
+        throw new Exception('รอบตรวจนี้ถูกปิดแล้ว ไม่สามารถแก้ไขได้');
+    }
+
     // เตรียมคำสั่ง SQL สำหรับการอัปเดตข้อมูล
     $stmt = $pdo->prepare("UPDATE health_tooth_external SET
         student_id = :student_id,
@@ -54,7 +63,8 @@ try {
         decayed_teeth_positions = :decayed_teeth_positions,
         treatments = :treatments,
         other_treatment_detail = :other_treatment_detail,
-        urgency = :urgency
+        urgency = :urgency,
+        updated_at = NOW()
     WHERE id = :data_id");
 
     // ผูกค่าพารามิเตอร์สำหรับข้อมูลนักเรียน

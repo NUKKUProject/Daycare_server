@@ -1,6 +1,7 @@
 <?php
 require_once('../../../pdf/WriteHTML.php');
 require_once(__DIR__ . '../../../../../config/database.php');
+require_once __DIR__ . '/../function/tooth_exam_helpers.php';
 
 // เชื่อมต่อฐานข้อมูล
 try {
@@ -16,8 +17,7 @@ $doctor = $_GET['doctor'] ?? '';
 // ดึงข้อมูลจากฐานข้อมูล
 if ($doctor === 'all') {
     // ไม่กรอง doctor_name
-    $sql = "SELECT * FROM health_tooth_external 
-            WHERE academic_year = :year";
+    $sql = "SELECT * FROM (" . tooth_effective_sql(false) . ") t";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
@@ -25,8 +25,7 @@ if ($doctor === 'all') {
     ]);
 } else {
     // กรอง doctor_name ตามค่าที่รับมา
-    $sql = "SELECT * FROM health_tooth_external 
-            WHERE academic_year = :year AND doctor_name = :doctor";
+    $sql = "SELECT * FROM (" . tooth_effective_sql(false, true) . ") t WHERE doctor_name = :doctor";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([

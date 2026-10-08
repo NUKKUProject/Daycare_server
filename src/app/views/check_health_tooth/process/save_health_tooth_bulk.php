@@ -1,9 +1,11 @@
 <?php
 // บันทึกผลตรวจฟันหลายคนในครั้งเดียว (หน้ากรอกทั้งห้องแบบตาราง)
-// ถ้าเด็กมีผลตรวจของปีการศึกษานั้นอยู่แล้วจะอัปเดตแถวล่าสุด ถ้าไม่มีจะเพิ่มใหม่ ทำในธุรกรรมเดียว
+// ผูกกับรอบตรวจและประเภทผู้ตรวจ (ครูคัดกรอง / แพทย์) ถ้าเด็กมีผลของประเภทนี้ในรอบนี้แล้วจะอัปเดต ถ้าไม่มีจะเพิ่มใหม่
+// ทำในธุรกรรมเดียว รอบที่ปิดแล้วบันทึกไม่ได้
 require_once __DIR__ . '/../../../include/auth/auth.php';
 checkUserRole(['admin', 'teacher', 'doctor']);
 require_once __DIR__ . '/../../../../config/database.php';
+require_once __DIR__ . '/../function/tooth_exam_helpers.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -29,10 +31,9 @@ try {
         respond(['status' => 'error', 'message' => 'ข้อมูลที่ส่งมาไม่ถูกต้อง'], 400);
     }
 
-    $academicYear = trim((string) ($data['academic_year'] ?? ''));
     $doctorName = trim((string) ($data['doctor_name'] ?? ''));
     $rows = $data['rows'] ?? [];
-    if ($academicYear === '' || !is_array($rows) || !$rows) {
+    if (!is_array($rows) || !$rows) {
         respond(['status' => 'error', 'message' => 'ไม่มีข้อมูลให้บันทึก'], 400);
     }
 
@@ -44,12 +45,24 @@ try {
     $stamp = $examDate->format('Y-m-d') . ' ' . date('H:i:s');
 
     $pdo = getDatabaseConnection();
+
+    $round = tooth_get_round($pdo, (int) ($data['round_id'] ?? 0));
+    if (!$round) {
+        respond(['status' => 'error', 'message' => 'กรุณาเลือกรอบตรวจ'], 400);
+    }
+    if ($round['status'] !== 'open') {
+        respond(['status' => 'error', 'message' => 'รอบตรวจนี้ถูกปิดแล้ว ไม่สามารถบันทึกได้'], 400);
+    }
+    $academicYear = $round['academic_year'];
+    $examType = tooth_resolve_exam_type($_SESSION['role'] ?? '', $data['exam_type'] ?? null);
+    $by = tooth_current_user_label();
+
     $pdo->beginTransaction();
 
     $childStmt = $pdo->prepare("SELECT studentid, prefix_th, firstname_th, lastname_th, nickname, classroom, birthday
                                 FROM children WHERE studentid = :sid");
     $findStmt = $pdo->prepare("SELECT id FROM health_tooth_external
-                               WHERE student_id = :sid AND academic_year = :yr ORDER BY id DESC LIMIT 1");
+                               WHERE student_id = :sid AND round_id = :rid AND exam_type = :t ORDER BY id DESC LIMIT 1");
 
     $update = $pdo->prepare("UPDATE health_tooth_external SET
             prefix_th = :prefix_th, first_name = :first_name, last_name = :last_name, nickname = :nickname,
@@ -58,19 +71,22 @@ try {
             total_teeth = :total_teeth, decayed_teeth = :decayed_teeth, oral_components = :oral_components,
             teeth_status = :teeth_status, missing_teeth_detail = :missing_teeth_detail,
             decayed_teeth_positions = :positions, treatments = :treatments,
-            other_treatment_detail = :other_detail, urgency = :urgency, updated_at = :stamp
+            other_treatment_detail = :other_detail, urgency = :urgency, updated_at = :stamp,
+            examined_by = :by, examined_at = :exam_day
         WHERE id = :id");
 
     $insert = $pdo->prepare("INSERT INTO health_tooth_external (
             student_id, prefix_th, first_name, last_name, nickname, classroom, doctor_name,
             age_year, age_month, age_day, academic_year,
             total_teeth, decayed_teeth, oral_components, teeth_status, missing_teeth_detail,
-            decayed_teeth_positions, treatments, other_treatment_detail, urgency, updated_at
+            decayed_teeth_positions, treatments, other_treatment_detail, urgency, updated_at,
+            round_id, exam_type, examined_by, examined_at
         ) VALUES (
             :sid, :prefix_th, :first_name, :last_name, :nickname, :classroom, :doctor_name,
             :age_year, :age_month, :age_day, :academic_year,
             :total_teeth, :decayed_teeth, :oral_components, :teeth_status, :missing_teeth_detail,
-            :positions, :treatments, :other_detail, :urgency, :stamp
+            :positions, :treatments, :other_detail, :urgency, :stamp,
+            :rid, :t, :by, :exam_day
         )");
 
     $saved = 0;
@@ -144,14 +160,16 @@ try {
             ':other_detail' => $otherDetail,
             ':urgency' => $urgency,
             ':stamp' => $stamp,
+            ':by' => $by,
+            ':exam_day' => $examDate->format('Y-m-d'),
         ];
 
-        $findStmt->execute([':sid' => $sid, ':yr' => $academicYear]);
+        $findStmt->execute([':sid' => $sid, ':rid' => $round['id'], ':t' => $examType]);
         $existingId = $findStmt->fetchColumn();
         if ($existingId) {
             $update->execute($params + [':id' => $existingId]);
         } else {
-            $insert->execute($params + [':sid' => $sid, ':academic_year' => $academicYear]);
+            $insert->execute($params + [':sid' => $sid, ':academic_year' => $academicYear, ':rid' => $round['id'], ':t' => $examType]);
         }
         $saved++;
     }
