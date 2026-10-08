@@ -71,17 +71,23 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     .tg select.f { min-width: 92px; }
     .tg td.pos.bad input { background: #fef3c7; border-color: #f59e0b; }
     .tg .diff { background: #fef9c3 !important; border-color: #eab308 !important; }
-    .tg tr.saved td { background: #f0fdf4; }
-    .tg tr.ready td { background: #eff6ff; }
-    .tg tr.prefill td { background: #faf5ff; }
-    .tg tr.saved .c-no, .tg tr.saved .c-nm { background: #f0fdf4; box-shadow: inset 4px 0 0 #22c55e; }
-    .tg tr.ready .c-nm { background: #eff6ff; box-shadow: inset 4px 0 0 #3b82f6; }
-    .tg tr.prefill .c-no, .tg tr.prefill .c-nm { background: #faf5ff; box-shadow: inset 4px 0 0 #8b5cf6; }
-    .tg tr.todo .c-nm { box-shadow: inset 4px 0 0 #f59e0b; }
+    /* สีเซลล์ตามกลุ่มคอลัมน์ (โทนอ่อนของสีหัวตาราง) */
+    .tg td.gc-child { background: #f1f5f9; } .tg td.gc-count { background: #eff6ff; } .tg td.gc-pos { background: #fffbeb; }
+    .tg td.gc-result { background: #fef2f2; } .tg td.gc-treat { background: #f0fdf4; } .tg td.gc-note { background: #faf5ff; } .tg td.gc-state { background: #f8fafc; }
+    .tg tbody tr:hover td { filter: brightness(.97); }
+    /* สถานะแถวดูจากแถบสีซ้ายของชื่อ + ป้ายสถานะ */
+    .tg tr.saved .c-no, .tg tr.saved .c-nm { box-shadow: inset 5px 0 0 #22c55e; }
+    .tg tr.ready .c-nm { box-shadow: inset 5px 0 0 #3b82f6; }
+    .tg tr.prefill .c-nm { box-shadow: inset 5px 0 0 #8b5cf6; }
+    .tg tr.todo .c-nm { box-shadow: inset 5px 0 0 #f59e0b; }
+    .tg td.c-age { white-space: nowrap; min-width: 74px; font-size: .8rem; }
     .tg th.th-treat { white-space: normal; min-width: 92px; max-width: 120px; line-height: 1.25; }
-    .tg .tgl { display: block; width: 100%; height: 32px; border: 1px solid #94a3b8; border-radius: 6px; background: #fff; cursor: pointer; padding: 0; line-height: 1; font-size: 1rem; }
-    .tg .tgl:hover:not(:disabled) { border-color: #3b82f6; background: #f0f7ff; }
-    .tg .tgl.on { background: #dbeafe; border-color: #3b82f6; color: #1d4ed8; font-weight: 700; }
+    .tg .tgl { display: block; width: 100%; height: 36px; border: 1.5px solid #94a3b8; border-radius: 8px; background: #fff; color: #94a3b8; cursor: pointer;
+        padding: 0; line-height: 1; font-size: 1.2rem; font-weight: 700; box-shadow: 0 1px 2px rgba(15, 36, 96, .12); transition: background-color .12s, border-color .12s, color .12s, transform .08s; }
+    .tg .tgl:hover:not(:disabled) { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+    .tg .tgl:active:not(:disabled) { transform: scale(.96); }
+    .tg .tgl.on { background: #16a34a; border-color: #15803d; color: #fff; }
+    .tg .tgl.on:hover:not(:disabled) { background: #15803d; color: #fff; }
     .tg .tgl:disabled { cursor: default; opacity: .6; }
     .tg .st { font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
     .tg .st.saved { background: #dcfce7; color: #15803d; }
@@ -91,8 +97,16 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     .tg .ex { font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; background: #f1f5f9; color: #64748b; }
     .tg .ex.doctor { background: #dcfce7; color: #15803d; }
     .tg .ex.teacher { background: #fef3c7; color: #b45309; }
-    .tg .rowact { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; font-size: .72rem; padding: 2px 8px; cursor: pointer; white-space: nowrap; }
-    .tg .rowact:hover { background: #f1f5f9; }
+    .tg .rowact { border: 1.5px solid #16a34a; background: #f0fdf4; color: #15803d; border-radius: 8px; font-size: .8rem; font-weight: 700; padding: 5px 12px; cursor: pointer; white-space: nowrap; box-shadow: 0 1px 2px rgba(15, 36, 96, .12); }
+    .tg .rowact:hover { background: #16a34a; color: #fff; }
+    .tg .rowact:active { transform: scale(.96); }
+    .tg .rowact.confirm { border-color: #7c3aed; background: #f5f3ff; color: #6d28d9; }
+    .tg .rowact.confirm:hover { background: #7c3aed; color: #fff; }
+
+    /* ลากเลื่อนตาราง */
+    .tg-wrap.draggable { cursor: grab; }
+    .tg-wrap.dragging { cursor: grabbing; user-select: none; }
+    .tg-wrap.dragging * { cursor: grabbing !important; }
     .tg-empty { text-align: center; padding: 2.5rem 1rem; color: #64748b; }
     .tg-empty .big { font-size: 1.05rem; font-weight: 700; color: #334155; margin-bottom: .35rem; }
     .tg-hint { font-size: .78rem; color: #64748b; margin-top: .5rem; }
@@ -365,23 +379,25 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     function rowHtml(r, i) {
         const st = rowState(r), bad = r.s === 'abnormal' && r.dc !== null && posSum(r) !== r.dc;
         const v = (x) => (x === null ? '' : x), d = roundClosed ? ' disabled' : '';
-        let h = `<tr class="${st}" data-i="${i}"><td class="c-no">${i + 1}</td>` +
-            `<td class="c-nm"><div class="nick">${r.nick ? esc(r.nick) : esc(r.name)}</div>${r.nick ? `<div class="full">${esc(r.name)}</div>` : ''}</td>` +
-            `<td>${esc(ageText(r.birthday))}</td>` +
-            `<td><input class="f n${dcls(r, 'tt')}" type="number" min="0" max="32" data-f="tt" value="${v(r.tt)}"${d} aria-label="ฟันทั้งหมด"></td>` +
-            `<td><input class="f n${dcls(r, 'dc')}" type="number" min="0" max="32" data-f="dc" value="${v(r.dc)}"${d} aria-label="ฟันผุ"></td>`;
-        r.p.forEach((x, k) => { h += `<td class="pos${bad ? ' bad' : ''}"><input class="f n${dcls(r, 'p', k)}" type="number" min="0" data-p="${k}" value="${v(x)}"${d} aria-label="${POS[k][1]}"></td>`; });
-        h += `<td><select class="f${dcls(r, 's')}" data-f="s" data-key="s"${d}><option value="">-</option><option value="normal"${r.s === 'normal' ? ' selected' : ''}>ไม่มีฟันผุ</option><option value="abnormal"${r.s === 'abnormal' ? ' selected' : ''}>มีฟันผุ</option></select></td>`;
-        h += `<td><select class="f${dcls(r, 'u')}" data-f="u"${d}><option value="">-</option>${URG.map((u) => `<option value="${u[0]}"${r.u === u[0] ? ' selected' : ''}>${u[1]}</option>`).join('')}</select></td>`;
-        TR.forEach((t) => { const on = r.t.includes(t[0]); h += `<td><button type="button" class="tgl${on ? ' on' : ''}${dcls(r, 't', t[0])}" data-t="${t[0]}" title="${esc(t[2])}" aria-label="${esc(t[2])}" aria-pressed="${on}"${d}>${on ? '✓' : ''}</button></td>`; });
-        if (showOtherCol()) h += `<td><input class="f t${dcls(r, 'other')}" type="text" maxlength="200" data-f="other" value="${esc(r.other)}"${r.t.includes('other') && !roundClosed ? '' : ' disabled'}></td>`;
+        const td = (cls, inner, extra) => `<td class="${cls}${extra || ''}">${inner}</td>`;
+        let h = `<tr class="${st}" data-i="${i}">` +
+            `<td class="c-no gc-child">${i + 1}</td>` +
+            `<td class="c-nm gc-child"><div class="nick">${r.nick ? esc(r.nick) : esc(r.name)}</div>${r.nick ? `<div class="full">${esc(r.name)}</div>` : ''}</td>` +
+            td('gc-child c-age', esc(ageText(r.birthday))) +
+            td('gc-count', `<input class="f n${dcls(r, 'tt')}" type="number" min="0" max="32" data-f="tt" value="${v(r.tt)}"${d} aria-label="ฟันทั้งหมด">`) +
+            td('gc-count', `<input class="f n${dcls(r, 'dc')}" type="number" min="0" max="32" data-f="dc" value="${v(r.dc)}"${d} aria-label="ฟันผุ">`);
+        r.p.forEach((x, k) => { h += td('gc-pos pos' + (bad ? ' bad' : ''), `<input class="f n${dcls(r, 'p', k)}" type="number" min="0" data-p="${k}" value="${v(x)}"${d} aria-label="${POS[k][1]}">`); });
+        h += td('gc-result', `<select class="f${dcls(r, 's')}" data-f="s" data-key="s"${d}><option value="">-</option><option value="normal"${r.s === 'normal' ? ' selected' : ''}>ไม่มีฟันผุ</option><option value="abnormal"${r.s === 'abnormal' ? ' selected' : ''}>มีฟันผุ</option></select>`);
+        h += td('gc-result', `<select class="f${dcls(r, 'u')}" data-f="u"${d}><option value="">-</option>${URG.map((u) => `<option value="${u[0]}"${r.u === u[0] ? ' selected' : ''}>${u[1]}</option>`).join('')}</select>`);
+        TR.forEach((t) => { const on = r.t.includes(t[0]); h += td('gc-treat', `<button type="button" class="tgl${on ? ' on' : ''}${dcls(r, 't', t[0])}" data-t="${t[0]}" title="${esc(t[2])}" aria-label="${esc(t[2])}" aria-pressed="${on}"${d}>${on ? '✓' : '+'}</button>`); });
+        if (showOtherCol()) h += td('gc-treat', `<input class="f t${dcls(r, 'other')}" type="text" maxlength="200" data-f="other" value="${esc(r.other)}"${r.t.includes('other') && !roundClosed ? '' : ' disabled'}>`);
         if (showExtra) {
-            h += `<td><input class="f t${dcls(r, 'oral')}" type="text" maxlength="100" data-f="oral" value="${esc(r.oral)}"${d}></td>` +
-                `<td><input class="f t${dcls(r, 'miss')}" type="text" maxlength="100" data-f="miss" value="${esc(r.miss)}"${d}></td>`;
+            h += td('gc-note', `<input class="f t${dcls(r, 'oral')}" type="text" maxlength="100" data-f="oral" value="${esc(r.oral)}"${d}>`) +
+                td('gc-note', `<input class="f t${dcls(r, 'miss')}" type="text" maxlength="100" data-f="miss" value="${esc(r.miss)}"${d}>`);
         }
-        h += `<td>${r.exam ? `<span class="ex ${r.exam}">${EXAM_TEXT[r.exam]}</span>` : '<span class="ex">ยังไม่มี</span>'}</td>` +
-            `<td><span class="st ${st}">${STATE_TEXT[st]}</span></td>` +
-            `<td>${roundClosed ? '' : (r.prefill ? '<button type="button" class="rowact" data-confirm="1" title="ยืนยันตามผลของครู">ยืนยัน</button> ' : '') + '<button type="button" class="rowact" data-normal="1" title="เติมค่าปกติ: ไม่มีฟันผุ (ถ้ายังไม่กรอกจำนวนฟันทั้งหมด จะใส่ 20 ซี่)">ปกติ</button>'}</td></tr>`;
+        h += td('gc-state', r.exam ? `<span class="ex ${r.exam}">${EXAM_TEXT[r.exam]}</span>` : '<span class="ex">ยังไม่มี</span>') +
+            td('gc-state', `<span class="st ${st}">${STATE_TEXT[st]}</span>`) +
+            td('gc-state', roundClosed ? '' : (r.prefill ? '<button type="button" class="rowact confirm" data-confirm="1" title="ยืนยันตามผลของครู">ยืนยัน</button> ' : '') + '<button type="button" class="rowact" data-normal="1" title="เติมค่าปกติ: ไม่มีฟันผุ (ถ้ายังไม่กรอกจำนวนฟันทั้งหมด จะใส่ 20 ซี่)">ปกติ</button>') + '</tr>';
         return h;
     }
 
@@ -566,7 +582,25 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         byId('gDoctorWrap').style.display = mode() === 'doctor' ? '' : 'none';
     }
 
+    // ลากเลื่อนตารางด้วยเมาส์ (จับที่พื้นที่ว่างของตาราง ไม่ใช่ที่ช่องกรอก/ปุ่ม)
+    function enableDragScroll(el) {
+        el.classList.add('draggable');
+        let down = false, sx = 0, sy = 0, sl = 0, st = 0;
+        el.addEventListener('mousedown', (e) => {
+            if (e.button !== 0 || e.target.closest('input, select, textarea, button, a, label')) return;
+            down = true; sx = e.clientX; sy = e.clientY; sl = el.scrollLeft; st = el.scrollTop;
+            el.classList.add('dragging');
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (!down) return;
+            el.scrollLeft = sl - (e.clientX - sx);
+            el.scrollTop = st - (e.clientY - sy);
+        });
+        window.addEventListener('mouseup', () => { if (down) { down = false; el.classList.remove('dragging'); } });
+    }
+
     function init() {
+        enableDragScroll(byId('gWrap'));
         byId('gDate').value = todayStr();
         byId('gExtra').checked = showExtra;
         byId('gExtra').addEventListener('change', (e) => {
