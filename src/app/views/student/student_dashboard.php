@@ -170,7 +170,8 @@ if ($dental) {
         $dental['treat_list'][] = 'อื่นๆ: ' . $dental['other_treatment_detail'];
     }
     // จำนวนฟันผุ > 0 ถือว่ามีฟันผุ แม้แพทย์ไม่ได้เลือกสภาพฟัน
-    $dental['has_decay'] = (int) ($dental['decayed_teeth'] ?? 0) > 0 || ($dental['teeth_status'] ?? '') === 'abnormal';
+    $dental['decay_count'] = max((int) ($dental['decayed_teeth'] ?? 0), is_array($positions) ? (int) array_sum(array_map('intval', $positions)) : 0);
+    $dental['has_decay'] = $dental['decay_count'] > 0 || ($dental['teeth_status'] ?? '') === 'abnormal';
     $urgLabels = ['urgent' => ['ควรรักษาโดยด่วน', 'urgent'], 'preventable' => ['ผัดผ่อนได้ในระยะเวลาไม่นานนัก', 'soon'], 'not_urgent' => ['ไม่เร่งด่วน', 'calm']];
     $dental['urg'] = $urgLabels[$dental['urgency'] ?? ''] ?? null;
     $dental['needs_reply'] = $dental['has_decay'] && empty($dental['followup_status']);
@@ -275,7 +276,7 @@ $viewTabs = [
         --student-text: #2c3e50;
         --student-muted: #64748b;
         --student-border: #d9e6ee;
-        max-width: 1280px;
+        max-width: 1680px;
         margin: 0 auto;
         padding: 1rem 1.25rem 2.5rem;
     }
@@ -606,17 +607,13 @@ $viewTabs = [
 
     /* แดชบอร์ด 2 คอลัมน์: ซ้าย = ข้อมูลวันนี้ / ขวา = สุขภาพและการติดตาม */
     .dash-layout { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }
-    .dash-main .attendance-summary-groups.today-info,
-    .dash-main .attendance-summary-groups.meal-info { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .dash-main .attendance-summary-card.symptoms { grid-column: 1 / -1; }
+    .dash-main .attendance-summary-groups.today-info { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+    .dash-main .attendance-summary-groups.meal-info { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+    .dash-main .attendance-summary-card.symptoms { grid-column: auto; }
     .dash-side { position: sticky; top: 76px; }
     @media (max-width: 1100px) {
         .dash-layout { grid-template-columns: minmax(0, 1fr); }
         .dash-side { position: static; }
-    }
-    @media (max-width: 768px) {
-        .dash-main .attendance-summary-groups.today-info,
-        .dash-main .attendance-summary-groups.meal-info { grid-template-columns: minmax(0, 1fr); }
     }
 
     .dental-card { background: #fff; border: 1px solid var(--student-border); border-radius: 1.25rem; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08); overflow: hidden; margin-bottom: 1rem; }
@@ -819,7 +816,7 @@ $viewTabs = [
             <?php if ($dental && $dental['needs_reply']): ?>
                 <div class="dental-alert">
                     <i class="bi bi-exclamation-triangle-fill fs-4"></i>
-                    <div><b>ตรวจพบฟันผุ <?= (int) $dental['decayed_teeth'] ?> ซี่</b> — กรุณาแจ้งศูนย์ว่ารับทราบหรือพาไปพบทันตแพทย์แล้ว</div>
+                    <div><b>ตรวจพบฟันผุ<?= $dental['decay_count'] > 0 ? ' ' . (int) $dental['decay_count'] . ' ซี่' : '' ?></b> — กรุณาแจ้งศูนย์ว่ารับทราบหรือพาไปพบทันตแพทย์แล้ว</div>
                     <a href="#dentalCard">ดูรายละเอียด <i class="bi bi-arrow-down"></i></a>
                 </div>
             <?php endif; ?>
@@ -911,7 +908,7 @@ $viewTabs = [
                             <div class="dental-banner ok"><i class="bi bi-check-circle-fill me-1"></i>ฟันปกติ ไม่พบฟันผุ<small>ฟันทั้งหมด <?= (int) $dental['total_teeth'] ?> ซี่</small></div>
                         <?php else: ?>
                             <div class="dental-banner <?= htmlspecialchars($dental['urg'][1] ?? 'calm') ?>">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i>พบฟันผุ <?= (int) $dental['decayed_teeth'] ?> ซี่
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>พบฟันผุ<?= $dental['decay_count'] > 0 ? ' ' . (int) $dental['decay_count'] . ' ซี่' : '' ?>
                                 <small><?= $dental['urg'] ? htmlspecialchars($dental['urg'][0]) : 'ควรพาไปพบทันตแพทย์' ?><?= (int) $dental['total_teeth'] > 0 ? ' · ฟันทั้งหมด ' . (int) $dental['total_teeth'] . ' ซี่' : '' ?></small>
                             </div>
                             <?php if ($dental['pos_list']): ?>
