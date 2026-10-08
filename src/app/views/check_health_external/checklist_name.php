@@ -1139,10 +1139,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
     // ฟังก์ชันดูประวัติการตรวจทั้งหมด (ปรับปรุงใหม่ - เน้นแสดงข้อมูลเด็กชัดเจน)
     // function viewAllRecords(studentId) {
-    //     const year = document.querySelector('[name="academic_year"]').value;
-        if (!year || !document.getElementById('round_id').value) { Swal.fire('ยังไม่มีรอบตรวจ', 'กรุณาให้ผู้ดูแลระบบเปิดรอบตรวจก่อน', 'info'); return; }
-        const cr = currentRound();
-        if (cr && cr.status !== 'open') { Swal.fire('รอบตรวจนี้ปิดแล้ว', 'บันทึกเพิ่มไม่ได้', 'info'); return; }
+    //     const year = document.querySelector('select[name="academic_year"]').value;
         
     //     fetch(`./function/get_student_health_history.php?student_id=${studentId}&academic_year=${year}`)
     //         .then(response => response.json())
@@ -1358,7 +1355,10 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     }
     // แก้ไขฟังก์ชัน addNewRecord
     function addNewRecord(studentId) {
-        const year = document.querySelector('select[name="academic_year"]').value;
+        const year = document.querySelector('[name="academic_year"]').value;
+        if (!year || !document.getElementById('round_id').value) { Swal.fire('ยังไม่มีรอบตรวจ', 'กรุณาให้ผู้ดูแลระบบเปิดรอบตรวจก่อน', 'info'); return; }
+        const cr = currentRound();
+        if (cr && cr.status !== 'open') { Swal.fire('รอบตรวจนี้ปิดแล้ว', 'บันทึกเพิ่มไม่ได้', 'info'); return; }
         fetch(`./function/get_student_data.php?student_id=${studentId}`)
             .then(response => response.json())
             .then(data => {
