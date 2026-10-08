@@ -205,6 +205,19 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     .btn-go { background: #15803d; border-color: #15803d; color: #fff; font-weight: 700; }
     .btn-go:hover { background: #166534; border-color: #166534; color: #fff; }
     .step-hint { font-size: .8rem; color: #64748b; }
+
+    .round-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: .75rem; }
+    .round-card { position: relative; text-align: left; background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; padding: .85rem 1rem; cursor: pointer;
+        transition: border-color .15s ease, background-color .15s ease, transform .15s ease; }
+    .round-card:hover { border-color: #93b4f0; transform: translateY(-2px); }
+    .round-card.selected { border-color: #1e4db7; background: #eff3ff; }
+    .round-card.selected::after { content: "\2713"; position: absolute; top: 10px; right: 12px; width: 22px; height: 22px; border-radius: 50%;
+        background: #1e4db7; color: #fff; display: flex; align-items: center; justify-content: center; font-size: .8rem; font-weight: 700; }
+    .round-card.closed { background: #f8fafc; }
+    .round-card .rc-year { font-size: 1.35rem; font-weight: 700; color: #0f2460; line-height: 1.1; }
+    .round-card .rc-title { font-weight: 700; color: #334155; }
+    .round-card .rc-date { font-size: .82rem; color: #64748b; margin: .25rem 0 .5rem; }
+    .round-card .rc-chips { display: flex; flex-wrap: wrap; gap: .3rem; }
 </style>
 
 <main class="main-content">
@@ -228,34 +241,14 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                     <span class="step-state wait" id="state1">รอเลือกรอบ</span>
                 </div>
                 <div class="step-body">
-                    <div class="row g-3 align-items-end">
-                        <div class="col-6 col-md-3">
-                            <label for="exam_academic_year" class="form-label">ปีการศึกษาที่ตรวจ</label>
-                            <select name="academic_year" id="exam_academic_year" class="form-select" onchange="loadRounds()">
-                                <?php
-                                $currentTop = isset($academicYears[0]['name']) ? (int)$academicYears[0]['name'] : null;
-                                $nextYear = $currentTop ? $currentTop + 1 : null;
-                                ?>
-                                <?php if ($nextYear): ?>
-                                    <option value="<?= $nextYear ?>"><?= $nextYear ?></option>
-                                <?php endif; ?>
-                                <?php foreach ($academicYears as $index => $year): ?>
-                                    <option value="<?= htmlspecialchars($year['name']) ?>" <?= $index === 0 ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($year['name']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <label for="round_id" class="form-label">รอบตรวจ</label>
-                            <select name="round_id" id="round_id" class="form-select" onchange="onRoundChange()"></select>
-                        </div>
-                        <div class="col-12 col-md-5">
-                            <div class="round-info" id="roundInfo"></div>
-                            <?php if ($is_admin): ?>
-                                <a href="tooth_rounds.php" class="btn btn-sm btn-outline-primary mt-2"><i class="fas fa-calendar-check"></i> เปิดรอบใหม่ / ปิดรอบ</a>
-                            <?php endif; ?>
-                        </div>
+                    <input type="hidden" name="academic_year" id="exam_academic_year" value="">
+                    <input type="hidden" name="round_id" id="round_id" value="">
+                    <div class="round-cards" id="roundCards"><div class="text-muted">กำลังโหลดรอบตรวจ...</div></div>
+                    <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+                        <button type="button" class="btn btn-sm btn-link p-0" id="moreRoundsBtn" style="display:none;" onclick="toggleOldRounds()"></button>
+                        <?php if ($is_admin): ?>
+                            <a href="tooth_rounds.php" class="btn btn-sm btn-outline-primary ms-auto"><i class="fas fa-calendar-check"></i> เปิดรอบใหม่ / ปิดรอบ</a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </section>
@@ -414,22 +407,67 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
         document.getElementById('gridLink').href = 'checklist_grid.php?' + q.toString();
     }
 
-    function renderRoundInfo() {
-        const r = toothRounds.find(x => String(x.id) === String(document.getElementById('round_id').value));
-        const box = document.getElementById('roundInfo');
-        if (!r) { box.innerHTML = ''; return; }
-        const open = r.status === 'open';
-        box.innerHTML = `<span class="rchip ${open ? 'open' : 'closed'}">${open ? 'เปิดอยู่' : 'ปิดแล้ว (ดูอย่างเดียว)'}</span>` +
-            `<span class="rchip teacher">ครูคัดกรองแล้ว ${r.teacher_count} คน</span>` +
-            `<span class="rchip doctor">แพทย์ตรวจแล้ว ${r.doctor_count} คน</span>`;
+    const ROUNDS_VISIBLE = 4;
+    let showOldRounds = false;
+
+    const thaiShort = (d) => (d ? new Date(String(d).slice(0, 10) + 'T00:00:00').toLocaleDateString('th-TH', {
+        day: 'numeric',
+        month: 'short',
+        year: '2-digit'
+    }) : '');
+
+    function roundDateText(r) {
+        if (r.start_date || r.end_date) {
+            return `${thaiShort(r.start_date) || '...'} – ${thaiShort(r.end_date) || '...'}`;
+        }
+        return r.created_at ? `เปิดเมื่อ ${thaiShort(r.created_at)}` : '-';
     }
 
-    // โหลดรายการรอบตรวจของปีการศึกษาที่เลือก แล้วเลือกรอบที่เปิดอยู่ล่าสุดให้อัตโนมัติ
+    function renderRoundCards() {
+        const box = document.getElementById('roundCards');
+        const selected = document.getElementById('round_id').value;
+        const list = showOldRounds ? toothRounds : toothRounds.slice(0, ROUNDS_VISIBLE);
+        if (!toothRounds.length) {
+            box.innerHTML = '<div class="text-muted">ยังไม่มีรอบตรวจ</div>';
+        } else {
+            box.innerHTML = list.map(r => {
+                const open = r.status === 'open';
+                return `<button type="button" class="round-card ${String(r.id) === String(selected) ? 'selected' : ''} ${open ? '' : 'closed'}" data-round="${r.id}">
+                    <div class="rc-year">${r.academic_year}</div>
+                    <div class="rc-title">${r.title}</div>
+                    <div class="rc-date">วันที่ ${roundDateText(r)}</div>
+                    <div class="rc-chips">
+                        <span class="rchip ${open ? 'open' : 'closed'}">${open ? 'เปิดอยู่' : 'ปิดแล้ว'}</span>
+                        <span class="rchip teacher">ครู ${r.teacher_count} คน</span>
+                        <span class="rchip doctor">แพทย์ ${r.doctor_count} คน</span>
+                    </div>
+                </button>`;
+            }).join('');
+        }
+        const more = document.getElementById('moreRoundsBtn');
+        const hidden = toothRounds.length - ROUNDS_VISIBLE;
+        more.style.display = hidden > 0 ? '' : 'none';
+        more.textContent = showOldRounds ? 'ซ่อนรอบเก่า' : `ดูรอบเก่ากว่านี้ (${hidden} รอบ)`;
+    }
+
+    function toggleOldRounds() {
+        showOldRounds = !showOldRounds;
+        renderRoundCards();
+    }
+
+    function selectRound(id) {
+        const r = toothRounds.find(x => String(x.id) === String(id));
+        document.getElementById('round_id').value = r ? r.id : '';
+        document.getElementById('exam_academic_year').value = r ? r.academic_year : '';
+        renderRoundCards();
+        updateSteps();
+        if (resultsLoaded) loadResults(); // เปลี่ยนรอบ = โหลดรายชื่อใหม่ตามรอบนั้น
+    }
+
+    // โหลดรอบตรวจทั้งหมด (ใหม่ล่าสุดก่อน) แล้วเลือกรอบที่เปิดอยู่ล่าสุดให้อัตโนมัติ
     function loadRounds() {
-        const year = document.getElementById('exam_academic_year').value;
-        const sel = document.getElementById('round_id');
         const notice = document.getElementById('noRoundNotice');
-        return fetch(`./process/manage_tooth_rounds.php?action=list&academic_year=${encodeURIComponent(year)}`, {
+        return fetch('./process/manage_tooth_rounds.php?action=list', {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
@@ -437,45 +475,43 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             .then(r => r.json())
             .then(res => {
                 toothRounds = res.data || [];
-                sel.innerHTML = '';
-                toothRounds.forEach(r => {
-                    const o = document.createElement('option');
-                    o.value = r.id;
-                    o.textContent = `${r.title}${r.status === 'closed' ? ' (ปิดแล้ว)' : ''}`;
-                    sel.appendChild(o);
-                });
+                const keep = document.getElementById('round_id').value;
                 const firstOpen = toothRounds.find(r => r.status === 'open');
-                if (firstOpen) sel.value = firstOpen.id;
+                const chosen = toothRounds.find(r => String(r.id) === String(keep)) || firstOpen || toothRounds[0];
+                // ถ้ารอบที่เลือกเป็นรอบเก่า ให้แสดงรายการเต็มเพื่อให้เห็นการ์ดที่เลือก
+                if (chosen && toothRounds.indexOf(chosen) >= ROUNDS_VISIBLE) showOldRounds = true;
+                document.getElementById('round_id').value = chosen ? chosen.id : '';
+                document.getElementById('exam_academic_year').value = chosen ? chosen.academic_year : '';
 
                 if (!toothRounds.length) {
-                    sel.innerHTML = '<option value="">ยังไม่มีรอบตรวจ</option>';
                     notice.style.display = '';
                     notice.innerHTML = IS_ADMIN ?
-                        '<b>ปีการศึกษานี้ยังไม่มีรอบตรวจ</b> เริ่มจากกดปุ่ม "เปิดรอบใหม่ / ปิดรอบ" ในขั้นที่ 1' :
-                        '<b>ปีการศึกษานี้ยังไม่มีรอบตรวจ</b> กรุณาแจ้งผู้ดูแลระบบให้เปิดรอบตรวจก่อน จึงจะบันทึกผลได้';
+                        '<b>ยังไม่มีรอบตรวจ</b> เริ่มจากกดปุ่ม "เปิดรอบใหม่ / ปิดรอบ" ในขั้นที่ 1' :
+                        '<b>ยังไม่มีรอบตรวจ</b> กรุณาแจ้งผู้ดูแลระบบให้เปิดรอบตรวจก่อน จึงจะบันทึกผลได้';
                 } else if (!firstOpen) {
                     notice.style.display = '';
-                    notice.innerHTML = '<b>ทุกรอบของปีการศึกษานี้ปิดแล้ว</b> ดูผลย้อนหลังได้ แต่บันทึกเพิ่มไม่ได้ ' +
+                    notice.innerHTML = '<b>ทุกรอบปิดแล้ว</b> ดูผลย้อนหลังได้ แต่บันทึกเพิ่มไม่ได้ ' +
                         (IS_ADMIN ? 'กด "เปิดรอบใหม่ / ปิดรอบ" เพื่อเปิดรอบใหม่' : 'กรุณาแจ้งผู้ดูแลระบบให้เปิดรอบใหม่');
                 } else {
                     notice.style.display = 'none';
                 }
-                renderRoundInfo();
+                renderRoundCards();
                 updateSteps();
             })
-            .catch(e => console.error('Error loading rounds:', e));
-    }
-
-    function onRoundChange() {
-        renderRoundInfo();
-        updateSteps();
-        if (resultsLoaded) loadResults();   // เปลี่ยนรอบ = โหลดรายชื่อใหม่ตามรอบนั้น
+            .catch(e => {
+                console.error('Error loading rounds:', e);
+                document.getElementById('roundCards').innerHTML = '<div class="text-danger">โหลดรอบตรวจไม่สำเร็จ</div>';
+            });
     }
 
     // เพิ่มฟังก์ชันเมื่อโหลดหน้า
     document.addEventListener('DOMContentLoaded', () => {
-        ['child_group', 'classroom', 'student_year', 'exam_academic_year'].forEach(id => document.getElementById(id).addEventListener('change', updateSteps));
+        ['child_group', 'classroom', 'student_year'].forEach(id => document.getElementById(id).addEventListener('change', updateSteps));
         document.getElementById('gridLink').addEventListener('click', updateSteps);
+        document.getElementById('roundCards').addEventListener('click', e => {
+            const c = e.target.closest('[data-round]');
+            if (c) selectRound(c.dataset.round);
+        });
         loadRounds();
         // ถ้ามี URL parameters ให้กรอกข้อมูลในฟอร์มและค้นหา
         const urlParams = new URLSearchParams(window.location.search);
@@ -1237,7 +1273,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     }
     // แก้ไขฟังก์ชัน addNewRecord
     function addNewRecord(studentId) {
-        const year = document.querySelector('select[name="academic_year"]').value;
+        const year = document.getElementById('exam_academic_year').value;
         fetch(`./function/get_student_data.php?student_id=${studentId}`)
             .then(response => response.json())
             .then(data => {
