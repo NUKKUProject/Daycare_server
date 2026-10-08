@@ -108,6 +108,10 @@ try {
         foreach (TOOTH_POSITIONS as $p) {
             $positions[$p] = count_or_null($row['positions'][$p] ?? null) ?? 0;
         }
+        // จำนวนฟันผุรวม = ผลรวมของตำแหน่งที่แพทย์กรอก
+        if (array_sum($positions) > 0) {
+            $decayed = array_sum($positions);
+        }
         if ($status === 'normal') {
             $decayed = 0;
             $positions = array_fill_keys(TOOTH_POSITIONS, 0);

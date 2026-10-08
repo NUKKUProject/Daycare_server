@@ -275,7 +275,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
                 </div>
             </div>
             <div class="tg-hint">
-                Tab ไปช่องถัดไป · Enter ลงแถวถัดไป · เลือก "ไม่มีฟันผุ" ระบบเติมฟันผุและตำแหน่งเป็น 0 ให้ · ช่องตำแหน่งขึ้นเหลืองเมื่อยอดรวมไม่เท่ากับจำนวนฟันผุ · อายุคำนวณจากวันเกิดให้
+                Tab ไปช่องถัดไป · Enter ลงแถวถัดไป · เลือก "ไม่มีฟันผุ" ระบบเติมฟันผุและตำแหน่งเป็น 0 ให้ · จำนวนฟันผุรวมจากตำแหน่งที่กรอกให้เอง (ช่องตำแหน่งขึ้นเหลืองถ้าแก้ตัวเลขรวมให้ไม่ตรงกับตำแหน่ง) · อายุคำนวณจากวันเกิดให้
             </div>
         </div>
 
@@ -521,6 +521,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         if (!tr) return;
         const r = rows[i], st = rowState(r), bad = r.s === 'abnormal' && r.dc !== null && posSum(r) !== r.dc;
         tr.className = st;
+        const dcEl = tr.querySelector('[data-f="dc"]'); if (dcEl && document.activeElement !== dcEl) dcEl.value = r.dc === null ? '' : r.dc;
         const stSel = tr.querySelector('[data-f="s"]'); if (stSel && stSel.value !== r.s) stSel.value = r.s;
         const chip = tr.querySelector('.st'); chip.className = 'st ' + st; chip.textContent = stateText(r, st);
         tr.querySelectorAll('td.pos').forEach((td) => td.classList.toggle('bad', bad));
@@ -671,7 +672,13 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         const el = e.target, tr = el.closest('tr[data-i]');
         if (!tr) return;
         const i = +tr.dataset.i, r = rows[i];
-        if (el.dataset.p !== undefined) r.p[+el.dataset.p] = num(el.value);
+        if (el.dataset.p !== undefined) {
+            // จำนวนฟันผุรวม = ผลรวมของตำแหน่งที่แพทย์กรอก (ลบจนเหลือ 0 ให้ล้างค่ารวมที่เคยคำนวณไว้)
+            const prev = posSum(r);
+            r.p[+el.dataset.p] = num(el.value);
+            const sum = posSum(r);
+            if (sum > 0) r.dc = sum; else if (r.dc === prev) r.dc = null;
+        }
         else if (el.dataset.f === 'tt' || el.dataset.f === 'dc') r[el.dataset.f] = num(el.value);
         else if (el.dataset.f) r[el.dataset.f] = el.value;
         else return;

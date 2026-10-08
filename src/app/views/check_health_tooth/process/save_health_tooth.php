@@ -33,6 +33,11 @@ try {
         ];
     }
 
+    // จำนวนฟันผุรวม = ผลรวมของตำแหน่งที่แพทย์กรอก
+    if (array_sum($data['decayed_teeth_positions']) > 0) {
+        $data['decayed_teeth'] = array_sum($data['decayed_teeth_positions']);
+    }
+
     // รอบตรวจ + ประเภทผู้ตรวจ ตามบทบาทผู้ใช้
     $role = $_SESSION['role'] ?? '';
     $academicYear = trim((string) ($data['academic_year'] ?? ''));
