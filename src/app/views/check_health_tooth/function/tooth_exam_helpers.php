@@ -40,8 +40,8 @@ function tooth_get_round(PDO $pdo, int $roundId): ?array
 
 /**
  * รอบที่ใช้บันทึก: ระบุ round_id มาก็ใช้รอบนั้น ไม่งั้นใช้รอบที่เปิดอยู่ล่าสุดของปีนั้น
- * ถ้าปีนั้นยังไม่มีรอบเลย จะสร้าง "ครั้งที่ 1" ให้อัตโนมัติ เพื่อให้ฟอร์มเดิมยังใช้งานได้
- * @throws Exception เมื่อรอบที่เลือกถูกปิด หรือทุกรอบของปีนั้นปิดอยู่
+ * รอบต้องถูกเปิดโดย admin ก่อน ไม่สร้างให้อัตโนมัติ
+ * @throws Exception เมื่อไม่มีรอบ / รอบที่เลือกถูกปิด / ทุกรอบของปีนั้นปิดอยู่
  */
 function tooth_resolve_round(PDO $pdo, string $academicYear, ?int $roundId, ?string $createdBy = null): array
 {
@@ -65,11 +65,7 @@ function tooth_resolve_round(PDO $pdo, string $academicYear, ?int $roundId, ?str
     if ($rounds) {
         throw new Exception('ทุกรอบตรวจของปีการศึกษานี้ถูกปิดแล้ว กรุณาให้ผู้ดูแลระบบเปิดรอบใหม่');
     }
-
-    $stmt = $pdo->prepare("INSERT INTO tooth_exam_rounds (academic_year, round_no, title, status, created_by)
-                           VALUES (:y, 1, 'ครั้งที่ 1', 'open', :by) RETURNING *");
-    $stmt->execute([':y' => $academicYear, ':by' => $createdBy]);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
+    throw new Exception('ยังไม่มีรอบตรวจของปีการศึกษานี้ กรุณาให้ผู้ดูแลระบบเปิดรอบตรวจก่อน');
 }
 
 /** ชื่อผู้ใช้สำหรับบันทึกว่าใครตรวจ */
