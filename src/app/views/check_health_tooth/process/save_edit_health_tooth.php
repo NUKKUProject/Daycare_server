@@ -42,6 +42,13 @@ try {
         throw new Exception('รอบตรวจนี้ถูกปิดแล้ว ไม่สามารถแก้ไขได้');
     }
 
+    // ผลคัดกรองของครูไม่เก็บชื่อแพทย์
+    $typeStmt = $pdo->prepare('SELECT exam_type FROM health_tooth_external WHERE id = :id');
+    $typeStmt->execute([':id' => $data['data_id'] ?? 0]);
+    if ($typeStmt->fetchColumn() !== 'doctor') {
+        $data['doctor_name'] = null;
+    }
+
     // เตรียมคำสั่ง SQL สำหรับการอัปเดตข้อมูล
     $stmt = $pdo->prepare("UPDATE health_tooth_external SET
         student_id = :student_id,

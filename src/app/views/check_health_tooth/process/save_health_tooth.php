@@ -45,7 +45,8 @@ try {
         ':last_name' => $data['last_name_th'] ?? null,
         ':nickname' => $data['nickname'] ?? null,
         ':classroom' => $data['class_room'] ?? null,
-        ':doctor_name' => $data['doctor_name'] ?? null,
+        // ชื่อแพทย์เก็บเฉพาะผลที่แพทย์ตรวจ
+        ':doctor_name' => $examType === 'doctor' && trim((string) ($data['doctor_name'] ?? '')) !== '' ? trim($data['doctor_name']) : null,
         ':age_year' => $data['age_year'],
         ':age_month' => $data['age_month'],
         ':age_day' => $data['age_day'],

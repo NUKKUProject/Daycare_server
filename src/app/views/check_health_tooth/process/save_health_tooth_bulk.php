@@ -56,6 +56,8 @@ try {
     $academicYear = $round['academic_year'];
     $examType = tooth_resolve_exam_type($_SESSION['role'] ?? '', $data['exam_type'] ?? null);
     $by = tooth_current_user_label();
+    // ชื่อแพทย์เก็บเฉพาะผลที่แพทย์ตรวจ ผลคัดกรองของครูไม่เก็บ (ผู้บันทึกอยู่ใน examined_by อยู่แล้ว)
+    $doctorName = $examType === 'doctor' && $doctorName !== '' ? $doctorName : null;
 
     $pdo->beginTransaction();
 

@@ -134,8 +134,8 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
                         <input type="date" id="gDate" class="form-control">
                         <div class="help"></div>
                     </div>
-                    <div class="fld">
-                        <label for="gDoctor">ชื่อผู้ตรวจ</label>
+                    <div class="fld" id="gDoctorWrap">
+                        <label for="gDoctor">ชื่อแพทย์ผู้ตรวจ</label>
                         <input type="text" id="gDoctor" class="form-control" value="<?= htmlspecialchars($defaultDoctor) ?>" maxlength="100">
                         <div class="help"></div>
                     </div>
@@ -508,7 +508,8 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         const dirty = rows.filter((r) => r.dirty);
         const ready = dirty.filter(complete), notReady = dirty.filter((r) => !complete(r));
         if (!ready.length) { Swal.fire({ icon: 'warning', title: 'ยังไม่มีแถวที่พร้อมบันทึก', text: 'กรอกให้ครบทุกช่องที่จำเป็นของแถวที่แก้ไข (แถวสีเหลืองยังไม่ครบ)', confirmButtonText: 'ตกลง' }); return; }
-        if (!byId('gDoctor').value.trim()) { Swal.fire({ icon: 'warning', title: 'กรุณาระบุชื่อผู้ตรวจ', confirmButtonText: 'ตกลง' }); byId('gDoctor').focus(); return; }
+        const isDoctor = mode() === 'doctor';
+        if (isDoctor && !byId('gDoctor').value.trim()) { Swal.fire({ icon: 'warning', title: 'กรุณาระบุชื่อแพทย์ผู้ตรวจ', confirmButtonText: 'ตกลง' }); byId('gDoctor').focus(); return; }
         const who = mode() === 'doctor' ? 'ผลตรวจของแพทย์' : 'ผลคัดกรองของครู';
         const ok = await Swal.fire({
             icon: 'question', title: `บันทึก ${ready.length} คน?`,
@@ -521,7 +522,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         const btn = byId('gSave'); btn.disabled = true;
         try {
             const body = {
-                round_id: loadedRoundId, exam_type: mode(), exam_date: byId('gDate').value, doctor_name: byId('gDoctor').value.trim(),
+                round_id: loadedRoundId, exam_type: mode(), exam_date: byId('gDate').value, doctor_name: isDoctor ? byId('gDoctor').value.trim() : '',
                 rows: ready.map((r) => ({
                     student_id: r.sid, total_teeth: r.tt, decayed_teeth: r.dc, teeth_status: r.s, urgency: r.u || null,
                     positions: Object.fromEntries(POS.map(([k], i) => [k, r.p[i] || 0])), treatments: r.t,
@@ -559,6 +560,11 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         }
     }
 
+    // ชื่อผู้ตรวจแสดงและบันทึกเฉพาะเมื่อบันทึกในฐานะแพทย์
+    function syncExaminerField() {
+        byId('gDoctorWrap').style.display = mode() === 'doctor' ? '' : 'none';
+    }
+
     function init() {
         byId('gDate').value = todayStr();
         byId('gExtra').checked = showExtra;
@@ -572,7 +578,8 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         byId('gRoom').addEventListener('change', () => loadList(false));
         byId('gStudentYear').addEventListener('change', () => loadList(false));
         byId('gRound').addEventListener('change', () => { roundChips(); loadList(false); });
-        byId('gType').addEventListener('change', () => { if (rows.length) loadList(false); });
+        byId('gType').addEventListener('change', () => { syncExaminerField(); if (rows.length) loadList(false); });
+        syncExaminerField();
         byId('gSearch').addEventListener('input', debounce(() => loadList(false), 450));
         byId('gLoad').addEventListener('click', () => loadList(true));
         byId('gSave').addEventListener('click', saveAll);
