@@ -26,7 +26,7 @@ function hf_provider_dental(PDO $pdo): array
     $stmt = $pdo->query("
         WITH latest AS (
             SELECT DISTINCT ON (h.student_id)
-                   h.id, h.student_id, h.round_id, h.decayed_teeth, h.teeth_status, h.urgency, h.examined_at, h.updated_at
+                   h.id, h.student_id, h.round_id, h.decayed_teeth, h.teeth_status, h.urgency, h.examined_at, h.updated_at, h.treatments::text AS treatments
             FROM health_tooth_external h
             LEFT JOIN tooth_exam_rounds r ON r.id = h.round_id
             WHERE h.exam_type = 'doctor'
@@ -37,7 +37,7 @@ function hf_provider_dental(PDO $pdo): array
         FROM latest l
         JOIN children c ON c.studentid = l.student_id
         LEFT JOIN health_followups f ON f.source_type = 'dental' AND f.source_id = l.id
-        WHERE c.status = 'กำลังศึกษา' AND (COALESCE(l.decayed_teeth, 0) > 0 OR l.teeth_status = 'abnormal')
+        WHERE c.status = 'กำลังศึกษา' AND (COALESCE(l.decayed_teeth, 0) > 0 OR l.teeth_status = 'abnormal' OR COALESCE(NULLIF(l.treatments, 'null'), '[]') <> '[]')
     ");
     $items = [];
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
@@ -58,7 +58,7 @@ function hf_provider_dental(PDO $pdo): array
 }
 
 /** รายการติดตามทั้งหมดของทั้งศูนย์ (รวมทุกชนิด) ชนิดที่ดึงไม่ได้จะถูกข้ามและบันทึก log */
-function hf_fetch_items(PDO $pdo): array
+function hf_fetch_items(PDO $pdo, ?array &$errors = null): array
 {
     $all = [];
     foreach (hf_types() as $type => $def) {
@@ -66,6 +66,9 @@ function hf_fetch_items(PDO $pdo): array
             $all = array_merge($all, $def['provider']($pdo));
         } catch (Exception $e) {
             error_log("health follow-up provider {$type}: " . $e->getMessage());   // ยังไม่ได้รัน migration ก็ไม่ให้หน้าพัง
+            if ($errors !== null) {
+                $errors[$type] = $e->getMessage();
+            }
         }
     }
     return $all;

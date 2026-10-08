@@ -119,8 +119,8 @@ try {
         if ($otherDetail !== '' && !in_array('other', $treatments, true)) {
             $treatments[] = 'other';
         }
-        // กรอกจำนวนฟันผุ > 0 แต่ไม่ได้เลือกสภาพฟัน = มีฟันผุ
-        if ($status === null && $decayed !== null && $decayed > 0) {
+        // กรอกจำนวนฟันผุ / ตำแหน่ง / วิธีรักษา แต่ไม่ได้เลือกสภาพฟัน = มีฟันผุ
+        if ($status === null && (($decayed !== null && $decayed > 0) || array_sum($positions) > 0 || $treatments)) {
             $status = 'abnormal';
         }
         $oral = mb_substr(trim((string) ($row['oral_components'] ?? '')), 0, 100);

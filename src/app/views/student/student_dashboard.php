@@ -172,7 +172,7 @@ if ($dental) {
     }
     // จำนวนฟันผุ > 0 ถือว่ามีฟันผุ แม้แพทย์ไม่ได้เลือกสภาพฟัน
     $dental['decay_count'] = max((int) ($dental['decayed_teeth'] ?? 0), is_array($positions) ? (int) array_sum(array_map('intval', $positions)) : 0);
-    $dental['has_decay'] = $dental['decay_count'] > 0 || ($dental['teeth_status'] ?? '') === 'abnormal';
+    $dental['has_decay'] = $dental['decay_count'] > 0 || ($dental['teeth_status'] ?? '') === 'abnormal' || !empty($dental['treat_list']);
     $urgLabels = ['urgent' => ['ควรรักษาโดยด่วน', 'urgent'], 'preventable' => ['ผัดผ่อนได้ในระยะเวลาไม่นานนัก', 'soon'], 'not_urgent' => ['ไม่เร่งด่วน', 'calm']];
     $dental['urg'] = $urgLabels[$dental['urgency'] ?? ''] ?? null;
     $dental['needs_reply'] = $dental['has_decay'] && empty($dental['followup_status']);

@@ -44,7 +44,7 @@ try {
     if (trim((string) ($data['other_treatment_detail'] ?? '')) !== '' && !in_array('other', $data['treatments'], true)) {
         $data['treatments'][] = 'other';
     }
-    if (empty($data['teeth_status']) && $data['decayed_teeth'] > 0) {
+    if (empty($data['teeth_status']) && ($data['decayed_teeth'] > 0 || array_sum($data['decayed_teeth_positions']) > 0 || $data['treatments'])) {
         $data['teeth_status'] = 'abnormal';
     }
 

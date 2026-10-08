@@ -431,6 +431,11 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         }
     }
 
+    // แพทย์กรอกจำนวนฟันผุ / ตำแหน่ง / วิธีรักษา แต่ยังไม่ได้เลือกสภาพฟัน = มีฟันผุ (เลือกให้เอง)
+    function autoStatus(r) {
+        if (!r.s && ((r.dc || 0) > 0 || posSum(r) > 0 || r.t.length > 0 || r.other.trim())) r.s = 'abnormal';
+    }
+
     const posSum = (r) => r.p.reduce((a, b) => a + (b || 0), 0);
     function complete(r) {
         if (r.tt === null || !r.s) return false;
@@ -516,6 +521,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         if (!tr) return;
         const r = rows[i], st = rowState(r), bad = r.s === 'abnormal' && r.dc !== null && posSum(r) !== r.dc;
         tr.className = st;
+        const stSel = tr.querySelector('[data-f="s"]'); if (stSel && stSel.value !== r.s) stSel.value = r.s;
         const chip = tr.querySelector('.st'); chip.className = 'st ' + st; chip.textContent = stateText(r, st);
         tr.querySelectorAll('td.pos').forEach((td) => td.classList.toggle('bad', bad));
         tr.querySelectorAll('.tgl').forEach((b) => { const on = r.t.includes(b.dataset.t); b.classList.toggle('on', on); b.textContent = on ? '✓' : '+'; b.setAttribute('aria-pressed', on); });
@@ -671,6 +677,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         else return;
         // พิมพ์ข้อความ "การรักษาอื่นๆ" แล้วติ๊ก "อื่นๆ" ให้เอง
         if (el.dataset.f === 'other' && r.other.trim() && !r.t.includes('other')) r.t.push('other');
+        autoStatus(r);
         r.dirty = true; r.prefill = false;
         if (el.dataset.f === 's') {
             if (el.value === 'normal') { r.dc = 0; r.p = POS.map(() => 0); r.u = ''; }
@@ -725,7 +732,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         wrap.addEventListener('click', (e) => {
             const b = e.target.closest('button'); if (!b) return;
             const i = +b.closest('tr').dataset.i, r = rows[i];
-            if (b.dataset.t) { const k = r.t.indexOf(b.dataset.t); k > -1 ? r.t.splice(k, 1) : r.t.push(b.dataset.t); if (b.dataset.t === 'other' && k > -1) r.other = ''; r.dirty = true; r.prefill = false; render(); }
+            if (b.dataset.t) { const k = r.t.indexOf(b.dataset.t); k > -1 ? r.t.splice(k, 1) : r.t.push(b.dataset.t); if (b.dataset.t === 'other' && k > -1) r.other = ''; autoStatus(r); r.dirty = true; r.prefill = false; render(); }
             if (b.dataset.normal) { setNormal(r); render(); }
             if (b.dataset.confirm) { r.dirty = true; r.prefill = false; render(); }
             if (b.dataset.fu) openFollowup(r);

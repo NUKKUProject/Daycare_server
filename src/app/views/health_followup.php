@@ -8,10 +8,12 @@ require_once __DIR__ . '/../include/auth/auth_dashboard.php';
 require_once __DIR__ . '/../include/function/health_followup_functions.php';
 
 $items = [];
+$hfErrors = [];
 try {
-    $items = hf_fetch_items(getDatabaseConnection());
+    $items = hf_fetch_items(getDatabaseConnection(), $hfErrors);
 } catch (Exception $e) {
     error_log('health_followup page: ' . $e->getMessage());
+    $hfErrors['connection'] = $e->getMessage();
 }
 $types = array_map(fn($t) => ['label' => $t['label'], 'icon' => $t['icon']], hf_types());
 ?>
@@ -117,6 +119,13 @@ $types = array_map(fn($t) => ['label' => $t['label'], 'icon' => $t['icon']], hf_
                 <p>เรื่องสุขภาพที่ต้องติดตามกับผู้ปกครอง ทั้งศูนย์ — ดูว่าผู้ปกครองแจ้งกลับแล้วหรือยัง และบันทึกแทนผู้ปกครองได้</p>
             </div>
         </div>
+
+        <?php if ($hfErrors && ($_SESSION['role'] ?? '') === 'admin'): ?>
+            <div class="alert alert-danger">
+                <b>โหลดข้อมูลบางส่วนไม่สำเร็จ</b> (แสดงเฉพาะผู้ดูแลระบบ)
+                <?php foreach ($hfErrors as $k => $msg): ?><div class="small"><code><?= htmlspecialchars($k) ?></code>: <?= htmlspecialchars($msg) ?></div><?php endforeach; ?>
+            </div>
+        <?php endif; ?>
 
         <div class="hf-stats" id="hfStats"></div>
 
