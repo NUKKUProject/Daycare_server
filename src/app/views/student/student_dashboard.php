@@ -185,7 +185,7 @@ if ($child) {
     if (!$dental) {
         $hubItems[] = ['icon' => 'fa-solid fa-tooth', 'tone' => 'gray', 'title' => 'สุขภาพช่องปาก', 'sub' => 'ยังไม่มีผลตรวจจากทันตแพทย์', 'badge' => 'ยังไม่มีผล', 'attn' => false, 'modal' => false, 'href' => 'health_tooth_history.php'];
     } elseif (!$dental['has_decay']) {
-        $hubItems[] = ['icon' => 'fa-solid fa-tooth', 'tone' => 'green', 'title' => 'สุขภาพช่องปาก', 'sub' => 'ฟันปกติ ไม่พบฟันผุ · ' . thaiDateShort($dental['date']), 'badge' => 'ปกติ', 'attn' => false, 'modal' => true];
+        // ผลปกติ ไม่ต้องแสดงในศูนย์รวม (ดูย้อนหลังได้ที่เมนูตรวจสุขภาพช่องปาก)
     } else {
         $fs = $dental['followup_status'] ?? '';
         $badge = ['' => 'ต้องแจ้งกลับ', 'acknowledged' => 'รับทราบแล้ว', 'scheduled' => 'นัดหมอ ' . thaiDateShort($dental['followup_date']), 'treated' => 'พาไปรักษาแล้ว'][$fs] ?? 'ต้องแจ้งกลับ';
@@ -697,6 +697,8 @@ $viewTabs = [
     .hub-badge.gray { background: #f1f5f9; color: #475569; } .hub-badge.green { background: #dcfce7; color: #15803d; } .hub-badge.red { background: #fee2e2; color: #b91c1c; }
     .hub-badge.blue { background: #dbeafe; color: #1d4ed8; } .hub-badge.amber { background: #fef3c7; color: #b45309; }
     .hub-go { color: #94a3b8; flex-shrink: 0; }
+    .hub-empty { background: #f0fdf4; border: 1px dashed #86efac; border-radius: 1rem; color: #15803d; font-weight: 700; padding: 1rem; text-align: center; }
+    .hub-empty i { margin-right: .35rem; }
     #dentalModal .dental-card { border: 0; box-shadow: none; margin: 0; border-radius: 0; }
     .dental-alert { border-radius: 1rem; padding: .8rem 1rem; margin-bottom: 1rem; display: flex; gap: .75rem; align-items: center; background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; }
     .dental-alert a { margin-left: auto; font-weight: 700; color: #9a3412; white-space: nowrap; }
@@ -957,7 +959,9 @@ $viewTabs = [
                             <i class="bi bi-chevron-right hub-go"></i>
                         </<?= $isModal ? 'button' : 'a' ?>>
                     <?php endforeach; ?>
-                    <?php if (!$hubItems): ?><div class="text-muted small">ยังไม่มีรายการ</div><?php endif; ?>
+                    <?php if (!$hubItems): ?>
+                        <div class="hub-empty"><i class="bi bi-check-circle-fill"></i> ไม่มีเรื่องที่ต้องติดตาม</div>
+                    <?php endif; ?>
                 </div>
             </aside>
             </div><!-- /dash-layout -->
