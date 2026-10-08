@@ -166,6 +166,10 @@ try {
         if ($c === 'status') {
             return "($statusExpr) AS status";
         }
+        if ($c === 'age_student') {
+            // อายุเต็มปี คำนวณจากวันเกิด ณ วันที่ส่งออก ถ้าไม่มีวันเกิด (หรือวันเกิดเป็นอนาคต) ให้เว้นว่าง
+            return "(CASE WHEN birthday IS NOT NULL AND birthday <= CURRENT_DATE THEN date_part('year', age(CURRENT_DATE, birthday))::int END) AS age_student";
+        }
         if (isset($allergyExpr[$c])) {
             return $allergyExpr[$c] . ' AS ' . $c;
         }
