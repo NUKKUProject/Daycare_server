@@ -178,6 +178,44 @@ if ($dental) {
     $dental['date'] = $dental['examined_at'] ?: substr((string) $dental['updated_at'], 0, 10);
 }
 
+// รายการในศูนย์รวม "สุขภาพและการติดตาม"
+$hubItems = [];
+if ($child) {
+    // 1) สุขภาพช่องปาก
+    if (!$dental) {
+        $hubItems[] = ['icon' => 'fa-solid fa-tooth', 'tone' => 'gray', 'title' => 'สุขภาพช่องปาก', 'sub' => 'ยังไม่มีผลตรวจจากทันตแพทย์', 'badge' => 'ยังไม่มีผล', 'attn' => false, 'modal' => false, 'href' => 'health_tooth_history.php'];
+    } elseif (!$dental['has_decay']) {
+        $hubItems[] = ['icon' => 'fa-solid fa-tooth', 'tone' => 'green', 'title' => 'สุขภาพช่องปาก', 'sub' => 'ฟันปกติ ไม่พบฟันผุ · ' . thaiDateShort($dental['date']), 'badge' => 'ปกติ', 'attn' => false, 'modal' => true];
+    } else {
+        $fs = $dental['followup_status'] ?? '';
+        $badge = ['' => 'ต้องแจ้งกลับ', 'acknowledged' => 'รับทราบแล้ว', 'scheduled' => 'นัดหมอ ' . thaiDateShort($dental['followup_date']), 'treated' => 'พาไปรักษาแล้ว'][$fs] ?? 'ต้องแจ้งกลับ';
+        $tone = $fs === '' ? 'red' : ($fs === 'treated' ? 'green' : 'blue');
+        $hubItems[] = ['icon' => 'fa-solid fa-tooth', 'tone' => $tone, 'title' => 'สุขภาพช่องปาก',
+            'sub' => 'พบฟันผุ' . ($dental['decay_count'] > 0 ? ' ' . $dental['decay_count'] . ' ซี่' : '') . ($dental['urg'] ? ' · ' . $dental['urg'][0] : '') . ' · ' . thaiDateShort($dental['date']),
+            'badge' => $badge, 'attn' => $fs === '', 'modal' => true];
+    }
+
+    // 2) สมุดสื่อสารประจำวัน (วันนี้)
+    $nb = null;
+    try {
+        $nbStmt = $pdo->prepare("SELECT parent_updated_at, teacher_updated_at FROM daily_reports WHERE student_id = :s AND report_date = CURRENT_DATE");
+        $nbStmt->execute(['s' => $studentid]);
+        $nb = $nbStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    } catch (PDOException $e) {
+        $nb = null;   // ยังไม่ได้สร้างตารางสมุดสื่อสาร
+    }
+    if ($nb !== null) {
+        if (!empty($nb['teacher_updated_at'])) {
+            $nbSub = 'คุณครูบันทึกข้อมูลวันนี้แล้ว'; $nbBadge = 'ครูบันทึกแล้ว'; $nbTone = 'green'; $nbAttn = false;
+        } elseif (!empty($nb['parent_updated_at'])) {
+            $nbSub = 'ท่านกรอกแล้ว รอคุณครูบันทึก'; $nbBadge = 'ส่งแล้ว'; $nbTone = 'blue'; $nbAttn = false;
+        } else {
+            $nbSub = 'ส่งข้อมูลที่บ้านถึงครู และดูบันทึกของครู'; $nbBadge = 'วันนี้ยังไม่กรอก'; $nbTone = 'amber'; $nbAttn = true;
+        }
+        $hubItems[] = ['icon' => 'bi bi-journal-text', 'tone' => $nbTone, 'title' => 'สมุดสื่อสารประจำวัน', 'sub' => $nbSub, 'badge' => $nbBadge, 'attn' => $nbAttn, 'modal' => false, 'href' => 'daily_notebook.php'];
+    }
+}
+
 function thaiDateShort(?string $d): string
 {
     if (!$d) {
@@ -643,6 +681,23 @@ $viewTabs = [
     .dental-actions button { border: 2px solid var(--student-border); background: #fff; border-radius: .8rem; padding: .55rem .8rem; font-weight: 700; text-align: left; color: var(--student-primary-dark); }
     .dental-actions button:hover { border-color: var(--student-primary); background: var(--student-primary-soft); }
     .dental-actions button.active { border-color: #16a34a; background: #f0fdf4; color: #15803d; }
+    .hub-list { display: flex; flex-direction: column; gap: .65rem; margin-bottom: 1rem; }
+    .hub-item { align-items: center; background: #fff; border: 1px solid var(--student-border); border-left: 5px solid var(--student-border); border-radius: 1rem;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, .06); color: var(--student-text); cursor: pointer; display: flex; gap: .8rem; padding: .8rem 1rem; text-align: left;
+        text-decoration: none; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; width: 100%; }
+    .hub-item:hover { box-shadow: 0 12px 24px rgba(38, 100, 142, .15); color: var(--student-text); transform: translateY(-2px); }
+    .hub-item.attn { border-left-color: #dc2626; }
+    .hub-ic { align-items: center; border-radius: .8rem; display: flex; flex-shrink: 0; font-size: 1.25rem; height: 44px; justify-content: center; width: 44px; }
+    .hub-ic.gray { background: #f1f5f9; color: #64748b; } .hub-ic.green { background: #dcfce7; color: #15803d; } .hub-ic.red { background: #fee2e2; color: #b91c1c; }
+    .hub-ic.blue { background: #dbeafe; color: #1d4ed8; } .hub-ic.amber { background: #fef3c7; color: #b45309; }
+    .hub-main { flex: 1; min-width: 0; }
+    .hub-title { color: var(--student-primary-dark); font-weight: 700; line-height: 1.25; }
+    .hub-sub { color: var(--student-muted); font-size: .8rem; line-height: 1.3; overflow-wrap: anywhere; }
+    .hub-badge { border-radius: 999px; flex-shrink: 0; font-size: .74rem; font-weight: 700; padding: .15rem .65rem; white-space: nowrap; }
+    .hub-badge.gray { background: #f1f5f9; color: #475569; } .hub-badge.green { background: #dcfce7; color: #15803d; } .hub-badge.red { background: #fee2e2; color: #b91c1c; }
+    .hub-badge.blue { background: #dbeafe; color: #1d4ed8; } .hub-badge.amber { background: #fef3c7; color: #b45309; }
+    .hub-go { color: #94a3b8; flex-shrink: 0; }
+    #dentalModal .dental-card { border: 0; box-shadow: none; margin: 0; border-radius: 0; }
     .dental-alert { border-radius: 1rem; padding: .8rem 1rem; margin-bottom: 1rem; display: flex; gap: .75rem; align-items: center; background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; }
     .dental-alert a { margin-left: auto; font-weight: 700; color: #9a3412; white-space: nowrap; }
 
@@ -817,7 +872,7 @@ $viewTabs = [
                 <div class="dental-alert">
                     <i class="bi bi-exclamation-triangle-fill fs-4"></i>
                     <div><b>ตรวจพบฟันผุ<?= $dental['decay_count'] > 0 ? ' ' . (int) $dental['decay_count'] . ' ซี่' : '' ?></b> — กรุณาแจ้งศูนย์ว่ารับทราบหรือพาไปพบทันตแพทย์แล้ว</div>
-                    <a href="#dentalCard">ดูรายละเอียด <i class="bi bi-arrow-down"></i></a>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#dentalModal">ดูรายละเอียด <i class="bi bi-chevron-right"></i></a>
                 </div>
             <?php endif; ?>
 
@@ -887,8 +942,50 @@ $viewTabs = [
             </div>
             </div><!-- /dash-main -->
 
-            <aside class="dash-side" id="dentalCard">
+            <aside class="dash-side" id="healthHub">
                 <div class="student-section-title">สุขภาพและการติดตาม</div>
+                <div class="hub-list">
+                    <?php foreach ($hubItems as $it): ?>
+                        <?php $isModal = !empty($it['modal']); ?>
+                        <<?= $isModal ? 'button type="button" data-bs-toggle="modal" data-bs-target="#dentalModal"' : 'a href="' . htmlspecialchars($it['href']) . '"' ?> class="hub-item<?= $it['attn'] ? ' attn' : '' ?>">
+                            <span class="hub-ic <?= $it['tone'] ?>"><i class="<?= htmlspecialchars($it['icon']) ?>"></i></span>
+                            <span class="hub-main">
+                                <span class="hub-title d-block"><?= htmlspecialchars($it['title']) ?></span>
+                                <span class="hub-sub d-block"><?= htmlspecialchars($it['sub']) ?></span>
+                            </span>
+                            <span class="hub-badge <?= $it['tone'] ?>"><?= htmlspecialchars($it['badge']) ?></span>
+                            <i class="bi bi-chevron-right hub-go"></i>
+                        </<?= $isModal ? 'button' : 'a' ?>>
+                    <?php endforeach; ?>
+                    <?php if (!$hubItems): ?><div class="text-muted small">ยังไม่มีรายการ</div><?php endif; ?>
+                </div>
+            </aside>
+            </div><!-- /dash-layout -->
+
+            <div class="student-section-title">เลือกดูข้อมูล</div>
+            <div class="student-tab-grid" aria-label="เมนูข้อมูลเด็ก">
+                <?php foreach ($viewTabs as $tab): ?>
+                    <?php $tabHref = $tab['href'] ?? ('view_child.php?studentid=' . rawurlencode($studentid) . '&tab=' . rawurlencode($tab['id'])); ?>
+                    <a class="student-tab-button <?= htmlspecialchars($tab['color']) ?>"
+                       href="<?= htmlspecialchars($tabHref) ?>">
+                        <span class="student-tab-icon <?= htmlspecialchars($tab['color']) ?>">
+                            <i class="<?= htmlspecialchars($tab['icon']) ?>" aria-hidden="true"></i>
+                        </span>
+                        <strong><?= htmlspecialchars($tab['title']) ?></strong>
+                        <small><?= htmlspecialchars($tab['description']) ?></small>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+</main>
+
+
+<?php if ($dental): ?>
+<!-- รายละเอียดสุขภาพช่องปาก + แจ้งกลับศูนย์ -->
+<div class="modal fade" id="dentalModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius:1.25rem;overflow:hidden;">
                 <div class="dental-card">
                     <div class="dental-head">
                         <i class="fa-solid fa-tooth"></i>
@@ -958,26 +1055,12 @@ $viewTabs = [
                         <div class="mt-3"><a href="health_tooth_history.php" class="small">ดูประวัติตรวจช่องปากทั้งหมด <i class="bi bi-arrow-right"></i></a></div>
                     </div>
                 </div>
-            </aside>
-            </div><!-- /dash-layout -->
 
-            <div class="student-section-title">เลือกดูข้อมูล</div>
-            <div class="student-tab-grid" aria-label="เมนูข้อมูลเด็ก">
-                <?php foreach ($viewTabs as $tab): ?>
-                    <?php $tabHref = $tab['href'] ?? ('view_child.php?studentid=' . rawurlencode($studentid) . '&tab=' . rawurlencode($tab['id'])); ?>
-                    <a class="student-tab-button <?= htmlspecialchars($tab['color']) ?>"
-                       href="<?= htmlspecialchars($tabHref) ?>">
-                        <span class="student-tab-icon <?= htmlspecialchars($tab['color']) ?>">
-                            <i class="<?= htmlspecialchars($tab['icon']) ?>" aria-hidden="true"></i>
-                        </span>
-                        <strong><?= htmlspecialchars($tab['title']) ?></strong>
-                        <small><?= htmlspecialchars($tab['description']) ?></small>
-                    </a>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
+            <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">ปิด</button></div>
+        </div>
     </div>
-</main>
+</div>
+<?php endif; ?>
 
 <?php if ($dental && $dental['has_decay']): ?>
 <script>
@@ -988,6 +1071,10 @@ $viewTabs = [
             btn.addEventListener('click', async () => {
                 const status = btn.dataset.follow;
                 const needDate = status !== 'acknowledged';
+                // ปิดหน้าต่างรายละเอียดชั่วคราว ไม่งั้น Bootstrap แย่งโฟกัสจนพิมพ์ในกล่องของ SweetAlert ไม่ได้
+                const modalEl = document.getElementById('dentalModal');
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.hide();
                 const today = new Date().toISOString().slice(0, 10);
                 const r = await Swal.fire({
                     title: TEXT[status],
@@ -1002,7 +1089,7 @@ $viewTabs = [
                         return { date, note: document.getElementById('swNote').value.trim() };
                     }
                 });
-                if (!r.isConfirmed) return;
+                if (!r.isConfirmed) { modal.show(); return; }
                 try {
                     const res = await fetch('../../include/function/tooth_followup_api.php', {
                         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -1013,7 +1100,7 @@ $viewTabs = [
                     await Swal.fire({ icon: 'success', title: data.message, timer: 1500, showConfirmButton: false });
                     location.reload();
                 } catch (e) {
-                    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: e.message, confirmButtonText: 'ตกลง' });
+                    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: e.message, confirmButtonText: 'ตกลง' }).then(() => modal.show());
                 }
             });
         });
