@@ -215,6 +215,10 @@ $message = isset($_GET['message']) ? urldecode($_GET['message']) : null;
         <h1 class="h2 justify-center">ข้อมูลของเด็กนักเรียนที่อยู่ในการดูแล</h1>
     </div>
 
+    <div class="container mt-3">
+        <?php include __DIR__ . '/../partials/tooth_followup_card.php'; ?>
+    </div>
+
     <div class="container mt-4">
         <?php if ($teacherData): ?>
             <div class="card teacher-profile-card">

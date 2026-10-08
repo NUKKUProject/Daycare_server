@@ -83,6 +83,8 @@ $studentAttendanceTodayByGroup = getStudentAttendanceTodayByGroup() ?? [];
             <h1 class="h2">แดชบอร์ดข้อมูล </h1>
         </div>
 
+        <?php include __DIR__ . '/../partials/tooth_followup_card.php'; ?>
+
         <!-- แท็บหลัก -->
         <ul class="nav nav-tabs dashboard-tabs mb-4" id="mainTab" role="tablist">
             <li class="nav-item">
