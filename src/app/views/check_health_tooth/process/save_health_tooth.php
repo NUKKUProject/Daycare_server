@@ -39,6 +39,15 @@ try {
     $round = tooth_resolve_round($pdo, $academicYear, !empty($data['round_id']) ? (int) $data['round_id'] : null, tooth_current_user_label());
     $examType = tooth_resolve_exam_type($role, $data['exam_type'] ?? null);
 
+    // ข้อความที่แพทย์พิมพ์ต้องไม่หาย แม้ไม่ได้ติ๊ก "อื่นๆ" ระบบติ๊กให้เอง และจำนวนฟันผุ > 0 ถือว่ามีฟันผุ
+    $data['treatments'] = is_array($data['treatments'] ?? null) ? $data['treatments'] : [];
+    if (trim((string) ($data['other_treatment_detail'] ?? '')) !== '' && !in_array('other', $data['treatments'], true)) {
+        $data['treatments'][] = 'other';
+    }
+    if (empty($data['teeth_status']) && $data['decayed_teeth'] > 0) {
+        $data['teeth_status'] = 'abnormal';
+    }
+
     $params = [
         ':prefix_th' => $data['prefix_th'] ?? null,
         ':first_name' => $data['first_name_th'] ?? null,

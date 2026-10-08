@@ -59,7 +59,8 @@ try {
         $in = implode(',', array_fill(0, count($ids), '?'));
         $recStmt = $pdo->prepare("SELECT id, student_id, exam_type, total_teeth, decayed_teeth, oral_components, teeth_status,
                    missing_teeth_detail, decayed_teeth_positions::text AS decayed_teeth_positions,
-                   treatments::text AS treatments, other_treatment_detail, urgency, doctor_name, examined_by, updated_at
+                   treatments::text AS treatments, other_treatment_detail, urgency, doctor_name, examined_by, updated_at,
+                   parent_ack_at, followup_status, followup_date, followup_note
             FROM health_tooth_external
             WHERE round_id = ? AND student_id IN ($in)
             ORDER BY id");

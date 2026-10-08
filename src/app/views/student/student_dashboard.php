@@ -121,6 +121,72 @@ if ($child) {
     }
 }
 
+// ผลตรวจฟันล่าสุดที่แพทย์ตรวจแล้ว (ผลที่ครูคัดกรองไว้ยังไม่แสดงให้ผู้ปกครอง)
+$dental = null;
+if ($child) {
+    try {
+        $dStmt = $pdo->prepare("
+            SELECT h.id, h.total_teeth, h.decayed_teeth, h.teeth_status, h.urgency, h.doctor_name, h.oral_components,
+                   h.missing_teeth_detail, h.other_treatment_detail, h.examined_at, h.updated_at,
+                   h.decayed_teeth_positions::text AS positions, h.treatments::text AS treatments,
+                   h.followup_status, h.followup_date, h.followup_note, h.parent_ack_at,
+                   r.title AS round_title, r.academic_year
+            FROM health_tooth_external h
+            LEFT JOIN tooth_exam_rounds r ON r.id = h.round_id
+            WHERE h.student_id = :s AND h.exam_type = 'doctor'
+            ORDER BY r.academic_year DESC NULLS LAST, r.round_no DESC NULLS LAST, h.id DESC
+            LIMIT 1
+        ");
+        $dStmt->execute(['s' => $studentid]);
+        $dental = $dStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    } catch (PDOException $e) {
+        error_log('student_dashboard dental: ' . $e->getMessage());   // ยังไม่ได้รัน migration ก็ไม่ให้หน้าพัง
+    }
+}
+if ($dental) {
+    $posLabels = ['upper_front_teeth' => 'ฟันหน้าบน', 'upper_right_molar' => 'กรามขวาบน', 'lower_right_molar' => 'กรามขวาล่าง',
+        'lower_front_teeth' => 'ฟันหน้าล่าง', 'upper_left_molar' => 'กรามซ้ายบน', 'lower_left_molar' => 'กรามซ้ายล่าง'];
+    $treatLabels = ['filling' => 'อุดฟัน', 'fluoride' => 'เคลือบฟลูออไรด์', 'root_canal' => 'รักษาคลองรากฟัน',
+        'fluoride_molar' => 'เคลือบหลุมร่องฟันที่ฟันกราม', 'crown' => 'ครอบฟัน', 'extraction' => 'ถอนฟัน', 'other' => 'อื่นๆ'];
+    $positions = json_decode($dental['positions'] ?? '{}', true);
+    $treatments = json_decode($dental['treatments'] ?? '[]', true);
+    $dental['pos_list'] = [];
+    foreach ($posLabels as $k => $label) {
+        $n = (int) (($positions[$k] ?? 0));
+        if ($n > 0) {
+            $dental['pos_list'][] = $label . ' ' . $n . ' ซี่';
+        }
+    }
+    $dental['treat_list'] = [];
+    foreach (is_array($treatments) ? $treatments : [] as $code) {
+        $label = $treatLabels[$code] ?? $code;
+        if ($code === 'other' && !empty($dental['other_treatment_detail'])) {
+            $label = 'อื่นๆ: ' . $dental['other_treatment_detail'];
+        }
+        $dental['treat_list'][] = $label;
+    }
+    // ข้อความอิสระของแพทย์ที่ไม่ได้อยู่ในรายการติ๊ก (กรณีพิมพ์ "อื่นๆ" แต่ไม่ได้ติ๊ก)
+    if (!empty($dental['other_treatment_detail']) && !in_array('other', is_array($treatments) ? $treatments : [], true)) {
+        $dental['treat_list'][] = 'อื่นๆ: ' . $dental['other_treatment_detail'];
+    }
+    // จำนวนฟันผุ > 0 ถือว่ามีฟันผุ แม้แพทย์ไม่ได้เลือกสภาพฟัน
+    $dental['has_decay'] = (int) ($dental['decayed_teeth'] ?? 0) > 0 || ($dental['teeth_status'] ?? '') === 'abnormal';
+    $urgLabels = ['urgent' => ['ควรรักษาโดยด่วน', 'urgent'], 'preventable' => ['ผัดผ่อนได้ในระยะเวลาไม่นานนัก', 'soon'], 'not_urgent' => ['ไม่เร่งด่วน', 'calm']];
+    $dental['urg'] = $urgLabels[$dental['urgency'] ?? ''] ?? null;
+    $dental['needs_reply'] = $dental['has_decay'] && empty($dental['followup_status']);
+    $dental['date'] = $dental['examined_at'] ?: substr((string) $dental['updated_at'], 0, 10);
+}
+
+function thaiDateShort(?string $d): string
+{
+    if (!$d) {
+        return '';
+    }
+    $t = strtotime(substr($d, 0, 10));
+    $months = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    return $t ? (int) date('j', $t) . ' ' . $months[(int) date('n', $t)] . ' ' . ((int) date('Y', $t) + 543) : '';
+}
+
 function renderGuardian(?array $person): void
 {
     if (!$person) {
@@ -538,6 +604,51 @@ $viewTabs = [
         .attendance-charts { grid-template-columns: minmax(0, 1fr); }
     }
 
+    /* แดชบอร์ด 2 คอลัมน์: ซ้าย = ข้อมูลวันนี้ / ขวา = สุขภาพและการติดตาม */
+    .dash-layout { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }
+    .dash-main .attendance-summary-groups.today-info,
+    .dash-main .attendance-summary-groups.meal-info { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dash-main .attendance-summary-card.symptoms { grid-column: 1 / -1; }
+    .dash-side { position: sticky; top: 76px; }
+    @media (max-width: 1100px) {
+        .dash-layout { grid-template-columns: minmax(0, 1fr); }
+        .dash-side { position: static; }
+    }
+    @media (max-width: 768px) {
+        .dash-main .attendance-summary-groups.today-info,
+        .dash-main .attendance-summary-groups.meal-info { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    .dental-card { background: #fff; border: 1px solid var(--student-border); border-radius: 1.25rem; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08); overflow: hidden; margin-bottom: 1rem; }
+    .dental-head { align-items: center; display: flex; gap: .6rem; padding: .85rem 1.1rem; border-bottom: 1px solid var(--student-border); }
+    .dental-head i { color: var(--student-primary); font-size: 1.25rem; }
+    .dental-head .t { font-weight: 700; color: var(--student-primary-dark); line-height: 1.2; }
+    .dental-head .s { font-size: .75rem; color: var(--student-muted); }
+    .dental-body { padding: 1rem 1.1rem; }
+    .dental-banner { border-radius: .9rem; padding: .8rem 1rem; margin-bottom: .9rem; font-weight: 700; }
+    .dental-banner small { display: block; font-weight: 500; opacity: .9; }
+    .dental-banner.ok { background: #dcfce7; color: #15803d; }
+    .dental-banner.urgent { background: #fee2e2; color: #b91c1c; }
+    .dental-banner.soon { background: #ffedd5; color: #c2410c; }
+    .dental-banner.calm { background: #fef3c7; color: #92400e; }
+    .dental-banner.none { background: #f1f5f9; color: #475569; }
+    .dental-sec { margin-bottom: .85rem; }
+    .dental-sec .lb { font-size: .75rem; font-weight: 700; color: var(--student-muted); margin-bottom: .25rem; }
+    .dental-chips { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .dental-chip { border-radius: 999px; padding: .15rem .65rem; font-size: .85rem; font-weight: 700; background: #fde68a; color: #92400e; }
+    .dental-chip.treat { background: #dbeafe; color: #1e40af; }
+    .dental-note { background: #f8fafc; border-left: 4px solid var(--student-primary); border-radius: .5rem; padding: .6rem .8rem; font-size: .9rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .dental-note + .dental-note { margin-top: .4rem; }
+    .dental-follow { border-top: 1px dashed var(--student-border); padding-top: .85rem; }
+    .dental-follow .now { font-size: .88rem; margin-bottom: .6rem; }
+    .dental-follow .now b { color: var(--student-primary-dark); }
+    .dental-actions { display: grid; gap: .45rem; }
+    .dental-actions button { border: 2px solid var(--student-border); background: #fff; border-radius: .8rem; padding: .55rem .8rem; font-weight: 700; text-align: left; color: var(--student-primary-dark); }
+    .dental-actions button:hover { border-color: var(--student-primary); background: var(--student-primary-soft); }
+    .dental-actions button.active { border-color: #16a34a; background: #f0fdf4; color: #15803d; }
+    .dental-alert { border-radius: 1rem; padding: .8rem 1rem; margin-bottom: 1rem; display: flex; gap: .75rem; align-items: center; background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; }
+    .dental-alert a { margin-left: auto; font-weight: 700; color: #9a3412; white-space: nowrap; }
+
     .student-section-title {
         color: var(--student-primary-dark);
         font-size: 1.2rem;
@@ -705,6 +816,16 @@ $viewTabs = [
                 ไม่พบข้อมูลเด็กของบัญชีนี้ กรุณาติดต่อผู้ดูแลระบบ
             </div>
         <?php else: ?>
+            <?php if ($dental && $dental['needs_reply']): ?>
+                <div class="dental-alert">
+                    <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                    <div><b>ตรวจพบฟันผุ <?= (int) $dental['decayed_teeth'] ?> ซี่</b> — กรุณาแจ้งศูนย์ว่ารับทราบหรือพาไปพบทันตแพทย์แล้ว</div>
+                    <a href="#dentalCard">ดูรายละเอียด <i class="bi bi-arrow-down"></i></a>
+                </div>
+            <?php endif; ?>
+
+            <div class="dash-layout">
+            <div class="dash-main">
             <div class="student-section-title">ข้อมูลวันนี้</div>
             <div class="attendance-summary">
                 <div class="attendance-summary-groups today-info">
@@ -767,6 +888,81 @@ $viewTabs = [
                         <?php endforeach; ?>
                 </div>
             </div>
+            </div><!-- /dash-main -->
+
+            <aside class="dash-side" id="dentalCard">
+                <div class="student-section-title">สุขภาพและการติดตาม</div>
+                <div class="dental-card">
+                    <div class="dental-head">
+                        <i class="fa-solid fa-tooth"></i>
+                        <div>
+                            <div class="t">สุขภาพช่องปาก</div>
+                            <?php if ($dental): ?>
+                                <div class="s">ตรวจโดย <?= htmlspecialchars($dental['doctor_name'] ?: 'ทันตแพทย์') ?> · <?= htmlspecialchars(thaiDateShort($dental['date'])) ?><?= !empty($dental['round_title']) ? ' · ' . htmlspecialchars($dental['academic_year'] . ' ' . $dental['round_title']) : '' ?></div>
+                            <?php else: ?>
+                                <div class="s">ผลตรวจจากทันตแพทย์</div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="dental-body">
+                        <?php if (!$dental): ?>
+                            <div class="dental-banner none">ยังไม่มีผลตรวจช่องปากจากทันตแพทย์<small>เมื่อทันตแพทย์ตรวจแล้ว ผลจะแสดงที่นี่</small></div>
+                        <?php elseif (!$dental['has_decay']): ?>
+                            <div class="dental-banner ok"><i class="bi bi-check-circle-fill me-1"></i>ฟันปกติ ไม่พบฟันผุ<small>ฟันทั้งหมด <?= (int) $dental['total_teeth'] ?> ซี่</small></div>
+                        <?php else: ?>
+                            <div class="dental-banner <?= htmlspecialchars($dental['urg'][1] ?? 'calm') ?>">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>พบฟันผุ <?= (int) $dental['decayed_teeth'] ?> ซี่
+                                <small><?= $dental['urg'] ? htmlspecialchars($dental['urg'][0]) : 'ควรพาไปพบทันตแพทย์' ?><?= (int) $dental['total_teeth'] > 0 ? ' · ฟันทั้งหมด ' . (int) $dental['total_teeth'] . ' ซี่' : '' ?></small>
+                            </div>
+                            <?php if ($dental['pos_list']): ?>
+                                <div class="dental-sec"><div class="lb">ตำแหน่งที่พบ</div>
+                                    <div class="dental-chips"><?php foreach ($dental['pos_list'] as $x): ?><span class="dental-chip"><?= htmlspecialchars($x) ?></span><?php endforeach; ?></div></div>
+                            <?php endif; ?>
+                            <?php if ($dental['treat_list']): ?>
+                                <div class="dental-sec"><div class="lb">การรักษาที่แนะนำ</div>
+                                    <div class="dental-chips"><?php foreach ($dental['treat_list'] as $x): ?><span class="dental-chip treat"><?= htmlspecialchars($x) ?></span><?php endforeach; ?></div></div>
+                            <?php endif; ?>
+                        <?php endif; ?>
+
+                        <?php if ($dental && (!empty($dental['oral_components']) || !empty($dental['missing_teeth_detail']))): ?>
+                            <div class="dental-sec"><div class="lb">หมายเหตุจากทันตแพทย์</div>
+                                <?php if (!empty($dental['oral_components'])): ?><div class="dental-note"><b>ช่องปาก:</b> <?= htmlspecialchars($dental['oral_components']) ?></div><?php endif; ?>
+                                <?php if (!empty($dental['missing_teeth_detail'])): ?><div class="dental-note"><?= htmlspecialchars($dental['missing_teeth_detail']) ?></div><?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($dental && $dental['has_decay']): ?>
+                            <div class="dental-follow">
+                                <div class="lb small fw-bold text-muted mb-1">แจ้งกลับศูนย์</div>
+                                <div class="now">
+                                    <?php
+                                    $fs = $dental['followup_status'] ?? '';
+                                    if ($fs === 'treated') {
+                                        echo '<b>พาไปรักษาแล้ว</b> ' . htmlspecialchars(thaiDateShort($dental['followup_date']));
+                                    } elseif ($fs === 'scheduled') {
+                                        echo '<b>นัดหมอแล้ว</b> วันที่ ' . htmlspecialchars(thaiDateShort($dental['followup_date']));
+                                    } elseif ($fs === 'acknowledged') {
+                                        echo '<b>รับทราบแล้ว</b>';
+                                    } else {
+                                        echo '<span class="text-danger fw-bold">ยังไม่ได้แจ้งกลับ</span>';
+                                    }
+                                    if (!empty($dental['followup_note'])) {
+                                        echo '<div class="text-muted small mt-1">' . htmlspecialchars($dental['followup_note']) . '</div>';
+                                    }
+                                    ?>
+                                </div>
+                                <div class="dental-actions">
+                                    <button type="button" data-follow="acknowledged" class="<?= $fs === 'acknowledged' ? 'active' : '' ?>"><i class="bi bi-hand-thumbs-up me-1"></i>รับทราบ</button>
+                                    <button type="button" data-follow="scheduled" class="<?= $fs === 'scheduled' ? 'active' : '' ?>"><i class="bi bi-calendar-event me-1"></i>นัดหมอแล้ว</button>
+                                    <button type="button" data-follow="treated" class="<?= $fs === 'treated' ? 'active' : '' ?>"><i class="bi bi-check2-circle me-1"></i>พาไปรักษาแล้ว</button>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                        <div class="mt-3"><a href="health_tooth_history.php" class="small">ดูประวัติตรวจช่องปากทั้งหมด <i class="bi bi-arrow-right"></i></a></div>
+                    </div>
+                </div>
+            </aside>
+            </div><!-- /dash-layout -->
 
             <div class="student-section-title">เลือกดูข้อมูล</div>
             <div class="student-tab-grid" aria-label="เมนูข้อมูลเด็ก">
@@ -785,6 +981,48 @@ $viewTabs = [
         <?php endif; ?>
     </div>
 </main>
+
+<?php if ($dental && $dental['has_decay']): ?>
+<script>
+    (function () {
+        const RECORD_ID = <?= (int) $dental['id'] ?>;
+        const TEXT = { acknowledged: 'รับทราบ', scheduled: 'นัดหมอแล้ว', treated: 'พาไปรักษาแล้ว' };
+        document.querySelectorAll('[data-follow]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const status = btn.dataset.follow;
+                const needDate = status !== 'acknowledged';
+                const today = new Date().toISOString().slice(0, 10);
+                const r = await Swal.fire({
+                    title: TEXT[status],
+                    html: (needDate ? `<div class="text-start"><label class="form-label mt-2">${status === 'scheduled' ? 'วันที่นัดหมอ' : 'วันที่พาไปรักษา'}</label>
+                            <input id="swDate" type="date" class="form-control" value="${today}" ${status === 'treated' ? `max="${today}"` : ''}></div>` : '') +
+                        `<div class="text-start"><label class="form-label mt-2">ข้อความถึงศูนย์ (ไม่บังคับ)</label>
+                            <textarea id="swNote" class="form-control" rows="3" maxlength="300" placeholder="เช่น นัดที่โรงพยาบาล... / ทันตแพทย์แนะนำ..."></textarea></div>`,
+                    showCancelButton: true, confirmButtonText: 'ส่งให้ศูนย์', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#26648E',
+                    preConfirm: () => {
+                        const date = needDate ? document.getElementById('swDate').value : '';
+                        if (needDate && !date) { Swal.showValidationMessage('กรุณาระบุวันที่'); return false; }
+                        return { date, note: document.getElementById('swNote').value.trim() };
+                    }
+                });
+                if (!r.isConfirmed) return;
+                try {
+                    const res = await fetch('../../include/function/tooth_followup_api.php', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                        body: JSON.stringify({ id: RECORD_ID, status, date: r.value.date, note: r.value.note })
+                    });
+                    const data = await res.json();
+                    if (data.status !== 'success') throw new Error(data.message || 'บันทึกไม่สำเร็จ');
+                    await Swal.fire({ icon: 'success', title: data.message, timer: 1500, showConfirmButton: false });
+                    location.reload();
+                } catch (e) {
+                    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: e.message, confirmButtonText: 'ตกลง' });
+                }
+            });
+        });
+    })();
+</script>
+<?php endif; ?>
 
 </body>
 </html>

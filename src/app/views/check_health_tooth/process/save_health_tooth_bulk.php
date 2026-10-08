@@ -114,7 +114,15 @@ try {
         }
         $urgency = in_array($row['urgency'] ?? '', TOOTH_URGENCY, true) ? $row['urgency'] : null;
         $treatments = array_values(array_intersect(TOOTH_TREATMENTS, is_array($row['treatments'] ?? null) ? $row['treatments'] : []));
-        $otherDetail = in_array('other', $treatments, true) ? mb_substr(trim((string) ($row['other_treatment_detail'] ?? '')), 0, 200) : '';
+        // ข้อความที่แพทย์พิมพ์ต้องไม่หาย แม้ไม่ได้ติ๊ก "อื่นๆ" ระบบติ๊กให้เอง
+        $otherDetail = mb_substr(trim((string) ($row['other_treatment_detail'] ?? '')), 0, 200);
+        if ($otherDetail !== '' && !in_array('other', $treatments, true)) {
+            $treatments[] = 'other';
+        }
+        // กรอกจำนวนฟันผุ > 0 แต่ไม่ได้เลือกสภาพฟัน = มีฟันผุ
+        if ($status === null && $decayed !== null && $decayed > 0) {
+            $status = 'abnormal';
+        }
         $oral = mb_substr(trim((string) ($row['oral_components'] ?? '')), 0, 100);
         $missing = mb_substr(trim((string) ($row['missing_teeth_detail'] ?? '')), 0, 100);
 

@@ -112,6 +112,9 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     .tg-wrap.draggable { cursor: grab; }
     .tg-wrap.dragging { cursor: grabbing; user-select: none; }
     .tg-wrap.dragging * { cursor: grabbing !important; }
+    .tg .fu { font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+    .tg .fu.wait { background: #ffedd5; color: #c2410c; } .tg .fu.ack { background: #dbeafe; color: #1d4ed8; }
+    .tg .fu.sched { background: #ede9fe; color: #6d28d9; } .tg .fu.done { background: #dcfce7; color: #15803d; }
     .tg-empty { text-align: center; padding: 2.5rem 1rem; color: #64748b; }
     .tg-empty .big { font-size: 1.05rem; font-weight: 700; color: #334155; margin-bottom: .35rem; }
     .tg-hint { font-size: .78rem; color: #64748b; margin-top: .5rem; }
@@ -245,8 +248,8 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
                 <span id="gProgressText" class="fw-bold"></span>
                 <div class="bar"><span id="gProgressBar" style="width:0%"></span></div>
                 <div class="form-check form-switch mb-0">
-                    <input class="form-check-input" type="checkbox" id="gExtra">
-                    <label class="form-check-label small" for="gExtra">แสดงช่องหมายเหตุ (ช่องปาก / รายละเอียด)</label>
+                    <input class="form-check-input" type="checkbox" id="gPending">
+                    <label class="form-check-label small" for="gPending">เฉพาะมีฟันผุที่ผู้ปกครองยังไม่ตอบกลับ</label>
                 </div>
             </div>
             <div class="tg-legend" id="gLegend" style="display:none">
@@ -296,8 +299,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     let rounds = [];
     let roundClosed = false;
     let loadedRoundId = null;
-    let showExtra = false;
-    try { showExtra = localStorage.getItem('toothGridExtra') === '1'; } catch (e) { /* ใช้งานต่อได้แม้ไม่มี localStorage */ }
+    const showExtra = true;   // ช่องหมายเหตุของแพทย์แสดงตลอด ไม่ซ่อน
     const byId = (id) => document.getElementById(id);
     const mode = () => byId('gType').value;
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -342,9 +344,24 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
             birthday: c.birthday, exam: '', doctorDone: doctorDone,
             // ครูแก้ผลที่แพทย์ตรวจแล้วไม่ได้ (ผลของแพทย์ใช้แทนเสมอ จึงล็อกไว้กันแก้แล้วไม่มีผล)
             locked: m === 'teacher' && doctorDone,
+            fu: recs.doctor ? { status: recs.doctor.followup_status, date: recs.doctor.followup_date, note: recs.doctor.followup_note } : null,
             saved: m === 'doctor' ? doctorDone : !!source,
             prefill: m === 'doctor' && !doctorDone && !!source, ref: null, dirty: false
         });
+    }
+
+    // ติดตามผู้ปกครอง: ใช้กับเด็กที่แพทย์ตรวจแล้วและพบฟันผุเท่านั้น
+    const hasDecay = (r) => (r.dc || 0) > 0 || r.s === 'abnormal';
+    const needsFollowup = (r) => r.doctorDone && hasDecay(r) && !(r.fu && r.fu.status);
+    const thaiShort = (d) => (d ? new Date(String(d).slice(0, 10) + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : '');
+    function followupHtml(r) {
+        if (!r.doctorDone || !hasDecay(r)) return '<span class="text-muted small">-</span>';
+        const f = r.fu && r.fu.status ? r.fu : null;
+        if (!f) return '<span class="fu wait" title="พบฟันผุ ผู้ปกครองยังไม่แจ้งกลับ">ยังไม่ตอบ</span>';
+        const t = f.note ? ` title="${esc(f.note)}"` : '';
+        if (f.status === 'treated') return `<span class="fu done"${t}>พาไปรักษาแล้ว ${thaiShort(f.date)}</span>`;
+        if (f.status === 'scheduled') return `<span class="fu sched"${t}>นัดหมอ ${thaiShort(f.date)}</span>`;
+        return `<span class="fu ack"${t}>รับทราบแล้ว</span>`;
     }
 
     const posSum = (r) => r.p.reduce((a, b) => a + (b || 0), 0);
@@ -355,7 +372,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     }
     // มีข้อมูลอย่างน้อยหนึ่งช่อง = บันทึกได้ (ไม่ต้องกรอกครบ)
     function hasData(r) {
-        return r.tt !== null || r.dc !== null || !!r.s || !!r.u || r.t.length > 0 || posSum(r) > 0 || !!r.oral.trim() || !!r.miss.trim();
+        return r.tt !== null || r.dc !== null || !!r.s || !!r.u || r.t.length > 0 || posSum(r) > 0 || !!r.oral.trim() || !!r.miss.trim() || !!r.other.trim();
     }
     const rowState = (r) => (r.dirty
         ? (complete(r) ? 'ready' : (hasData(r) ? 'partial' : 'todo'))
@@ -380,13 +397,13 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         return '<thead><tr class="h1">' +
             '<th class="g-child" colspan="3">เด็ก</th><th class="g-count" colspan="2">จำนวนฟัน (ซี่)</th><th class="g-pos" colspan="6">ฟันผุแต่ละตำแหน่ง (ซี่)</th>' +
             '<th class="g-result" colspan="2">ผลตรวจ</th><th class="g-treat" colspan="' + nTreat + '">การรักษา</th>' +
-            (showExtra ? '<th class="g-note" colspan="2">หมายเหตุ</th>' : '') + '<th class="g-state" colspan="2">สถานะ</th></tr>' +
+            (showExtra ? '<th class="g-note" colspan="2">หมายเหตุจากแพทย์</th>' : '') + '<th class="g-state" colspan="3">สถานะ</th></tr>' +
             '<tr class="h2"><th class="c-no">#</th><th class="c-nm">ชื่อ</th><th>อายุ</th><th>ทั้งหมด</th><th>ผุ</th>' +
             POS.map((p) => `<th>${p[1]}</th>`).join('') + '<th>สภาพฟัน</th><th>ความเร่งด่วน</th>' +
             TR.map((t) => `<th class="th-treat" title="${esc(t[2])}">${esc(t[2])}</th>`).join('') +
             (showOtherCol() ? '<th>อื่นๆ (ระบุ)</th>' : '') +
-            (showExtra ? '<th>ช่องปาก</th><th>รายละเอียด</th>' : '') +
-            '<th>สถานะ</th><th></th></tr></thead>';
+            (showExtra ? '<th>ช่องปาก (เหงือก/ลิ้น/เพดาน)</th><th>รายละเอียด / หมายเหตุ</th>' : '') +
+            '<th>สถานะ</th><th>ติดตามผู้ปกครอง</th><th></th></tr></thead>';
     }
 
     function rowHtml(r, i) {
@@ -403,12 +420,13 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         h += td('gc-result', `<select class="f${dcls(r, 's')}" data-f="s" data-key="s"${d}><option value="">-</option><option value="normal"${r.s === 'normal' ? ' selected' : ''}>ไม่มีฟันผุ</option><option value="abnormal"${r.s === 'abnormal' ? ' selected' : ''}>มีฟันผุ</option></select>`);
         h += td('gc-result', `<select class="f${dcls(r, 'u')}" data-f="u"${d}><option value="">-</option>${URG.map((u) => `<option value="${u[0]}"${r.u === u[0] ? ' selected' : ''}>${u[1]}</option>`).join('')}</select>`);
         TR.forEach((t) => { const on = r.t.includes(t[0]); h += td('gc-treat', `<button type="button" class="tgl${on ? ' on' : ''}${dcls(r, 't', t[0])}" data-t="${t[0]}" title="${esc(t[2])}" aria-label="${esc(t[2])}" aria-pressed="${on}"${d}>${on ? '✓' : '+'}</button>`); });
-        if (showOtherCol()) h += td('gc-treat', `<input class="f t${dcls(r, 'other')}" type="text" maxlength="200" data-f="other" value="${esc(r.other)}"${r.t.includes('other') && !roundClosed && !r.locked ? '' : ' disabled'}>`);
+        if (showOtherCol()) h += td('gc-treat', `<input class="f t${dcls(r, 'other')}" type="text" maxlength="200" data-f="other" value="${esc(r.other)}"${roundClosed || r.locked ? ' disabled' : ''} data-key="other" placeholder="ระบุ (ติ๊กให้เอง)">`);
         if (showExtra) {
             h += td('gc-note', `<input class="f t${dcls(r, 'oral')}" type="text" maxlength="100" data-f="oral" value="${esc(r.oral)}"${d}>`) +
                 td('gc-note', `<input class="f t${dcls(r, 'miss')}" type="text" maxlength="100" data-f="miss" value="${esc(r.miss)}"${d}>`);
         }
         h += td('gc-state', `<span class="st ${st}">${stateText(r, st)}</span>`) +
+            td('gc-state', followupHtml(r)) +
             td('gc-state', roundClosed || r.locked ? (r.locked ? '<span class="text-muted small">🔒 แพทย์ตรวจแล้ว</span>' : '') : (r.prefill ? '<button type="button" class="rowact confirm" data-confirm="1" title="ยืนยันตามผลของครู">ยืนยัน</button> ' : '') + '<button type="button" class="rowact" data-normal="1" title="เติมค่าปกติ: ไม่มีฟันผุ (ถ้ายังไม่กรอกจำนวนฟันทั้งหมด จะใส่ 20 ซี่)">ปกติ</button>') + '</tr>';
         return h;
     }
@@ -417,7 +435,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         const wrap = byId('gWrap');
         if (!rows.length) { wrap.innerHTML = '<div class="tg-empty"><div class="big">ไม่พบรายชื่อเด็กตามเงื่อนไข</div>ลองเปลี่ยนกลุ่ม ห้อง หรือคำค้นหา</div>'; summary(); return; }
         const sc = { top: wrap.scrollTop, left: wrap.scrollLeft };
-        wrap.innerHTML = '<table class="tg">' + header() + '<tbody>' + rows.map(rowHtml).join('') + '</tbody></table>';
+        wrap.innerHTML = '<table class="tg">' + header() + '<tbody>' + (byId('gPending').checked ? rows.map((r, i) => (needsFollowup(r) ? rowHtml(r, i) : '')) : rows.map(rowHtml)).join('') + '</tbody></table>';
         wrap.scrollTop = sc.top; wrap.scrollLeft = sc.left;
         if (keepFocus) {
             const el = wrap.querySelector(`tr[data-i="${keepFocus.i}"] [data-key="${keepFocus.key}"]`);
@@ -433,7 +451,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         tr.className = st;
         const chip = tr.querySelector('.st'); chip.className = 'st ' + st; chip.textContent = stateText(r, st);
         tr.querySelectorAll('td.pos').forEach((td) => td.classList.toggle('bad', bad));
-        const other = tr.querySelector('[data-f="other"]'); if (other) other.disabled = !r.t.includes('other') || roundClosed;
+        tr.querySelectorAll('.tgl').forEach((b) => { const on = r.t.includes(b.dataset.t); b.classList.toggle('on', on); b.textContent = on ? '✓' : '+'; b.setAttribute('aria-pressed', on); });
         tr.querySelectorAll('[data-f],[data-p]').forEach((el) => {
             const d = el.dataset.p !== undefined ? diffOf(r, 'p', +el.dataset.p) : diffOf(r, el.dataset.f);
             el.classList.toggle('diff', d && !r.prefill);
@@ -584,6 +602,8 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         else if (el.dataset.f === 'tt' || el.dataset.f === 'dc') r[el.dataset.f] = num(el.value);
         else if (el.dataset.f) r[el.dataset.f] = el.value;
         else return;
+        // พิมพ์ข้อความ "การรักษาอื่นๆ" แล้วติ๊ก "อื่นๆ" ให้เอง
+        if (el.dataset.f === 'other' && r.other.trim() && !r.t.includes('other')) r.t.push('other');
         r.dirty = true; r.prefill = false;
         if (el.dataset.f === 's') {
             if (el.value === 'normal') { r.dc = 0; r.p = POS.map(() => 0); r.u = ''; }
@@ -618,12 +638,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     function init() {
         enableDragScroll(byId('gWrap'));
         byId('gDate').value = todayStr();
-        byId('gExtra').checked = showExtra;
-        byId('gExtra').addEventListener('change', (e) => {
-            showExtra = e.target.checked;
-            try { localStorage.setItem('toothGridExtra', showExtra ? '1' : '0'); } catch (err) { /* ไม่เป็นไร */ }
-            if (rows.length) render();
-        });
+        byId('gPending').addEventListener('change', () => { if (rows.length) render(); });
         // เปลี่ยนตัวกรอง = โหลดรายชื่อใหม่เอง
         byId('gGroup').addEventListener('change', async () => { await loadRooms(); loadList(false); });
         byId('gRoom').addEventListener('change', () => loadList(false));
@@ -643,7 +658,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         wrap.addEventListener('click', (e) => {
             const b = e.target.closest('button'); if (!b) return;
             const i = +b.closest('tr').dataset.i, r = rows[i];
-            if (b.dataset.t) { const k = r.t.indexOf(b.dataset.t); k > -1 ? r.t.splice(k, 1) : r.t.push(b.dataset.t); r.dirty = true; r.prefill = false; render(); }
+            if (b.dataset.t) { const k = r.t.indexOf(b.dataset.t); k > -1 ? r.t.splice(k, 1) : r.t.push(b.dataset.t); if (b.dataset.t === 'other' && k > -1) r.other = ''; r.dirty = true; r.prefill = false; render(); }
             if (b.dataset.normal) { setNormal(r); render(); }
             if (b.dataset.confirm) { r.dirty = true; r.prefill = false; render(); }
         });
