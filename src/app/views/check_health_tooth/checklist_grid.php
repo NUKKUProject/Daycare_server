@@ -118,11 +118,16 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
                 </div>
                 <div class="col-6 col-md-2">
                     <label for="gType">ผู้ตรวจ</label>
-                    <select id="gType" class="form-select">
-                        <?php foreach ($allowedTypes as $t): ?>
-                            <option value="<?= $t ?>"><?= $typeLabels[$t] ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <?php if (count($allowedTypes) === 1): ?>
+                        <input type="hidden" id="gType" value="<?= $allowedTypes[0] ?>">
+                        <div class="form-control bg-light fw-bold" title="กำหนดตามสิทธิ์ที่เข้าสู่ระบบ"><?= $typeLabels[$allowedTypes[0]] ?></div>
+                    <?php else: ?>
+                        <select id="gType" class="form-select">
+                            <?php foreach ($allowedTypes as $t): ?>
+                                <option value="<?= $t ?>"><?= $typeLabels[$t] ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    <?php endif; ?>
                 </div>
                 <div class="col-6 col-md-2">
                     <label for="gStudentYear">ปีการศึกษาของเด็ก</label>

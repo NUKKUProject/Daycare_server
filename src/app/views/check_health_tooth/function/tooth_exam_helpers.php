@@ -13,7 +13,7 @@ function tooth_allowed_types(?string $role): array
     if ($role === 'teacher') {
         return ['teacher'];
     }
-    return ['doctor', 'teacher'];
+    return ['teacher', 'doctor'];   // admin: ค่าเริ่มต้นเป็นครูคัดกรอง (ไม่ระบุว่าเป็นผลของแพทย์โดยไม่ตั้งใจ)
 }
 
 /** เลือกประเภทผู้ตรวจ: ถ้าส่งมาและอนุญาตให้ใช้ ไม่งั้นใช้ตัวแรกที่บทบาทนี้บันทึกได้ */
