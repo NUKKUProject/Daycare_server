@@ -78,7 +78,9 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     .tg tr.ready .c-nm { background: #eff6ff; box-shadow: inset 4px 0 0 #3b82f6; }
     .tg tr.prefill .c-no, .tg tr.prefill .c-nm { background: #faf5ff; box-shadow: inset 4px 0 0 #8b5cf6; }
     .tg tr.todo .c-nm { box-shadow: inset 4px 0 0 #f59e0b; }
-    .tg .tgl { width: 24px; height: 24px; border: 1px solid #94a3b8; border-radius: 5px; background: #fff; cursor: pointer; padding: 0; line-height: 1; font-size: .8rem; }
+    .tg th.th-treat { white-space: normal; min-width: 92px; max-width: 120px; line-height: 1.25; }
+    .tg .tgl { display: block; width: 100%; height: 32px; border: 1px solid #94a3b8; border-radius: 6px; background: #fff; cursor: pointer; padding: 0; line-height: 1; font-size: 1rem; }
+    .tg .tgl:hover:not(:disabled) { border-color: #3b82f6; background: #f0f7ff; }
     .tg .tgl.on { background: #dbeafe; border-color: #3b82f6; color: #1d4ed8; font-weight: 700; }
     .tg .tgl:disabled { cursor: default; opacity: .6; }
     .tg .st { font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
@@ -242,8 +244,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
                 </div>
             </div>
             <div class="tg-hint">
-                Tab ไปช่องถัดไป · Enter ลงแถวถัดไป · เลือก "ไม่มีฟันผุ" ระบบเติมฟันผุและตำแหน่งเป็น 0 ให้ · ช่องตำแหน่งขึ้นเหลืองเมื่อยอดรวมไม่เท่ากับจำนวนฟันผุ · อายุคำนวณจากวันเกิดให้ ·
-                ตัวย่อการรักษา: อุด = อุดฟัน, ฟล = เคลือบฟลูออไรด์, รา = รักษาคลองรากฟัน, กร = เคลือบหลุมร่องฟันที่ฟันกราม, คร = ครอบฟัน, ถอ = ถอนฟัน, อื่ = อื่นๆ
+                Tab ไปช่องถัดไป · Enter ลงแถวถัดไป · เลือก "ไม่มีฟันผุ" ระบบเติมฟันผุและตำแหน่งเป็น 0 ให้ · ช่องตำแหน่งขึ้นเหลืองเมื่อยอดรวมไม่เท่ากับจำนวนฟันผุ · อายุคำนวณจากวันเกิดให้
             </div>
         </div>
 
@@ -355,7 +356,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
             (showExtra ? '<th class="g-note" colspan="2">หมายเหตุ</th>' : '') + '<th class="g-state" colspan="3">สถานะ</th></tr>' +
             '<tr class="h2"><th class="c-no">#</th><th class="c-nm">ชื่อ</th><th>อายุ</th><th>ทั้งหมด</th><th>ผุ</th>' +
             POS.map((p) => `<th>${p[1]}</th>`).join('') + '<th>สภาพฟัน</th><th>ความเร่งด่วน</th>' +
-            TR.map((t) => `<th title="${esc(t[2])}">${t[1]}</th>`).join('') +
+            TR.map((t) => `<th class="th-treat" title="${esc(t[2])}">${esc(t[2])}</th>`).join('') +
             (showOtherCol() ? '<th>อื่นๆ (ระบุ)</th>' : '') +
             (showExtra ? '<th>ช่องปาก</th><th>รายละเอียด</th>' : '') +
             '<th>ผลของรอบนี้</th><th>การกรอก</th><th></th></tr></thead>';
