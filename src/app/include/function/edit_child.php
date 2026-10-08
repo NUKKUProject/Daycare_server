@@ -950,8 +950,16 @@ try {
             $updateData['age_years'] = $updateData['age_years'] ?? 0;
             $updateData['age_months'] = $updateData['age_months'] ?? 0;
             $updateData['age_days'] = $updateData['age_days'] ?? 0;
-            $updateData['has_drug_allergy_history'] = $updateData['has_drug_allergy_history'] ?? false;
-            $updateData['has_food_allergy_history'] = $updateData['has_food_allergy_history'] ?? false;
+            // ฟอร์มประวัติไม่ได้ส่งธงการแพ้มา (จัดการผ่าน manage_allergies.php) จึงคำนวณจากรายการแพ้จริง
+            // ห้ามตั้งเป็น false เพราะจะล้างธงของเด็กที่มีรายการแพ้ทุกครั้งที่บันทึกประวัติ
+            $allergyFlags = $pdo->prepare("
+                SELECT EXISTS (SELECT 1 FROM drug_allergies WHERE student_id = :s1) AS has_drug,
+                       EXISTS (SELECT 1 FROM food_allergies WHERE student_id = :s2) AS has_food
+            ");
+            $allergyFlags->execute(['s1' => $originalStudentId, 's2' => $originalStudentId]);
+            $allergyRow = $allergyFlags->fetch(PDO::FETCH_ASSOC);
+            $updateData['has_drug_allergy_history'] = !empty($allergyRow['has_drug']);
+            $updateData['has_food_allergy_history'] = !empty($allergyRow['has_food']);
 
             // เรียกใช้ฟังก์ชันอัปเดต
             $result = updateChildById(
@@ -994,8 +1002,8 @@ try {
                 $updateData['mother_image'] ?? $existingData['mother_image'] ?? null,
                 $updateData['relative_image'] ?? $existingData['relative_image'] ?? null,
                 $updateData['blood_type'],
-                null, // allergic_food
-                null, // allergic_medicine
+                $existingData['allergic_food'] ?? null,      // ฟอร์มประวัติไม่มีช่องนี้ คงค่าเดิมไว้ ไม่ล้างเป็น null
+                $existingData['allergic_medicine'] ?? null,
                 $updateData['address'],
                 $updateData['district'],
                 $updateData['amphoe'],
