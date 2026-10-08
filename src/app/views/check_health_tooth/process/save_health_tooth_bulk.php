@@ -105,12 +105,8 @@ try {
 
         $total = count_or_null($row['total_teeth'] ?? null);
         $decayed = count_or_null($row['decayed_teeth'] ?? null);
-        $status = (string) ($row['teeth_status'] ?? '');
-        if ($total === null || $decayed === null || !in_array($status, ['normal', 'abnormal'], true)) {
-            $errors[] = ['student_id' => $sid, 'message' => 'กรอกจำนวนฟันและสภาพฟันไม่ครบ'];
-            continue;
-        }
-
+        // กรอกไม่ครบก็บันทึกได้ ช่องที่ไม่ได้กรอกเก็บเป็นว่าง (ต้องมีอย่างน้อยหนึ่งช่อง)
+        $status = in_array($row['teeth_status'] ?? '', ['normal', 'abnormal'], true) ? $row['teeth_status'] : null;
         $positions = [];
         foreach (TOOTH_POSITIONS as $p) {
             $positions[$p] = count_or_null($row['positions'][$p] ?? null) ?? 0;
@@ -118,19 +114,19 @@ try {
         if ($status === 'normal') {
             $decayed = 0;
             $positions = array_fill_keys(TOOTH_POSITIONS, 0);
-        } elseif (array_sum($positions) !== $decayed) {
-            $errors[] = ['student_id' => $sid, 'message' => 'ยอดรวมตำแหน่งฟันผุไม่ตรงกับจำนวนฟันผุ'];
-            continue;
         }
-
         $urgency = in_array($row['urgency'] ?? '', TOOTH_URGENCY, true) ? $row['urgency'] : null;
-        if ($status === 'abnormal' && $urgency === null) {
-            $errors[] = ['student_id' => $sid, 'message' => 'ยังไม่ได้เลือกความเร่งด่วน'];
-            continue;
-        }
-
         $treatments = array_values(array_intersect(TOOTH_TREATMENTS, is_array($row['treatments'] ?? null) ? $row['treatments'] : []));
         $otherDetail = in_array('other', $treatments, true) ? mb_substr(trim((string) ($row['other_treatment_detail'] ?? '')), 0, 200) : '';
+        $oral = mb_substr(trim((string) ($row['oral_components'] ?? '')), 0, 100);
+        $missing = mb_substr(trim((string) ($row['missing_teeth_detail'] ?? '')), 0, 100);
+
+        $hasAny = $total !== null || $decayed !== null || $status !== null || $urgency !== null
+            || array_sum($positions) > 0 || $treatments || $oral !== '' || $missing !== '';
+        if (!$hasAny) {
+            $errors[] = ['student_id' => $sid, 'message' => 'ยังไม่ได้กรอกข้อมูลใดๆ'];
+            continue;
+        }
 
         // อายุ ณ วันตรวจ คำนวณจากวันเกิด (ไม่มีวันเกิดเก็บเป็น 0)
         $ageY = $ageM = $ageD = 0;
@@ -154,9 +150,9 @@ try {
             ':age_day' => $ageD,
             ':total_teeth' => $total,
             ':decayed_teeth' => $decayed,
-            ':oral_components' => mb_substr(trim((string) ($row['oral_components'] ?? '')), 0, 100),
+            ':oral_components' => $oral,
             ':teeth_status' => $status,
-            ':missing_teeth_detail' => mb_substr(trim((string) ($row['missing_teeth_detail'] ?? '')), 0, 100),
+            ':missing_teeth_detail' => $missing,
             ':positions' => json_encode($positions),
             ':treatments' => json_encode($treatments),
             ':other_detail' => $otherDetail,

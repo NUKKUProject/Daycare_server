@@ -79,7 +79,8 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     .tg tr.saved .c-no, .tg tr.saved .c-nm { box-shadow: inset 5px 0 0 #22c55e; }
     .tg tr.ready .c-nm { box-shadow: inset 5px 0 0 #3b82f6; }
     .tg tr.prefill .c-nm { box-shadow: inset 5px 0 0 #8b5cf6; }
-    .tg tr.todo .c-nm { box-shadow: inset 5px 0 0 #f59e0b; }
+    .tg tr.partial .c-nm { box-shadow: inset 5px 0 0 #fb923c; }
+    .tg tr.todo .c-nm { box-shadow: inset 5px 0 0 #cbd5e1; }
     .tg td.c-age { white-space: nowrap; min-width: 74px; font-size: .8rem; }
     .tg th.th-treat { white-space: normal; min-width: 92px; max-width: 120px; line-height: 1.25; }
     .tg .tgl { display: block; width: 100%; height: 36px; border: 1.5px solid #94a3b8; border-radius: 8px; background: #fff; color: #94a3b8; cursor: pointer;
@@ -92,7 +93,8 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     .tg .st { font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
     .tg .st.saved { background: #dcfce7; color: #15803d; }
     .tg .st.ready { background: #dbeafe; color: #1d4ed8; }
-    .tg .st.todo { background: #fef3c7; color: #b45309; }
+    .tg .st.todo { background: #f1f5f9; color: #64748b; }
+    .tg .st.partial { background: #ffedd5; color: #c2410c; }
     .tg .st.prefill { background: #ede9fe; color: #6d28d9; }
     .tg .ex { font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; background: #f1f5f9; color: #64748b; }
     .tg .ex.doctor { background: #dcfce7; color: #15803d; }
@@ -116,7 +118,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     .tg-dock .pills { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; font-size: .82rem; }
     .tg-pill { border-radius: 999px; padding: 2px 12px; font-weight: 700; font-size: .78rem; }
     .tg-pill.saved { background: #dcfce7; color: #15803d; } .tg-pill.ready { background: #dbeafe; color: #1d4ed8; }
-    .tg-pill.todo { background: #fef3c7; color: #b45309; } .tg-pill.prefill { background: #ede9fe; color: #6d28d9; }
+    .tg-pill.todo { background: #f1f5f9; color: #64748b; } .tg-pill.partial { background: #ffedd5; color: #c2410c; } .tg-pill.prefill { background: #ede9fe; color: #6d28d9; }
     .tg-dock .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
     .btn-save-grid { background: #15803d; border-color: #15803d; color: #fff; font-weight: 700; min-width: 170px; }
     .btn-save-grid:hover:not(:disabled) { background: #166534; border-color: #166534; color: #fff; }
@@ -248,7 +250,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
             </div>
             <div class="tg-legend" id="gLegend" style="display:none">
                 <span><i style="background:#22c55e"></i>บันทึกแล้ว</span><span><i style="background:#3b82f6"></i>พร้อมบันทึก</span>
-                <span><i style="background:#f59e0b"></i>ยังไม่ครบ</span><span id="gLegendPrefill"><i style="background:#8b5cf6"></i>ผลครู รอแพทย์ยืนยัน</span>
+                <span><i style="background:#fb923c"></i>กรอกบางส่วน (บันทึกได้)</span><span><i style="background:#cbd5e1"></i>ยังไม่ได้กรอก</span><span id="gLegendPrefill"><i style="background:#8b5cf6"></i>ผลครู รอแพทย์ยืนยัน</span>
                 <span><i style="background:#eab308"></i>ช่องที่แพทย์แก้ต่างจากครู</span>
             </div>
             <div class="tg-wrap" id="gWrap">
@@ -348,8 +350,14 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         if (r.s === 'normal') return r.dc === 0;
         return r.dc !== null && r.dc > 0 && posSum(r) === r.dc && !!r.u;
     }
-    const rowState = (r) => (r.dirty ? (complete(r) ? 'ready' : 'todo') : (r.saved ? 'saved' : (r.prefill ? 'prefill' : 'todo')));
-    const STATE_TEXT = { saved: 'บันทึกแล้ว', ready: 'พร้อมบันทึก', todo: 'ยังไม่ครบ', prefill: 'ผลครู · รอยืนยัน' };
+    // มีข้อมูลอย่างน้อยหนึ่งช่อง = บันทึกได้ (ไม่ต้องกรอกครบ)
+    function hasData(r) {
+        return r.tt !== null || r.dc !== null || !!r.s || !!r.u || r.t.length > 0 || posSum(r) > 0 || !!r.oral.trim() || !!r.miss.trim();
+    }
+    const rowState = (r) => (r.dirty
+        ? (complete(r) ? 'ready' : (hasData(r) ? 'partial' : 'todo'))
+        : (r.saved ? 'saved' : (r.prefill ? 'prefill' : 'todo')));
+    const STATE_TEXT = { saved: 'บันทึกแล้ว', ready: 'พร้อมบันทึก', partial: 'กรอกบางส่วน', todo: 'ยังไม่ได้กรอก', prefill: 'ผลครู · รอยืนยัน' };
 
     function diffOf(r, key, idx) {
         if (!r.ref) return false;
@@ -431,25 +439,26 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     }
 
     function summary() {
-        const c = { saved: 0, ready: 0, todo: 0, prefill: 0 };
+        const c = { saved: 0, ready: 0, partial: 0, todo: 0, prefill: 0 };
         rows.forEach((r) => c[rowState(r)]++);
         const doctor = mode() === 'doctor';
         byId('gSummary').innerHTML = rows.length
             ? `<span>${rows.length} คน</span><span class="tg-pill saved">บันทึกแล้ว ${c.saved}</span><span class="tg-pill ready">พร้อมบันทึก ${c.ready}</span>` +
-              (doctor ? `<span class="tg-pill prefill">ผลครูรอยืนยัน ${c.prefill}</span>` : '') + `<span class="tg-pill todo">ยังไม่ครบ ${c.todo}</span>`
+              (c.partial ? `<span class="tg-pill partial">กรอกบางส่วน ${c.partial}</span>` : '') +
+              (doctor ? `<span class="tg-pill prefill">ผลครูรอยืนยัน ${c.prefill}</span>` : '') + `<span class="tg-pill todo">ยังไม่ได้กรอก ${c.todo}</span>`
             : '<span class="text-muted">ยังไม่ได้โหลดรายชื่อ</span>';
 
         const pr = byId('gProgress'), lg = byId('gLegend');
         pr.style.display = lg.style.display = rows.length ? '' : 'none';
         byId('gLegendPrefill').style.display = doctor ? '' : 'none';
         if (rows.length) {
-            const done = c.saved + c.ready;
+            const done = c.saved + c.ready + c.partial;
             byId('gProgressText').textContent = `ตรวจแล้ว ${done} / ${rows.length} คน`;
             byId('gProgressBar').style.width = Math.round(done * 100 / rows.length) + '%';
         }
 
         const anyDirty = rows.some((r) => r.dirty);
-        const ready = rows.filter((r) => r.dirty && complete(r)).length;
+        const ready = rows.filter((r) => r.dirty && hasData(r)).length;
         const saveBtn = byId('gSave');
         saveBtn.disabled = !anyDirty || roundClosed;
         saveBtn.innerHTML = `<i class="bi bi-check-circle me-1"></i>บันทึกทั้งห้อง${ready ? ` (${ready} คน)` : ''}`;
@@ -523,15 +532,17 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
 
     async function saveAll() {
         const dirty = rows.filter((r) => r.dirty);
-        const ready = dirty.filter(complete), notReady = dirty.filter((r) => !complete(r));
-        if (!ready.length) { Swal.fire({ icon: 'warning', title: 'ยังไม่มีแถวที่พร้อมบันทึก', text: 'กรอกให้ครบทุกช่องที่จำเป็นของแถวที่แก้ไข (แถวสีเหลืองยังไม่ครบ)', confirmButtonText: 'ตกลง' }); return; }
+        const ready = dirty.filter(hasData), blank = dirty.length - ready.length;
+        const partial = ready.filter((r) => !complete(r)).length;
+        if (!ready.length) { Swal.fire({ icon: 'warning', title: 'ยังไม่มีข้อมูลให้บันทึก', text: 'กรอกอย่างน้อยหนึ่งช่องในแถวที่ต้องการบันทึก', confirmButtonText: 'ตกลง' }); return; }
         const isDoctor = mode() === 'doctor';
         if (isDoctor && !byId('gDoctor').value.trim()) { Swal.fire({ icon: 'warning', title: 'กรุณาระบุชื่อแพทย์ผู้ตรวจ', confirmButtonText: 'ตกลง' }); byId('gDoctor').focus(); return; }
         const who = mode() === 'doctor' ? 'ผลตรวจของแพทย์' : 'ผลคัดกรองของครู';
         const ok = await Swal.fire({
             icon: 'question', title: `บันทึก ${ready.length} คน?`,
             html: `บันทึกเป็น <b>${who}</b> ของ "${esc(byId('gRound').selectedOptions[0]?.textContent || '')}"<br>` +
-                (notReady.length ? `ข้าม <b>${notReady.length}</b> คนที่กรอกยังไม่ครบ (ข้อมูลที่กรอกไว้ยังอยู่ในตาราง)<br>` : '') +
+                (partial ? `มี <b>${partial}</b> คนที่กรอกบางส่วน จะบันทึกเท่าที่กรอก (กลับมากรอกเพิ่มทีหลังได้)<br>` : '') +
+                (blank ? `ไม่บันทึก <b>${blank}</b> คนที่ยังไม่ได้กรอกอะไร<br>` : '') +
                 'ถ้าเด็กมีผลของผู้ตรวจประเภทเดียวกันในรอบนี้อยู่แล้ว จะถูกอัปเดตทับ (ผลของอีกประเภทไม่ถูกแตะ)',
             showCancelButton: true, confirmButtonText: 'ยืนยันบันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#15803d'
         });
