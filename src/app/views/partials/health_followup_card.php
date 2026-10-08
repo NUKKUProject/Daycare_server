@@ -1,61 +1,12 @@
 <?php
-// การ์ดบนแดชบอร์ดครู/admin: เรื่องสุขภาพที่ต้องติดตามกับผู้ปกครอง และผู้ปกครองแจ้งกลับแล้วหรือยัง (ทั้งศูนย์)
-//
-// ออกแบบให้เพิ่มการตรวจสุขภาพชนิดอื่นได้ในภายหลัง: แต่ละชนิดมีฟังก์ชัน "provider" ที่คืนรายการในรูปแบบเดียวกัน
-// (ดูตัวอย่างจาก tfuProviderDental) แล้วเพิ่มชื่อฟังก์ชันเข้า $tfuProviders การ์ดจะรวมแสดงให้เอง
-// รูปแบบรายการ: type, type_label, student_id, nickname, name, classroom, detail, urgency (urgent|preventable|not_urgent|''),
-//   count_text, checked_at (วันที่ตรวจ), status ('' = ยังไม่ตอบ | acknowledged | scheduled | treated),
-//   status_date, note, replied_at, link
-require_once __DIR__ . '/../../../config/database.php';
-
-/** ผลตรวจฟันของแพทย์ล่าสุดของเด็กแต่ละคนที่พบฟันผุ */
-function tfuProviderDental(PDO $pdo): array
-{
-    $stmt = $pdo->query("
-        WITH latest AS (
-            SELECT DISTINCT ON (h.student_id)
-                   h.student_id, h.round_id, h.decayed_teeth, h.teeth_status, h.urgency, h.examined_at, h.updated_at,
-                   h.followup_status, h.followup_date, h.followup_note, h.followup_updated_at, h.followup_by_role
-            FROM health_tooth_external h
-            LEFT JOIN tooth_exam_rounds r ON r.id = h.round_id
-            WHERE h.exam_type = 'doctor'
-            ORDER BY h.student_id, r.academic_year DESC NULLS LAST, r.round_no DESC NULLS LAST, h.id DESC
-        )
-        SELECT l.*, c.nickname, c.prefix_th, c.firstname_th, c.lastname_th, c.classroom
-        FROM latest l
-        JOIN children c ON c.studentid = l.student_id
-        WHERE c.status = 'กำลังศึกษา' AND (COALESCE(l.decayed_teeth, 0) > 0 OR l.teeth_status = 'abnormal')
-    ");
-    $items = [];
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
-        $n = (int) $r['decayed_teeth'];
-        $items[] = [
-            'type' => 'dental', 'type_label' => 'ช่องปาก',
-            'student_id' => $r['student_id'], 'nickname' => $r['nickname'],
-            'name' => trim(($r['prefix_th'] ?? '') . ($r['firstname_th'] ?? '') . ' ' . ($r['lastname_th'] ?? '')),
-            'classroom' => $r['classroom'], 'detail' => 'พบฟันผุ', 'urgency' => $r['urgency'] ?? '',
-            'count_text' => $n > 0 ? $n . ' ซี่' : '', 'checked_at' => $r['examined_at'] ?: substr((string) $r['updated_at'], 0, 10),
-            'status' => $r['followup_status'] ?: '', 'status_date' => $r['followup_date'], 'note' => $r['followup_note'],
-            'replied_at' => $r['followup_updated_at'], 'by' => $r['followup_by_role'] ?? '',
-            'link' => '../check_health_tooth/checklist_grid.php?round_id=' . (int) $r['round_id'] . '&search=' . rawurlencode($r['student_id']),
-        ];
-    }
-    return $items;
-}
-
-// เพิ่มการตรวจสุขภาพชนิดอื่นที่นี่ เช่น 'tfuProviderGrowth'
-$tfuProviders = ['tfuProviderDental'];
+// การ์ดสรุปบนแดชบอร์ดครู/admin: เรื่องสุขภาพที่ต้องติดตามกับผู้ปกครอง และผู้ปกครองแจ้งกลับแล้วหรือยัง (ทั้งศูนย์)
+// ข้อมูลมาจากไลบรารีกลาง include/function/health_followup_functions.php (เพิ่มการตรวจชนิดใหม่ที่นั่น)
+// หน้าเต็มสำหรับค้นหา/กรอง/บันทึกแทนผู้ปกครอง: views/health_followup.php
+require_once __DIR__ . '/../../include/function/health_followup_functions.php';
 
 $tfuItems = [];
 try {
-    $tfuPdo = getDatabaseConnection();
-    foreach ($tfuProviders as $provider) {
-        try {
-            $tfuItems = array_merge($tfuItems, $provider($tfuPdo));
-        } catch (Exception $e) {
-            error_log('health follow-up provider ' . $provider . ': ' . $e->getMessage());   // ยังไม่ได้รัน migration ก็ไม่ให้แดชบอร์ดพัง
-        }
-    }
+    $tfuItems = hf_fetch_items(getDatabaseConnection());
 } catch (Exception $e) {
     error_log('health follow-up card: ' . $e->getMessage());
 }
@@ -133,6 +84,7 @@ if ($tfuItems):
             <div class="s">เรื่องสุขภาพที่ต้องติดตามกับผู้ปกครอง ทั้งศูนย์ <?= count($tfuItems) ?> รายการ</div>
         </div>
         <div class="tfu-stats">
+            <a href="/app/views/health_followup.php" class="tfu-pill" style="background:#1E4F6F;color:#fff;text-decoration:none;">ดูทั้งหมด <i class="bi bi-chevron-right"></i></a>
             <span class="tfu-pill none">ยังไม่ตอบ <?= $tfuCount['none'] ?></span>
             <span class="tfu-pill ack">รับทราบ <?= $tfuCount['acknowledged'] ?></span>
             <span class="tfu-pill sch">นัดหมอ <?= $tfuCount['scheduled'] ?></span>

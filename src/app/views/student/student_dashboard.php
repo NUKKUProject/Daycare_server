@@ -129,10 +129,11 @@ if ($child) {
             SELECT h.id, h.total_teeth, h.decayed_teeth, h.teeth_status, h.urgency, h.doctor_name, h.oral_components,
                    h.missing_teeth_detail, h.other_treatment_detail, h.examined_at, h.updated_at,
                    h.decayed_teeth_positions::text AS positions, h.treatments::text AS treatments,
-                   h.followup_status, h.followup_date, h.followup_note, h.followup_by_role, h.parent_ack_at,
+                   f.status AS followup_status, f.followup_date, f.note AS followup_note, f.by_role AS followup_by_role, f.ack_at AS parent_ack_at,
                    r.title AS round_title, r.academic_year
             FROM health_tooth_external h
             LEFT JOIN tooth_exam_rounds r ON r.id = h.round_id
+            LEFT JOIN health_followups f ON f.source_type = 'dental' AND f.source_id = h.id
             WHERE h.student_id = :s AND h.exam_type = 'doctor'
             ORDER BY r.academic_year DESC NULLS LAST, r.round_no DESC NULLS LAST, h.id DESC
             LIMIT 1
@@ -1184,9 +1185,9 @@ $viewTabs = [
                 });
                 if (!r.isConfirmed) { modal.show(); return; }
                 try {
-                    const res = await fetch('../../include/function/tooth_followup_api.php', {
+                    const res = await fetch('../../include/function/health_followup_api.php', {
                         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                        body: JSON.stringify({ id: RECORD_ID, status, date: r.value.date, note: r.value.note })
+                        body: JSON.stringify({ type: 'dental', id: RECORD_ID, status, date: r.value.date, note: r.value.note })
                     });
                     const data = await res.json();
                     if (data.status !== 'success') throw new Error(data.message || 'บันทึกไม่สำเร็จ');

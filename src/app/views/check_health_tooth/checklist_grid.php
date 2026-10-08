@@ -417,9 +417,9 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         });
         if (!res.isConfirmed) return;
         try {
-            const r2 = await fetch('../../include/function/tooth_followup_api.php', {
+            const r2 = await fetch('../../include/function/health_followup_api.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json', ...XHR },
-                body: JSON.stringify({ id: f.id, status, date: res.value.date, note: res.value.note })
+                body: JSON.stringify({ type: 'dental', id: f.id, status, date: res.value.date, note: res.value.note })
             });
             const data = await r2.json();
             if (data.status !== 'success') throw new Error(data.message || 'บันทึกไม่สำเร็จ');

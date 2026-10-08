@@ -57,13 +57,14 @@ try {
     if ($children) {
         $ids = array_column($children, 'studentid');
         $in = implode(',', array_fill(0, count($ids), '?'));
-        $recStmt = $pdo->prepare("SELECT id, student_id, exam_type, total_teeth, decayed_teeth, oral_components, teeth_status,
-                   missing_teeth_detail, decayed_teeth_positions::text AS decayed_teeth_positions,
-                   treatments::text AS treatments, other_treatment_detail, urgency, doctor_name, examined_by, updated_at,
-                   parent_ack_at, followup_status, followup_date, followup_note, followup_by_role
-            FROM health_tooth_external
-            WHERE round_id = ? AND student_id IN ($in)
-            ORDER BY id");
+        $recStmt = $pdo->prepare("SELECT h.id, h.student_id, h.exam_type, h.total_teeth, h.decayed_teeth, h.oral_components, h.teeth_status,
+                   h.missing_teeth_detail, h.decayed_teeth_positions::text AS decayed_teeth_positions,
+                   h.treatments::text AS treatments, h.other_treatment_detail, h.urgency, h.doctor_name, h.examined_by, h.updated_at,
+                   f.ack_at AS parent_ack_at, f.status AS followup_status, f.followup_date, f.note AS followup_note, f.by_role AS followup_by_role
+            FROM health_tooth_external h
+            LEFT JOIN health_followups f ON f.source_type = 'dental' AND f.source_id = h.id
+            WHERE h.round_id = ? AND h.student_id IN ($in)
+            ORDER BY h.id");
         $recStmt->execute(array_merge([$roundId], $ids));
         $decode = function ($v, $default) {
             if ($v === null || $v === '') {

@@ -22,6 +22,8 @@ function isCurrentPage($path)
 
 // วาดเมนูแบบกลุ่มที่พับ/กางได้ (ใช้ร่วมกันระหว่าง admin และครู)
 // $menu = [['title' =>, 'icon' =>, 'items' => [['label', 'href', 'match', 'icon', 'sub'?]]]]
+require_once __DIR__ . '/../function/health_followup_functions.php';
+
 function renderSidebarGroups(array $menu, string $storageKey)
 {
     static $styleDone = false;
@@ -77,6 +79,9 @@ function renderSidebarGroups(array $menu, string $storageKey)
                             href="<?php echo htmlspecialchars($item['href']); ?>">
                             <i class="<?php echo htmlspecialchars($item['icon']); ?>"></i>
                             <?php echo htmlspecialchars($item['label']); ?>
+                            <?php if (!empty($item['badge'])): ?>
+                                <span class="badge rounded-pill bg-danger ms-auto"><?php echo (int) $item['badge']; ?></span>
+                            <?php endif; ?>
                         </a>
                     </li>
                 <?php endforeach; ?>
@@ -172,6 +177,7 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                     ['label' => 'ตรวจร่างกายประจำวัน', 'href' => '/app/views/checklist_history.php', 'match' => 'checklist_history.php', 'icon' => 'fa-solid fa-stethoscope'],
                                     ['label' => 'ตรวจสุขภาพโดยกุมารแพทย์', 'href' => '/app/views/check_health_external/checklist_name.php', 'match' => 'check_health_external', 'icon' => 'fa-solid fa-user-doctor'],
                                     ['label' => 'ตรวจสุขภาพช่องปาก', 'href' => '/app/views/check_health_tooth/checklist_name.php', 'match' => 'check_health_tooth', 'icon' => 'fa-solid fa-tooth'],
+                                    ['label' => 'ติดตามสุขภาพ', 'href' => '/app/views/health_followup.php', 'match' => 'health_followup.php', 'icon' => 'bi bi-heart-pulse', 'badge' => hf_pending_count()],
                                     ['label' => 'กราฟการเจริญเติบโต', 'href' => '/app/views/growth_history.php', 'match' => 'growth_history.php', 'icon' => 'bi bi-graph-up'],
                                 ],
                             ],
@@ -219,6 +225,7 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                     ['label' => 'ตรวจร่างกายประจำวัน', 'href' => '/app/views/checklist_history.php', 'match' => 'checklist_history.php', 'icon' => 'fa-solid fa-stethoscope'],
                                     ['label' => 'ตรวจสุขภาพโดยกุมารแพทย์', 'href' => '/app/views/check_health_external/checklist_name.php', 'match' => 'check_health_external', 'icon' => 'fa-solid fa-user-doctor'],
                                     ['label' => 'ตรวจสุขภาพช่องปาก', 'href' => '/app/views/check_health_tooth/checklist_name.php', 'match' => 'check_health_tooth', 'icon' => 'fa-solid fa-tooth'],
+                                    ['label' => 'ติดตามสุขภาพ', 'href' => '/app/views/health_followup.php', 'match' => 'health_followup.php', 'icon' => 'bi bi-heart-pulse', 'badge' => hf_pending_count()],
                                     ['label' => 'กราฟการเจริญเติบโต', 'href' => '/app/views/growth_history.php', 'match' => 'growth_history.php', 'icon' => 'bi bi-graph-up'],
                                 ],
                             ],
