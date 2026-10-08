@@ -50,6 +50,7 @@ const CHILD_COLUMN_LABELS = [
     'relative_first_name' => 'ชื่อผู้ปกครอง/ผู้ดูแล',
     'relative_last_name' => 'นามสกุลผู้ปกครอง/ผู้ดูแล',
     'relative_phone' => 'เบอร์โทรผู้ปกครอง/ผู้ดูแล',
+    'relative_phone_backup' => 'เบอร์โทรสำรองผู้ปกครอง/ผู้ดูแล',
     'emergency_contact' => 'ผู้ติดต่อฉุกเฉิน',
     'emergency_phone' => 'เบอร์โทรฉุกเฉิน',
     'emergency_relation' => 'ความสัมพันธ์ผู้ติดต่อฉุกเฉิน',
@@ -80,8 +81,10 @@ function child_csv_cell(string $col, $value): string
         return $value ? 'ใช่' : 'ไม่ใช่';
     }
     $v = (string) $value;
-    if ($v !== '' && child_is_text_number_column($col) && preg_match('/^\d+$/', $v)) {
-        return '="' . $v . '"';   // Excel จะไม่ตัดเลข 0 นำหน้า
+    // คอลัมน์เบอร์/เลขบัตร/รหัส: ค่าที่หน้าตาเป็นตัวเลข (รวมที่มีเว้นวรรค ขีด จุด) ต้องบังคับเป็นข้อความ
+    // ไม่เช่นนั้น Excel จะแปลงเป็นตัวเลข (ตัดเลข 0 นำหน้า หรือขึ้น 8.12E+09) หรือเป็นวันที่
+    if ($v !== '' && child_is_text_number_column($col) && preg_match('/^[\d\s\-\.\/\+\(\)]+$/', $v)) {
+        return '="' . trim($v) . '"';
     }
     // กัน CSV injection: ค่าที่ขึ้นต้นด้วยอักขระสูตร
     if ($v !== '' && strpos("=+-@\t\r", $v[0]) !== false && !preg_match('/^-?\d+(\.\d+)?$/', $v)) {
