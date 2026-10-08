@@ -89,6 +89,9 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     .tg .tgl:active:not(:disabled) { transform: scale(.96); }
     .tg .tgl.on { background: #16a34a; border-color: #15803d; color: #fff; }
     .tg .tgl.on:hover:not(:disabled) { background: #15803d; color: #fff; }
+    /* ปุ่มที่ติ๊กแล้วต้องเป็นสีเขียวเสมอ แม้เป็นช่องที่แพทย์แก้ต่างจากครู (ให้ใช้วงแหวนเหลืองบอกความต่างแทนการเปลี่ยนสีพื้น) */
+    .tg .tgl.on, .tg .tgl.on.diff { background: #16a34a !important; border-color: #15803d !important; color: #fff !important; }
+    .tg .tgl.diff { box-shadow: 0 0 0 3px #fde047; }
     .tg .tgl:disabled { cursor: default; opacity: .6; }
     .tg .st { font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
     .tg .st.saved { background: #dcfce7; color: #15803d; }
