@@ -20,9 +20,23 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     .tg-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, .06); padding: .9rem 1.25rem; margin-bottom: .85rem; }
     .tg-card label, .tg-ctx label { font-size: .78rem; font-weight: 700; color: #475569; margin-bottom: .15rem; }
     .gs { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: #1e4db7; color: #fff; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; }
-    .tg-ctx { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1rem; align-items: end; }
-    @media (max-width: 992px) { .tg-ctx { grid-template-columns: 1fr; } }
+    .page-title { font-size: 1.5rem; font-weight: 700; color: #0f2460; margin: 0; }
+    .sec { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+    @media (max-width: 992px) { .sec { grid-template-columns: 1fr; gap: .75rem; } }
+    .sec-head { display: flex; gap: .65rem; align-items: flex-start; }
+    .sec-head .gs { margin-top: 2px; }
+    .sec-title { font-weight: 700; font-size: 1.02rem; color: #0f2460; line-height: 1.25; }
+    .sec-sub { font-size: .8rem; color: #64748b; line-height: 1.3; }
+    .fgrid { display: grid; gap: .75rem 1rem; }
+    .fgrid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .fgrid.c3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr) auto; }
+    @media (max-width: 992px) { .fgrid.c4, .fgrid.c3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 576px) { .fgrid.c4, .fgrid.c3 { grid-template-columns: 1fr; } }
+    .fld > label { display: block; font-size: .78rem; font-weight: 700; color: #475569; margin-bottom: .2rem; }
+    .fld .help { min-height: 1.5rem; margin-top: .3rem; display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; font-size: .75rem; color: #64748b; }
+    .fld .as-field { height: 38px; display: flex; align-items: center; gap: .4rem; }
     .ctx-title { font-size: .75rem; font-weight: 700; color: #64748b; margin-bottom: .35rem; }
+    .tg-divider { border: 0; border-top: 1px solid #e2e8f0; margin: .9rem 0; }
     .chip { border-radius: 999px; padding: 2px 10px; font-weight: 700; font-size: .78rem; background: #f1f5f9; color: #475569; white-space: nowrap; }
     .chip.open { background: #dcfce7; color: #15803d; }
     .chip.closed { background: #fee2e2; color: #b91c1c; }
@@ -95,86 +109,102 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
 <main class="main-content">
     <div class="container-fluid px-4">
         <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
-            <div>
-                <h2 class="mb-1">กรอกผลตรวจสุขภาพช่องปากทั้งห้อง</h2>
-                <div class="text-muted">
-                    <span class="gs">1</span> ตรวจสอบรอบและข้อมูลการตรวจ → <span class="gs">2</span> เลือกกลุ่ม/ห้อง หรือค้นหาชื่อ (รายชื่อขึ้นเอง) → <span class="gs">3</span> กรอกในตาราง แล้วกด "บันทึกทั้งห้อง"
-                </div>
-            </div>
-            <a href="checklist_name.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>กลับหน้าเลือกรอบ</a>
+            <h2 class="page-title">กรอกผลตรวจสุขภาพช่องปากทั้งห้อง</h2>
+            <a href="checklist_name.php" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>กลับหน้าเลือกรอบ</a>
         </div>
 
-        <!-- 1) รอบ + ข้อมูลการตรวจ -->
-        <div class="tg-card tg-ctx">
-            <div>
-                <div class="ctx-title"><span class="gs">1</span> รอบตรวจ</div>
-                <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <select id="gRound" class="form-select" style="max-width:280px" aria-label="รอบตรวจ"></select>
-                    <span id="gRoundChips" class="d-flex flex-wrap gap-1"></span>
-                </div>
-            </div>
-            <div class="row g-2">
-                <div class="col-5">
-                    <label for="gDate">วันที่ตรวจ</label>
-                    <input type="date" id="gDate" class="form-control">
-                </div>
-                <div class="col-7">
-                    <label for="gDoctor">ชื่อผู้ตรวจ</label>
-                    <input type="text" id="gDoctor" class="form-control" value="<?= htmlspecialchars($defaultDoctor) ?>" maxlength="100">
-                </div>
-                <div class="col-12 d-flex align-items-center gap-2">
-                    <label class="mb-0">บันทึกในฐานะ</label>
-                    <?php if (count($allowedTypes) === 1): ?>
-                        <input type="hidden" id="gType" value="<?= $allowedTypes[0] ?>">
-                        <span class="chip <?= $allowedTypes[0] ?>" title="กำหนดตามสิทธิ์ที่เข้าสู่ระบบ"><?= $typeLabels[$allowedTypes[0]] ?></span>
-                        <span class="text-muted small">(ตามสิทธิ์ของคุณ)</span>
-                    <?php else: ?>
-                        <select id="gType" class="form-select form-select-sm" style="max-width:160px" aria-label="บันทึกในฐานะ">
-                            <?php foreach ($allowedTypes as $t): ?>
-                                <option value="<?= $t ?>"><?= $typeLabels[$t] ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2) เลือกกลุ่ม/ห้อง -->
         <div class="tg-card">
-            <div class="ctx-title"><span class="gs">2</span> เลือกเด็ก</div>
-            <div class="row g-3 align-items-end">
-                <div class="col-6 col-md-3">
-                    <label for="gGroup">กลุ่มเรียน</label>
-                    <select id="gGroup" class="form-select">
-                        <option value="">-- เลือก --</option>
-                        <?php foreach ($groups as $g): if (!empty($g['child_group'])): ?>
-                            <option value="<?= htmlspecialchars($g['child_group']) ?>"><?= htmlspecialchars($g['child_group']) ?></option>
-                        <?php endif; endforeach; ?>
-                    </select>
+            <!-- ส่วนที่ 1: ข้อมูลการตรวจ -->
+            <div class="sec">
+                <div class="sec-head">
+                    <span class="gs">1</span>
+                    <div>
+                        <div class="sec-title">ข้อมูลการตรวจ</div>
+                        <div class="sec-sub">ตั้งครั้งเดียว ใช้กับเด็กทุกคนที่บันทึก</div>
+                    </div>
                 </div>
-                <div class="col-6 col-md-3">
-                    <label for="gRoom">ห้องเรียน</label>
-                    <select id="gRoom" class="form-select"><option value="">ทุกห้องในกลุ่ม</option></select>
+                <div class="fgrid c4">
+                    <div class="fld">
+                        <label for="gRound">รอบตรวจ</label>
+                        <select id="gRound" class="form-select" aria-label="รอบตรวจ"></select>
+                        <div class="help" id="gRoundChips"></div>
+                    </div>
+                    <div class="fld">
+                        <label for="gDate">วันที่ตรวจ</label>
+                        <input type="date" id="gDate" class="form-control">
+                        <div class="help"></div>
+                    </div>
+                    <div class="fld">
+                        <label for="gDoctor">ชื่อผู้ตรวจ</label>
+                        <input type="text" id="gDoctor" class="form-control" value="<?= htmlspecialchars($defaultDoctor) ?>" maxlength="100">
+                        <div class="help"></div>
+                    </div>
+                    <div class="fld">
+                        <label for="gType">บันทึกในฐานะ</label>
+                        <?php if (count($allowedTypes) === 1): ?>
+                            <input type="hidden" id="gType" value="<?= $allowedTypes[0] ?>">
+                            <div class="as-field"><span class="chip <?= $allowedTypes[0] ?>"><?= $typeLabels[$allowedTypes[0]] ?></span></div>
+                            <div class="help">ตามสิทธิ์ที่เข้าสู่ระบบ</div>
+                        <?php else: ?>
+                            <select id="gType" class="form-select">
+                                <?php foreach ($allowedTypes as $t): ?>
+                                    <option value="<?= $t ?>"><?= $typeLabels[$t] ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="help">ผู้ดูแลระบบเลือกได้</div>
+                        <?php endif; ?>
+                    </div>
                 </div>
-                <div class="col-12 col-md-4">
-                    <label for="gSearch">หรือค้นหาชื่อ / รหัส</label>
-                    <input type="text" id="gSearch" class="form-control" placeholder="พิมพ์แล้วรายชื่อขึ้นเอง" autocomplete="off">
+            </div>
+
+            <hr class="tg-divider">
+
+            <!-- ส่วนที่ 2: เลือกเด็ก -->
+            <div class="sec">
+                <div class="sec-head">
+                    <span class="gs">2</span>
+                    <div>
+                        <div class="sec-title">เลือกเด็ก</div>
+                        <div class="sec-sub">เลือกแล้วรายชื่อขึ้นเอง</div>
+                    </div>
                 </div>
-                <div class="col-12 col-md-2 d-flex gap-2">
-                    <button type="button" class="btn btn-outline-primary flex-fill" id="gLoad" title="โหลดรายชื่อใหม่"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button>
-                </div>
-                <div class="col-12">
-                    <a class="small text-decoration-none" data-bs-toggle="collapse" href="#gMore" role="button" aria-expanded="false"><i class="bi bi-sliders"></i> ตัวกรองเพิ่มเติม</a>
-                    <div class="collapse mt-2" id="gMore">
-                        <div class="row g-3">
-                            <div class="col-6 col-md-3">
-                                <label for="gStudentYear">เฉพาะเด็กที่เข้าเรียนปีการศึกษา</label>
-                                <select id="gStudentYear" class="form-select">
-                                    <option value="all">ทั้งหมด</option>
-                                    <?php foreach ($academicYears as $y): ?>
-                                        <option value="<?= htmlspecialchars($y['name']) ?>"><?= htmlspecialchars($y['name']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                <div>
+                    <div class="fgrid c3">
+                        <div class="fld">
+                            <label for="gGroup">กลุ่มเรียน</label>
+                            <select id="gGroup" class="form-select">
+                                <option value="">-- เลือก --</option>
+                                <?php foreach ($groups as $g): if (!empty($g['child_group'])): ?>
+                                    <option value="<?= htmlspecialchars($g['child_group']) ?>"><?= htmlspecialchars($g['child_group']) ?></option>
+                                <?php endif; endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="fld">
+                            <label for="gRoom">ห้องเรียน</label>
+                            <select id="gRoom" class="form-select"><option value="">ทุกห้องในกลุ่ม</option></select>
+                        </div>
+                        <div class="fld">
+                            <label for="gSearch">หรือค้นหาชื่อ / รหัส</label>
+                            <input type="text" id="gSearch" class="form-control" placeholder="พิมพ์ชื่อ ชื่อเล่น หรือรหัส" autocomplete="off">
+                        </div>
+                        <div class="fld">
+                            <label>&nbsp;</label>
+                            <button type="button" class="btn btn-outline-primary w-100" id="gLoad" title="โหลดรายชื่อใหม่"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <a class="small text-decoration-none" data-bs-toggle="collapse" href="#gMore" role="button" aria-expanded="false"><i class="bi bi-sliders"></i> ตัวกรองเพิ่มเติม</a>
+                        <div class="collapse mt-2" id="gMore">
+                            <div class="fgrid c4">
+                                <div class="fld">
+                                    <label for="gStudentYear">เฉพาะเด็กที่เข้าเรียนปีการศึกษา</label>
+                                    <select id="gStudentYear" class="form-select">
+                                        <option value="all">ทั้งหมด</option>
+                                        <?php foreach ($academicYears as $y): ?>
+                                            <option value="<?= htmlspecialchars($y['name']) ?>"><?= htmlspecialchars($y['name']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -184,7 +214,13 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
 
         <!-- 3) ตาราง -->
         <div class="tg-card">
-            <div class="ctx-title"><span class="gs">3</span> กรอกผลตรวจ</div>
+            <div class="sec-head mb-2">
+                <span class="gs">3</span>
+                <div>
+                    <div class="sec-title">กรอกผลตรวจ</div>
+                    <div class="sec-sub">กรอกในตาราง แล้วกด "บันทึกทั้งห้อง" ที่แถบด้านล่าง</div>
+                </div>
+            </div>
             <div id="gClosed" class="tg-closed" style="display:none"><i class="bi bi-lock-fill me-1"></i>รอบตรวจนี้ถูกปิดแล้ว ดูข้อมูลได้อย่างเดียว (ให้ผู้ดูแลระบบเปิดรอบอีกครั้งถ้าต้องแก้)</div>
             <div class="tg-progress" id="gProgress" style="display:none">
                 <span id="gProgressText" class="fw-bold"></span>
