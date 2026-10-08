@@ -255,6 +255,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                     <div class="col-12">
                         <button type="submit" class="btn btn-primary">ค้นหา</button>
                         <button type="button" class="btn btn-secondary" onclick="resetForm()">รีเซ็ต</button>
+                        <a href="checklist_grid.php" class="btn btn-outline-success"><i class="fas fa-table"></i> กรอกทั้งห้อง (ตาราง)</a>
                         <button type="button" class="btn btn-danger" onclick="exportToPdf()">
                             <i class="fas fa-file-pdf"></i> Export Pdf
                         </button>
