@@ -440,8 +440,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                     <div class="rc-date">วันที่ ${roundDateText(r)}</div>
                     <div class="rc-chips">
                         <span class="rchip ${open ? 'open' : 'closed'}">${open ? 'เปิดอยู่' : 'ปิดแล้ว'}</span>
-                        <span class="rchip teacher">ครู ${r.teacher_count} คน</span>
-                        <span class="rchip doctor">แพทย์ ${r.doctor_count} คน</span>
+                        <span class="rchip">ตรวจแล้ว ${r.child_count} คน</span>
                     </div>
                     <div class="rc-go">กรอกผลเป็นตาราง <i class="fas fa-arrow-right"></i></div>
                     <span class="rc-more" data-more="${r.id}">รายคน / ส่งออก</span>
@@ -656,22 +655,15 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                 }
 
                 // สรุปสถานะของรอบนี้ในรายชื่อที่แสดง
-                const cnt = {
-                    none: 0,
-                    teacher: 0,
-                    doctor: 0,
-                    legacy: 0
-                };
-                data.forEach(st => {
-                    if (st.id == null) cnt.none++;
-                    else cnt[st.exam_type] = (cnt[st.exam_type] || 0) + 1;
-                });
+                const done = data.filter(st => st.id != null).length;
+                const none = data.length - done;
                 document.getElementById('sumRow').innerHTML =
                     `<span class="rchip">ทั้งหมด ${data.length} คน</span>` +
-                    `<span class="rchip">ยังไม่ตรวจ ${cnt.none}</span>` +
-                    `<span class="rchip teacher">ครูคัดกรอง ${cnt.teacher}</span>` +
-                    `<span class="rchip doctor">แพทย์ตรวจ ${cnt.doctor}</span>` +
-                    (cnt.legacy ? `<span class="rchip">ข้อมูลเดิม ${cnt.legacy}</span>` : '');
+                    `<span class="rchip open">ตรวจแล้ว ${done}</span>` +
+                    `<span class="rchip">ยังไม่ตรวจ ${none}</span>`;
+                const cnt = {
+                    none: none
+                };
                 resultsLoaded = true;
                 updateSteps();
                 setState(3, cnt.none === 0, cnt.none === 0 ? 'ตรวจครบทุกคน' : `เหลือ ${cnt.none} คน`);
@@ -798,17 +790,9 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
     // ป้ายสถานะการตรวจ: แพทย์ตรวจแล้ว / ครูคัดกรองแล้ว (รอแพทย์) / ข้อมูลเดิม / ยังไม่มีการบันทึก
     function examStatusBadge(student, hasRecord) {
-        if (!hasRecord) {
-            return '<span class="badge bg-secondary">ยังไม่มีการบันทึก</span>';
-        }
-        if (student.exam_type === 'doctor') {
-            return '<span class="badge bg-success">แพทย์ตรวจแล้ว</span>' +
-                (student.has_teacher ? '<div class="small text-muted">มีผลคัดกรองของครูด้วย</div>' : '');
-        }
-        if (student.exam_type === 'teacher') {
-            return '<span class="badge bg-warning text-dark">ครูคัดกรองแล้ว · รอแพทย์ตรวจ</span>';
-        }
-        return '<span class="badge bg-light text-dark border">ข้อมูลเดิม</span>';
+        return hasRecord ?
+            '<span class="badge bg-success">ตรวจแล้ว</span>' :
+            '<span class="badge bg-secondary">ยังไม่มีการบันทึก</span>';
     }
 
     // เพิ่มฟังก์ชันจัดกลุ่มข้อมูล
