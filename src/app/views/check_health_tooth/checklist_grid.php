@@ -33,6 +33,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     .tg-pill.ready { background: #dbeafe; color: #1d4ed8; }
     .tg-pill.todo { background: #fef3c7; color: #b45309; }
     .tg-pill.prefill { background: #ede9fe; color: #6d28d9; }
+    .gs { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: #1e4db7; color: #fff; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; }
     .tg-closed { background: #fee2e2; color: #b91c1c; border-radius: 8px; padding: .5rem .9rem; font-weight: 700; margin-bottom: .6rem; }
 
     .tg-wrap { overflow: auto; max-height: 70vh; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; }
@@ -83,7 +84,12 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
 <main class="main-content">
     <div class="container-fluid px-4">
         <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
-            <h2 class="mb-0">กรอกผลตรวจสุขภาพช่องปากทั้งห้อง</h2>
+            <div>
+                <h2 class="mb-1">กรอกผลตรวจสุขภาพช่องปากทั้งห้อง</h2>
+                <div class="text-muted">
+                    <span class="gs">1</span> เลือกรอบ → <span class="gs">2</span> เลือกห้องแล้วกด "โหลดรายชื่อ" → <span class="gs">3</span> กรอกในตาราง แล้วกด "บันทึกทั้งห้อง"
+                </div>
+            </div>
             <a href="checklist_name.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>กลับหน้ารายชื่อ</a>
         </div>
 
@@ -178,6 +184,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     const URG = [['urgent', 'ด่วน'], ['not_urgent', 'ไม่เร่งด่วน'], ['preventable', 'ผัดผ่อนได้']];
     const EXAM_TEXT = { doctor: 'แพทย์ตรวจแล้ว', teacher: 'ครูคัดกรอง', legacy: 'ข้อมูลเดิม' };
 
+    const PRE = Object.fromEntries(new URLSearchParams(location.search));
     let rows = [];
     let roundClosed = false;
     let loadedRoundId = null;
@@ -335,6 +342,8 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
                 : '<option value="">ยังไม่มีรอบ — ให้ admin เปิดรอบ</option>';
             const firstOpen = list.find((r) => r.status === 'open');
             if (firstOpen) sel.value = firstOpen.id;
+            // ค่าที่ส่งมาจากหน้ารายชื่อ (ถ้ามี)
+            if (PRE.round_id && list.some((r) => String(r.id) === PRE.round_id)) sel.value = PRE.round_id;
         } catch (e) { sel.innerHTML = '<option value="">โหลดรอบไม่สำเร็จ</option>'; }
     }
 
@@ -441,14 +450,24 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
             if (next) { next.focus(); next.select(); }
         });
         window.addEventListener('beforeunload', (e) => { if (window.__dirty) { e.preventDefault(); e.returnValue = ''; } });
-        loadRounds();
+        applyPreselect();
+    }
+
+    // มาจากหน้ารายชื่อ: ใส่ค่าที่เลือกไว้ให้ แล้วโหลดรายชื่อต่อเลย
+    async function applyPreselect() {
+        if (PRE.academic_year && [...byId('gYear').options].some((o) => o.value === PRE.academic_year)) byId('gYear').value = PRE.academic_year;
+        if (PRE.student_year && [...byId('gStudentYear').options].some((o) => o.value === PRE.student_year)) byId('gStudentYear').value = PRE.student_year;
+        if (PRE.child_group) { byId('gGroup').value = PRE.child_group; await loadRooms(); }
+        if (PRE.classroom) byId('gRoom').value = PRE.classroom;
+        await loadRounds();
+        if (byId('gRound').value && (byId('gGroup').value || byId('gRoom').value)) loadList();
     }
 
     function loadRooms() {
         const group = byId('gGroup').value, sel = byId('gRoom');
         sel.innerHTML = '<option value="">ทุกห้อง</option>';
-        if (!group) return;
-        fetch(`../../include/function/get_classrooms.php?child_group=${encodeURIComponent(group)}`)
+        if (!group) return Promise.resolve();
+        return fetch(`../../include/function/get_classrooms.php?child_group=${encodeURIComponent(group)}`)
             .then((r) => r.json())
             .then((d) => { [...new Set((Array.isArray(d) ? d : []).map((c) => c.classroom_name))].forEach((n) => { const o = document.createElement('option'); o.value = o.textContent = n; sel.appendChild(o); }); })
             .catch(console.error);
