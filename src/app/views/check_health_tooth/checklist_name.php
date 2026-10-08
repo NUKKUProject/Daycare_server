@@ -218,6 +218,8 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     .round-card .rc-title { font-weight: 700; color: #334155; }
     .round-card .rc-date { font-size: .82rem; color: #64748b; margin: .25rem 0 .5rem; }
     .round-card .rc-chips { display: flex; flex-wrap: wrap; gap: .3rem; }
+    .round-card .rc-go { margin-top: .6rem; font-weight: 700; color: #15803d; font-size: .88rem; }
+    .round-card .rc-more { display: inline-block; margin-top: .35rem; font-size: .78rem; color: #1e4db7; text-decoration: underline; }
 </style>
 
 <main class="main-content">
@@ -236,7 +238,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                     <span class="step-no">1</span>
                     <div>
                         <div class="step-title">เลือกรอบตรวจ</div>
-                        <div class="step-sub">รอบตรวจเปิดโดยผู้ดูแลระบบ ครูและแพทย์กรอกได้ทันทีเมื่อรอบเปิดอยู่</div>
+                        <div class="step-sub">กดการ์ดรอบที่ต้องการ ระบบจะพาไปหน้ากรอกผลตรวจเป็นตาราง (รอบตรวจเปิดโดยผู้ดูแลระบบ)</div>
                     </div>
                     <span class="step-state wait" id="state1">รอเลือกรอบ</span>
                 </div>
@@ -254,7 +256,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             </section>
 
             <!-- ขั้นที่ 2 -->
-            <section class="step locked" id="step2">
+            <section class="step locked" id="step2" style="display:none;">
                 <div class="step-head">
                     <span class="step-no">2</span>
                     <div>
@@ -319,7 +321,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
         </form>
 
         <!-- ขั้นที่ 3 -->
-        <section class="step locked" id="step3">
+        <section class="step locked" id="step3" style="display:none;">
             <div class="step-head">
                 <span class="step-no">3</span>
                 <div>
@@ -346,8 +348,8 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             </div>
         </section>
 
-        <!-- ตารางแสดงผล -->
-        <div class="card shadow-sm">
+        <!-- ตารางแสดงผล (เปิดเมื่อกด "รายคน / ส่งออก") -->
+        <div class="card shadow-sm" id="resultCard" style="display:none;">
             <div class="card-body">
                 <div class="table-responsive" id="resultTable">
                     <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
@@ -432,7 +434,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
         } else {
             box.innerHTML = list.map(r => {
                 const open = r.status === 'open';
-                return `<button type="button" class="round-card ${String(r.id) === String(selected) ? 'selected' : ''} ${open ? '' : 'closed'}" data-round="${r.id}">
+                return `<div role="button" tabindex="0" class="round-card ${String(r.id) === String(selected) ? 'selected' : ''} ${open ? '' : 'closed'}" data-round="${r.id}">
                     <div class="rc-year">${r.academic_year}</div>
                     <div class="rc-title">${r.title}</div>
                     <div class="rc-date">วันที่ ${roundDateText(r)}</div>
@@ -441,13 +443,28 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                         <span class="rchip teacher">ครู ${r.teacher_count} คน</span>
                         <span class="rchip doctor">แพทย์ ${r.doctor_count} คน</span>
                     </div>
-                </button>`;
+                    <div class="rc-go">กรอกผลเป็นตาราง <i class="fas fa-arrow-right"></i></div>
+                    <span class="rc-more" data-more="${r.id}">รายคน / ส่งออก</span>
+                </div>`;
             }).join('');
         }
         const more = document.getElementById('moreRoundsBtn');
         const hidden = toothRounds.length - ROUNDS_VISIBLE;
         more.style.display = hidden > 0 ? '' : 'none';
         more.textContent = showOldRounds ? 'ซ่อนรอบเก่า' : `ดูรอบเก่ากว่านี้ (${hidden} รอบ)`;
+    }
+
+    // เครื่องมือรายคน (ดู/แก้ไข/ลบ และส่งออก) ซ่อนไว้ก่อน เปิดเมื่อกด "รายคน / ส่งออก" ในการ์ด
+    function showPersonTools(roundId) {
+        selectRound(roundId);
+        ['step2', 'step3', 'resultCard'].forEach(id => {
+            document.getElementById(id).style.display = '';
+        });
+        updateSteps();
+        document.getElementById('step2').scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
     }
 
     function toggleOldRounds() {
@@ -508,9 +525,27 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     document.addEventListener('DOMContentLoaded', () => {
         ['child_group', 'classroom', 'student_year'].forEach(id => document.getElementById(id).addEventListener('change', updateSteps));
         document.getElementById('gridLink').addEventListener('click', updateSteps);
-        document.getElementById('roundCards').addEventListener('click', e => {
+        const cards = document.getElementById('roundCards');
+        const openCard = (c) => {
+            window.location.href = 'checklist_grid.php?round_id=' + encodeURIComponent(c.dataset.round);
+        };
+        cards.addEventListener('click', e => {
+            const more = e.target.closest('[data-more]');
+            if (more) {
+                e.stopPropagation();
+                showPersonTools(more.dataset.more);
+                return;
+            }
             const c = e.target.closest('[data-round]');
-            if (c) selectRound(c.dataset.round);
+            if (c) openCard(c);
+        });
+        cards.addEventListener('keydown', e => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            const c = e.target.closest('[data-round]');
+            if (c && e.target === c) {
+                e.preventDefault();
+                openCard(c);
+            }
         });
         loadRounds();
         // ถ้ามี URL parameters ให้กรอกข้อมูลในฟอร์มและค้นหา
@@ -518,6 +553,9 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
         // ถ้ามีการเลือกกลุ่มเรียน ให้โหลดห้องเรียนก่อน
         if (urlParams.get('child_group')) {
+            ['step2', 'step3', 'resultCard'].forEach(id => {
+                document.getElementById(id).style.display = '';
+            });
             // กรอกข้อมูลกลุ่มเรียน
             document.getElementById('child_group').value = urlParams.get('child_group');
 

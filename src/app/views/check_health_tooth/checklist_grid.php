@@ -87,7 +87,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
             <div>
                 <h2 class="mb-1">กรอกผลตรวจสุขภาพช่องปากทั้งห้อง</h2>
                 <div class="text-muted">
-                    <span class="gs">1</span> เลือกรอบ → <span class="gs">2</span> เลือกห้องแล้วกด "โหลดรายชื่อ" → <span class="gs">3</span> กรอกในตาราง แล้วกด "บันทึกทั้งห้อง"
+                    <span class="gs">1</span> เลือกรอบ (เลือกมาจากหน้าก่อนแล้ว เปลี่ยนได้) → <span class="gs">2</span> เลือกกลุ่ม/ห้อง หรือค้นหาชื่อ แล้วกด "โหลดรายชื่อ" → <span class="gs">3</span> กรอกในตาราง แล้วกด "บันทึกทั้งห้อง"
                 </div>
             </div>
             <a href="checklist_name.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>กลับหน้ารายชื่อ</a>
@@ -109,14 +109,10 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
                     <select id="gRoom" class="form-select"><option value="">ทุกห้อง</option></select>
                 </div>
                 <div class="col-6 col-md-2">
-                    <label for="gYear">ตรวจประจำปีการศึกษา</label>
-                    <select id="gYear" class="form-select">
-                        <?php foreach ($examYears as $i => $y): ?>
-                            <option value="<?= $y ?>" <?= $i === 1 ? 'selected' : '' ?>><?= $y ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <label for="gSearch">ค้นหาชื่อ / รหัส</label>
+                    <input type="text" id="gSearch" class="form-control" placeholder="ไม่บังคับ" autocomplete="off">
                 </div>
-                <div class="col-6 col-md-2">
+                <div class="col-6 col-md-3">
                     <label for="gRound">รอบตรวจ</label>
                     <select id="gRound" class="form-select"></select>
                 </div>
@@ -157,7 +153,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         <div class="tg-card">
             <div id="gClosed" class="tg-closed" style="display:none"><i class="bi bi-lock-fill me-1"></i>รอบตรวจนี้ถูกปิดแล้ว ดูข้อมูลได้อย่างเดียว (ให้ผู้ดูแลระบบเปิดรอบอีกครั้งถ้าต้องแก้)</div>
             <div class="tg-summary" id="gSummary"></div>
-            <div class="tg-wrap" id="gWrap"><div class="tg-empty">เลือกรอบตรวจ กลุ่มหรือห้องเรียน แล้วกด "โหลดรายชื่อ"</div></div>
+            <div class="tg-wrap" id="gWrap"><div class="tg-empty">เลือกกลุ่ม/ห้องเรียน หรือค้นหาชื่อเด็ก แล้วกด "โหลดรายชื่อ"</div></div>
             <div class="tg-hint">
                 Tab ไปช่องถัดไป · Enter ลงแถวถัดไปในคอลัมน์เดียวกัน · เลือก "ไม่มีฟันผุ" ระบบเติมฟันผุและตำแหน่งเป็น 0 ให้ ·
                 ช่องตำแหน่งขึ้นเหลืองเมื่อยอดรวมไม่เท่ากับจำนวนฟันผุ · อายุคำนวณจากวันเกิด ณ วันที่ตรวจ ·
@@ -334,11 +330,11 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     async function loadRounds() {
         const sel = byId('gRound');
         try {
-            const res = await fetch(`${API_ROUNDS}?action=list&academic_year=${encodeURIComponent(byId('gYear').value)}`, { headers: XHR });
+            const res = await fetch(`${API_ROUNDS}?action=list`, { headers: XHR });
             const data = await res.json();
             const list = data.data || [];
             sel.innerHTML = list.length
-                ? list.map((r) => `<option value="${r.id}">${esc(r.title)}${r.status === 'closed' ? ' (ปิดแล้ว)' : ''}</option>`).join('')
+                ? list.map((r) => `<option value="${r.id}">${esc(r.academic_year)} · ${esc(r.title)}${r.status === 'closed' ? ' (ปิดแล้ว)' : ''}</option>`).join('')
                 : '<option value="">ยังไม่มีรอบ — ให้ admin เปิดรอบ</option>';
             const firstOpen = list.find((r) => r.status === 'open');
             if (firstOpen) sel.value = firstOpen.id;
@@ -350,11 +346,12 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     async function loadList() {
         const group = byId('gGroup').value, room = byId('gRoom').value, round = byId('gRound').value;
         if (!round) { Swal.fire({ icon: 'info', title: 'เลือกรอบตรวจก่อน', text: 'ถ้ายังไม่มีรอบ ให้ผู้ดูแลระบบเปิดรอบจากหน้ารายชื่อ', confirmButtonText: 'ตกลง' }); return; }
-        if (!group && !room) { Swal.fire({ icon: 'info', title: 'เลือกกลุ่มหรือห้องเรียนก่อน', confirmButtonText: 'ตกลง' }); return; }
+        const search = byId('gSearch').value.trim();
+        if (!group && !room && !search) { Swal.fire({ icon: 'info', title: 'เลือกกลุ่ม/ห้องเรียน หรือค้นหาชื่อเด็กก่อน', confirmButtonText: 'ตกลง' }); return; }
         if (window.__dirty && !(await Swal.fire({ icon: 'warning', title: 'มีข้อมูลที่ยังไม่บันทึก', text: 'โหลดรายชื่อใหม่จะทิ้งข้อมูลที่กรอกค้างไว้', showCancelButton: true, confirmButtonText: 'โหลดใหม่', cancelButtonText: 'กลับไปกรอกต่อ' })).isConfirmed) return;
         byId('gWrap').innerHTML = '<div class="tg-empty"><div class="spinner-border text-primary"></div></div>';
         try {
-            const q = new URLSearchParams({ round_id: round, student_year: byId('gStudentYear').value, child_group: group, classroom: room });
+            const q = new URLSearchParams({ round_id: round, student_year: byId('gStudentYear').value, child_group: group, classroom: room, search: search });
             const res = await fetch(`${API_LIST}?${q}`, { headers: XHR });
             const data = await res.json();
             if (data.status !== 'success') throw new Error(data.message || 'โหลดไม่สำเร็จ');
@@ -425,7 +422,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     function init() {
         byId('gDate').value = todayStr();
         byId('gGroup').addEventListener('change', loadRooms);
-        byId('gYear').addEventListener('change', loadRounds);
+        byId('gSearch').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); loadList(); } });
         byId('gType').addEventListener('change', () => { if (rows.length) loadList(); });
         byId('gLoad').addEventListener('click', loadList);
         byId('gSave').addEventListener('click', saveAll);
@@ -455,12 +452,12 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
 
     // มาจากหน้ารายชื่อ: ใส่ค่าที่เลือกไว้ให้ แล้วโหลดรายชื่อต่อเลย
     async function applyPreselect() {
-        if (PRE.academic_year && [...byId('gYear').options].some((o) => o.value === PRE.academic_year)) byId('gYear').value = PRE.academic_year;
         if (PRE.student_year && [...byId('gStudentYear').options].some((o) => o.value === PRE.student_year)) byId('gStudentYear').value = PRE.student_year;
         if (PRE.child_group) { byId('gGroup').value = PRE.child_group; await loadRooms(); }
         if (PRE.classroom) byId('gRoom').value = PRE.classroom;
+        if (PRE.search) byId('gSearch').value = PRE.search;
         await loadRounds();
-        if (byId('gRound').value && (byId('gGroup').value || byId('gRoom').value)) loadList();
+        if (byId('gRound').value && (byId('gGroup').value || byId('gRoom').value || byId('gSearch').value.trim())) loadList();
     }
 
     function loadRooms() {

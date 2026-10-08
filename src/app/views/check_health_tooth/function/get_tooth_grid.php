@@ -14,14 +14,15 @@ try {
     $group = trim($_GET['child_group'] ?? '');
     $classroom = trim($_GET['classroom'] ?? '');
     $studentYear = trim($_GET['student_year'] ?? '');
+    $search = trim($_GET['search'] ?? '');
 
     $round = $roundId ? tooth_get_round($pdo, $roundId) : null;
     if (!$round) {
         throw new Exception('กรุณาเลือกรอบตรวจ');
     }
     // กันดึงทั้งศูนย์โดยไม่ตั้งใจ ต้องเลือกกลุ่มหรือห้องอย่างน้อยหนึ่งอย่าง
-    if ($group === '' && $classroom === '') {
-        throw new Exception('กรุณาเลือกกลุ่มเรียนหรือห้องเรียน');
+    if ($group === '' && $classroom === '' && $search === '') {
+        throw new Exception('กรุณาเลือกกลุ่มเรียน ห้องเรียน หรือค้นหาชื่อเด็ก');
     }
 
     $sql = "SELECT c.studentid, c.prefix_th, c.firstname_th, c.lastname_th, c.nickname,
@@ -40,6 +41,10 @@ try {
     if ($classroom !== '') {
         $sql .= ' AND c.classroom = :room';
         $params[':room'] = $classroom;
+    }
+    if ($search !== '') {
+        $sql .= ' AND (c.firstname_th ILIKE :search OR c.lastname_th ILIKE :search OR c.nickname ILIKE :search OR c.studentid ILIKE :search)';
+        $params[':search'] = '%' . $search . '%';
     }
     $sql .= ' ORDER BY c.child_group, c.classroom, c.firstname_th, c.lastname_th';
 
