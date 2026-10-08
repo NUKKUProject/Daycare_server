@@ -88,7 +88,7 @@ try {
                         :exam_date, :measurement_date, :academic_year, NULL, :student_id, :prefix_th, :first_name, :last_name_th,
                         :child_grop, :classroom, :birth_date, :age_year, :age_month, :age_day, :nickname,
                         :vital_signs, :behavior, :physical_measures, :development_assessment, :physical_exam, :neurological,
-                        :recommendation, :check_round, :recorded_by, 0, NOW(), NOW()
+                        :recommendation, :check_round, :recorded_by, FALSE, NOW(), NOW()
                     ) RETURNING id');
                 $ins->execute([
                     ':exam_date' => $examDate, ':measurement_date' => $measureDate, ':academic_year' => $year,
