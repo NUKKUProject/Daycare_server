@@ -540,14 +540,13 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
         if (!ready.length) { Swal.fire({ icon: 'warning', title: 'ยังไม่มีข้อมูลให้บันทึก', text: 'กรอกอย่างน้อยหนึ่งช่องในแถวที่ต้องการบันทึก', confirmButtonText: 'ตกลง' }); return; }
         const isDoctor = mode() === 'doctor';
         if (isDoctor && !byId('gDoctor').value.trim()) { Swal.fire({ icon: 'warning', title: 'กรุณาระบุชื่อแพทย์ผู้ตรวจ', confirmButtonText: 'ตกลง' }); byId('gDoctor').focus(); return; }
-        const who = mode() === 'doctor' ? 'ผลตรวจของแพทย์' : 'ผลคัดกรองของครู';
+        const who = mode() === 'doctor' ? 'แพทย์ตรวจ' : 'ครูคัดกรอง';
+        const note = [partial ? `กรอกบางส่วน ${partial} คน` : '', blank ? `ข้าม ${blank} คนที่ยังว่าง` : ''].filter(Boolean).join(' · ');
         const ok = await Swal.fire({
-            icon: 'question', title: `บันทึก ${ready.length} คน?`,
-            html: `บันทึกเป็น <b>${who}</b> ของ "${esc(byId('gRound').selectedOptions[0]?.textContent || '')}"<br>` +
-                (partial ? `มี <b>${partial}</b> คนที่กรอกบางส่วน จะบันทึกเท่าที่กรอก (กลับมากรอกเพิ่มทีหลังได้)<br>` : '') +
-                (blank ? `ไม่บันทึก <b>${blank}</b> คนที่ยังไม่ได้กรอกอะไร<br>` : '') +
-                'ถ้าเด็กมีผลของผู้ตรวจประเภทเดียวกันในรอบนี้อยู่แล้ว จะถูกอัปเดตทับ (ผลของอีกประเภทไม่ถูกแตะ)',
-            showCancelButton: true, confirmButtonText: 'ยืนยันบันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#15803d'
+            title: `บันทึก ${ready.length} คน?`,
+            html: `<div>${who} · ${esc(byId('gRound').selectedOptions[0]?.textContent || '')}</div>` +
+                (note ? `<div class="text-muted small mt-1">${note}</div>` : ''),
+            showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#15803d'
         });
         if (!ok.isConfirmed) return;
         const btn = byId('gSave'); btn.disabled = true;
