@@ -721,6 +721,30 @@ $viewTabs = [
     .dental-actions .opt.active { background: #f0fdf4; border-color: #16a34a; }
     .dental-actions .opt.active .ring { background: #16a34a; border-color: #16a34a; color: #fff; }
     .dental-follow .lb { color: #1E4F6F; font-size: .95rem; font-weight: 700; }
+    /* กล่องกรอกหลังเลือก (SweetAlert) */
+    .fu-popup { border-radius: 1.25rem !important; padding: 1.4rem 1.5rem 1.25rem !important; width: 30rem !important; max-width: 94vw; }
+    .fu-popup .swal2-html-container { margin: 0 !important; padding: 0 !important; text-align: left; overflow: visible; }
+    .fu-popup .swal2-actions { margin: 1.25rem 0 0 !important; width: 100%; gap: .6rem; }
+    .fu-head { align-items: center; display: flex; gap: .8rem; margin-bottom: 1.1rem; }
+    .fu-ic { align-items: center; border-radius: .9rem; display: flex; flex-shrink: 0; font-size: 1.4rem; height: 48px; justify-content: center; width: 48px; }
+    .fu-ic.ack { background: #dbeafe; color: #1d4ed8; } .fu-ic.sch { background: #ede9fe; color: #6d28d9; } .fu-ic.trt { background: #dcfce7; color: #15803d; }
+    .fu-title { color: #1E4F6F; font-size: 1.2rem; font-weight: 700; line-height: 1.2; }
+    .fu-sub { color: #64748b; font-size: .85rem; line-height: 1.3; }
+    .fu-field { margin-bottom: 1rem; }
+    .fu-field > label { color: #334155; display: block; font-size: .85rem; font-weight: 700; margin-bottom: .35rem; }
+    .fu-field .opt { color: #94a3b8; font-weight: 500; }
+    .fu-field input[type=date], .fu-field textarea { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: .8rem; color: #0f2460; font-size: 1rem; padding: .55rem .75rem; width: 100%; }
+    .fu-field input[type=date]:focus, .fu-field textarea:focus { background: #fff; border-color: #26648E; box-shadow: 0 0 0 4px rgba(38, 100, 142, .12); outline: none; }
+    .fu-field textarea { resize: vertical; }
+    .fu-quick { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; }
+    .fu-quick button { background: #fff; border: 1.5px solid #cbd5e1; border-radius: 999px; color: #1E4F6F; font-size: .82rem; font-weight: 700; padding: .2rem .8rem; }
+    .fu-quick button:hover, .fu-quick button.on { background: #26648E; border-color: #26648E; color: #fff; }
+    .fu-thai { color: #64748b; font-size: .82rem; margin-top: .35rem; }
+    .fu-count { color: #94a3b8; font-size: .75rem; text-align: right; }
+    .fu-confirm { background: #15803d; border: 0; border-radius: .8rem; color: #fff; font-size: 1rem; font-weight: 700; padding: .65rem 1.4rem; }
+    .fu-confirm:hover { background: #166534; }
+    .fu-cancel { background: #fff; border: 2px solid #cbd5e1; border-radius: .8rem; color: #475569; font-size: 1rem; font-weight: 700; padding: .6rem 1.2rem; }
+    .fu-cancel:hover { background: #f1f5f9; }
     .dental-alert { border-radius: 1rem; padding: .8rem 1rem; margin-bottom: 1rem; display: flex; gap: .75rem; align-items: center; background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; }
     .dental-alert a { margin-left: auto; font-weight: 700; color: #9a3412; white-space: nowrap; }
 
@@ -1103,23 +1127,52 @@ $viewTabs = [
 <script>
     (function () {
         const RECORD_ID = <?= (int) $dental['id'] ?>;
-        const TEXT = { acknowledged: 'รับทราบ', scheduled: 'นัดหมอแล้ว', treated: 'พาไปรักษาแล้ว' };
+        const META = {
+            acknowledged: { title: 'รับทราบผลตรวจ', sub: 'แจ้งศูนย์ว่าท่านทราบผลตรวจฟันแล้ว', cls: 'ack', icon: 'bi-hand-thumbs-up', ph: 'เช่น จะพาไปพบทันตแพทย์เร็วๆ นี้', dateLabel: '', quick: [] },
+            scheduled: { title: 'นัดหมอแล้ว', sub: 'ระบุวันที่นัดพบทันตแพทย์ ศูนย์จะได้ช่วยติดตาม', cls: 'sch', icon: 'bi-calendar-event', ph: 'เช่น นัดที่โรงพยาบาล... เวลา...', dateLabel: 'วันที่นัดหมอ', quick: [['วันนี้', 0], ['พรุ่งนี้', 1], ['อีก 1 สัปดาห์', 7]] },
+            treated: { title: 'พาไปรักษาแล้ว', sub: 'ระบุวันที่พาลูกไปรักษา และผลที่ทันตแพทย์แจ้ง', cls: 'trt', icon: 'bi-check2-circle', ph: 'เช่น อุดฟันเรียบร้อย ทันตแพทย์แนะนำให้...', dateLabel: 'วันที่พาไปรักษา', quick: [['วันนี้', 0], ['เมื่อวาน', -1], ['3 วันก่อน', -3]] }
+        };
+        const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;   // วันที่ตามเวลาเครื่อง ไม่ใช่ UTC
+        const shift = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return fmt(d); };
+        const thai = (v) => (v ? new Date(v + 'T00:00:00').toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '');
         document.querySelectorAll('[data-follow]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const status = btn.dataset.follow;
+                const m = META[status];
                 const needDate = status !== 'acknowledged';
                 // ปิดหน้าต่างรายละเอียดชั่วคราว ไม่งั้น Bootstrap แย่งโฟกัสจนพิมพ์ในกล่องของ SweetAlert ไม่ได้
                 const modalEl = document.getElementById('dentalModal');
                 const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 modal.hide();
-                const today = new Date().toISOString().slice(0, 10);
+                const today = fmt(new Date());
                 const r = await Swal.fire({
-                    title: TEXT[status],
-                    html: (needDate ? `<div class="text-start"><label class="form-label mt-2">${status === 'scheduled' ? 'วันที่นัดหมอ' : 'วันที่พาไปรักษา'}</label>
-                            <input id="swDate" type="date" class="form-control" value="${today}" ${status === 'treated' ? `max="${today}"` : ''}></div>` : '') +
-                        `<div class="text-start"><label class="form-label mt-2">ข้อความถึงศูนย์ (ไม่บังคับ)</label>
-                            <textarea id="swNote" class="form-control" rows="3" maxlength="300" placeholder="เช่น นัดที่โรงพยาบาล... / ทันตแพทย์แนะนำ..."></textarea></div>`,
-                    showCancelButton: true, confirmButtonText: 'ส่งให้ศูนย์', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#26648E',
+                    html: `<div class="fu-head"><span class="fu-ic ${m.cls}"><i class="bi ${m.icon}"></i></span>
+                            <div><div class="fu-title">${m.title}</div><div class="fu-sub">${m.sub}</div></div></div>` +
+                        (needDate ? `<div class="fu-field"><label for="swDate">${m.dateLabel}</label>
+                            <input id="swDate" type="date" value="${today}" ${status === 'treated' ? `max="${today}"` : ''}>
+                            <div class="fu-quick">${m.quick.map(([t, n]) => `<button type="button" data-off="${n}">${t}</button>`).join('')}</div>
+                            <div class="fu-thai" id="swThai"></div></div>` : '') +
+                        `<div class="fu-field"><label for="swNote">ข้อความถึงศูนย์ <span class="opt">(ไม่บังคับ)</span></label>
+                            <textarea id="swNote" rows="3" maxlength="300" placeholder="${m.ph}"></textarea>
+                            <div class="fu-count"><span id="swCount">0</span> / 300</div></div>`,
+                    showCancelButton: true, buttonsStyling: false, reverseButtons: true,
+                    confirmButtonText: '<i class="bi bi-send me-1"></i>ส่งให้ศูนย์', cancelButtonText: 'ยกเลิก',
+                    customClass: { popup: 'fu-popup', confirmButton: 'fu-confirm', cancelButton: 'fu-cancel' },
+                    didOpen: () => {
+                        const date = document.getElementById('swDate'), thaiBox = document.getElementById('swThai');
+                        const syncDate = () => {
+                            if (!date) return;
+                            thaiBox.textContent = date.value ? 'ตรงกับ' + thai(date.value) : '';
+                            document.querySelectorAll('.fu-quick button').forEach((b) => b.classList.toggle('on', shift(+b.dataset.off) === date.value));
+                        };
+                        if (date) {
+                            date.addEventListener('input', syncDate);
+                            document.querySelectorAll('.fu-quick button').forEach((b) => b.addEventListener('click', () => { date.value = shift(+b.dataset.off); syncDate(); }));
+                            syncDate();
+                        }
+                        const note = document.getElementById('swNote');
+                        note.addEventListener('input', () => { document.getElementById('swCount').textContent = note.value.length; });
+                    },
                     preConfirm: () => {
                         const date = needDate ? document.getElementById('swDate').value : '';
                         if (needDate && !date) { Swal.showValidationMessage('กรุณาระบุวันที่'); return false; }
