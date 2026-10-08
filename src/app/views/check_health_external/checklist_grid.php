@@ -10,6 +10,8 @@ require_once __DIR__ . '/../../include/auth/auth_dashboard.php';
 
 $groups = get_childgroup();
 $roundId = (int) ($_GET['round_id'] ?? 0);
+$isDoctor = getUserRole() === 'doctor';
+$doctorName = $isDoctor ? getFullName() : '';
 ?>
 
 <style>
@@ -74,7 +76,7 @@ $roundId = (int) ($_GET['round_id'] ?? 0);
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
             <div>
                 <h1 class="hg-title">กรอกผลตรวจสุขภาพทั้งห้อง</h1>
-                <div class="hg-help">กรอกได้หลายคนในตารางเดียว กรอกบางส่วนก็บันทึกได้ · กด Enter เพื่อลงช่องเดียวกันของคนถัดไป</div>
+                <div class="hg-help"><?= $isDoctor ? 'ผู้ตรวจ: ' . htmlspecialchars($doctorName) . ' (บันทึกแล้วจะลงชื่อแพทย์ให้อัตโนมัติ) · ' : '' ?>กรอกได้หลายคนในตารางเดียว กรอกบางส่วนก็บันทึกได้ · กด Enter เพื่อลงช่องเดียวกันของคนถัดไป</div>
             </div>
             <a href="checklist_name.php" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>กลับ</a>
         </div>
@@ -141,6 +143,8 @@ $roundId = (int) ($_GET['round_id'] ?? 0);
     const byId = (id) => document.getElementById(id);
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const XHR = { 'X-Requested-With': 'XMLHttpRequest' };
+    const IS_DOCTOR = <?= $isDoctor ? 'true' : 'false' ?>;
+    const DOCTOR_NAME = <?= json_encode($doctorName, JSON_UNESCAPED_UNICODE) ?>;
 
     const DEV = [['gm', 'GM'], ['fm', 'FM'], ['rl', 'RL'], ['el', 'EL'], ['ps', 'PS']];
     const EXAM = [['general', 'สภาพทั่วไป'], ['skin', 'ผิวหนัง'], ['head', 'ศีรษะ'], ['face', 'ใบหน้า'], ['eyes', 'ตา'], ['ears', 'หู'], ['nose', 'จมูก'], ['mouth', 'ปาก'],
@@ -161,7 +165,7 @@ $roundId = (int) ($_GET['round_id'] ?? 0);
         const pe = rec?.physical_exam || {}, nl = rec?.neurological || {};
         const r = {
             sid: c.student_id, name: c.name, nick: c.nick, birthday: c.birthday,
-            id: rec ? rec.id : null, locked: !!rec?.locked, doctor: rec?.doctor_name || '', skip: false, dirty: false, err: '',
+            id: rec ? rec.id : null, locked: !!rec?.locked && !IS_DOCTOR, doctor: rec?.doctor_name || '', skip: false, dirty: false, err: '',
             date: vs.bp_date || rec?.exam_date || byId('gDate').value || today(), mdate: rec?.measurement_date || '', dateEdited: false,
             temp: vs.temperature ?? '', bp: vs.bp ?? '', h: pm.height ?? '', w: pm.weight ?? '',
             wfa: one(pm.weight_for_age), hfa: one(pm.height_for_age), wfh: one(pm.weight_for_height),
@@ -197,7 +201,7 @@ $roundId = (int) ($_GET['round_id'] ?? 0);
         if (r.skip) return ['is-skip', '', 'ไม่ตรวจ (ข้าม)'];
         if (toSave(r)) return ['is-dirty', 'dirty', 'พร้อมบันทึก'];
         if (r.dirty && !hasData(r)) return ['', '', 'ยังไม่ได้กรอก'];
-        if (r.id) return ['is-saved', 'saved', 'บันทึกแล้ว'];
+        if (r.id) return ['is-saved', 'saved', r.doctor ? 'แพทย์ตรวจแล้ว' : (IS_DOCTOR ? 'รอแพทย์ตรวจ' : 'บันทึกแล้ว (รอแพทย์)')];
         return ['', '', 'ยังไม่ได้กรอก'];
     }
 
@@ -416,7 +420,7 @@ $roundId = (int) ($_GET['round_id'] ?? 0);
             const savedIds = new Map((res.saved || []).map((s) => [s.student_id, s.id]));
             const errs = new Map((res.errors || []).map((e) => [e.student_id, e.message]));
             rows.forEach((r) => {
-                if (savedIds.has(r.sid)) { r.id = savedIds.get(r.sid); r.dirty = false; r.err = ''; if (!r.mdate || r.dateEdited) { r.mdate = r.date; r.dateEdited = false; } }
+                if (savedIds.has(r.sid)) { r.id = savedIds.get(r.sid); r.dirty = false; r.err = ''; if (IS_DOCTOR) r.doctor = res.doctor_name || DOCTOR_NAME; if (!r.mdate || r.dateEdited) { r.mdate = r.date; r.dateEdited = false; } }
                 if (errs.has(r.sid)) r.err = errs.get(r.sid);
             });
             render();

@@ -21,6 +21,12 @@ try {
     $year = (string) $round['academic_year'];
     $roundNo = (int) $round['round_no'];
     $recordedBy = $_SESSION['user_id'] ?? null;
+    // แพทย์บันทึก = ลงชื่อแพทย์ผู้ตรวจและถือว่าตรวจแล้ว  ครู/แอดมินบันทึก = รอแพทย์ตรวจ (ไม่มีชื่อแพทย์)
+    $isDoctor = getUserRole() === 'doctor';
+    $doctorName = $isDoctor ? trim((string) getFullName()) : null;
+    if ($isDoctor && $doctorName === '') {
+        throw new Exception('ไม่พบชื่อแพทย์ของบัญชีนี้');
+    }
 
     $json = fn($v) => json_encode(is_array($v) ? $v : [], JSON_UNESCAPED_UNICODE);
     $dec = fn($v) => ($v === null || $v === '') ? [] : (json_decode($v, true) ?: []);
@@ -53,7 +59,7 @@ try {
 
             $pdo->beginTransaction();
             if ($existing) {
-                if (trim((string) $existing['doctor_name']) !== '') {
+                if (!$isDoctor && trim((string) $existing['doctor_name']) !== '') {
                     throw new Exception('แพทย์ตรวจแล้ว แก้ไขในตารางนี้ไม่ได้');
                 }
                 // รวมกับข้อมูลเดิม: ช่องที่ตารางไม่มี (เช่น รายการตรวจอื่นที่กรอกในฟอร์มรายคน) จะไม่หาย
@@ -63,9 +69,9 @@ try {
                         age_year = :age_year, age_month = :age_month, age_day = :age_day,
                         vital_signs = :vital_signs, behavior = :behavior, physical_measures = :physical_measures,
                         development_assessment = :development_assessment, physical_exam = :physical_exam, neurological = :neurological,
-                        recommendation = :recommendation, updated_at = NOW()
+                        recommendation = :recommendation, updated_at = NOW()' . ($isDoctor ? ', doctor_name = :doctor_name, is_doctor_checked = TRUE' : '') . '
                     WHERE id = :id');
-                $upd->execute([
+                $updParams = [
                     ':exam_date' => $examDate, ':measurement_date' => $measureDate, ':birth_date' => $birth,
                     ':age_year' => $intOrNull($rec['age_year'] ?? null), ':age_month' => $intOrNull($rec['age_month'] ?? null), ':age_day' => $intOrNull($rec['age_day'] ?? null),
                     ':vital_signs' => $merge('vital_signs', $rec['vital_signs'] ?? []),
@@ -76,7 +82,11 @@ try {
                     ':neurological' => $merge('neurological', $rec['neurological'] ?? []),
                     ':recommendation' => $rec['recommendation'] ?? null,
                     ':id' => $existing['id'],
-                ]);
+                ];
+                if ($isDoctor) {
+                    $updParams[':doctor_name'] = $doctorName;
+                }
+                $upd->execute($updParams);
                 $id = (int) $existing['id'];
             } else {
                 $ins = $pdo->prepare('INSERT INTO health_data_external (
@@ -85,10 +95,10 @@ try {
                         vital_signs, behavior, physical_measures, development_assessment, physical_exam, neurological,
                         recommendation, check_round, recorded_by, is_doctor_checked, created_at, updated_at
                     ) VALUES (
-                        :exam_date, :measurement_date, :academic_year, NULL, :student_id, :prefix_th, :first_name, :last_name_th,
+                        :exam_date, :measurement_date, :academic_year, :doctor_name, :student_id, :prefix_th, :first_name, :last_name_th,
                         :child_grop, :classroom, :birth_date, :age_year, :age_month, :age_day, :nickname,
                         :vital_signs, :behavior, :physical_measures, :development_assessment, :physical_exam, :neurological,
-                        :recommendation, :check_round, :recorded_by, FALSE, NOW(), NOW()
+                        :recommendation, :check_round, :recorded_by, ' . ($isDoctor ? 'TRUE' : 'FALSE') . ', NOW(), NOW()
                     ) RETURNING id');
                 $ins->execute([
                     ':exam_date' => $examDate, ':measurement_date' => $measureDate, ':academic_year' => $year,
@@ -101,7 +111,7 @@ try {
                     ':physical_measures' => $json($rec['physical_measures'] ?? []), ':development_assessment' => $json($rec['development_assessment'] ?? []),
                     ':physical_exam' => $json($rec['physical_exam'] ?? []), ':neurological' => $json($rec['neurological'] ?? []),
                     ':recommendation' => $rec['recommendation'] ?? null,
-                    ':check_round' => $roundNo, ':recorded_by' => $recordedBy,
+                    ':check_round' => $roundNo, ':recorded_by' => $recordedBy, ':doctor_name' => $doctorName,
                 ]);
                 $id = (int) $ins->fetchColumn();
             }
@@ -118,7 +128,7 @@ try {
     echo json_encode([
         'status' => $saved ? 'success' : 'error',
         'message' => $saved ? '' : ($errors[0]['message'] ?? 'บันทึกไม่สำเร็จ'),
-        'saved' => $saved, 'errors' => $errors, 'total' => count($records),
+        'saved' => $saved, 'errors' => $errors, 'doctor_name' => $doctorName, 'total' => count($records),
     ], JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) {
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
