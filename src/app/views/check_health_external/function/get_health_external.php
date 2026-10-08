@@ -21,10 +21,14 @@ try {
     FROM children c
     LEFT JOIN health_data_external h
         ON c.studentid = h.student_id 
-        AND h.academic_year = :academic_year
+        AND h.academic_year = :academic_year" . (!empty($_GET['check_round']) ? "
+        AND COALESCE(h.check_round, 1) = :check_round" : '') . "
     WHERE 1=1 AND c.status = 'กำลังศึกษา'";
 
     $params = [];
+    if (!empty($_GET['check_round'])) {
+        $params[':check_round'] = (int) $_GET['check_round'];
+    }
 
     // เพิ่มเงื่อนไขการค้นหา
     if (!empty($_GET['child_group'])) {

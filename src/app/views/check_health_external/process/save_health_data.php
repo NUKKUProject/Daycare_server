@@ -50,6 +50,22 @@ try {
         }
     }
 
+    // ผูกกับรอบตรวจที่ admin เปิดไว้: รอบต้องเปิดอยู่ และเด็ก 1 คนมีผลได้ 1 แถวต่อรอบ
+    if (!empty($data['round_no']) && !empty($data['academic_year'])) {
+        require_once __DIR__ . '/../function/health_round_helpers.php';
+        $round = health_find_round($pdo, (string) $data['academic_year'], (int) $data['round_no']);
+        if (!$round) {
+            throw new Exception('ไม่พบรอบตรวจ กรุณาให้ผู้ดูแลระบบเปิดรอบตรวจก่อน');
+        }
+        health_require_open_round($pdo, (int) $round['id']);
+        $dup = $pdo->prepare('SELECT 1 FROM health_data_external WHERE student_id = :s AND academic_year::text = :y AND COALESCE(check_round, 1) = :n LIMIT 1');
+        $dup->execute([':s' => $data['student_id'], ':y' => (string) $data['academic_year'], ':n' => (int) $round['round_no']]);
+        if ($dup->fetchColumn()) {
+            throw new Exception('เด็กคนนี้มีผลตรวจในรอบนี้แล้ว ให้กดแก้ไขแทนการเพิ่มใหม่');
+        }
+        $checkRound = (int) $round['round_no'];
+    }
+
     // ดึง recorded_by จาก session (ถ้ามี)
     $recordedBy = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
 
