@@ -677,10 +677,6 @@ $viewTabs = [
     .dental-follow { border-top: 1px dashed var(--student-border); padding-top: .85rem; }
     .dental-follow .now { font-size: .88rem; margin-bottom: .6rem; }
     .dental-follow .now b { color: var(--student-primary-dark); }
-    .dental-actions { display: grid; gap: .45rem; }
-    .dental-actions button { border: 2px solid var(--student-border); background: #fff; border-radius: .8rem; padding: .55rem .8rem; font-weight: 700; text-align: left; color: var(--student-primary-dark); }
-    .dental-actions button:hover { border-color: var(--student-primary); background: var(--student-primary-soft); }
-    .dental-actions button.active { border-color: #16a34a; background: #f0fdf4; color: #15803d; }
     .hub-list { display: flex; flex-direction: column; gap: .65rem; margin-bottom: 1rem; }
     .hub-item { align-items: center; background: #fff; border: 1px solid var(--student-border); border-left: 5px solid var(--student-border); border-radius: 1rem;
         box-shadow: 0 6px 16px rgba(15, 23, 42, .06); color: var(--student-text); cursor: pointer; display: flex; gap: .8rem; padding: .8rem 1rem; text-align: left;
@@ -700,6 +696,31 @@ $viewTabs = [
     .hub-empty { background: #f0fdf4; border: 1px dashed #86efac; border-radius: 1rem; color: #15803d; font-weight: 700; padding: 1rem; text-align: center; }
     .hub-empty i { margin-right: .35rem; }
     #dentalModal .dental-card { border: 0; box-shadow: none; margin: 0; border-radius: 0; }
+    #dentalModal {
+        --student-primary: #26648E; --student-primary-dark: #1E4F6F; --student-primary-soft: #ebf4fb;
+        --student-text: #2c3e50; --student-muted: #64748b; --student-border: #d9e6ee;
+    }
+    #dentalModal .dental-head { background: #f4f9fd; }
+    #dentalModal .dental-body { padding: 1.1rem 1.25rem 1.25rem; }
+
+    /* ตัวเลือกแจ้งกลับศูนย์: การ์ดที่กดได้ชัดเจน */
+    .dental-actions { display: grid; gap: .6rem; }
+    .dental-actions .opt { align-items: center; background: #fff; border: 2px solid #cbd5e1; border-radius: 1rem; box-shadow: 0 2px 6px rgba(15, 23, 42, .06); color: #1E4F6F;
+        cursor: pointer; display: flex; gap: .8rem; padding: .7rem .9rem; text-align: left; transition: border-color .15s, background-color .15s, transform .12s, box-shadow .15s; width: 100%; }
+    .dental-actions .opt:hover { background: #f4f9fd; border-color: #26648E; box-shadow: 0 6px 16px rgba(38, 100, 142, .18); transform: translateY(-1px); }
+    .dental-actions .opt:active { transform: scale(.99); }
+    .dental-actions .opt .ic { align-items: center; border-radius: .8rem; display: flex; flex-shrink: 0; font-size: 1.2rem; height: 42px; justify-content: center; width: 42px; }
+    .dental-actions .opt.ack .ic { background: #dbeafe; color: #1d4ed8; }
+    .dental-actions .opt.sch .ic { background: #ede9fe; color: #6d28d9; }
+    .dental-actions .opt.trt .ic { background: #dcfce7; color: #15803d; }
+    .dental-actions .opt .tx { flex: 1; min-width: 0; }
+    .dental-actions .opt .tx b { display: block; font-size: 1rem; line-height: 1.25; }
+    .dental-actions .opt .tx small { color: #64748b; display: block; font-weight: 500; line-height: 1.3; }
+    .dental-actions .opt .ring { align-items: center; border: 2px solid #94a3b8; border-radius: 50%; color: transparent; display: flex; flex-shrink: 0; font-size: .85rem; height: 26px; justify-content: center; width: 26px; }
+    .dental-actions .opt:hover .ring { border-color: #26648E; }
+    .dental-actions .opt.active { background: #f0fdf4; border-color: #16a34a; }
+    .dental-actions .opt.active .ring { background: #16a34a; border-color: #16a34a; color: #fff; }
+    .dental-follow .lb { color: #1E4F6F; font-size: .95rem; font-weight: 700; }
     .dental-alert { border-radius: 1rem; padding: .8rem 1rem; margin-bottom: 1rem; display: flex; gap: .75rem; align-items: center; background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; }
     .dental-alert a { margin-left: auto; font-weight: 700; color: #9a3412; white-space: nowrap; }
 
@@ -1031,7 +1052,7 @@ $viewTabs = [
 
                         <?php if ($dental && $dental['has_decay']): ?>
                             <div class="dental-follow">
-                                <div class="lb small fw-bold text-muted mb-1">แจ้งกลับศูนย์</div>
+                                <div class="lb mb-1">แจ้งกลับศูนย์ — เลือกสิ่งที่ต้องการแจ้ง</div>
                                 <div class="now">
                                     <?php
                                     $fs = $dental['followup_status'] ?? '';
@@ -1050,9 +1071,21 @@ $viewTabs = [
                                     ?>
                                 </div>
                                 <div class="dental-actions">
-                                    <button type="button" data-follow="acknowledged" class="<?= $fs === 'acknowledged' ? 'active' : '' ?>"><i class="bi bi-hand-thumbs-up me-1"></i>รับทราบ</button>
-                                    <button type="button" data-follow="scheduled" class="<?= $fs === 'scheduled' ? 'active' : '' ?>"><i class="bi bi-calendar-event me-1"></i>นัดหมอแล้ว</button>
-                                    <button type="button" data-follow="treated" class="<?= $fs === 'treated' ? 'active' : '' ?>"><i class="bi bi-check2-circle me-1"></i>พาไปรักษาแล้ว</button>
+                                    <button type="button" data-follow="acknowledged" class="opt ack<?= $fs === 'acknowledged' ? ' active' : '' ?>">
+                                        <span class="ic"><i class="bi bi-hand-thumbs-up"></i></span>
+                                        <span class="tx"><b>รับทราบ</b><small>แจ้งศูนย์ว่าท่านทราบผลตรวจแล้ว</small></span>
+                                        <span class="ring"><i class="bi bi-check-lg"></i></span>
+                                    </button>
+                                    <button type="button" data-follow="scheduled" class="opt sch<?= $fs === 'scheduled' ? ' active' : '' ?>">
+                                        <span class="ic"><i class="bi bi-calendar-event"></i></span>
+                                        <span class="tx"><b>นัดหมอแล้ว</b><small>ระบุวันที่นัดพบทันตแพทย์</small></span>
+                                        <span class="ring"><i class="bi bi-check-lg"></i></span>
+                                    </button>
+                                    <button type="button" data-follow="treated" class="opt trt<?= $fs === 'treated' ? ' active' : '' ?>">
+                                        <span class="ic"><i class="bi bi-check2-circle"></i></span>
+                                        <span class="tx"><b>พาไปรักษาแล้ว</b><small>ระบุวันที่พาไปรักษา</small></span>
+                                        <span class="ring"><i class="bi bi-check-lg"></i></span>
+                                    </button>
                                 </div>
                             </div>
                         <?php endif; ?>
