@@ -475,7 +475,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
             TR.map((t) => `<th class="th-treat" title="${esc(t[2])}">${esc(t[2])}</th>`).join('') +
             (showOtherCol() ? '<th>อื่นๆ (ระบุ)</th>' : '') +
             (showExtra ? '<th>ช่องปาก (เหงือก/ลิ้น/เพดาน)</th><th>รายละเอียด / หมายเหตุ</th>' : '') +
-            '<th>สถานะ</th><th>ติดตามผู้ปกครอง</th><th></th></tr></thead>';
+            '<th>สถานะ</th>' + (mode() === 'doctor' ? '' : '<th>ติดตามผู้ปกครอง</th>') + '<th></th></tr></thead>';
     }
 
     function rowHtml(r, i) {
@@ -498,7 +498,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
                 td('gc-note', `<input class="f t${dcls(r, 'miss')}" type="text" maxlength="100" data-f="miss" value="${esc(r.miss)}"${d}>`);
         }
         h += td('gc-state', `<span class="st ${st}">${stateText(r, st)}</span>`) +
-            td('gc-state', followupHtml(r)) +
+            (mode() === 'doctor' ? '' : td('gc-state', followupHtml(r))) +
             td('gc-state', roundClosed || r.locked ? (r.locked ? '<span class="text-muted small">🔒 แพทย์ตรวจแล้ว</span>' : '') : (r.prefill ? '<button type="button" class="rowact confirm" data-confirm="1" title="ยืนยันตามผลของครู">ยืนยัน</button> ' : '') + '<button type="button" class="rowact" data-normal="1" title="เติมค่าปกติ: ไม่มีฟันผุ (ถ้ายังไม่กรอกจำนวนฟันทั้งหมด จะใส่ 20 ซี่)">ปกติ</button>') + '</tr>';
         return h;
     }
@@ -506,6 +506,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     function render(keepFocus) {
         const wrap = byId('gWrap');
         if (!rows.length) { wrap.innerHTML = '<div class="tg-empty"><div class="big">ไม่พบรายชื่อเด็กตามเงื่อนไข</div>ลองเปลี่ยนกลุ่ม ห้อง หรือคำค้นหา</div>'; summary(); return; }
+        const pendBox = byId('gPending'); if (pendBox) { const dm = mode() === 'doctor'; if (dm) pendBox.checked = false; pendBox.closest('.form-check').style.display = dm ? 'none' : ''; }
         const sc = { top: wrap.scrollTop, left: wrap.scrollLeft };
         wrap.innerHTML = '<table class="tg">' + header() + '<tbody>' + (byId('gPending').checked ? rows.map((r, i) => (needsFollowup(r) ? rowHtml(r, i) : '')) : rows.map(rowHtml)).join('') + '</tbody></table>';
         wrap.scrollTop = sc.top; wrap.scrollLeft = sc.left;
