@@ -231,6 +231,9 @@ $types = array_map(fn($t) => ['label' => $t['label'], 'icon' => $t['icon']], hf_
 
     document.addEventListener('DOMContentLoaded', () => {
         fillFilters();
+        // มาจากการ์ดบนแดชบอร์ด: ?status=none|acknowledged|scheduled|treated
+        const qs = new URLSearchParams(location.search).get('status');
+        if (qs && [...byId('hfStatus').options].some((o) => o.value === qs)) byId('hfStatus').value = qs;
         renderAll();
         byId('hfStats').addEventListener('click', (e) => { const b = e.target.closest('[data-k]'); if (b) { byId('hfStatus').value = b.dataset.k; renderAll(); } });
         byId('hfTabs').addEventListener('click', (e) => { const b = e.target.closest('[data-k]'); if (b) { typeFilter = b.dataset.k; renderAll(); } });
