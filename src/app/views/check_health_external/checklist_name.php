@@ -36,124 +36,177 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
 
 <style>
-    .hx-step { background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(0, 0, 0, .06); padding: 1rem 1.25rem; border-left: 5px solid #1e4db7; }
-    .hx-step-title { font-weight: 700; font-size: 1.05rem; color: #0f2460; display: flex; align-items: center; gap: .5rem; }
-    .hx-no { width: 28px; height: 28px; border-radius: 50%; background: #1e4db7; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; }
-    .hx-sub { font-size: .82rem; color: #64748b; }
-    .hx-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: .75rem; }
-    .hx-card { position: relative; background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; padding: .85rem 1rem; cursor: pointer; transition: border-color .15s, background-color .15s, transform .15s; }
-    .hx-card:hover { border-color: #93b4f0; transform: translateY(-2px); }
-    .hx-card.selected { border-color: #1e4db7; background: #eff3ff; }
-    .hx-card.closed { background: #f8fafc; }
-    .hx-card .y { font-size: 1.35rem; font-weight: 700; color: #0f2460; line-height: 1.1; }
-    .hx-card .t { font-weight: 700; color: #334155; }
-    .hx-card .d { font-size: .82rem; color: #64748b; margin: .25rem 0 .5rem; }
-    .hx-chip { border-radius: 999px; padding: 2px 10px; font-weight: 700; font-size: .78rem; background: #f1f5f9; color: #475569; display: inline-block; }
-    .hx-chip.open { background: #dcfce7; color: #15803d; } .hx-chip.closed { background: #fee2e2; color: #b91c1c; }
-    .hx-card .go { margin-top: .6rem; font-weight: 700; color: #15803d; font-size: .88rem; }
-    .hx-card .more { display: inline-block; margin-top: .35rem; font-size: .78rem; color: #1e4db7; text-decoration: underline; }
+    /* ===== Guided steps ===== */
+    .step { background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(0, 0, 0, .06); padding: 1rem 1.25rem; margin-bottom: 1rem;
+        border-left: 5px solid #1e4db7; transition: opacity .2s ease; }
+    .step.locked { opacity: .55; border-left-color: #cbd5e1; }
+    .step.locked .step-body { pointer-events: none; }
+    .step.done { border-left-color: #16a34a; }
+    .step-head { display: flex; align-items: center; gap: .75rem; margin-bottom: .75rem; }
+    .step-no { width: 34px; height: 34px; border-radius: 50%; background: #1e4db7; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+    .step.locked .step-no { background: #94a3b8; }
+    .step.done .step-no { background: #16a34a; }
+    .step-title { font-weight: 700; font-size: 1.05rem; color: #0f2460; line-height: 1.2; }
+    .step-sub { font-size: .82rem; color: #64748b; }
+    .step-state { margin-left: auto; font-size: .78rem; font-weight: 700; padding: 2px 12px; border-radius: 999px; white-space: nowrap; }
+    .step-state.ok { background: #dcfce7; color: #15803d; }
+    .step-state.wait { background: #fef3c7; color: #b45309; }
+    .round-info { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; font-size: .82rem; }
+    .rchip { border-radius: 999px; padding: 2px 10px; font-weight: 700; font-size: .78rem; background: #f1f5f9; color: #475569; }
+    .rchip.open { background: #dcfce7; color: #15803d; }
+    .rchip.closed { background: #fee2e2; color: #b91c1c; }
+    .rchip.teacher { background: #fef3c7; color: #b45309; }
+    .rchip.doctor { background: #dbeafe; color: #1d4ed8; }
+    .step .form-label { font-size: .8rem; font-weight: 700; color: #475569; }
+    .step-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+    .btn-go { background: #15803d; border-color: #15803d; color: #fff; font-weight: 700; }
+    .btn-go:hover { background: #166534; border-color: #166534; color: #fff; }
+    .step-hint { font-size: .8rem; color: #64748b; }
+
+    .round-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: .75rem; }
+    .round-card { position: relative; text-align: left; background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; padding: .85rem 1rem; cursor: pointer;
+        transition: border-color .15s ease, background-color .15s ease, transform .15s ease; }
+    .round-card:hover { border-color: #93b4f0; transform: translateY(-2px); }
+    .round-card.selected { border-color: #1e4db7; background: #eff3ff; }
+    .round-card.selected::after { content: "\2713"; position: absolute; top: 10px; right: 12px; width: 22px; height: 22px; border-radius: 50%;
+        background: #1e4db7; color: #fff; display: flex; align-items: center; justify-content: center; font-size: .8rem; font-weight: 700; }
+    .round-card.closed { background: #f8fafc; }
+    .round-card .rc-year { font-size: 1.35rem; font-weight: 700; color: #0f2460; line-height: 1.1; }
+    .round-card .rc-title { font-weight: 700; color: #334155; }
+    .round-card .rc-date { font-size: .82rem; color: #64748b; margin: .25rem 0 .5rem; }
+    .round-card .rc-chips { display: flex; flex-wrap: wrap; gap: .3rem; }
+    .round-card .rc-go { margin-top: .6rem; font-weight: 700; color: #15803d; font-size: .88rem; }
+    .round-card .rc-more { display: inline-block; margin-top: .35rem; font-size: .78rem; color: #1e4db7; text-decoration: underline; }
 </style>
 
 <main class="main-content">
     <div class="container-fluid px-4">
-        <h2 class="mb-1">บันทึกการตรวจสุขภาพเด็ก</h2>
-        <div class="text-muted mb-3">ผู้ดูแลระบบเปิดรอบตรวจก่อน แล้วเลือกรอบเพื่อกรอกผลทั้งห้องหรือดูรายคน</div>
+        <div class="mb-3">
+            <h2 class="mb-1">บันทึกการตรวจสุขภาพเด็ก</h2>
+            <div class="text-muted">ทำตามลำดับ 1 → 2 → 3</div>
+        </div>
 
         <div id="noRoundNotice" class="alert alert-warning" style="display:none;"></div>
 
-        <section class="hx-step">
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                <div>
-                    <div class="hx-step-title"><span class="hx-no">1</span> เลือกรอบตรวจ</div>
-                    <div class="hx-sub">กดการ์ดรอบที่ต้องการ ระบบจะพาไปหน้ากรอกผลตรวจเป็นตาราง</div>
+        <form id="searchForm" method="GET">
+            <!-- ขั้นที่ 1 -->
+            <section class="step" id="step1">
+                <div class="step-head">
+                    <span class="step-no">1</span>
+                    <div>
+                        <div class="step-title">เลือกรอบตรวจ</div>
+                        <div class="step-sub">กดการ์ดรอบที่ต้องการ ระบบจะพาไปหน้ากรอกผลตรวจเป็นตาราง (รอบตรวจเปิดโดยผู้ดูแลระบบ)</div>
+                    </div>
+                    <span class="step-state wait" id="state1">รอเลือกรอบ</span>
                 </div>
-                <?php if ($is_admin): ?>
-                    <a href="health_rounds.php" class="btn btn-sm btn-outline-primary ms-auto"><i class="fas fa-calendar-check"></i> เปิดรอบใหม่ / ปิดรอบ</a>
-                <?php endif; ?>
-            </div>
-            <div class="hx-cards" id="roundCards"><div class="text-muted">กำลังโหลดรอบตรวจ...</div></div>
-            <button type="button" class="btn btn-sm btn-link p-0 mt-2" id="moreRoundsBtn" style="display:none;" onclick="toggleOldRounds()"></button>
-        </section>
-
-        <div class="hx-step-title mt-4 mb-2"><span class="hx-no">2</span> ดู / แก้ไขรายคน และส่งออก <span class="hx-sub fw-normal">(ผลของรอบที่เลือก: <b id="roundLabel">-</b>)</span></div>
-
-        <!-- ฟอร์มค้นหา -->
-        <div class="card search-card">
-            <div class="card-body">
-                <form id="searchForm" method="GET" class="row g-3">
-                    <div class="col-md-2">
-                        <label for="child_group" class="form-label">กลุ่มเรียน</label>
-                        <select name="child_group" id="child_group" class="form-select" onchange="loadClassrooms()">
-                            <option value="">-- เลือกกลุ่มเรียน --</option>
-                            <?php
-                            $groups = get_childgroup();
-                            foreach ($groups as $group) {
-                                if (!empty($group['child_group'])) {
-                                    $selected = (isset($_GET['child_group']) && $_GET['child_group'] == $group['child_group']) ? 'selected' : '';
-                                    echo "<option value='" . $group['child_group'] . "' $selected>" . $group['child_group'] . "</option>";
-                                }
-                            }
-                            ?>
-                        </select>
-                    </div>
-
-                    <div class="col-md-2">
-                        <label for="classroom" class="form-label">ห้องเรียน</label>
-                        <select name="classroom" id="classroom" class="form-select">
-                            <option value="">-- เลือกห้องเรียน --</option>
-                        </select>
-                    </div>
-
+                <div class="step-body">
                     <input type="hidden" name="academic_year" id="academic_year" value="">
                     <input type="hidden" name="round_id" id="round_id" value="">
                     <input type="hidden" name="check_round" id="check_round" value="">
-
-                    <div class="col-md-2">
-                        <label for="student_year" class="form-label">กลุ่มเด็ก</label>
-                        <select name="student_year" id="student_year" class="form-select" onchange="filterData()">
-                            <option value="all" <?= (isset($_GET['student_year']) && $_GET['student_year'] == 'all') ? 'selected' : '' ?>>
-                                ทั้งหมด
-                            </option>
-                            <?php foreach ($academicYears as $year): ?>
-                                <option value="<?= $year['name'] ?>" <?= $index === 0 ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($year['name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                    <div class="round-cards" id="roundCards"><div class="text-muted">กำลังโหลดรอบตรวจ...</div></div>
+                    <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+                        <button type="button" class="btn btn-sm btn-link p-0" id="moreRoundsBtn" style="display:none;" onclick="toggleOldRounds()"></button>
+                        <?php if ($is_admin): ?>
+                            <a href="health_rounds.php" class="btn btn-sm btn-outline-primary ms-auto"><i class="fas fa-calendar-check"></i> เปิดรอบใหม่ / ปิดรอบ</a>
+                        <?php endif; ?>
                     </div>
+                </div>
+            </section>
 
-                    <div class="col-md-4">
-                        <label for="search" class="form-label">ค้นหาชื่อ</label>
-                        <input type="text" class="form-control" id="search" name="search" placeholder="ชื่อ-นามสกุล"
-                            value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+            <!-- ขั้นที่ 2 -->
+            <section class="step locked" id="step2" style="display:none;">
+                <div class="step-head">
+                    <span class="step-no">2</span>
+                    <div>
+                        <div class="step-title">เลือกห้องเรียน</div>
+                        <div class="step-sub">เลือกกลุ่มและห้อง หรือค้นหาชื่อเด็ก แล้วกด "แสดงรายชื่อ"</div>
                     </div>
+                    <span class="step-state wait" id="state2">รอเลือกห้อง</span>
+                </div>
+                <div class="step-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-6 col-md-3">
+                            <label for="child_group" class="form-label">กลุ่มเรียน</label>
+                            <select name="child_group" id="child_group" class="form-select" onchange="loadClassrooms()">
+                                <option value="">-- เลือกกลุ่มเรียน --</option>
+                                <?php
+                                $groups = get_childgroup();
+                                foreach ($groups as $group) {
+                                    if (!empty($group['child_group'])) {
+                                        $selected = (isset($_GET['child_group']) && $_GET['child_group'] == $group['child_group']) ? 'selected' : '';
+                                        echo "<option value='" . htmlspecialchars($group['child_group']) . "' $selected>" . htmlspecialchars($group['child_group']) . "</option>";
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label for="classroom" class="form-label">ห้องเรียน</label>
+                            <select name="classroom" id="classroom" class="form-select">
+                                <option value="">-- ทุกห้องในกลุ่ม --</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label for="search" class="form-label">หรือค้นหาชื่อ (ไม่บังคับ)</label>
+                            <input type="text" class="form-control" id="search" name="search" placeholder="ชื่อ-นามสกุล / รหัส"
+                                value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                        </div>
+                        <div class="col-12 col-md-3 step-actions">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> แสดงรายชื่อ</button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">ล้าง</button>
+                        </div>
+                        <div class="col-12">
+                            <a class="step-hint text-decoration-none" data-bs-toggle="collapse" href="#moreFilters" role="button" aria-expanded="false">
+                                <i class="fas fa-sliders-h"></i> ตัวกรองเพิ่มเติม
+                            </a>
+                            <div class="collapse mt-2" id="moreFilters">
+                                <div class="row g-3">
+                                    <div class="col-6 col-md-3">
+                                        <label for="student_year" class="form-label">เฉพาะเด็กที่เข้าเรียนปีการศึกษา</label>
+                                        <select name="student_year" id="student_year" class="form-select">
+                                            <option value="all" <?= (isset($_GET['student_year']) && $_GET['student_year'] == 'all') ? 'selected' : '' ?>>ทั้งหมด</option>
+                                            <?php foreach ($academicYears as $year): ?>
+                                                <option value="<?= htmlspecialchars($year['name']) ?>"><?= htmlspecialchars($year['name']) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </form>
 
-                    <!-- เพิ่มปุ่ม Export ไว้ข้างๆ ปุ่มค้นหาและรีเซ็ต -->
-                    <div class="col-12">
-                        <button type="submit" class="btn btn-primary mt-1">ค้นหา</button>
-                        <button type="button" class="btn btn-secondary mt-1" onclick="resetForm()">รีเซ็ต</button>
-                        <button type="button" class="btn btn-danger mt-1" onclick="exportToPdf()">
-                            <i class="fas fa-file-pdf"></i> Export Pdf
-                        </button>
-                        <!-- <button type="button" class="btn btn-success mt-1" onclick="exportToExcel()">
-                            <i class="fas fa-file-excel"></i> Export Excel
-                        </button>
-                        <button type="button" class="btn btn-warning mt-1" onclick="showDownloadTemplateModal()">
-                            <i class="fas fa-download"></i> ดาวน์โหลด Template
-                        </button>
-                        <button type="button" class="btn btn-info mt-1" onclick="showImportModal()">
-                            <i class="fas fa-file-upload"></i> Import Excel
-                        </button> -->
-                        <a href="checklist_grid.php" id="gridLink" class="btn btn-success mt-1">
-                            <i class="fas fa-table"></i> กรอกทั้งห้อง (ตาราง)
-                        </a>
-                    </div>
-                </form>
+        <!-- ขั้นที่ 3 -->
+        <section class="step locked" id="step3" style="display:none;">
+            <div class="step-head">
+                <span class="step-no">3</span>
+                <div>
+                    <div class="step-title">บันทึกผลตรวจ</div>
+                    <div class="step-sub" id="step3Sub">เลือกรอบและห้องเรียนในขั้นที่ 1-2 ก่อน</div>
+                </div>
+                <span class="step-state wait" id="state3">รอรายชื่อ</span>
             </div>
-        </div>
+            <div class="step-body">
+                <div class="round-info mb-3" id="sumRow"></div>
+                <div class="step-actions">
+                    <a href="checklist_grid.php" id="gridLink" class="btn btn-go"><i class="fas fa-table"></i> กรอกทั้งห้อง (ตาราง)</a>
+                    <span class="step-hint">หรือกด "เพิ่มข้อมูล" รายคนในตารางด้านล่าง</span>
+                    <div class="dropdown ms-auto">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-file-export"></i> พิมพ์ / ส่งออก
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><button type="button" class="dropdown-item" onclick="exportToPdf()"><i class="fas fa-file-pdf text-danger me-2"></i>ส่งออก PDF</button></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <!-- ตารางแสดงผล (โหมดดู) -->
-        <div class="card shadow-sm" id="viewModeCard">
+        <!-- ตารางแสดงผล (เปิดเมื่อกด "รายคน / ส่งออก") -->
+        <div class="card shadow-sm" id="resultCard" style="display:none;">
             <div class="card-body">
                 <div class="table-responsive" id="resultTable">
                     <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
@@ -183,6 +236,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
         // ถ้ามีการเลือกกลุ่มเรียน ให้โหลดห้องเรียนก่อน
         if (urlParams.get('child_group')) {
+            ['step2', 'step3', 'resultCard'].forEach((id) => { document.getElementById(id).style.display = ''; });
             // กรอกข้อมูลกลุ่มเรียน
             document.getElementById('child_group').value = urlParams.get('child_group');
 
@@ -217,6 +271,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
     // ===== รอบตรวจ =====
     let healthRounds = [];
+    let resultsLoaded = false;
     let showOldRounds = false;
     const ROUNDS_VISIBLE = 4;
     const IS_ADMIN = <?= $is_admin ? 'true' : 'false' ?>;
@@ -237,12 +292,16 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             const list = showOldRounds ? healthRounds : healthRounds.slice(0, ROUNDS_VISIBLE);
             box.innerHTML = list.map((r) => {
                 const open = r.status === 'open';
-                return `<div role="button" tabindex="0" class="hx-card ${String(r.id) === String(selected) ? 'selected' : ''} ${open ? '' : 'closed'}" data-round="${r.id}">
-                    <div class="y">${r.academic_year}</div><div class="t">${r.title}</div>
-                    <div class="d">วันที่ ${roundDateText(r)}</div>
-                    <div><span class="hx-chip ${open ? 'open' : 'closed'}">${open ? 'เปิดอยู่' : 'ปิดแล้ว'}</span> <span class="hx-chip">กรอกแล้ว ${r.child_count} คน</span></div>
-                    <div class="go">${open ? 'กรอกผลเป็นตาราง' : 'ดูผลเป็นตาราง'} <i class="fas fa-arrow-right"></i></div>
-                    <span class="more" data-more="${r.id}">ดูรายคน / ส่งออก</span>
+                return `<div role="button" tabindex="0" class="round-card ${String(r.id) === String(selected) ? 'selected' : ''} ${open ? '' : 'closed'}" data-round="${r.id}">
+                    <div class="rc-year">${r.academic_year}</div>
+                    <div class="rc-title">${r.title}</div>
+                    <div class="rc-date">วันที่ ${roundDateText(r)}</div>
+                    <div class="rc-chips">
+                        <span class="rchip ${open ? 'open' : 'closed'}">${open ? 'เปิดอยู่' : 'ปิดแล้ว'}</span>
+                        <span class="rchip">กรอกแล้ว ${r.child_count} คน</span>
+                    </div>
+                    <div class="rc-go">${open ? 'กรอกผลเป็นตาราง' : 'ดูผลเป็นตาราง'} <i class="fas fa-arrow-right"></i></div>
+                    <span class="rc-more" data-more="${r.id}">รายคน / ส่งออก</span>
                 </div>`;
             }).join('');
         }
@@ -259,10 +318,44 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
         document.getElementById('round_id').value = r ? r.id : '';
         document.getElementById('academic_year').value = r ? r.academic_year : '';
         document.getElementById('check_round').value = r ? r.round_no : '';
-        document.getElementById('roundLabel').textContent = r ? `${r.academic_year} · ${r.title}` : '-';
-        document.getElementById('gridLink').href = r ? 'checklist_grid.php?round_id=' + encodeURIComponent(r.id) : 'checklist_grid.php';
         renderRoundCards();
-        if (reload) loadResults();
+        updateSteps();
+        if (reload || resultsLoaded) loadResults();   // เปลี่ยนรอบ = โหลดรายชื่อใหม่ตามรอบนั้น
+    }
+
+    function setState(n, ok, text) {
+        const st = document.getElementById('state' + n);
+        st.className = 'step-state ' + (ok ? 'ok' : 'wait');
+        st.textContent = text;
+        document.getElementById('step' + n).classList.toggle('done', ok);
+    }
+
+    function updateSteps() {
+        const roundId = document.getElementById('round_id').value;
+        const hasRound = !!roundId;
+        document.getElementById('step2').classList.toggle('locked', !hasRound);
+        document.getElementById('step3').classList.toggle('locked', !(hasRound && resultsLoaded));
+        const r = healthRounds.find((x) => String(x.id) === String(roundId));
+        setState(1, hasRound, hasRound ? `เลือกแล้ว: ${r ? r.title : ''}` : 'รอเลือกรอบ');
+        setState(2, resultsLoaded, resultsLoaded ? 'แสดงรายชื่อแล้ว' : 'รอเลือกห้อง');
+        if (!resultsLoaded) setState(3, false, 'รอรายชื่อ');
+        document.getElementById('step3Sub').textContent = resultsLoaded
+            ? 'กรอกทั้งห้องในตารางเดียว หรือเพิ่มข้อมูลรายคนในรายชื่อด้านล่าง'
+            : 'เลือกรอบและห้องเรียนในขั้นที่ 1-2 ก่อน';
+        // ลิงก์ไปหน้ากรอกทั้งห้อง พร้อมค่าที่เลือกไว้
+        const q = new URLSearchParams({
+            round_id: roundId || '',
+            child_group: document.getElementById('child_group').value,
+            classroom: document.getElementById('classroom').value,
+        });
+        document.getElementById('gridLink').href = 'checklist_grid.php?' + q.toString();
+    }
+
+    // เครื่องมือรายคน (ดู/แก้ไข/ลบ และส่งออก) ซ่อนไว้ก่อน เปิดเมื่อกด "รายคน / ส่งออก" ในการ์ด
+    function showPersonTools(roundId) {
+        ['step2', 'step3', 'resultCard'].forEach((id) => { document.getElementById(id).style.display = ''; });
+        selectRound(roundId, false);
+        document.getElementById('step2').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function loadRounds() {
@@ -295,8 +388,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             const more = e.target.closest('[data-more]');
             if (more) {
                 e.stopPropagation();
-                selectRound(more.dataset.more, false);
-                document.getElementById('searchForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                showPersonTools(more.dataset.more);
                 return;
             }
             const c = e.target.closest('[data-round]');
@@ -307,6 +399,8 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             const c = e.target.closest('[data-round]');
             if (c && e.target === c) { e.preventDefault(); openGrid(c); }
         });
+        ['child_group', 'classroom', 'student_year'].forEach((id) => document.getElementById(id).addEventListener('change', updateSteps));
+        document.getElementById('gridLink').addEventListener('click', updateSteps);
         loadRounds();
     });
 
@@ -344,10 +438,11 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     function resetForm() {
         const keepRound = document.getElementById('round_id').value;
         document.getElementById('searchForm').reset();
+        document.getElementById('classroom').innerHTML = '<option value="">-- ทุกห้องในกลุ่ม --</option>';
+        resultsLoaded = false;
+        document.getElementById('resultTable').innerHTML = '<div class="alert alert-info">เลือกกลุ่มเรียนหรือห้องเรียนในขั้นที่ 2 แล้วกด "แสดงรายชื่อ"</div>';
+        document.getElementById('sumRow').innerHTML = '';
         selectRound(keepRound, false);
-        document.getElementById('child_group').innerHTML = '<option value="">-- เลือกห้องเรียน --</option>';
-        document.getElementById('classroom').innerHTML = '<option value="">-- เลือกห้องเรียน --</option>';
-        loadResults(); // โหลดผลลัพธ์ใหม่
     }
 
     // ฟังก์ชันจัดกลุ่มข้อมูล (แบบใหม่)
@@ -605,7 +700,9 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
         // ถ้าไม่มีการเลือกกลุ่มเรียนและห้องเรียน และไม่มีการค้นหาชื่อ
         if (!formData.get('child_group') && !formData.get('classroom') && !searchValue) {
             const table = document.getElementById('resultTable');
-            table.innerHTML = '<div class="alert alert-info">กรุณาเลือกกลุ่มเรียน, ห้องเรียน หรือค้นหาจากชื่อนักเรียน แล้วกดปุ่มค้นหา</div>';
+            table.innerHTML = '<div class="alert alert-info">เลือกกลุ่มเรียนหรือห้องเรียนในขั้นที่ 2 หรือค้นหาจากชื่อเด็ก แล้วกด "แสดงรายชื่อ"</div>';
+            resultsLoaded = false;
+            updateSteps();
             return;
         }
 
@@ -615,6 +712,22 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             .then(response => response.json())
             .then(data => {
                 renderResults(data);
+                if (!Array.isArray(data) || !data.length) { resultsLoaded = false; updateSteps(); return; }
+                // สรุปสถานะของรอบนี้ในรายชื่อที่แสดง (เด็ก 1 คนนับ 1 ครั้ง)
+                const byChild = {};
+                data.forEach((r) => { const k = r.student_id; if (!byChild[k] || (r.id != null && byChild[k].id == null)) byChild[k] = r; });
+                const list = Object.values(byChild);
+                const done = list.filter((r) => r.id != null && r.doctor_name).length;
+                const waiting = list.filter((r) => r.id != null && !r.doctor_name).length;
+                const none = list.length - done - waiting;
+                document.getElementById('sumRow').innerHTML =
+                    `<span class="rchip">ทั้งหมด ${list.length} คน</span>` +
+                    `<span class="rchip open">หมอตรวจแล้ว ${done}</span>` +
+                    (waiting ? `<span class="rchip teacher">รอแพทย์ตรวจ ${waiting}</span>` : '') +
+                    `<span class="rchip">ยังไม่บันทึก ${none}</span>`;
+                resultsLoaded = true;
+                updateSteps();
+                setState(3, none === 0, none === 0 ? 'บันทึกครบทุกคน' : `เหลือ ${none} คน`);
             })
             .catch(error => {
                 console.error('Error:', error);
