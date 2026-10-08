@@ -65,9 +65,6 @@ const CHILD_COLUMNS_EXCLUDED = [
     'place_birth', 'issue_at', 'issue_date', 'expiry_date',
 ];
 
-// คอลัมน์พื้นฐานเมื่อเลือกส่งออกเฉพาะข้อมูลพื้นฐาน
-const CHILD_COLUMNS_BASIC = ['studentid', 'prefix_th', 'firstname_th', 'lastname_th', 'nickname', 'academic_year', 'child_group', 'classroom', 'status'];
-
 // คอลัมน์ตัวเลขที่ต้องคงเลข 0 นำหน้าเมื่อเปิดด้วย Excel
 function child_is_text_number_column(string $col): bool
 {
@@ -102,7 +99,6 @@ try {
     $group = $groupMap[$group] ?? $group;
     $classroom = trim($_POST['classroom'] ?? '');
     $year = trim($_POST['academic_year'] ?? '');
-    $scope = ($_POST['scope'] ?? 'all') === 'basic' ? 'basic' : 'all';
     $eduStatus = trim($_POST['edu_status'] ?? 'all');
 
     $where = [];
@@ -151,9 +147,6 @@ try {
         $ib = $ib === false ? PHP_INT_MAX : $ib;
         return $ia <=> $ib;
     });
-    if ($scope === 'basic') {
-        $columns = array_values(array_filter($columns, fn($c) => in_array($c, CHILD_COLUMNS_BASIC, true)));
-    }
 
     // ยา/อาหารที่แพ้: ใช้รายการจากตารางบันทึกการแพ้ (ที่แท็บประวัติประจำตัวใช้งานจริง)
     // ถ้าไม่มีให้ใช้ค่าข้อความเดิมในตารางเด็ก

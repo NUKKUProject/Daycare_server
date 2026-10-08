@@ -307,25 +307,11 @@ if (!$exportYearDefault) {
                         <label class="form-label fw-semibold" for="exportStatus">สถานะการศึกษา</label>
                         <select name="edu_status" id="exportStatus" class="form-select">
                             <option value="all">ทุกสถานะ</option>
-                            <option value="กำลังศึกษา">กำลังศึกษา</option>
+                            <option value="กำลังศึกษา" selected>กำลังศึกษา</option>
                             <option value="สำเร็จการศึกษา">สำเร็จการศึกษา</option>
                             <option value="ย้ายไปโรงเรียนอื่น">ย้ายไปโรงเรียนอื่น</option>
                             <option value="ลาออก">ลาออก</option>
                         </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold d-block">ข้อมูลที่ส่งออก</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="scope" id="scopeAll" value="all" checked>
-                            <label class="form-check-label" for="scopeAll">ข้อมูลทั้งหมด (รวมข้อมูลส่วนตัว)</label>
-                            <div class="form-text">เลขบัตรประชาชน วันเกิด ที่อยู่ โรคประจำตัว ข้อมูลผู้ปกครองและเบอร์โทร ฯลฯ</div>
-                        </div>
-                        <div class="form-check mt-2">
-                            <input class="form-check-input" type="radio" name="scope" id="scopeBasic" value="basic">
-                            <label class="form-check-label" for="scopeBasic">เฉพาะข้อมูลพื้นฐาน</label>
-                            <div class="form-text">รหัส ชื่อ ชื่อเล่น ปีการศึกษา กลุ่ม ห้อง สถานะการศึกษา</div>
-                        </div>
                     </div>
 
                     <div class="alert alert-warning py-2 small mb-0">
