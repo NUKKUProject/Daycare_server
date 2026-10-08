@@ -115,6 +115,18 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     .tg .fu { font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
     .tg .fu.wait { background: #ffedd5; color: #c2410c; } .tg .fu.ack { background: #dbeafe; color: #1d4ed8; }
     .tg .fu.sched { background: #ede9fe; color: #6d28d9; } .tg .fu.done { background: #dcfce7; color: #15803d; }
+    .tg .fu-edit { margin-left: .25rem; padding: 1px 8px; font-size: .7rem; }
+    .fo-popup { border-radius: 1.1rem !important; padding: 1.3rem 1.4rem 1.2rem !important; }
+    .fo-popup .swal2-html-container { margin: 0 !important; padding: 0 !important; overflow: visible; }
+    .fo-popup .swal2-actions { margin: 1.1rem 0 0 !important; gap: .6rem; width: 100%; }
+    .fo-opts { display: grid; gap: .5rem; grid-template-columns: repeat(3, 1fr); }
+    .fo-opt { background: #fff; border: 2px solid #cbd5e1; border-radius: .8rem; color: #1E4F6F; font-weight: 700; padding: .6rem .3rem; text-align: center; }
+    .fo-opt i { display: block; font-size: 1.3rem; margin-bottom: .15rem; }
+    .fo-opt:hover { border-color: #26648E; background: #f4f9fd; }
+    .fo-opt.on { background: #f0fdf4; border-color: #16a34a; color: #15803d; }
+    .fo-lb { color: #334155; display: block; font-size: .85rem; font-weight: 700; margin-bottom: .3rem; }
+    .fo-confirm { background: #15803d; border: 0; border-radius: .7rem; color: #fff; font-weight: 700; padding: .6rem 1.3rem; }
+    .fo-cancel { background: #fff; border: 2px solid #cbd5e1; border-radius: .7rem; color: #475569; font-weight: 700; padding: .55rem 1.1rem; }
     .tg-empty { text-align: center; padding: 2.5rem 1rem; color: #64748b; }
     .tg-empty .big { font-size: 1.05rem; font-weight: 700; color: #334155; margin-bottom: .35rem; }
     .tg-hint { font-size: .78rem; color: #64748b; margin-top: .5rem; }
@@ -344,7 +356,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
             birthday: c.birthday, exam: '', doctorDone: doctorDone,
             // ครูแก้ผลที่แพทย์ตรวจแล้วไม่ได้ (ผลของแพทย์ใช้แทนเสมอ จึงล็อกไว้กันแก้แล้วไม่มีผล)
             locked: m === 'teacher' && doctorDone,
-            fu: recs.doctor ? { status: recs.doctor.followup_status, date: recs.doctor.followup_date, note: recs.doctor.followup_note } : null,
+            fu: recs.doctor ? { id: recs.doctor.id, status: recs.doctor.followup_status, date: recs.doctor.followup_date, note: recs.doctor.followup_note, by: recs.doctor.followup_by_role } : null,
             saved: m === 'doctor' ? doctorDone : !!source,
             prefill: m === 'doctor' && !doctorDone && !!source, ref: null, dirty: false
         });
@@ -357,11 +369,66 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
     function followupHtml(r) {
         if (!r.doctorDone || !hasDecay(r)) return '<span class="text-muted small">-</span>';
         const f = r.fu && r.fu.status ? r.fu : null;
-        if (!f) return '<span class="fu wait" title="พบฟันผุ ผู้ปกครองยังไม่แจ้งกลับ">ยังไม่ตอบ</span>';
-        const t = f.note ? ` title="${esc(f.note)}"` : '';
-        if (f.status === 'treated') return `<span class="fu done"${t}>พาไปรักษาแล้ว ${thaiShort(f.date)}</span>`;
-        if (f.status === 'scheduled') return `<span class="fu sched"${t}>นัดหมอ ${thaiShort(f.date)}</span>`;
-        return `<span class="fu ack"${t}>รับทราบแล้ว</span>`;
+        const who = f && f.by === 'center' ? ' · ศูนย์บันทึก' : '';
+        const t = f && f.note ? ` title="${esc(f.note)}"` : '';
+        let chip;
+        if (!f) chip = '<span class="fu wait" title="พบฟันผุ ผู้ปกครองยังไม่แจ้งกลับ">ยังไม่ตอบ</span>';
+        else if (f.status === 'treated') chip = `<span class="fu done"${t}>พาไปรักษาแล้ว ${thaiShort(f.date)}${who}</span>`;
+        else if (f.status === 'scheduled') chip = `<span class="fu sched"${t}>นัดหมอ ${thaiShort(f.date)}${who}</span>`;
+        else chip = `<span class="fu ack"${t}>รับทราบแล้ว${who}</span>`;
+        // ศูนย์บันทึกแทนผู้ปกครองได้ (เช่น ศูนย์พาไปรักษาเอง) แม้รอบตรวจจะปิดแล้ว
+        return chip + ` <button type="button" class="rowact fu-edit" data-fu="1" title="บันทึกการติดตามแทนผู้ปกครอง">${f ? 'แก้ไข' : 'บันทึก'}</button>`;
+    }
+
+    // ศูนย์บันทึกการติดตามแทนผู้ปกครอง
+    async function openFollowup(r) {
+        const f = r.fu || {};
+        let status = f.status || 'treated';
+        const today = todayStr();
+        const OPT = [['acknowledged', 'รับทราบ', 'bi-hand-thumbs-up'], ['scheduled', 'นัดหมอแล้ว', 'bi-calendar-event'], ['treated', 'พาไปรักษาแล้ว', 'bi-check2-circle']];
+        const res = await Swal.fire({
+            width: 520,
+            html: `<div style="text-align:left">
+                <div style="font-weight:700;font-size:1.15rem;color:#1E4F6F">บันทึกการติดตามแทนผู้ปกครอง</div>
+                <div class="text-muted small mb-3">${esc(r.nick || r.name)} · ใช้เมื่อศูนย์ดำเนินการแทน เช่น ศูนย์พาไปรักษาเอง</div>
+                <div class="fo-opts">${OPT.map(([k, t, ic]) => `<button type="button" class="fo-opt${k === status ? ' on' : ''}" data-k="${k}"><i class="bi ${ic}"></i>${t}</button>`).join('')}</div>
+                <div id="foDateWrap" class="mt-3"><label class="fo-lb" for="foDate">วันที่</label>
+                    <input id="foDate" type="date" class="form-control" value="${esc((f.date || today).slice(0, 10))}"></div>
+                <div class="mt-3"><label class="fo-lb" for="foNote">หมายเหตุ <span class="text-muted fw-normal">(ไม่บังคับ)</span></label>
+                    <textarea id="foNote" class="form-control" rows="3" maxlength="300" placeholder="เช่น ศูนย์พาไปโรงพยาบาล... อุดฟันเรียบร้อย">${esc(f.note || '')}</textarea></div></div>`,
+            showCancelButton: true, buttonsStyling: false, reverseButtons: true,
+            confirmButtonText: '<i class="bi bi-check-circle me-1"></i>บันทึก', cancelButtonText: 'ยกเลิก',
+            customClass: { popup: 'fo-popup', confirmButton: 'fo-confirm', cancelButton: 'fo-cancel' },
+            didOpen: () => {
+                const wrap = byId('foDateWrap');
+                const sync = () => { wrap.style.display = status === 'acknowledged' ? 'none' : ''; };
+                document.querySelectorAll('.fo-opt').forEach((b) => b.addEventListener('click', () => {
+                    status = b.dataset.k;
+                    document.querySelectorAll('.fo-opt').forEach((x) => x.classList.toggle('on', x === b));
+                    sync();
+                }));
+                sync();
+            },
+            preConfirm: () => {
+                const date = status === 'acknowledged' ? '' : byId('foDate').value;
+                if (status !== 'acknowledged' && !date) { Swal.showValidationMessage('กรุณาระบุวันที่'); return false; }
+                return { date, note: byId('foNote').value.trim() };
+            }
+        });
+        if (!res.isConfirmed) return;
+        try {
+            const r2 = await fetch('../../include/function/tooth_followup_api.php', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', ...XHR },
+                body: JSON.stringify({ id: f.id, status, date: res.value.date, note: res.value.note })
+            });
+            const data = await r2.json();
+            if (data.status !== 'success') throw new Error(data.message || 'บันทึกไม่สำเร็จ');
+            r.fu = { id: f.id, status, date: res.value.date || null, note: res.value.note || null, by: 'center' };
+            render();
+            Swal.fire({ icon: 'success', title: 'บันทึกการติดตามแล้ว', timer: 1400, showConfirmButton: false });
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: e.message, confirmButtonText: 'ตกลง' });
+        }
     }
 
     const posSum = (r) => r.p.reduce((a, b) => a + (b || 0), 0);
@@ -661,6 +728,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
             if (b.dataset.t) { const k = r.t.indexOf(b.dataset.t); k > -1 ? r.t.splice(k, 1) : r.t.push(b.dataset.t); if (b.dataset.t === 'other' && k > -1) r.other = ''; r.dirty = true; r.prefill = false; render(); }
             if (b.dataset.normal) { setNormal(r); render(); }
             if (b.dataset.confirm) { r.dirty = true; r.prefill = false; render(); }
+            if (b.dataset.fu) openFollowup(r);
         });
         wrap.addEventListener('keydown', (e) => {
             if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;

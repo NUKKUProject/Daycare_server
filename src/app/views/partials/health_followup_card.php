@@ -15,7 +15,7 @@ function tfuProviderDental(PDO $pdo): array
         WITH latest AS (
             SELECT DISTINCT ON (h.student_id)
                    h.student_id, h.round_id, h.decayed_teeth, h.teeth_status, h.urgency, h.examined_at, h.updated_at,
-                   h.followup_status, h.followup_date, h.followup_note, h.followup_updated_at
+                   h.followup_status, h.followup_date, h.followup_note, h.followup_updated_at, h.followup_by_role
             FROM health_tooth_external h
             LEFT JOIN tooth_exam_rounds r ON r.id = h.round_id
             WHERE h.exam_type = 'doctor'
@@ -36,7 +36,7 @@ function tfuProviderDental(PDO $pdo): array
             'classroom' => $r['classroom'], 'detail' => 'พบฟันผุ', 'urgency' => $r['urgency'] ?? '',
             'count_text' => $n > 0 ? $n . ' ซี่' : '', 'checked_at' => $r['examined_at'] ?: substr((string) $r['updated_at'], 0, 10),
             'status' => $r['followup_status'] ?: '', 'status_date' => $r['followup_date'], 'note' => $r['followup_note'],
-            'replied_at' => $r['followup_updated_at'],
+            'replied_at' => $r['followup_updated_at'], 'by' => $r['followup_by_role'] ?? '',
             'link' => '../check_health_tooth/checklist_grid.php?round_id=' . (int) $r['round_id'] . '&search=' . rawurlencode($r['student_id']),
         ];
     }
@@ -172,7 +172,7 @@ if ($tfuItems):
                     [$stText, $stCls] = $tfuStatusLabel[$it['status']] ?? ['แจ้งกลับ', 'ack']; ?>
                     <a class="tfu-item <?= $stCls ?>" href="<?= htmlspecialchars($it['link']) ?>">
                         <span class="nm"><b><?= htmlspecialchars($tfuName($it)) ?> <span class="tfu-pill <?= $stCls ?> ms-1"><?= htmlspecialchars($stText) ?><?= $it['status'] !== 'acknowledged' && $it['status_date'] ? ' ' . htmlspecialchars(tfuThaiDate($it['status_date'])) : '' ?></span></b>
-                            <small><span class="tfu-tag"><?= htmlspecialchars($it['type_label']) ?></span>ห้อง <?= htmlspecialchars($it['classroom'] ?? '-') ?><?= !empty($it['note']) ? ' · “' . htmlspecialchars($it['note']) . '”' : '' ?></small></span>
+                            <small><span class="tfu-tag"><?= htmlspecialchars($it['type_label']) ?></span><?= ($it['by'] ?? '') === 'center' ? '<span class="tfu-tag">ศูนย์บันทึก</span>' : '' ?>ห้อง <?= htmlspecialchars($it['classroom'] ?? '-') ?><?= !empty($it['note']) ? ' · “' . htmlspecialchars($it['note']) . '”' : '' ?></small></span>
                         <span class="rt"><small><?= htmlspecialchars(tfuThaiDate($it['replied_at'], true)) ?></small></span>
                     </a>
                 <?php endforeach; ?>

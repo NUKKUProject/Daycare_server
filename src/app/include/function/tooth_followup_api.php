@@ -1,7 +1,8 @@
 <?php
-// ผู้ปกครอง (บัญชีนักเรียน) แจ้งกลับศูนย์เรื่องผลตรวจฟันของลูกตัวเอง: รับทราบ / นัดหมอแล้ว / พาไปรักษาแล้ว
+// แจ้งกลับเรื่องผลตรวจฟัน: รับทราบ / นัดหมอแล้ว / พาไปรักษาแล้ว
+// ผู้ปกครอง (บัญชีนักเรียน) แจ้งได้เฉพาะลูกตัวเอง  ศูนย์ (admin / ครู / แพทย์) แจ้งแทนผู้ปกครองได้ทุกคน (เช่น ศูนย์พาไปรักษาเอง)
 require_once __DIR__ . '/../auth/auth.php';
-checkUserRole(['student']);
+checkUserRole(['student', 'admin', 'teacher', 'doctor']);
 require_once __DIR__ . '/../../../config/database.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -18,10 +19,12 @@ try {
         out(['status' => 'error', 'message' => 'วิธีเรียกใช้ไม่ถูกต้อง'], 405);
     }
     $in = json_decode(file_get_contents('php://input'), true) ?: [];
-    $studentId = (string) ($_SESSION['username'] ?? '');
+    $role = (string) ($_SESSION['role'] ?? '');
+    $isParent = $role === 'student';
+    $username = (string) ($_SESSION['username'] ?? '');
     $id = (int) ($in['id'] ?? 0);
     $status = (string) ($in['status'] ?? '');
-    if ($studentId === '' || !$id || !in_array($status, ['acknowledged', 'scheduled', 'treated'], true)) {
+    if ($username === '' || !$id || !in_array($status, ['acknowledged', 'scheduled', 'treated'], true)) {
         out(['status' => 'error', 'message' => 'ข้อมูลไม่ถูกต้อง'], 400);
     }
 
@@ -40,18 +43,19 @@ try {
     $note = mb_substr(trim((string) ($in['note'] ?? '')), 0, 300);
 
     $pdo = getDatabaseConnection();
-    // แก้ได้เฉพาะผลตรวจของแพทย์ของลูกตัวเองเท่านั้น
-    $own = $pdo->prepare("SELECT id FROM health_tooth_external WHERE id = :id AND student_id = :s AND exam_type = 'doctor'");
-    $own->execute([':id' => $id, ':s' => $studentId]);
+    // ผู้ปกครองแก้ได้เฉพาะผลตรวจของแพทย์ของลูกตัวเอง ศูนย์แก้ได้ทุกคน (เฉพาะผลที่แพทย์ตรวจ)
+    $sql = "SELECT id FROM health_tooth_external WHERE id = :id AND exam_type = 'doctor'" . ($isParent ? ' AND student_id = :s' : '');
+    $own = $pdo->prepare($sql);
+    $own->execute($isParent ? [':id' => $id, ':s' => $username] : [':id' => $id]);
     if (!$own->fetchColumn()) {
         out(['status' => 'error', 'message' => 'ไม่พบผลตรวจที่ต้องการ'], 404);
     }
 
     $upd = $pdo->prepare("UPDATE health_tooth_external SET
             followup_status = :st, followup_date = :d, followup_note = :n,
-            parent_ack_at = COALESCE(parent_ack_at, NOW()), followup_updated_at = NOW(), followup_by = :by
+            parent_ack_at = COALESCE(parent_ack_at, NOW()), followup_updated_at = NOW(), followup_by = :by, followup_by_role = :role
         WHERE id = :id");
-    $upd->execute([':st' => $status, ':d' => $date, ':n' => $note !== '' ? $note : null, ':by' => $studentId, ':id' => $id]);
+    $upd->execute([':st' => $status, ':d' => $date, ':n' => $note !== '' ? $note : null, ':by' => $username, ':role' => $isParent ? 'parent' : 'center', ':id' => $id]);
 
     out(['status' => 'success', 'message' => 'แจ้งศูนย์เรียบร้อยแล้ว']);
 } catch (Exception $e) {

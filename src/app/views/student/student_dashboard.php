@@ -129,7 +129,7 @@ if ($child) {
             SELECT h.id, h.total_teeth, h.decayed_teeth, h.teeth_status, h.urgency, h.doctor_name, h.oral_components,
                    h.missing_teeth_detail, h.other_treatment_detail, h.examined_at, h.updated_at,
                    h.decayed_teeth_positions::text AS positions, h.treatments::text AS treatments,
-                   h.followup_status, h.followup_date, h.followup_note, h.parent_ack_at,
+                   h.followup_status, h.followup_date, h.followup_note, h.followup_by_role, h.parent_ack_at,
                    r.title AS round_title, r.academic_year
             FROM health_tooth_external h
             LEFT JOIN tooth_exam_rounds r ON r.id = h.round_id
@@ -1088,6 +1088,9 @@ $viewTabs = [
                                         echo '<b>รับทราบแล้ว</b>';
                                     } else {
                                         echo '<span class="text-danger fw-bold">ยังไม่ได้แจ้งกลับ</span>';
+                                    }
+                                    if ($fs !== '' && ($dental['followup_by_role'] ?? '') === 'center') {
+                                        echo '<div class="text-muted small mt-1"><i class="bi bi-building me-1"></i>ศูนย์เป็นผู้บันทึกให้</div>';
                                     }
                                     if (!empty($dental['followup_note'])) {
                                         echo '<div class="text-muted small mt-1">' . htmlspecialchars($dental['followup_note']) . '</div>';
