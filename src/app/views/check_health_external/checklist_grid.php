@@ -318,10 +318,10 @@ $doctorName = $isDoctor ? getFullName() : '';
 
     function header() {
         const fill = (kind, key, title) => (closed() ? '' : `<button type="button" class="fillcol" data-fill="${kind}" data-k="${key}" title="เติมค่าปกติให้ช่องว่างของทุกคน">${title}</button>`);
-        return '<thead><tr class="g1"><th class="c-no" rowspan="2">#</th><th class="c-nm" rowspan="2">เด็ก</th><th class="gh-info" rowspan="2">วันที่ตรวจ / อายุ</th><th class="gh-body" rowspan="2">วันที่ชั่ง/วัด</th>' +
-            '<th class="gh-body" colspan="7">การเจริญเติบโต</th><th class="gh-beh">ปัญหาด้านพฤติกรรม</th><th class="gh-dev" colspan="5">พัฒนาการ</th>' +
+        return '<thead><tr class="g1"><th class="c-no" rowspan="2">#</th><th class="c-nm" rowspan="2">เด็ก</th><th class="gh-info" rowspan="2">วันที่ตรวจ / อายุ</th>' +
+            '<th class="gh-body" colspan="8">การเจริญเติบโต</th><th class="gh-beh">ปัญหาด้านพฤติกรรม</th><th class="gh-dev" colspan="5">พัฒนาการ</th>' +
             `<th class="gh-exam ex" colspan="${EXAM.length}">ตรวจร่างกาย</th><th class="gh-info" rowspan="2">คำแนะนำ</th><th class="gh-st" rowspan="2">สถานะ</th><th class="gh-st" rowspan="2"></th></tr>` +
-            '<tr class="g2"><th class="gh-body">น้ำหนัก</th><th class="gh-body">ส่วนสูง</th><th class="gh-body">อุณหภูมิ</th><th class="gh-body">BP</th>' +
+            '<tr class="g2"><th class="gh-body">วันที่ชั่ง/วัด</th><th class="gh-body">น้ำหนัก</th><th class="gh-body">ส่วนสูง</th><th class="gh-body">อุณหภูมิ</th><th class="gh-body">BP</th>' +
             '<th class="gh-body">น้ำหนัก/อายุ</th><th class="gh-body">ส่วนสูง/อายุ</th><th class="gh-body">น้ำหนัก/ส่วนสูง</th>' +
             `<th class="gh-beh">ไม่มี/มี ${fill('beh', 'beh', '✓')}</th>` +
             DEV.map(([k, l]) => `<th class="gh-dev">${l} ${fill('dev', k, '✓')}</th>`).join('') +
