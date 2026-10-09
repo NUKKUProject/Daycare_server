@@ -169,7 +169,7 @@ $doctorName = $isDoctor ? getFullName() : '';
             date: vs.bp_date || rec?.exam_date || byId('gDate').value || today(), mdate: rec?.measurement_date || '', dateEdited: false,
             temp: vs.temperature ?? '', bp: vs.bp ?? '', h: pm.height ?? '', w: pm.weight ?? '',
             wfa: one(pm.weight_for_age), hfa: one(pm.height_for_age), wfh: one(pm.weight_for_height),
-            beh: rec?.behavior?.status ?? '', dev: {}, ex: {}, rec: rec?.recommendation ?? '',
+            beh: rec?.behavior?.status ?? '', behd: rec?.behavior?.detail ?? '', dev: {}, ex: {}, rec: rec?.recommendation ?? '',
         };
         DEV.forEach(([k]) => { r.dev[k] = { s: dv[k]?.status ?? '', sc: dv[k]?.score ?? '' }; });
         EXAM.forEach(([k]) => {
@@ -222,10 +222,11 @@ $doctorName = $isDoctor ? getFullName() : '';
             `<td><select class="f" data-f="wfa" data-col="wfa"${dis}>${opts(WFA, r.wfa)}</select></td>` +
             `<td><select class="f" data-f="hfa" data-col="hfa"${dis}>${opts(HFA, r.hfa)}</select></td>` +
             `<td><select class="f" data-f="wfh" data-col="wfh"${dis}>${opts(WFH, r.wfh)}</select></td>` +
-            `<td><select class="f${r.beh ? ' s-' + r.beh : ''}" data-f="beh" data-col="beh"${dis}><option value=""></option><option value="none"${r.beh === 'none' ? ' selected' : ''}>none</option><option value="has"${r.beh === 'has' ? ' selected' : ''}>has</option></select></td>`;
+            `<td><select class="f${r.beh ? ' s-' + r.beh : ''}" data-f="beh" data-col="beh"${dis}><option value=""></option><option value="none"${r.beh === 'none' ? ' selected' : ''}>ไม่มี</option><option value="has"${r.beh === 'has' ? ' selected' : ''}>มี</option></select>` +
+                `<input class="f dtl${r.beh === 'has' || r.behd ? '' : ' hide'}" type="text" data-f="behd" data-col="behd" value="${esc(r.behd)}" placeholder="ระบุ"${dis}></td>`;
         DEV.forEach(([k]) => {
             const d = r.dev[k];
-            h += `<td><select class="f${d.s ? ' s-' + d.s : ''}" data-f="dev" data-k="${k}" data-col="dev_${k}"${dis}><option value=""></option><option value="pass"${d.s === 'pass' ? ' selected' : ''}>pass</option><option value="delay"${d.s === 'delay' ? ' selected' : ''}>delay</option></select>` +
+            h += `<td><select class="f${d.s ? ' s-' + d.s : ''}" data-f="dev" data-k="${k}" data-col="dev_${k}"${dis}><option value=""></option><option value="pass"${d.s === 'pass' ? ' selected' : ''}>ผ่าน</option><option value="delay"${d.s === 'delay' ? ' selected' : ''}>สงสัยล่าช้า</option></select>` +
                 `<input class="f sc${d.s === 'delay' ? '' : ' hide'}" type="text" data-f="devsc" data-k="${k}" data-col="devsc_${k}" value="${esc(d.sc)}" placeholder="ข้อที่"${dis}></td>`;
         });
         EXAM.forEach(([k]) => {
@@ -242,11 +243,11 @@ $doctorName = $isDoctor ? getFullName() : '';
     function header() {
         const fill = (kind, key, title) => (closed() ? '' : `<button type="button" class="fillcol" data-fill="${kind}" data-k="${key}" title="เติมค่าปกติให้ช่องว่างของทุกคน">${title}</button>`);
         return '<thead><tr class="g1"><th class="c-no" rowspan="2">#</th><th class="c-nm" rowspan="2">เด็ก</th><th class="gh-info" rowspan="2">วันที่ตรวจ / อายุ</th>' +
-            '<th class="gh-body" colspan="7">การเจริญเติบโต</th><th class="gh-beh">พฤติกรรม</th><th class="gh-dev" colspan="5">พัฒนาการ</th>' +
+            '<th class="gh-body" colspan="7">การเจริญเติบโต</th><th class="gh-beh">ปัญหาด้านพฤติกรรม</th><th class="gh-dev" colspan="5">พัฒนาการ</th>' +
             `<th class="gh-exam ex" colspan="${EXAM.length}">ตรวจร่างกาย</th><th class="gh-info" rowspan="2">คำแนะนำ</th><th class="gh-st" rowspan="2">สถานะ</th><th class="gh-st" rowspan="2"></th></tr>` +
             '<tr class="g2"><th class="gh-body">น้ำหนัก</th><th class="gh-body">ส่วนสูง</th><th class="gh-body">อุณหภูมิ</th><th class="gh-body">BP</th>' +
             '<th class="gh-body">น้ำหนัก/อายุ</th><th class="gh-body">ส่วนสูง/อายุ</th><th class="gh-body">น้ำหนัก/ส่วนสูง</th>' +
-            `<th class="gh-beh">none/has ${fill('beh', 'beh', '✓')}</th>` +
+            `<th class="gh-beh">ไม่มี/มี ${fill('beh', 'beh', '✓')}</th>` +
             DEV.map(([k, l]) => `<th class="gh-dev">${l} ${fill('dev', k, '✓')}</th>`).join('') +
             EXAM.map(([k, l]) => `<th class="gh-exam ex">${l} ${fill('ex', k, '✓')}</th>`).join('') + '</tr></thead>';
     }
@@ -307,6 +308,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         else { if (f === 'date') r.dateEdited = true; r[f] = v; }
         r.dirty = true; r.err = '';
         if (f === 'dev' || f === 'ex' || f === 'beh') el.className = 'f' + (v ? ' s-' + v : '');
+        if (f === 'beh') tr.querySelector('[data-f="behd"]')?.classList.toggle('hide', v !== 'has');
         if (f === 'dev') tr.querySelector(`[data-f="devsc"][data-k="${k}"]`)?.classList.toggle('hide', v !== 'delay');
         if (f === 'ex') { const d = tr.querySelector(`[data-f="exd"][data-k="${k}"]`); if (d) d.classList.toggle('hide', v !== 'abnormal' && !d.value); }
         refreshRow(i);
@@ -399,7 +401,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         return {
             student_id: r.sid, exam_date: r.date, measurement_date: (r.mdate && !r.dateEdited) ? r.mdate : r.date, birth_date: r.birthday,
             age_year: a ? a.y : null, age_month: a ? a.m : null, age_day: a ? a.d : null,
-            vital_signs: { temperature: r.temp, bp: r.bp, bp_date: r.date }, behavior: { status: r.beh },
+            vital_signs: { temperature: r.temp, bp: r.bp, bp_date: r.date }, behavior: { status: r.beh, detail: r.beh === 'has' ? r.behd : '' },
             physical_measures: { height: r.h, weight: r.w, weight_for_age: r.wfa, height_for_age: r.hfa, weight_for_height: r.wfh },
             development_assessment: dev, physical_exam: pe, neurological: nl, recommendation: r.rec,
         };
