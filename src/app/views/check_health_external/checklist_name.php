@@ -81,9 +81,12 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
 <main class="main-content">
     <div class="container-fluid px-4">
-        <div class="mb-3">
-            <h2 class="mb-1">บันทึกการตรวจสุขภาพเด็ก</h2>
-            <div class="text-muted">ทำตามลำดับ 1 → 2 → 3</div>
+        <div class="mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <h2 class="mb-1">บันทึกการตรวจสุขภาพเด็ก</h2>
+                <div class="text-muted">ทำตามลำดับ 1 → 2 → 3</div>
+            </div>
+            <button type="button" class="btn btn-danger" onclick="exportToPdf()"><i class="fas fa-file-pdf"></i> ส่งออก PDF</button>
         </div>
 
         <div id="noRoundNotice" class="alert alert-warning" style="display:none;"></div>
@@ -193,14 +196,6 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                 <div class="step-actions">
                     <a href="checklist_grid.php" id="gridLink" class="btn btn-go"><i class="fas fa-table"></i> กรอกทั้งห้อง (ตาราง)</a>
                     <span class="step-hint">หรือกด "เพิ่มข้อมูล" รายคนในตารางด้านล่าง</span>
-                    <div class="dropdown ms-auto">
-                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-file-export"></i> พิมพ์ / ส่งออก
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><button type="button" class="dropdown-item" onclick="exportToPdf()"><i class="fas fa-file-pdf text-danger me-2"></i>ส่งออก PDF</button></li>
-                        </ul>
-                    </div>
                 </div>
             </div>
         </section>
