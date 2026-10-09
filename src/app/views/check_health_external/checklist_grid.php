@@ -69,6 +69,9 @@ $doctorName = $isDoctor ? getFullName() : '';
     .hg-dock .acts { margin-left: auto; display: flex; gap: .5rem; align-items: center; }
     .btn-save-grid { background: #15803d; border-color: #15803d; color: #fff; font-weight: 700; padding: .5rem 1.4rem; }
     .btn-save-grid:hover:not(:disabled) { background: #166534; color: #fff; }
+    .hg-panel:fullscreen { background: #f1f5f9; display: flex; flex-direction: column; padding: .75rem; }
+    .hg-panel:fullscreen .hg-wrap { flex: 1 1 auto; max-height: none; min-height: 0; }
+    .hg-panel:fullscreen .hg-dock { border-radius: 12px; }
 </style>
 
 <main class="main-content">
@@ -119,6 +122,7 @@ $doctorName = $isDoctor ? getFullName() : '';
                 <button type="button" class="btn btn-outline-primary" id="gApplyDate"><i class="fas fa-calendar-check me-1"></i>ใช้กับทั้งห้อง</button>
                 <button type="button" class="btn btn-outline-success" id="gFillNormal" title="เติมค่าปกติ (พฤติกรรม none, พัฒนาการ pass, ตรวจร่างกาย normal) เฉพาะช่องที่ยังว่างของทุกคน"><i class="fas fa-check-double me-1"></i>เติมปกติทั้งห้อง (เฉพาะช่องว่าง)</button>
                 <button type="button" class="btn btn-outline-secondary" id="gToggleExam"><i class="fas fa-eye me-1"></i><span>แสดงการตรวจร่างกาย</span></button>
+                <button type="button" class="btn btn-outline-dark" id="gFull"><i class="fas fa-expand me-1"></i><span>เต็มจอ</span></button>
             </div>
         </div>
 
@@ -127,13 +131,15 @@ $doctorName = $isDoctor ? getFullName() : '';
             <div class="hg-bar"><span id="gProgressBar" style="width:0%"></span></div>
         </div>
 
-        <div class="hg-wrap" id="gWrap"><div class="hg-empty">กำลังโหลด...</div></div>
+        <div class="hg-panel" id="gPanel">
+            <div class="hg-wrap" id="gWrap"><div class="hg-empty">กำลังโหลด...</div></div>
 
-        <div class="hg-dock" id="gDock">
-            <div class="pills" id="gPills"></div>
-            <div class="acts">
-                <span class="hg-help" id="gSaveHint"></span>
-                <button type="button" class="btn btn-save-grid" id="gSave" disabled><i class="fas fa-save me-1"></i>บันทึก</button>
+            <div class="hg-dock" id="gDock">
+                <div class="pills" id="gPills"></div>
+                <div class="acts">
+                    <span class="hg-help" id="gSaveHint"></span>
+                    <button type="button" class="btn btn-save-grid" id="gSave" disabled><i class="fas fa-save me-1"></i>บันทึก</button>
+                </div>
             </div>
         </div>
     </div>
@@ -467,6 +473,14 @@ $doctorName = $isDoctor ? getFullName() : '';
             byId('gWrap').querySelector('table')?.classList.toggle('hide-exam', !on);
         });
         byId('gSave').addEventListener('click', save);
+        byId('gFull').addEventListener('click', () => {
+            if (document.fullscreenElement) document.exitFullscreen();
+            else byId('gPanel').requestFullscreen().catch(() => toast('เปิดเต็มจอไม่ได้ในเบราว์เซอร์นี้'));
+        });
+        document.addEventListener('fullscreenchange', () => {
+            const on = document.fullscreenElement === byId('gPanel');
+            byId('gFull').querySelector('span').textContent = on ? 'ออกจากเต็มจอ' : 'เต็มจอ';
+        });
 
         const wrap = byId('gWrap');
         const onChange = (e) => { const el = e.target; if (el.dataset && el.dataset.f) applyInput(el); };

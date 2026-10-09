@@ -5644,7 +5644,7 @@ textarea.vx-input { height:auto; }
       if (!arr || arr.length === 0) return '<span style="color:var(--gray-400);">-</span>';
       const label = arr.join(', ');
       const isGood = label.includes('สมส่วน') || label.includes('ตามเกณฑ์') || label.includes('ปกติ');
-      return '<span style="color:' + (isGood ? 'var(--success)' : 'var(--warning)') + ';font-weight:700;">' + label + '</span>';
+      return '<span style="color:' + (isGood ? 'var(--success)' : 'var(--danger)') + ';font-weight:700;">' + label + '</span>';
     }
 
     function devStatusHtml(status) {

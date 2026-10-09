@@ -882,7 +882,7 @@
     }
 
     .dev-pass { color: var(--success); font-weight: 600; }
-    .dev-delay { color: var(--warning); font-weight: 600; }
+    .dev-delay { color: var(--danger); font-weight: 600; }
 
     /* ===== Empty State ===== */
     .empty-state {
