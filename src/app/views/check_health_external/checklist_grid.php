@@ -265,7 +265,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         const r = {
             sid: c.student_id, name: c.name, nick: c.nick, birthday: c.birthday,
             id: rec ? rec.id : null, locked: !!rec?.locked && !IS_DOCTOR, doctor: rec?.doctor_name || '', skip: false, dirty: false, err: '',
-            date: vs.bp_date || rec?.exam_date || setDate, mdate: rec ? (rec.measurement_date || rec.exam_date || '') : setMDate,
+            date: rec ? (rec.doctor_name ? (rec.exam_date || setDate) : (vs.bp_date || rec.exam_date || setDate)) : setDate, mdate: rec ? (rec.measurement_date || rec.exam_date || '') : setMDate,
             temp: vs.temperature ?? '', bp: vs.bp ?? '', h: pm.height ?? '', w: pm.weight ?? '',
             wfa: one(pm.weight_for_age), hfa: one(pm.height_for_age), wfh: one(pm.weight_for_height),
             beh: rec?.behavior?.status ?? '', behd: rec?.behavior?.detail ?? '', dev: {}, ex: {}, rec: rec?.recommendation ?? '',
@@ -340,10 +340,10 @@ $doctorName = $isDoctor ? getFullName() : '';
         return h;
     }
 
-    const hdrDate = (id, v) => `<div class="hdr-date" title="ตั้งครั้งเดียว ใส่ให้ทุกคนอัตโนมัติ">${dateFld('id="' + id + '"', v, closed() ? ' disabled' : '')}</div>`;
+    const hdrDate = (id, v) => `<div class="hdr-date" title="ตั้งครั้งเดียว ใส่ให้ทุกคนอัตโนมัติ (ไม่แก้คนที่แพทย์ตรวจแล้ว / คนที่เคยบันทึกวันชั่ง-วัดไว้แล้ว)">${dateFld('id="' + id + '"', v, closed() ? ' disabled' : '')}</div>`;
     function header() {
         const fill = (kind, key, title) => (closed() ? '' : `<button type="button" class="fillcol" data-fill="${kind}" data-k="${key}" title="เติมค่าปกติให้ช่องว่างของทุกคน">${title}</button>`);
-        return '<thead><tr class="g1"><th class="c-no" rowspan="2">#</th><th class="c-nm" rowspan="2">เด็ก</th><th class="gh-info" rowspan="2">วันที่ตรวจ / อายุ' + hdrDate('gDate', setDate) + '</th>' +
+        return '<thead><tr class="g1"><th class="c-no" rowspan="2">#</th><th class="c-nm" rowspan="2">เด็ก</th><th class="gh-info" rowspan="2">วันที่แพทย์ตรวจ' + hdrDate('gDate', setDate) + '</th>' +
             '<th class="gh-body" colspan="8">การเจริญเติบโต</th><th class="gh-beh">ปัญหาด้านพฤติกรรม</th><th class="gh-dev" colspan="5">พัฒนาการ</th>' +
             `<th class="gh-exam ex" colspan="${EXAM.length}">ตรวจร่างกาย</th><th class="gh-info" rowspan="2">คำแนะนำ</th><th class="gh-st" rowspan="2">สถานะ</th><th class="gh-st" rowspan="2"></th></tr>` +
             '<tr class="g2"><th class="gh-body">วันที่ชั่ง/วัด' + hdrDate('gMDate', setMDate) + '</th><th class="gh-body">น้ำหนัก</th><th class="gh-body">ส่วนสูง</th><th class="gh-body">อุณหภูมิ</th><th class="gh-body">BP</th>' +
@@ -569,7 +569,11 @@ $doctorName = $isDoctor ? getFullName() : '';
 
         // ตั้งวันที่ที่หัวตารางครั้งเดียว แล้วใส่ให้ทุกคน (ที่แก้ไขได้) อัตโนมัติ
         const syncDate = (key, d, label) => {
-            let n = 0; rows.forEach((r) => { if (editable(r)) { r[key] = d; if (r.id) r.dirty = true; n++; } });
+            // วันที่แพทย์ตรวจ: ไม่ทับคนที่แพทย์ตรวจแล้ว (ใช้วันที่แพทย์ตรวจจริง) / วันที่ชั่ง-วัด: ไม่ทับคนที่เคยบันทึกไว้แล้ว
+            let n = 0; rows.forEach((r) => {
+                if (!editable(r) || (key === 'date' && r.doctor) || (key === 'mdate' && r.id)) return;
+                r[key] = d; if (r.id) r.dirty = true; n++;
+            });
             if (n) { render(); toast(`ตั้ง${label}ให้ ${n} คน`); }
         };
         byId('gFillNormal').addEventListener('click', () => {
