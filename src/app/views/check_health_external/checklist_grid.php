@@ -68,70 +68,125 @@ $doctorName = $isDoctor ? getFullName() : '';
     .hg-dock .pills { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; font-size: .82rem; }
     .hg-dock .acts { margin-left: auto; display: flex; gap: .5rem; align-items: center; }
     .btn-save-grid { background: #15803d; border-color: #15803d; color: #fff; font-weight: 700; padding: .5rem 1.4rem; }
-    .btn-save-grid:hover:not(:disabled) { background: #166534; color: #fff; }</style>
+    .btn-save-grid:hover:not(:disabled) { background: #166534; color: #fff; }
+
+    .gs { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: #1e4db7; color: #fff; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; flex-shrink: 0; }
+    .sec { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+    @media (max-width: 992px) { .sec { grid-template-columns: 1fr; gap: .75rem; } }
+    .sec-head { display: flex; gap: .65rem; align-items: flex-start; }
+    .sec-head .gs { margin-top: 2px; }
+    .sec-title { font-weight: 700; font-size: 1.02rem; color: #0f2460; line-height: 1.25; }
+    .sec-sub { font-size: .8rem; color: #64748b; line-height: 1.3; }
+    .fgrid { display: grid; gap: .75rem 1rem; }
+    .fgrid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .fgrid.c3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr) auto; }
+    @media (max-width: 992px) { .fgrid.c4, .fgrid.c3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 576px) { .fgrid.c4, .fgrid.c3 { grid-template-columns: 1fr; } }
+    .fld > label { display: block; font-size: .78rem; font-weight: 700; color: #475569; margin-bottom: .2rem; }
+    .fld .help { min-height: 1.5rem; margin-top: .3rem; display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; font-size: .75rem; color: #64748b; }
+    .hg-divider { border: 0; border-top: 1px solid #e2e8f0; margin: .9rem 0; }
+    .hg-card .chip { border-radius: 999px; padding: 2px 10px; font-weight: 700; font-size: .78rem; background: #f1f5f9; color: #475569; white-space: nowrap; }
+    .hg-card .chip.open { background: #dcfce7; color: #15803d; } .hg-card .chip.closed { background: #fee2e2; color: #b91c1c; }
+</style>
 
 <main class="main-content">
     <div class="container-fluid px-4">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-            <div>
-                <h1 class="hg-title">กรอกผลตรวจสุขภาพทั้งห้อง</h1>
-                <div class="hg-help"><?= $isDoctor ? 'ผู้ตรวจ: ' . htmlspecialchars($doctorName) . ' (บันทึกแล้วจะลงชื่อแพทย์ให้อัตโนมัติ) · ' : '' ?>กรอกได้หลายคนในตารางเดียว กรอกบางส่วนก็บันทึกได้ · กด Enter เพื่อลงช่องเดียวกันของคนถัดไป</div>
-            </div>
-            <a href="checklist_name.php" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>กลับ</a>
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+            <h2 class="hg-title">กรอกผลตรวจสุขภาพทั้งห้อง</h2>
+            <a href="checklist_name.php" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>กลับหน้าเลือกรอบ</a>
         </div>
-
-        <div id="gClosed" class="hg-closed" style="display:none"><i class="fas fa-lock me-1"></i>รอบตรวจนี้ถูกปิดแล้ว ดูข้อมูลได้อย่างเดียว (ให้ผู้ดูแลระบบเปิดรอบอีกครั้งถ้าต้องแก้)</div>
 
         <div class="hg-card">
-            <div class="row g-3 align-items-end">
-                <div class="col-12 col-md-3">
-                    <label for="gRound">รอบตรวจ</label>
-                    <select id="gRound" class="form-select"></select>
+            <!-- ส่วนที่ 1: ข้อมูลการตรวจ -->
+            <div class="sec">
+                <div class="sec-head">
+                    <span class="gs">1</span>
+                    <div>
+                        <div class="sec-title">ข้อมูลการตรวจ</div>
+                        <div class="sec-sub">ตั้งครั้งเดียว ใช้กับเด็กทุกคนที่บันทึก</div>
+                    </div>
                 </div>
-                <div class="col-6 col-md-2">
-                    <label for="gGroup">กลุ่มเรียน</label>
-                    <select id="gGroup" class="form-select">
-                        <?php foreach ($groups as $g): if (!empty($g['child_group'])): ?>
-                            <option value="<?= htmlspecialchars($g['child_group']) ?>"><?= htmlspecialchars($g['child_group']) ?></option>
-                        <?php endif; endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-6 col-md-2">
-                    <label for="gRoom">ห้องเรียน</label>
-                    <select id="gRoom" class="form-select"><option value="">ทุกห้อง</option></select>
-                </div>
-                <div class="col-12 col-md-3">
-                    <label for="gSearch">ค้นหา</label>
-                    <input type="search" id="gSearch" class="form-control" placeholder="ชื่อ / ชื่อเล่น / รหัส">
-                </div>
-                <div class="col-12 col-md-2 d-grid">
-                    <button type="button" id="gReload" class="btn btn-outline-primary"><i class="fas fa-rotate me-1"></i>โหลดใหม่</button>
+                <div class="fgrid c4">
+                    <div class="fld">
+                        <label for="gRound">รอบตรวจ</label>
+                        <select id="gRound" class="form-select" aria-label="รอบตรวจ"></select>
+                        <div class="help" id="gRoundChips"></div>
+                    </div>
+                    <div class="fld">
+                        <label for="gDate">วันที่ตรวจ</label>
+                        <input type="date" id="gDate" class="form-control">
+                        <div class="help"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="gApplyDate"><i class="bi bi-calendar-check me-1"></i>ใช้กับทั้งห้อง</button></div>
+                    </div>
+                    <?php if ($isDoctor): ?>
+                        <div class="fld">
+                            <label>ผู้ตรวจ</label>
+                            <div class="form-control-plaintext fw-bold"><?= htmlspecialchars($doctorName) ?></div>
+                            <div class="help">บันทึกแล้วลงชื่อแพทย์ให้อัตโนมัติ</div>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
-            <hr class="my-3">
-            <div class="d-flex flex-wrap gap-2 align-items-end">
+
+            <hr class="hg-divider">
+
+            <!-- ส่วนที่ 2: เลือกเด็ก -->
+            <div class="sec">
+                <div class="sec-head">
+                    <span class="gs">2</span>
+                    <div>
+                        <div class="sec-title">เลือกเด็ก</div>
+                        <div class="sec-sub">เลือกแล้วรายชื่อขึ้นเอง</div>
+                    </div>
+                </div>
+                <div class="fgrid c3">
+                    <div class="fld">
+                        <label for="gGroup">กลุ่มเรียน</label>
+                        <select id="gGroup" class="form-select">
+                            <option value="">-- เลือก --</option>
+                            <?php foreach ($groups as $g): if (!empty($g['child_group'])): ?>
+                                <option value="<?= htmlspecialchars($g['child_group']) ?>"><?= htmlspecialchars($g['child_group']) ?></option>
+                            <?php endif; endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="fld">
+                        <label for="gRoom">ห้องเรียน</label>
+                        <select id="gRoom" class="form-select"><option value="">ทุกห้องในกลุ่ม</option></select>
+                    </div>
+                    <div class="fld">
+                        <label for="gSearch">หรือค้นหาชื่อ / รหัส</label>
+                        <input type="search" id="gSearch" class="form-control" placeholder="พิมพ์ชื่อ ชื่อเล่น หรือรหัส" autocomplete="off">
+                    </div>
+                    <div class="fld">
+                        <label>&nbsp;</label>
+                        <button type="button" class="btn btn-outline-primary w-100" id="gReload" title="โหลดรายชื่อใหม่"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3) ตาราง -->
+        <div class="hg-card">
+            <div class="sec-head mb-2">
+                <span class="gs">3</span>
                 <div>
-                    <label for="gDate">วันที่ตรวจ (ตั้งให้ทุกคน)</label>
-                    <input type="date" id="gDate" class="form-control">
+                    <div class="sec-title">กรอกผลตรวจ</div>
+                    <div class="sec-sub">กรอกในตาราง แล้วกด "บันทึก" ที่แถบด้านล่าง · กรอกบางส่วนก็บันทึกได้ · Enter ลงช่องเดียวกันของคนถัดไป</div>
                 </div>
-                <button type="button" class="btn btn-outline-primary" id="gApplyDate"><i class="fas fa-calendar-check me-1"></i>ใช้กับทั้งห้อง</button>
-                <button type="button" class="btn btn-outline-success" id="gFillNormal" title="เติมค่าปกติ (พฤติกรรม none, พัฒนาการ pass, ตรวจร่างกาย normal) เฉพาะช่องที่ยังว่างของทุกคน"><i class="fas fa-check-double me-1"></i>เติมปกติทั้งห้อง (เฉพาะช่องว่าง)</button>            </div>
+            </div>
+            <div id="gClosed" class="hg-closed" style="display:none"><i class="bi bi-lock-fill me-1"></i>รอบตรวจนี้ถูกปิดแล้ว ดูข้อมูลได้อย่างเดียว (ให้ผู้ดูแลระบบเปิดรอบอีกครั้งถ้าต้องแก้)</div>
+            <div class="hg-progress mb-2" id="gProgress" style="display:none">
+                <span id="gProgressText" class="fw-bold"></span>
+                <div class="hg-bar"><span id="gProgressBar" style="width:0%"></span></div>
+            </div>
+            <div class="hg-wrap" id="gWrap"><div class="hg-empty"><div class="fs-5 fw-bold">เลือกกลุ่มหรือห้องเรียนด้านบน</div>รายชื่อเด็กจะขึ้นให้อัตโนมัติ แล้วกรอกต่อในตารางได้เลย</div></div>
         </div>
 
-        <div class="hg-card hg-progress" id="gProgress" style="display:none">
-            <span id="gProgressText" class="fw-bold"></span>
-            <div class="hg-bar"><span id="gProgressBar" style="width:0%"></span></div>
-        </div>
-
-        <div class="hg-panel" id="gPanel">
-            <div class="hg-wrap" id="gWrap"><div class="hg-empty">กำลังโหลด...</div></div>
-
-            <div class="hg-dock" id="gDock">
-                <div class="pills" id="gPills"></div>
-                <div class="acts">
-                    <span class="hg-help" id="gSaveHint"></span>
-                    <button type="button" class="btn btn-save-grid" id="gSave" disabled><i class="fas fa-save me-1"></i>บันทึก</button>
-                </div>
+        <div class="hg-dock" id="gDock">
+            <div class="pills" id="gPills"></div>
+            <div class="acts">
+                <span class="hg-help" id="gSaveHint"></span>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="gFillNormal" title="เติมค่าปกติ (พฤติกรรม none, พัฒนาการ pass, ตรวจร่างกาย normal) เฉพาะช่องที่ยังว่างของทุกคน"><i class="bi bi-magic me-1"></i>เติมปกติให้ที่ยังว่าง</button>
+                <button type="button" class="btn btn-save-grid" id="gSave" disabled><i class="bi bi-check-circle me-1"></i>บันทึก</button>
             </div>
         </div>
     </div>
@@ -229,7 +284,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         });
         EXAM.forEach(([k]) => {
             const e = r.ex[k];
-            h += `<td class="ex"><select class="f${e.s ? ' s-' + e.s : ''}" data-f="ex" data-k="${k}" data-col="ex_${k}"${dis}><option value=""></option><option value="normal"${e.s === 'normal' ? ' selected' : ''}>normal</option><option value="abnormal"${e.s === 'abnormal' ? ' selected' : ''}>abnormal</option></select>` +
+            h += `<td class="ex"><select class="f${e.s ? ' s-' + e.s : ''}" data-f="ex" data-k="${k}" data-col="ex_${k}"${dis}><option value=""></option><option value="normal"${e.s === 'normal' ? ' selected' : ''}>ปกติ</option><option value="abnormal"${e.s === 'abnormal' ? ' selected' : ''}>ผิดปกติ</option></select>` +
                 `<input class="f dtl${e.s === 'abnormal' || e.d ? '' : ' hide'}" type="text" data-f="exd" data-k="${k}" data-col="exd_${k}" value="${esc(e.d)}" placeholder="รายละเอียด"${dis}></td>`;
         });
         h += `<td><input class="f t" style="width:170px" type="text" data-f="rec" data-col="rec" value="${esc(r.rec)}" placeholder="คำแนะนำ"${dis}></td>` +
@@ -349,8 +404,13 @@ $doctorName = $isDoctor ? getFullName() : '';
     async function load() {
         const roundId = byId('gRound').value;
         if (!roundId) { byId('gWrap').innerHTML = '<div class="hg-empty">ยังไม่มีรอบตรวจ ให้ผู้ดูแลระบบเปิดรอบตรวจก่อน</div>'; summary(); return; }
+        if (!byId('gGroup').value && !byId('gRoom').value && !byId('gSearch').value.trim()) {
+            rows = []; summary();
+            byId('gWrap').innerHTML = '<div class="hg-empty"><div class="fs-5 fw-bold">เลือกกลุ่มหรือห้องเรียนด้านบน</div>รายชื่อเด็กจะขึ้นให้อัตโนมัติ แล้วกรอกต่อในตารางได้เลย</div>';
+            return;
+        }
         const seq = ++loadSeq;
-        const q = new URLSearchParams({ round_id: roundId, child_group: byId('gGroup').value, classroom: byId('gRoom').value, search: byId('gSearch').value.trim() });
+        const q =new URLSearchParams({ round_id: roundId, child_group: byId('gGroup').value, classroom: byId('gRoom').value, search: byId('gSearch').value.trim() });
         byId('gWrap').innerHTML = '<div class="hg-empty">กำลังโหลด...</div>';
         try {
             const res = await (await fetch('./function/get_health_grid.php?' + q, { headers: XHR })).json();
@@ -384,6 +444,14 @@ $doctorName = $isDoctor ? getFullName() : '';
         sel.innerHTML = rounds.map((r) => `<option value="${r.id}">${esc(r.academic_year)} · ${esc(r.title)}${r.status === 'open' ? '' : ' (ปิดแล้ว)'}</option>`).join('');
         const pick = rounds.find((r) => String(r.id) === String(selectedId)) || rounds.find((r) => r.status === 'open') || rounds[0];
         if (pick) sel.value = pick.id;
+        roundChips();
+    }
+
+    function roundChips() {
+        const r = rounds.find((x) => String(x.id) === String(byId('gRound').value));
+        byId('gRoundChips').innerHTML = r
+            ? `<span class="chip ${r.status === 'open' ? 'open' : 'closed'}">${r.status === 'open' ? 'เปิดอยู่' : 'ปิดแล้ว'}</span><span class="chip">ตรวจแล้ว ${r.doctor_count ?? 0} คน</span>`
+            : '';
     }
 
     // ---- save ----
@@ -444,7 +512,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         await loadClassrooms(url.get('classroom'));
 
         const reload = async () => { if (await confirmDiscard()) { rows.forEach((r) => { r.dirty = false; }); load(); } };
-        byId('gRound').addEventListener('change', async () => { if (await confirmDiscard()) { rows.forEach((r) => { r.dirty = false; }); load(); } else { byId('gRound').value = round ? round.id : ''; } });
+        byId('gRound').addEventListener('change', async () => { roundChips(); if (await confirmDiscard()) { rows.forEach((r) => { r.dirty = false; }); load(); } else { byId('gRound').value = round ? round.id : ''; } });
         byId('gGroup').addEventListener('change', async () => { if (!await confirmDiscard()) { return; } rows.forEach((r) => { r.dirty = false; }); await loadClassrooms(); load(); });
         byId('gRoom').addEventListener('change', reload);
         byId('gReload').addEventListener('click', reload);
