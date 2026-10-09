@@ -119,6 +119,11 @@ $doctorName = $isDoctor ? getFullName() : '';
                         <input type="date" id="gDate" class="form-control">
                         <div class="help"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="gApplyDate"><i class="bi bi-calendar-check me-1"></i>ใช้กับทั้งห้อง</button></div>
                     </div>
+                    <div class="fld">
+                        <label for="gMDate">วันที่ชั่งน้ำหนัก / วัดส่วนสูง</label>
+                        <input type="date" id="gMDate" class="form-control">
+                        <div class="help"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="gApplyMDate"><i class="bi bi-calendar-check me-1"></i>ใช้กับทั้งห้อง</button></div>
+                    </div>
                     <?php if ($isDoctor): ?>
                         <div class="fld">
                             <label>ผู้ตรวจ</label>
@@ -236,7 +241,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         const r = {
             sid: c.student_id, name: c.name, nick: c.nick, birthday: c.birthday,
             id: rec ? rec.id : null, locked: !!rec?.locked && !IS_DOCTOR, doctor: rec?.doctor_name || '', skip: false, dirty: false, err: '',
-            date: vs.bp_date || rec?.exam_date || byId('gDate').value || today(), mdate: rec?.measurement_date || '', dateEdited: false,
+            date: vs.bp_date || rec?.exam_date || byId('gDate').value || today(), mdate: rec ? (rec.measurement_date || rec.exam_date || '') : (byId('gMDate').value || today()),
             temp: vs.temperature ?? '', bp: vs.bp ?? '', h: pm.height ?? '', w: pm.weight ?? '',
             wfa: one(pm.weight_for_age), hfa: one(pm.height_for_age), wfh: one(pm.weight_for_height),
             beh: rec?.behavior?.status ?? '', behd: rec?.behavior?.detail ?? '', dev: {}, ex: {}, rec: rec?.recommendation ?? '',
@@ -287,6 +292,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         let h = `<tr class="${cls}" data-i="${i}"><td class="c-no">${i + 1}</td>` +
             `<td class="c-nm"><div class="nick">${esc(r.nick || r.name)}</div>${r.nick ? `<div class="full">${esc(r.name)}</div>` : ''}</td>` +
             `<td><input class="f d" type="date" data-f="date" data-col="date" value="${esc(r.date)}"${dis}><div class="age" data-age>${esc(ageText(r))}</div></td>` +
+            `<td><input class="f d" type="date" data-f="mdate" data-col="mdate" value="${esc(r.mdate)}"${dis}></td>` +
             num('w', r.w, 'กก.') + num('h', r.h, 'ซม.') + num('temp', r.temp, '37.0') +
             `<td><input class="f n" style="width:78px" type="text" data-f="bp" data-col="bp" value="${esc(r.bp)}" placeholder="100/60"${dis}></td>` +
             `<td><select class="f" data-f="wfa" data-col="wfa"${dis}>${opts(WFA, r.wfa)}</select></td>` +
@@ -312,7 +318,7 @@ $doctorName = $isDoctor ? getFullName() : '';
 
     function header() {
         const fill = (kind, key, title) => (closed() ? '' : `<button type="button" class="fillcol" data-fill="${kind}" data-k="${key}" title="เติมค่าปกติให้ช่องว่างของทุกคน">${title}</button>`);
-        return '<thead><tr class="g1"><th class="c-no" rowspan="2">#</th><th class="c-nm" rowspan="2">เด็ก</th><th class="gh-info" rowspan="2">วันที่ตรวจ / อายุ</th>' +
+        return '<thead><tr class="g1"><th class="c-no" rowspan="2">#</th><th class="c-nm" rowspan="2">เด็ก</th><th class="gh-info" rowspan="2">วันที่ตรวจ / อายุ</th><th class="gh-body" rowspan="2">วันที่ชั่ง/วัด</th>' +
             '<th class="gh-body" colspan="7">การเจริญเติบโต</th><th class="gh-beh">ปัญหาด้านพฤติกรรม</th><th class="gh-dev" colspan="5">พัฒนาการ</th>' +
             `<th class="gh-exam ex" colspan="${EXAM.length}">ตรวจร่างกาย</th><th class="gh-info" rowspan="2">คำแนะนำ</th><th class="gh-st" rowspan="2">สถานะ</th><th class="gh-st" rowspan="2"></th></tr>` +
             '<tr class="g2"><th class="gh-body">น้ำหนัก</th><th class="gh-body">ส่วนสูง</th><th class="gh-body">อุณหภูมิ</th><th class="gh-body">BP</th>' +
@@ -374,7 +380,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         else if (f === 'devsc') r.dev[k].sc = v;
         else if (f === 'ex') r.ex[k].s = v;
         else if (f === 'exd') r.ex[k].d = v;
-        else { if (f === 'date') r.dateEdited = true; r[f] = v; }
+        else r[f] = v;
         r.dirty = true; r.err = '';
         if (f === 'dev' || f === 'ex' || f === 'beh') el.className = 'f' + (v ? ' s-' + v : '');
         if (f === 'beh') tr.querySelector('[data-f="behd"]')?.classList.toggle('hide', v !== 'has');
@@ -436,7 +442,7 @@ $doctorName = $isDoctor ? getFullName() : '';
             round = res.round;
             rows = res.data.map(toRow);
             byId('gClosed').style.display = closed() ? '' : 'none';
-            ['gApplyDate', 'gFillNormal', 'gDate'].forEach((id) => { byId(id).disabled = closed(); });
+            ['gApplyDate', 'gApplyMDate', 'gFillNormal', 'gDate', 'gMDate'].forEach((id) => { byId(id).disabled = closed(); });
             render();
         } catch (e) {
             byId('gWrap').innerHTML = `<div class="hg-empty text-danger">โหลดไม่สำเร็จ: ${esc(e.message)}</div>`;
@@ -481,7 +487,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         });
         DEV.forEach(([k]) => { dev[k] = { status: r.dev[k].s, score: r.dev[k].s === 'delay' ? r.dev[k].sc : '' }; });
         return {
-            student_id: r.sid, exam_date: r.date, measurement_date: (r.mdate && !r.dateEdited) ? r.mdate : r.date, birth_date: r.birthday,
+            student_id: r.sid, exam_date: r.date, measurement_date: r.mdate || r.date, birth_date: r.birthday,
             age_year: a ? a.y : null, age_month: a ? a.m : null, age_day: a ? a.d : null,
             vital_signs: { temperature: r.temp, bp: r.bp, bp_date: r.date }, behavior: { status: r.beh, detail: r.beh === 'has' ? r.behd : '' },
             physical_measures: { height: r.h, weight: r.w, weight_for_age: r.wfa, height_for_age: r.hfa, weight_for_height: r.wfh },
@@ -504,7 +510,7 @@ $doctorName = $isDoctor ? getFullName() : '';
             const savedIds = new Map((res.saved || []).map((s) => [s.student_id, s.id]));
             const errs = new Map((res.errors || []).map((e) => [e.student_id, e.message]));
             rows.forEach((r) => {
-                if (savedIds.has(r.sid)) { r.id = savedIds.get(r.sid); r.dirty = false; r.err = ''; if (IS_DOCTOR) r.doctor = res.doctor_name || DOCTOR_NAME; if (!r.mdate || r.dateEdited) { r.mdate = r.date; r.dateEdited = false; } }
+                if (savedIds.has(r.sid)) { r.id = savedIds.get(r.sid); r.dirty = false; r.err = ''; if (IS_DOCTOR) r.doctor = res.doctor_name || DOCTOR_NAME; }
                 if (errs.has(r.sid)) r.err = errs.get(r.sid);
             });
             render();
@@ -524,6 +530,7 @@ $doctorName = $isDoctor ? getFullName() : '';
     document.addEventListener('DOMContentLoaded', async () => {
         const url = new URLSearchParams(location.search);
         byId('gDate').value = today();
+        byId('gMDate').value = today();
         await loadRounds(url.get('round_id'));
         if (url.get('child_group')) byId('gGroup').value = url.get('child_group');
         await loadClassrooms(url.get('classroom'));
@@ -539,8 +546,13 @@ $doctorName = $isDoctor ? getFullName() : '';
 
         byId('gApplyDate').addEventListener('click', () => {
             const d = byId('gDate').value; if (!d) { Swal.fire('กรุณาเลือกวันที่ตรวจ', '', 'info'); return; }
-            let n = 0; rows.forEach((r) => { if (editable(r)) { r.date = d; r.dateEdited = true; if (r.id) r.dirty = true; n++; } });
+            let n = 0; rows.forEach((r) => { if (editable(r)) { r.date = d; if (r.id) r.dirty = true; n++; } });
             render(); toast(`ตั้งวันที่ให้ ${n} คน`);
+        });
+        byId('gApplyMDate').addEventListener('click', () => {
+            const d = byId('gMDate').value; if (!d) { Swal.fire('กรุณาเลือกวันที่ชั่งน้ำหนัก / วัดส่วนสูง', '', 'info'); return; }
+            let n = 0; rows.forEach((r) => { if (editable(r)) { r.mdate = d; if (r.id) r.dirty = true; n++; } });
+            render(); toast(`ตั้งวันที่ชั่ง/วัดให้ ${n} คน`);
         });
         byId('gFillNormal').addEventListener('click', () => {
             let n = 0; rows.forEach((r) => { if (fillNormal(r, true)) n++; });
