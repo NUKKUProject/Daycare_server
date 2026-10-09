@@ -53,6 +53,7 @@ function hf_provider_external(PDO $pdo): array
 {
     $stmt = $pdo->query("
         SELECT DISTINCT ON (e.student_id) e.id, e.student_id, e.exam_date, e.updated_at,
+               (SELECT hr.id FROM health_exam_rounds hr WHERE hr.academic_year = e.academic_year::text AND hr.round_no = COALESCE(e.check_round, 1) LIMIT 1) AS round_id,
                e.behavior, e.development_assessment, e.physical_exam, e.neurological,
                c.nickname, c.prefix_th, c.firstname_th, c.lastname_th, c.classroom, c.child_group,
                f.status AS f_status, f.followup_date AS f_date, f.note AS f_note, f.updated_at AS f_updated, f.by_role AS f_by
@@ -77,7 +78,7 @@ function hf_provider_external(PDO $pdo): array
             'checked_at' => $r['exam_date'] ?: substr((string) $r['updated_at'], 0, 10),
             'status' => $r['f_status'] ?: '', 'status_date' => $r['f_date'], 'note' => $r['f_note'],
             'replied_at' => $r['f_updated'], 'by' => $r['f_by'] ?? '',
-            'link' => '/app/views/check_health_external/checklist_name.php',
+            'link' => '/app/views/check_health_external/checklist_grid.php?' . ($r['round_id'] ? 'round_id=' . (int) $r['round_id'] . '&' : '') . 'search=' . rawurlencode($r['student_id']),
         ];
     }
     return $items;

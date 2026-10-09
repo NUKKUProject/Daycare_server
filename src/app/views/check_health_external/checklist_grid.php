@@ -528,6 +528,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         await loadRounds(url.get('round_id'));
         if (url.get('child_group')) byId('gGroup').value = url.get('child_group');
         await loadClassrooms(url.get('classroom'));
+        if (url.get('search')) byId('gSearch').value = url.get('search');
 
         const reload = async () => { if (await confirmDiscard()) { rows.forEach((r) => { r.dirty = false; }); load(); } };
         byId('gRound').addEventListener('change', async () => { roundChips(); if (await confirmDiscard()) { rows.forEach((r) => { r.dirty = false; }); load(); } else { byId('gRound').value = round ? round.id : ''; } });
