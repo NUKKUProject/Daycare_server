@@ -29,11 +29,34 @@ if ($export_type === 'exam_date' && empty($exam_date)) {
     exit;
 }
 
+require_once __DIR__ . '/../function/health_round_helpers.php';
+$round = null;
+$roundCond = null;
+
 try {
     $pdo = getDatabaseConnection();
 
+    if ($export_type === 'round') {
+        $round = health_get_round($pdo, (int) ($_POST['round_id'] ?? 0));
+        $roundCond = $round ? health_round_condition($pdo, (int) $round['id']) : null;
+        if (!$roundCond) {
+            http_response_code(400);
+            header('Content-Type: text/plain; charset=utf-8');
+            echo 'กรุณาเลือกรอบตรวจ';
+            exit;
+        }
+    }
+
     // Query ข้อมูล
-    if ($export_type === 'exam_date') {
+    if ($export_type === 'round') {
+        $sql = "SELECT * FROM health_data_external
+                WHERE {$roundCond[0]}
+                AND doctor_name IS NOT NULL
+                AND doctor_name != ''
+                ORDER BY exam_date, student_id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($roundCond[1]);
+    } elseif ($export_type === 'exam_date') {
         $sql = "SELECT * FROM health_data_external 
                 WHERE exam_date = :exam_date 
                 AND doctor_name IS NOT NULL 
@@ -278,7 +301,9 @@ try {
     $sheet->freezePane('A2');
 
     // กำหนดชื่อไฟล์
-    if ($export_type === 'exam_date') {
+    if ($export_type === 'round') {
+        $filename = "รายงานผลตรวจสุขภาพ_รอบ_{$round['academic_year']}_ครั้งที่_{$round['round_no']}.xlsx";
+    } elseif ($export_type === 'exam_date') {
         $dateFormatted = date('Y-m-d', strtotime($exam_date));
         $filename = "รายงานผลตรวจสุขภาพ_วันที่_{$dateFormatted}.xlsx";
     } else {

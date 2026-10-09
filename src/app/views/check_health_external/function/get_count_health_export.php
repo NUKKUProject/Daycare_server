@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__ . '../../../../../config/database.php');
+require_once __DIR__ . '/health_round_helpers.php';
 header('Content-Type: application/json; charset=utf-8');
 
 try {
@@ -12,7 +13,16 @@ try {
     $doctor = $_POST['doctor'] ?? 'all';
     
     // สร้าง query ตามประเภทที่เลือก (เฉพาะข้อมูลที่มี doctor_name ไม่เป็นค่าว่าง)
-    if ($export_type === 'exam_date') {
+    if ($export_type === 'round') {
+        // นับข้อมูลตามรอบตรวจ
+        $cond = health_round_condition($pdo, (int) ($_POST['round_id'] ?? 0));
+        if (!$cond) {
+            echo json_encode(['count' => 0]);
+            exit;
+        }
+        $stmt = $pdo->prepare("SELECT COUNT(*) AS total FROM health_data_external WHERE {$cond[0]} AND doctor_name IS NOT NULL AND doctor_name != ''");
+        $stmt->execute($cond[1]);
+    } elseif ($export_type === 'exam_date') {
         // นับข้อมูลตามวันที่ตรวจ
         if (!$exam_date) {
             echo json_encode(['count' => 0]);

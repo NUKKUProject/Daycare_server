@@ -2313,7 +2313,6 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     }
 
 
-    let savedExamDates = [];   // ใช้กับ modal export Excel (ช่วงวัน)
     let exportRounds = [];
 
     function exportToPdf() {
@@ -3445,16 +3444,16 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
 
     function exportToExcel() {
-        // ดึงรายการวันที่การตรวจก่อน
-        fetch('./function/get_exam_dates.php')
+        // ดึงรายการรอบตรวจก่อน
+        fetch('./process/manage_health_rounds.php?action=list', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(res => res.json())
             .then(data => {
-                savedExamDates = data.dates || [];
+                exportRounds = data.data || [];
                 return showExportExcelModal();
             })
             .catch(error => {
-                console.error('Error loading exam dates:', error);
-                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารโหลดรายการวันที่การตรวจได้', 'error');
+                console.error('Error loading rounds:', error);
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดรายการรอบตรวจได้', 'error');
             });
     }
 
@@ -3464,16 +3463,10 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             `<option value="${year.name}" ${index === 0 ? 'selected' : ''}>${year.name}</option>`
         ).join('');
 
-        // สร้างตัวเลือกวันที่ตรวจ
-        const dateOptions = savedExamDates.length > 0
-            ? savedExamDates.map(d => {
-                const date = new Date(d);
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const year = date.getFullYear() + 543;
-                return `<option value="${d}">${day}/${month}/${year}</option>`;
-            }).join('')
-            : '<option value="">ไม่พบข้อมูลวันที่การตรวจ</option>';
+        // สร้างตัวเลือกรอบตรวจ
+        const roundOptions = exportRounds.length > 0
+            ? exportRounds.map(r => `<option value="${r.id}">${r.academic_year} · ${r.title}${r.status === 'open' ? '' : ' (ปิดแล้ว)'}</option>`).join('')
+            : '<option value="">ไม่พบรอบตรวจ</option>';
 
         Swal.fire({
             title: 'Export ข้อมูลการตรวจสุขภาพ (Excel)',
@@ -3484,7 +3477,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                         <label class="form-label">เลือกประเภทการ Export</label>
                         <select name="export_type" id="exportTypeExcel" class="form-select" onchange="toggleExcelDateFields()">
                             <option value="academic_year">ตรวจประจำปี</option>
-                            <option value="exam_date">ช่วงวัน</option>
+                            <option value="round">รอบตรวจ</option>
                         </select>
                     </div>
 
@@ -3496,12 +3489,12 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                         </select>
                     </div>
 
-                    <!-- ฟิลด์สำหรับเลือกวันที่ตรวจ -->
-                    <div id="excelExamDateField" class="mb-3" style="display: none;">
-                        <label for="exam_date" class="form-label">วันที่ตรวจ</label>
-                        <select name="exam_date" id="exportExamDateExcel" class="form-select">
-                            <option value="">-- เลือกวันที่ --</option>
-                            ${dateOptions}
+                    <!-- ฟิลด์สำหรับเลือกรอบตรวจ -->
+                    <div id="excelRoundField" class="mb-3" style="display: none;">
+                        <label for="exportRoundExcel" class="form-label">รอบตรวจ</label>
+                        <select name="round_id" id="exportRoundExcel" class="form-select">
+                            <option value="">-- เลือกรอบตรวจ --</option>
+                            ${roundOptions}
                         </select>
                     </div>
                 </form>
@@ -3515,10 +3508,9 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                 const exportType = formData.get('export_type');
 
                 // ตรวจสอบข้อมูลตามประเภทที่เลือก
-                if (exportType === 'exam_date') {
-                    const examDate = formData.get('exam_date');
-                    if (!examDate) {
-                        Swal.showValidationMessage('กรุณาเลือกวันที่ตรวจ');
+                if (exportType === 'round') {
+                    if (!formData.get('round_id')) {
+                        Swal.showValidationMessage('กรุณาเลือกรอบตรวจ');
                         return false;
                     }
                 }
@@ -3577,7 +3569,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     function toggleExcelDateFields() {
         const exportType = document.getElementById('exportTypeExcel').value;
         document.getElementById('excelAcademicYearField').style.display = exportType === 'academic_year' ? 'block' : 'none';
-        document.getElementById('excelExamDateField').style.display = exportType === 'exam_date' ? 'block' : 'none';
+        document.getElementById('excelRoundField').style.display = exportType === 'round' ? 'block' : 'none';
     }
 
     // ฟังก์ชันโหลดรายการแพทย์ตามวันที่สำหรับ Excel
