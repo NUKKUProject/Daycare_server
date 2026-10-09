@@ -270,6 +270,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     let showOldRounds = false;
     const ROUNDS_VISIBLE = 4;
     const IS_ADMIN = <?= $is_admin ? 'true' : 'false' ?>;
+    const IS_DOCTOR = <?= $is_doctor ? 'true' : 'false' ?>;
     const thaiShort = (d) => (d ? new Date(String(d).slice(0, 10) + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : '');
     const roundDateText = (r) => ((r.start_date || r.end_date) ? `${thaiShort(r.start_date) || '...'} – ${thaiShort(r.end_date) || '...'}` : (r.created_at ? `เปิดเมื่อ ${thaiShort(r.created_at)}` : '-'));
     let roundsResolve;
@@ -358,7 +359,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
         return fetch('./process/manage_health_rounds.php?action=list', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then((r) => r.json())
             .then((res) => {
-                healthRounds = res.data || [];
+                healthRounds = (res.data || []).filter((r) => !IS_DOCTOR || r.status === 'open');   // แพทย์เห็นเฉพาะรอบที่เปิดอยู่
                 const firstOpen = healthRounds.find((r) => r.status === 'open');
                 const chosen = firstOpen || healthRounds[0];
                 if (chosen && healthRounds.indexOf(chosen) >= ROUNDS_VISIBLE) showOldRounds = true;
