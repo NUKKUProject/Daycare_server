@@ -68,11 +68,7 @@ $doctorName = $isDoctor ? getFullName() : '';
     .hg-dock .pills { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; font-size: .82rem; }
     .hg-dock .acts { margin-left: auto; display: flex; gap: .5rem; align-items: center; }
     .btn-save-grid { background: #15803d; border-color: #15803d; color: #fff; font-weight: 700; padding: .5rem 1.4rem; }
-    .btn-save-grid:hover:not(:disabled) { background: #166534; color: #fff; }
-    .hg-panel:fullscreen { background: #f1f5f9; display: flex; flex-direction: column; padding: .75rem; }
-    .hg-panel:fullscreen .hg-wrap { flex: 1 1 auto; max-height: none; min-height: 0; }
-    .hg-panel:fullscreen .hg-dock { border-radius: 12px; }
-</style>
+    .btn-save-grid:hover:not(:disabled) { background: #166534; color: #fff; }</style>
 
 <main class="main-content">
     <div class="container-fluid px-4">
@@ -95,7 +91,6 @@ $doctorName = $isDoctor ? getFullName() : '';
                 <div class="col-6 col-md-2">
                     <label for="gGroup">กลุ่มเรียน</label>
                     <select id="gGroup" class="form-select">
-                        <option value="">ทุกกลุ่ม</option>
                         <?php foreach ($groups as $g): if (!empty($g['child_group'])): ?>
                             <option value="<?= htmlspecialchars($g['child_group']) ?>"><?= htmlspecialchars($g['child_group']) ?></option>
                         <?php endif; endforeach; ?>
@@ -120,10 +115,7 @@ $doctorName = $isDoctor ? getFullName() : '';
                     <input type="date" id="gDate" class="form-control">
                 </div>
                 <button type="button" class="btn btn-outline-primary" id="gApplyDate"><i class="fas fa-calendar-check me-1"></i>ใช้กับทั้งห้อง</button>
-                <button type="button" class="btn btn-outline-success" id="gFillNormal" title="เติมค่าปกติ (พฤติกรรม none, พัฒนาการ pass, ตรวจร่างกาย normal) เฉพาะช่องที่ยังว่างของทุกคน"><i class="fas fa-check-double me-1"></i>เติมปกติทั้งห้อง (เฉพาะช่องว่าง)</button>
-                <button type="button" class="btn btn-outline-secondary" id="gToggleExam"><i class="fas fa-eye me-1"></i><span>แสดงการตรวจร่างกาย</span></button>
-                <button type="button" class="btn btn-outline-dark" id="gFull"><i class="fas fa-expand me-1"></i><span>เต็มจอ</span></button>
-            </div>
+                <button type="button" class="btn btn-outline-success" id="gFillNormal" title="เติมค่าปกติ (พฤติกรรม none, พัฒนาการ pass, ตรวจร่างกาย normal) เฉพาะช่องที่ยังว่างของทุกคน"><i class="fas fa-check-double me-1"></i>เติมปกติทั้งห้อง (เฉพาะช่องว่าง)</button>            </div>
         </div>
 
         <div class="hg-card hg-progress" id="gProgress" style="display:none">
@@ -262,8 +254,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         const wrap = byId('gWrap');
         if (!rows.length) { wrap.innerHTML = '<div class="hg-empty"><div class="fs-5 fw-bold">ไม่พบรายชื่อเด็กตามเงื่อนไข</div>ลองเปลี่ยนกลุ่ม ห้อง หรือคำค้นหา</div>'; summary(); return; }
         const keep = { top: wrap.scrollTop, left: wrap.scrollLeft };
-        const hideExam = byId('gToggleExam').dataset.on !== '1';
-        wrap.innerHTML = `<table class="hg${hideExam ? ' hide-exam' : ''}">${header()}<tbody>${rows.map(rowHtml).join('')}</tbody></table>`;
+        wrap.innerHTML = `<table class="hg">${header()}<tbody>${rows.map(rowHtml).join('')}</tbody></table>`;
         wrap.scrollTop = keep.top; wrap.scrollLeft = keep.left;
         summary();
     }
@@ -449,7 +440,8 @@ $doctorName = $isDoctor ? getFullName() : '';
         const url = new URLSearchParams(location.search);
         byId('gDate').value = today();
         await loadRounds(url.get('round_id'));
-        if (url.get('child_group')) { byId('gGroup').value = url.get('child_group'); await loadClassrooms(url.get('classroom')); }
+        if (url.get('child_group')) byId('gGroup').value = url.get('child_group');
+        await loadClassrooms(url.get('classroom'));
 
         const reload = async () => { if (await confirmDiscard()) { rows.forEach((r) => { r.dirty = false; }); load(); } };
         byId('gRound').addEventListener('change', async () => { if (await confirmDiscard()) { rows.forEach((r) => { r.dirty = false; }); load(); } else { byId('gRound').value = round ? round.id : ''; } });
@@ -467,21 +459,7 @@ $doctorName = $isDoctor ? getFullName() : '';
             let n = 0; rows.forEach((r) => { if (fillNormal(r, true)) n++; });
             render(); toast(n ? `เติมค่าปกติให้ ${n} คน` : 'ไม่มีช่องว่างให้เติม');
         });
-        byId('gToggleExam').addEventListener('click', (e) => {
-            const b = e.currentTarget, on = b.dataset.on !== '1'; b.dataset.on = on ? '1' : '0';
-            b.querySelector('span').textContent = on ? 'ซ่อนการตรวจร่างกาย' : 'แสดงการตรวจร่างกาย';
-            byId('gWrap').querySelector('table')?.classList.toggle('hide-exam', !on);
-        });
         byId('gSave').addEventListener('click', save);
-        byId('gFull').addEventListener('click', () => {
-            if (document.fullscreenElement) document.exitFullscreen();
-            else byId('gPanel').requestFullscreen().catch(() => toast('เปิดเต็มจอไม่ได้ในเบราว์เซอร์นี้'));
-        });
-        document.addEventListener('fullscreenchange', () => {
-            const on = document.fullscreenElement === byId('gPanel');
-            byId('gFull').querySelector('span').textContent = on ? 'ออกจากเต็มจอ' : 'เต็มจอ';
-        });
-
         const wrap = byId('gWrap');
         const onChange = (e) => { const el = e.target; if (el.dataset && el.dataset.f) applyInput(el); };
         wrap.addEventListener('input', (e) => { if (e.target.matches('input')) onChange(e); });
