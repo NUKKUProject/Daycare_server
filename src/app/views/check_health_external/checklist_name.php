@@ -86,7 +86,10 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                 <h2 class="mb-1">บันทึกการตรวจสุขภาพเด็ก</h2>
                 <div class="text-muted">ทำตามลำดับ 1 → 2 → 3</div>
             </div>
-            <button type="button" class="btn btn-danger" onclick="exportToPdf()"><i class="fas fa-file-pdf"></i> ส่งออก PDF</button>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-success" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> ส่งออก Excel</button>
+                <button type="button" class="btn btn-danger" onclick="exportToPdf()"><i class="fas fa-file-pdf"></i> ส่งออก PDF</button>
+            </div>
         </div>
 
         <div id="noRoundNotice" class="alert alert-warning" style="display:none;"></div>
