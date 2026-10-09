@@ -2,8 +2,8 @@
 // กันข้อความ warning/notice หลุดออกไปก่อนไฟล์ xlsx (ทำให้ Excel เปิดไฟล์ไม่ได้และ header ถูกส่งไปแล้ว)
 ini_set('display_errors', '0');
 ob_start();
-require_once(__DIR__ . '/../../../../../vendor/autoload.php');
-require_once(__DIR__ . '/../../../../../src/config/database.php');
+require_once(__DIR__ . '/../../../../vendor/autoload.php');
+require_once(__DIR__ . '/../../../../config/database.php');
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
