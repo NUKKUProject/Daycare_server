@@ -1,4 +1,7 @@
 <?php
+// กันข้อความ warning/notice หลุดออกไปก่อนไฟล์ xlsx (ทำให้ Excel เปิดไฟล์ไม่ได้และ header ถูกส่งไปแล้ว)
+ini_set('display_errors', '0');
+ob_start();
 require_once(__DIR__ . '/../../../../../vendor/autoload.php');
 require_once(__DIR__ . '/../../../../../src/config/database.php');
 
@@ -310,6 +313,9 @@ try {
         $filename = "รายงานผลตรวจสุขภาพ_ปีการศึกษา_{$academic_year}.xlsx";
     }
 
+    while (ob_get_level() > 0) {
+        ob_end_clean();   // ทิ้งข้อความที่หลุดมาก่อนหน้า เหลือแต่ไฟล์ xlsx
+    }
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename*=UTF-8\'\'' . rawurlencode($filename));
     header('Cache-Control: max-age=0');
