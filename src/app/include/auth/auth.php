@@ -1,11 +1,11 @@
 <?php
 ob_start();
+// เวลาหมดอายุของ session เมื่อไม่ได้ใช้งาน
+$session_timeout = 5 * 60 * 60; // 5 ชั่วโมง (เป็นวินาที)
+ini_set('session.gc_maxlifetime', (string) $session_timeout); // กัน PHP ลบไฟล์ session ทิ้งก่อน (ค่าเริ่มต้นประมาณ 24 นาที)
 session_start(); // ต้องเรียกใช้งานก่อนทุกสิ่งทุกอย่าง
 
 require_once(__DIR__ . '/../../../config/database.php'); // เชื่อมต่อไฟล์ database.php
-
-// เพิ่มการกำหนดเวลาหมดอายุของ session
-$session_timeout = 30 * 60; // 30 นาที (เป็นวินาที)
 
 
 
