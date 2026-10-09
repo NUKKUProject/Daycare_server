@@ -7,8 +7,10 @@ include __DIR__ . '/../../include/auth/auth_navbar.php';
 require_once __DIR__ . '/../../include/function/pages_referen.php';
 require_once __DIR__ . '/../../include/function/child_functions.php';
 require_once __DIR__ . '/../../include/auth/auth_dashboard.php';
+require_once __DIR__ . '/../../include/function/children_history_functions.php';
 
 $groups = get_childgroup();
+$academicYears = getAcademicYears();
 $roundId = (int) ($_GET['round_id'] ?? 0);
 $isDoctor = getUserRole() === 'doctor';
 $doctorName = $isDoctor ? getFullName() : '';
@@ -159,6 +161,22 @@ $doctorName = $isDoctor ? getFullName() : '';
                     <div class="fld">
                         <label>&nbsp;</label>
                         <button type="button" class="btn btn-outline-primary w-100" id="gReload" title="โหลดรายชื่อใหม่"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button>
+                    </div>
+                    <div class="mt-2" style="grid-column: 1 / -1">
+                        <a class="small text-decoration-none" data-bs-toggle="collapse" href="#gMore" role="button" aria-expanded="false"><i class="bi bi-sliders"></i> ตัวกรองเพิ่มเติม</a>
+                        <div class="collapse mt-2" id="gMore">
+                            <div class="fgrid c4">
+                                <div class="fld">
+                                    <label for="gStudentYear">เฉพาะเด็กที่เข้าเรียนปีการศึกษา</label>
+                                    <select id="gStudentYear" class="form-select">
+                                        <option value="all">ทั้งหมด</option>
+                                        <?php foreach ($academicYears as $y): ?>
+                                            <option value="<?= htmlspecialchars($y['name']) ?>"><?= htmlspecialchars($y['name']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -410,7 +428,7 @@ $doctorName = $isDoctor ? getFullName() : '';
             return;
         }
         const seq = ++loadSeq;
-        const q =new URLSearchParams({ round_id: roundId, child_group: byId('gGroup').value, classroom: byId('gRoom').value, search: byId('gSearch').value.trim() });
+        const q =new URLSearchParams({ round_id: roundId, child_group: byId('gGroup').value, classroom: byId('gRoom').value, student_year: byId('gStudentYear').value, search: byId('gSearch').value.trim() });
         byId('gWrap').innerHTML = '<div class="hg-empty">กำลังโหลด...</div>';
         try {
             const res = await (await fetch('./function/get_health_grid.php?' + q, { headers: XHR })).json();
@@ -515,6 +533,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         byId('gRound').addEventListener('change', async () => { roundChips(); if (await confirmDiscard()) { rows.forEach((r) => { r.dirty = false; }); load(); } else { byId('gRound').value = round ? round.id : ''; } });
         byId('gGroup').addEventListener('change', async () => { if (!await confirmDiscard()) { return; } rows.forEach((r) => { r.dirty = false; }); await loadClassrooms(); load(); });
         byId('gRoom').addEventListener('change', reload);
+        byId('gStudentYear').addEventListener('change', reload);
         byId('gReload').addEventListener('click', reload);
         let timer; byId('gSearch').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(reload, 450); });
 
