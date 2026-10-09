@@ -227,8 +227,7 @@ $typeLabels = ['teacher' => 'ครูคัดกรอง', 'doctor' => 'แ�
                         </div>
                     </div>
                     <div class="mt-2">
-                        <a class="small text-decoration-none" data-bs-toggle="collapse" href="#gMore" role="button" aria-expanded="true"><i class="bi bi-sliders"></i> ตัวกรองเพิ่มเติม</a>
-                        <div class="collapse show mt-2" id="gMore">
+                        <div class="mt-2" id="gMore">
                             <div class="fgrid c4">
                                 <div class="fld">
                                     <label for="gStudentYear">เฉพาะเด็กที่เข้าเรียนปีการศึกษา</label>
