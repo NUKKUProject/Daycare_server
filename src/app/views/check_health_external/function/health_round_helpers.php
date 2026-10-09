@@ -30,3 +30,16 @@ function health_require_open_round(PDO $pdo, int $id): array
     }
     return $r;
 }
+
+/** เงื่อนไข SQL ของผลตรวจในรอบที่เลือก (ใช้กับ health_data_external) พร้อมพารามิเตอร์ คืน null ถ้าไม่พบรอบ */
+function health_round_condition(PDO $pdo, int $roundId): ?array
+{
+    $round = health_get_round($pdo, $roundId);
+    if (!$round) {
+        return null;
+    }
+    return [
+        "academic_year::text = :ry AND COALESCE(check_round, 1) = :rn",
+        [':ry' => (string) $round['academic_year'], ':rn' => (int) $round['round_no']],
+    ];
+}

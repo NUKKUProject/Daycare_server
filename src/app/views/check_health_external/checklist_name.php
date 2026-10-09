@@ -2313,43 +2313,38 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     }
 
 
-    let savedExamDates = [];
+    let savedExamDates = [];   // ใช้กับ modal export Excel (ช่วงวัน)
+    let exportRounds = [];
 
     function exportToPdf() {
-        // ดึงรายการวันที่การตรวจก่อน
-        fetch('./function/get_exam_dates.php')
+        // ดึงรายการรอบตรวจก่อน
+        fetch('./process/manage_health_rounds.php?action=list', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(res => res.json())
             .then(data => {
-                savedExamDates = data.dates || [];
+                exportRounds = data.data || [];
                 return showExportModal();
             })
             .catch(error => {
-                console.error('Error loading exam dates:', error);
-                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารโหลดรายการวันที่การตรวจได้', 'error');
+                console.error('Error loading rounds:', error);
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดรายการรอบตรวจได้', 'error');
             });
     }
 
     function showExportModal() {
-        const dateOptions = savedExamDates.length > 0
-            ? savedExamDates.map(d => {
-                const date = new Date(d);
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const year = date.getFullYear() + 543;
-                return `<option value="${d}">${day}/${month}/${year}</option>`;
-            }).join('')
-            : '<option value="">ไม่พบข้อมูลวันที่การตรวจ</option>';
+        const roundOptions = exportRounds.length > 0
+            ? exportRounds.map(r => `<option value="${r.id}">${r.academic_year} · ${r.title}${r.status === 'open' ? '' : ' (ปิดแล้ว)'}</option>`).join('')
+            : '<option value="">ไม่พบรอบตรวจ</option>';
 
         Swal.fire({
             title: 'Export ข้อมูลการตรวจสุขภาพ',
             html: `
             <form id="exportForm" class="text-start">
-                <!-- เลือกวันที่ตรวจ -->
+                <!-- เลือกรอบตรวจ -->
                 <div class="mb-3">
-                    <label class="form-label">วันที่ตรวจ</label>
-                    <select name="exam_date" id="exportExamDate" class="form-select" onchange="loadDoctorsForDate(this.value)">
-                        <option value="">-- เลือกวันที่ --</option>
-                        ${dateOptions}
+                    <label class="form-label">รอบตรวจ</label>
+                    <select name="round_id" id="exportRound" class="form-select" onchange="loadDoctorsForDate(this.value)">
+                        <option value="">-- เลือกรอบตรวจ --</option>
+                        ${roundOptions}
                     </select>
                 </div>
 
@@ -2368,10 +2363,10 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             preConfirm: () => {
                 const form = Swal.getPopup().querySelector('#exportForm');
                 const formData = new FormData(form);
-                const examDate = formData.get('exam_date');
+                const roundId = formData.get('round_id');
 
-                if (!examDate) {
-                    Swal.showValidationMessage('กรุณาเลือกวันที่ตรวจ');
+                if (!roundId) {
+                    Swal.showValidationMessage('กรุณาเลือกรอบตรวจ');
                     return false;
                 }
 
@@ -2423,14 +2418,14 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
         })
     }
 
-    function loadDoctorsForDate(examDate) {
+    function loadDoctorsForDate(roundId) {
         const doctorSelect = document.getElementById('exportDoctor');
-        if (!examDate) {
+        if (!roundId) {
             doctorSelect.innerHTML = '<option value="all">-- ทั้งหมด --</option>';
             return;
         }
 
-        fetch(`./function/get_doctors_by_date.php?exam_date=${examDate}`)
+        fetch(`./function/get_doctors_by_date.php?round_id=${encodeURIComponent(roundId)}`)
             .then(res => res.json())
             .then(data => {
                 const doctors = data.doctors || [];

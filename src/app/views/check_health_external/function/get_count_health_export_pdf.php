@@ -1,43 +1,32 @@
 <?php
 require_once(__DIR__ . '../../../../../config/database.php');
+require_once __DIR__ . '/health_round_helpers.php';
 header('Content-Type: application/json; charset=utf-8');
 
 try {
     $pdo = getDatabaseConnection();
-    
+
     // รับค่าจาก POST
-    $exam_date = $_POST['exam_date'] ?? null;
+    $roundId = (int) ($_POST['round_id'] ?? 0);
     $doctor = $_POST['doctor'] ?? 'all';
-    
-    // ตรวจสอบข้อมูลนำเข้า
-    if (!$exam_date) {
+
+    $cond = $roundId ? health_round_condition($pdo, $roundId) : null;
+    if (!$cond) {
         echo json_encode(['count' => 0]);
         exit;
     }
-    
+
     // กรองตามแพทย์ (ถ้าไม่ใช่ 'all')
     if ($doctor !== 'all' && !empty($doctor)) {
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) as total
-            FROM health_data_external
-            WHERE exam_date = :exam_date
-            AND doctor_name = :doctor
-        ");
-        $stmt->execute([':exam_date' => $exam_date, ':doctor' => $doctor]);
+        $stmt = $pdo->prepare("SELECT COUNT(*) AS total FROM health_data_external WHERE {$cond[0]} AND doctor_name = :doctor");
+        $stmt->execute($cond[1] + [':doctor' => $doctor]);
     } else {
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) as total
-            FROM health_data_external
-            WHERE exam_date = :exam_date
-            AND doctor_name IS NOT NULL 
-            AND doctor_name != ''
-        ");
-        $stmt->execute([':exam_date' => $exam_date]);
+        $stmt = $pdo->prepare("SELECT COUNT(*) AS total FROM health_data_external WHERE {$cond[0]} AND doctor_name IS NOT NULL AND doctor_name != ''");
+        $stmt->execute($cond[1]);
     }
-    
+
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     echo json_encode(['count' => (int)$row['total']]);
-    
 } catch (PDOException $e) {
     error_log('Database error in get_count_health_export_pdf.php: ' . $e->getMessage());
     echo json_encode(['count' => 0, 'error' => 'Database error']);
@@ -45,4 +34,3 @@ try {
     error_log('Error in get_count_health_export_pdf.php: ' . $e->getMessage());
     echo json_encode(['count' => 0, 'error' => 'Server error']);
 }
-?>

@@ -16,29 +16,24 @@ try {
 checkUserRole(['admin', 'teacher', 'doctor']);
 
 // รับค่าจาก URL parameters
-$exam_date = $_GET['exam_date'] ?? '';
+require_once __DIR__ . '/../function/health_round_helpers.php';
+$round_id = (int) ($_GET['round_id'] ?? 0);
 $doctor = $_GET['doctor'] ?? '';
 
-// ดึงข้อมูลจากฐานข้อมูล
+$cond = $round_id ? health_round_condition($pdo, $round_id) : null;
+if (!$cond) {
+    die('ไม่พบรอบตรวจ');
+}
+
+// ดึงข้อมูลจากฐานข้อมูล (เฉพาะรอบที่เลือก)
 if ($doctor === 'all') {
     // ไม่กรอง doctor_name
-    $sql = "SELECT * FROM health_data_external 
-            WHERE exam_date = :exam_date";
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':exam_date' => $exam_date
-    ]);
+    $stmt = $pdo->prepare("SELECT * FROM health_data_external WHERE {$cond[0]}");
+    $stmt->execute($cond[1]);
 } else {
     // กรอง doctor_name ตามค่าที่รับมา
-    $sql = "SELECT * FROM health_data_external 
-            WHERE exam_date = :exam_date AND doctor_name = :doctor";
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':exam_date' => $exam_date,
-        ':doctor' => $doctor
-    ]);
+    $stmt = $pdo->prepare("SELECT * FROM health_data_external WHERE {$cond[0]} AND doctor_name = :doctor");
+    $stmt->execute($cond[1] + [':doctor' => $doctor]);
 }
 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
