@@ -265,7 +265,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         const r = {
             sid: c.student_id, name: c.name, nick: c.nick, birthday: c.birthday,
             id: rec ? rec.id : null, locked: !!rec?.locked && !IS_DOCTOR, doctor: rec?.doctor_name || '', skip: false, dirty: false, err: '',
-            date: rec ? (rec.doctor_name ? (rec.exam_date || setDate) : (vs.bp_date || rec.exam_date || setDate)) : setDate, mdate: rec ? (rec.measurement_date || rec.exam_date || '') : setMDate,
+            date: rec?.exam_date || setDate, mdate: rec ? (rec.measurement_date || rec.exam_date || '') : setMDate,
             temp: vs.temperature ?? '', bp: vs.bp ?? '', h: pm.height ?? '', w: pm.weight ?? '',
             wfa: one(pm.weight_for_age), hfa: one(pm.height_for_age), wfh: one(pm.weight_for_height),
             beh: rec?.behavior?.status ?? '', behd: rec?.behavior?.detail ?? '', dev: {}, ex: {}, rec: rec?.recommendation ?? '',
@@ -514,7 +514,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         return {
             student_id: r.sid, exam_date: r.date, measurement_date: r.mdate || r.date, birth_date: r.birthday,
             age_year: a ? a.y : null, age_month: a ? a.m : null, age_day: a ? a.d : null,
-            vital_signs: { temperature: r.temp, bp: r.bp, bp_date: r.date }, behavior: { status: r.beh, detail: r.beh === 'has' ? r.behd : '' },
+            vital_signs: { temperature: r.temp, bp: r.bp, bp_date: r.mdate || r.date }, behavior: { status: r.beh, detail: r.beh === 'has' ? r.behd : '' },
             physical_measures: { height: r.h, weight: r.w, weight_for_age: r.wfa, height_for_age: r.hfa, weight_for_height: r.wfh },
             development_assessment: dev, physical_exam: pe, neurological: nl, recommendation: r.rec,
         };

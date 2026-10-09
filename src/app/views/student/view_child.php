@@ -4526,7 +4526,7 @@ textarea.vx-input { height:auto; }
           <div class="eh-detail-grid">
             <div class="eh-detail-item"><label>อุณหภูมิ</label><div>${ehEscapeHtml(vital.temperature || '-')} °C</div></div>
             <div class="eh-detail-item"><label>ความดันโลหิต</label><div>${ehEscapeHtml(vital.bp || '-')} mmHg</div></div>
-            <div class="eh-detail-item"><label>วันที่ตรวจความดัน</label><div>${ehEscapeHtml(vital.bp_date || '-')}</div></div>
+            <div class="eh-detail-item"><label>วันที่ตรวจความดัน</label><div>${ehFormatDate(vital.bp_date)}</div></div>
           </div>
         </div>
 
