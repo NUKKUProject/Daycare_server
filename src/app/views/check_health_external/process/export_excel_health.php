@@ -330,12 +330,15 @@ try {
         header('Content-Type: text/plain; charset=utf-8');
         echo 'เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล';
     }
-} catch (Exception $e) {
-    error_log('Error in export_excel_health.php: ' . $e->getMessage());
+} catch (Throwable $e) {
+    error_log('Error in export_excel_health.php: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     if (!headers_sent()) {
         http_response_code(500);
         header('Content-Type: text/plain; charset=utf-8');
-        echo 'เกิดข้อผิดพลาดในการส่งออกข้อมูล';
+        echo 'เกิดข้อผิดพลาดในการส่งออกข้อมูล: ' . $e->getMessage() . ' (บรรทัด ' . $e->getLine() . ')';
     }
 }
 exit;

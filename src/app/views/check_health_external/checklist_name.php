@@ -3631,7 +3631,8 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    // แสดงข้อความจากเซิร์ฟเวอร์ (เช่น ไม่พบข้อมูล / error) แทนข้อความกลางๆ
+                    return response.text().then(t => { throw new Error(t.trim().slice(0, 500) || ('HTTP ' + response.status)); });
                 }
                 // อ่านชื่อไฟล์จาก Content-Disposition header (รองรับ filename*=UTF-8''...)
                 const disposition = response.headers.get('Content-Disposition') || '';
@@ -3683,7 +3684,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                 Swal.fire({
                     icon: 'error',
                     title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถ Export ไฟล์ Excel ได้ กรุณาลองใหม่อีกครั้ง',
+                    text: (error && error.message && error.message !== 'Failed to fetch' ? error.message : 'ไม่สามารถ Export ไฟล์ Excel ได้ กรุณาลองใหม่อีกครั้ง'),
                 });
             });
     }
