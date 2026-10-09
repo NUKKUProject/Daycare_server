@@ -73,6 +73,8 @@ $doctorName = $isDoctor ? getFullName() : '';
     .thd:focus-within .thd-txt { border-color: #1e4db7; box-shadow: 0 0 0 3px rgba(30, 77, 183, .15); }
     .thd.off .thd-txt { background: #f1f5f9; color: #64748b; }
     .thd-txt.empty { color: #94a3b8; }
+    .hg thead .hdr-date { margin-top: 4px; font-weight: 400; }
+    .hg thead .thd-txt { height: 28px; line-height: 21px; min-width: 112px; color: #0f2460; font-size: .78rem; font-weight: 600; padding: 3px 8px; }
 
     .hg-dock { position: sticky; bottom: 0; z-index: 30; background: #fff; border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 16px rgba(15, 36, 96, .08);
         padding: .7rem 1.25rem; display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; border-radius: 12px 12px 0 0; }
@@ -122,16 +124,6 @@ $doctorName = $isDoctor ? getFullName() : '';
                         <label for="gRound">รอบตรวจ</label>
                         <select id="gRound" class="form-select" aria-label="รอบตรวจ"></select>
                         <div class="help" id="gRoundChips"></div>
-                    </div>
-                    <div class="fld">
-                        <label for="gDate">วันที่ตรวจ</label>
-                        <span class="thd block"><input type="date" id="gDate"><span class="thd-txt"></span></span>
-                        <div class="help">เลือกแล้วใส่ให้ทุกคนอัตโนมัติ</div>
-                    </div>
-                    <div class="fld">
-                        <label for="gMDate">วันที่ชั่งน้ำหนัก / วัดส่วนสูง</label>
-                        <span class="thd block"><input type="date" id="gMDate"><span class="thd-txt"></span></span>
-                        <div class="help">เลือกแล้วใส่ให้ทุกคนอัตโนมัติ</div>
                     </div>
                     <?php if ($isDoctor): ?>
                         <div class="fld">
@@ -257,7 +249,6 @@ $doctorName = $isDoctor ? getFullName() : '';
         t.classList.toggle('empty', !input.value);
         input.parentElement.classList.toggle('off', input.disabled);
     }
-    const syncAllThd = () => document.querySelectorAll('.thd input[type=date]').forEach(syncThd);
     document.addEventListener('click', (e) => {
         const i = e.target.closest('.thd') && e.target.closest('.thd').querySelector('input');
         if (i && !i.disabled && i.showPicker) { try { i.showPicker(); } catch (err) { /* เปิดตัวเลือกวันที่ไม่ได้ ใช้การพิมพ์ต่อ */ } }
@@ -265,6 +256,7 @@ $doctorName = $isDoctor ? getFullName() : '';
     document.addEventListener('input', (e) => { if (e.target.matches('.thd input')) syncThd(e.target); });
     document.addEventListener('change', (e) => { if (e.target.matches('.thd input')) syncThd(e.target); });
 
+    let setDate = today(), setMDate = today();   // วันที่ที่ตั้งไว้ที่หัวตาราง (ใช้กับเด็กทุกคน)
     const one = (v) =>(Array.isArray(v) ? (v[0] ?? '') : (v ?? ''));
 
     function toRow(c) {
@@ -273,7 +265,7 @@ $doctorName = $isDoctor ? getFullName() : '';
         const r = {
             sid: c.student_id, name: c.name, nick: c.nick, birthday: c.birthday,
             id: rec ? rec.id : null, locked: !!rec?.locked && !IS_DOCTOR, doctor: rec?.doctor_name || '', skip: false, dirty: false, err: '',
-            date: vs.bp_date || rec?.exam_date || byId('gDate').value || today(), mdate: rec ? (rec.measurement_date || rec.exam_date || '') : (byId('gMDate').value || today()),
+            date: vs.bp_date || rec?.exam_date || setDate, mdate: rec ? (rec.measurement_date || rec.exam_date || '') : setMDate,
             temp: vs.temperature ?? '', bp: vs.bp ?? '', h: pm.height ?? '', w: pm.weight ?? '',
             wfa: one(pm.weight_for_age), hfa: one(pm.height_for_age), wfh: one(pm.weight_for_height),
             beh: rec?.behavior?.status ?? '', behd: rec?.behavior?.detail ?? '', dev: {}, ex: {}, rec: rec?.recommendation ?? '',
@@ -348,12 +340,13 @@ $doctorName = $isDoctor ? getFullName() : '';
         return h;
     }
 
+    const hdrDate = (id, v) => `<div class="hdr-date" title="ตั้งครั้งเดียว ใส่ให้ทุกคนอัตโนมัติ">${dateFld('id="' + id + '"', v, closed() ? ' disabled' : '')}</div>`;
     function header() {
         const fill = (kind, key, title) => (closed() ? '' : `<button type="button" class="fillcol" data-fill="${kind}" data-k="${key}" title="เติมค่าปกติให้ช่องว่างของทุกคน">${title}</button>`);
-        return '<thead><tr class="g1"><th class="c-no" rowspan="2">#</th><th class="c-nm" rowspan="2">เด็ก</th><th class="gh-info" rowspan="2">วันที่ตรวจ / อายุ</th>' +
+        return '<thead><tr class="g1"><th class="c-no" rowspan="2">#</th><th class="c-nm" rowspan="2">เด็ก</th><th class="gh-info" rowspan="2">วันที่ตรวจ / อายุ' + hdrDate('gDate', setDate) + '</th>' +
             '<th class="gh-body" colspan="8">การเจริญเติบโต</th><th class="gh-beh">ปัญหาด้านพฤติกรรม</th><th class="gh-dev" colspan="5">พัฒนาการ</th>' +
             `<th class="gh-exam ex" colspan="${EXAM.length}">ตรวจร่างกาย</th><th class="gh-info" rowspan="2">คำแนะนำ</th><th class="gh-st" rowspan="2">สถานะ</th><th class="gh-st" rowspan="2"></th></tr>` +
-            '<tr class="g2"><th class="gh-body">วันที่ชั่ง/วัด</th><th class="gh-body">น้ำหนัก</th><th class="gh-body">ส่วนสูง</th><th class="gh-body">อุณหภูมิ</th><th class="gh-body">BP</th>' +
+            '<tr class="g2"><th class="gh-body">วันที่ชั่ง/วัด' + hdrDate('gMDate', setMDate) + '</th><th class="gh-body">น้ำหนัก</th><th class="gh-body">ส่วนสูง</th><th class="gh-body">อุณหภูมิ</th><th class="gh-body">BP</th>' +
             '<th class="gh-body">น้ำหนัก/อายุ</th><th class="gh-body">ส่วนสูง/อายุ</th><th class="gh-body">น้ำหนัก/ส่วนสูง</th>' +
             `<th class="gh-beh">ไม่มี/มี ${fill('beh', 'beh', '✓')}</th>` +
             DEV.map(([k, l]) => `<th class="gh-dev">${l} ${fill('dev', k, '✓')}</th>`).join('') +
@@ -474,7 +467,7 @@ $doctorName = $isDoctor ? getFullName() : '';
             round = res.round;
             rows = res.data.map(toRow);
             byId('gClosed').style.display = closed() ? '' : 'none';
-            ['gFillNormal', 'gDate', 'gMDate'].forEach((id) => { byId(id).disabled = closed(); }); syncAllThd();
+            byId('gFillNormal').disabled = closed();
             render();
         } catch (e) {
             byId('gWrap').innerHTML = `<div class="hg-empty text-danger">โหลดไม่สำเร็จ: ${esc(e.message)}</div>`;
@@ -561,8 +554,6 @@ $doctorName = $isDoctor ? getFullName() : '';
     // ---- wiring ----
     document.addEventListener('DOMContentLoaded', async () => {
         const url = new URLSearchParams(location.search);
-        byId('gDate').value = today();
-        byId('gMDate').value = today(); syncAllThd();
         await loadRounds(url.get('round_id'));
         if (url.get('child_group')) byId('gGroup').value = url.get('child_group');
         await loadClassrooms(url.get('classroom'));
@@ -576,16 +567,11 @@ $doctorName = $isDoctor ? getFullName() : '';
         byId('gReload').addEventListener('click', reload);
         let timer; byId('gSearch').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(reload, 450); });
 
-        byId('gDate').addEventListener('change', () => {
-            const d = byId('gDate').value; if (!d) return;
-            let n = 0; rows.forEach((r) => { if (editable(r)) { r.date = d; if (r.id) r.dirty = true; n++; } });
-            if (n) { render(); toast(`ตั้งวันที่ตรวจให้ ${n} คน`); }
-        });
-        byId('gMDate').addEventListener('change', () => {
-            const d = byId('gMDate').value; if (!d) return;
-            let n = 0; rows.forEach((r) => { if (editable(r)) { r.mdate = d; if (r.id) r.dirty = true; n++; } });
-            if (n) { render(); toast(`ตั้งวันที่ชั่ง/วัดให้ ${n} คน`); }
-        });
+        // ตั้งวันที่ที่หัวตารางครั้งเดียว แล้วใส่ให้ทุกคน (ที่แก้ไขได้) อัตโนมัติ
+        const syncDate = (key, d, label) => {
+            let n = 0; rows.forEach((r) => { if (editable(r)) { r[key] = d; if (r.id) r.dirty = true; n++; } });
+            if (n) { render(); toast(`ตั้ง${label}ให้ ${n} คน`); }
+        };
         byId('gFillNormal').addEventListener('click', () => {
             let n = 0; rows.forEach((r) => { if (fillNormal(r, true)) n++; });
             render(); toast(n ? `เติมค่าปกติให้ ${n} คน` : 'ไม่มีช่องว่างให้เติม');
@@ -594,7 +580,11 @@ $doctorName = $isDoctor ? getFullName() : '';
         const wrap = byId('gWrap');
         const onChange = (e) => { const el = e.target; if (el.dataset && el.dataset.f) applyInput(el); };
         wrap.addEventListener('input', (e) => { if (e.target.matches('input')) onChange(e); });
-        wrap.addEventListener('change', (e) => { if (e.target.matches('select, input[type=date]')) onChange(e); });
+        wrap.addEventListener('change', (e) => {
+            if (e.target.id === 'gDate') { setDate = e.target.value || setDate; if (e.target.value) syncDate('date', e.target.value, 'วันที่ตรวจ'); return; }
+            if (e.target.id === 'gMDate') { setMDate = e.target.value || setMDate; if (e.target.value) syncDate('mdate', e.target.value, 'วันที่ชั่ง/วัด'); return; }
+            if (e.target.matches('select, input[type=date]')) onChange(e);
+        });
         wrap.addEventListener('click', (e) => {
             const fc = e.target.closest('[data-fill]'); if (fc) { fillColumn(fc.dataset.fill, fc.dataset.k); return; }
             const tr = e.target.closest('tr[data-i]'); if (!tr) return;
