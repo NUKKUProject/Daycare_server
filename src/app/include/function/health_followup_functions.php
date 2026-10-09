@@ -17,7 +17,70 @@ function hf_types(): array
 {
     return [
         'dental' => ['label' => 'ช่องปาก', 'icon' => 'fa-solid fa-tooth', 'provider' => 'hf_provider_dental'],
+        'external' => ['label' => 'ตรวจร่างกายกุมารแพทย์', 'icon' => 'fa-solid fa-user-doctor', 'provider' => 'hf_provider_external'],
     ];
+}
+
+/** รายการที่ผิดปกติของผลตรวจร่างกายกุมารแพทย์ 1 ครั้ง (ว่าง = ปกติ) ใช้ร่วมกันทั้งแดชบอร์ดและรายการติดตาม */
+function hf_external_findings(array $r): array
+{
+    $decode = fn($v) => is_array($j = json_decode((string) $v, true)) ? $j : [];
+    $isAbn = fn($v) => is_array($v) ? in_array('abnormal', $v, true) : $v === 'abnormal';
+    $devLabels = ['gm' => 'GM', 'fm' => 'FM', 'rl' => 'RL', 'el' => 'EL', 'ps' => 'PS'];
+    $examLabels = ['general' => 'สภาพทั่วไป', 'skin' => 'ผิวหนัง', 'head' => 'ศีรษะ', 'face' => 'ใบหน้า', 'eyes' => 'ตา', 'ears' => 'หู', 'nose' => 'จมูก', 'mouth' => 'ปาก',
+        'neck' => 'คอ', 'breast' => 'ทรวงอก/ปอด', 'breathe' => 'การหายใจ', 'lungs' => 'ปอด', 'heart' => 'หัวใจ', 'heart_sound' => 'เสียงหัวใจ', 'pulse' => 'ชีพจร',
+        'abdomen' => 'ท้อง', 'others' => 'อื่นๆ', 'neuro' => 'ระบบประสาท', 'movement' => 'การเคลื่อนไหว'];
+    $dev = $decode($r['development_assessment'] ?? null);
+    $pe = $decode($r['physical_exam'] ?? null) + $decode($r['neurological'] ?? null);
+    $beh = $decode($r['behavior'] ?? null);
+    $parts = [];
+    $delayed = array_filter($devLabels, fn($k) => in_array($dev[$k]['status'] ?? '', ['delay', 'fail'], true), ARRAY_FILTER_USE_KEY);
+    if ($delayed) {
+        $parts[] = 'พัฒนาการสงสัยล่าช้า ' . implode(', ', $delayed);
+    }
+    $abn = array_filter($examLabels, fn($k) => $isAbn($pe[$k] ?? null), ARRAY_FILTER_USE_KEY);
+    if ($abn) {
+        $parts[] = 'ตรวจร่างกายผิดปกติ ' . implode(', ', $abn);
+    }
+    if (($beh['status'] ?? '') === 'has') {
+        $parts[] = 'ปัญหาด้านพฤติกรรม' . (!empty($beh['detail']) ? ' (' . $beh['detail'] . ')' : '');
+    }
+    return $parts;
+}
+
+/** ผลตรวจร่างกายกุมารแพทย์ล่าสุดของเด็กแต่ละคนที่ผิดปกติ */
+function hf_provider_external(PDO $pdo): array
+{
+    $stmt = $pdo->query("
+        SELECT DISTINCT ON (e.student_id) e.id, e.student_id, e.exam_date, e.updated_at,
+               e.behavior, e.development_assessment, e.physical_exam, e.neurological,
+               c.nickname, c.prefix_th, c.firstname_th, c.lastname_th, c.classroom, c.child_group,
+               f.status AS f_status, f.followup_date AS f_date, f.note AS f_note, f.updated_at AS f_updated, f.by_role AS f_by
+        FROM health_data_external e
+        JOIN children c ON c.studentid = e.student_id
+        LEFT JOIN health_followups f ON f.source_type = 'external' AND f.source_id = e.id
+        WHERE c.status = 'กำลังศึกษา' AND COALESCE(TRIM(e.doctor_name), '') <> ''
+        ORDER BY e.student_id, e.exam_date DESC NULLS LAST, e.id DESC
+    ");
+    $items = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+        $parts = hf_external_findings($r);
+        if (!$parts) {
+            continue;
+        }
+        $items[] = [
+            'source_type' => 'external', 'source_id' => (int) $r['id'], 'type_label' => 'ตรวจร่างกายกุมารแพทย์',
+            'student_id' => $r['student_id'], 'nickname' => $r['nickname'],
+            'name' => trim(($r['prefix_th'] ?? '') . ($r['firstname_th'] ?? '') . ' ' . ($r['lastname_th'] ?? '')),
+            'classroom' => $r['classroom'], 'child_group' => $r['child_group'],
+            'detail' => implode(' · ', $parts), 'urgency' => '', 'count_text' => '',
+            'checked_at' => $r['exam_date'] ?: substr((string) $r['updated_at'], 0, 10),
+            'status' => $r['f_status'] ?: '', 'status_date' => $r['f_date'], 'note' => $r['f_note'],
+            'replied_at' => $r['f_updated'], 'by' => $r['f_by'] ?? '',
+            'link' => '/app/views/check_health_external/checklist_name.php',
+        ];
+    }
+    return $items;
 }
 
 /** ผลตรวจฟันของแพทย์ล่าสุดของเด็กแต่ละคนที่พบฟันผุ */
@@ -99,6 +162,13 @@ function hf_verify_source(PDO $pdo, string $type, int $sourceId, ?string $studen
 {
     if ($type === 'dental') {
         $sql = "SELECT student_id FROM health_tooth_external WHERE id = :id AND exam_type = 'doctor'" . ($studentId !== null ? ' AND student_id = :s' : '');
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($studentId !== null ? [':id' => $sourceId, ':s' => $studentId] : [':id' => $sourceId]);
+        $sid = $stmt->fetchColumn();
+        return $sid !== false ? (string) $sid : null;
+    }
+    if ($type === 'external') {
+        $sql = "SELECT student_id FROM health_data_external WHERE id = :id AND COALESCE(TRIM(doctor_name), '') <> ''" . ($studentId !== null ? ' AND student_id = :s' : '');
         $stmt = $pdo->prepare($sql);
         $stmt->execute($studentId !== null ? [':id' => $sourceId, ':s' => $studentId] : [':id' => $sourceId]);
         $sid = $stmt->fetchColumn();

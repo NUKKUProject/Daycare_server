@@ -5,6 +5,7 @@
 <?php require_once __DIR__ . '/../../include/function/pages_referen.php'; ?>
 <?php require_once __DIR__ . '/../../include/function/child_functions.php'; ?>
 <?php require_once __DIR__ . '/../../include/function/dashboard_functions.php'; ?>
+<?php require_once __DIR__ . '/../../include/function/health_followup_functions.php'; ?>
 <?php include __DIR__ . '/../../include/auth/auth_dashboard.php'; ?>
 <?php
 $studentid = $_SESSION['username'] ?? '';
@@ -197,43 +198,29 @@ if ($child) {
     }
 
     // 1.5) ผลตรวจร่างกายจากกุมารแพทย์ที่ผิดปกติ (เฉพาะผลที่แพทย์ตรวจแล้ว ใช้ผลล่าสุด)
+    $exItem = null;
     try {
         $exStmt = $pdo->prepare("
-            SELECT exam_date, doctor_name, behavior, development_assessment, physical_exam, neurological
-            FROM health_data_external
-            WHERE student_id = :s AND COALESCE(TRIM(doctor_name), '') <> ''
-            ORDER BY exam_date DESC NULLS LAST, id DESC
+            SELECT e.id, e.exam_date, e.behavior, e.development_assessment, e.physical_exam, e.neurological,
+                   f.status AS followup_status, f.followup_date, f.note AS followup_note, f.by_role AS followup_by_role
+            FROM health_data_external e
+            LEFT JOIN health_followups f ON f.source_type = 'external' AND f.source_id = e.id
+            WHERE e.student_id = :s AND COALESCE(TRIM(e.doctor_name), '') <> ''
+            ORDER BY e.exam_date DESC NULLS LAST, e.id DESC
             LIMIT 1
         ");
         $exStmt->execute(['s' => $studentid]);
         $ex = $exStmt->fetch(PDO::FETCH_ASSOC);
-        if ($ex) {
-            $decode = fn($v) => is_array($j = json_decode((string) $v, true)) ? $j : [];
-            $isAbn = fn($v) => is_array($v) ? in_array('abnormal', $v, true) : $v === 'abnormal';
-            $devLabels = ['gm' => 'GM', 'fm' => 'FM', 'rl' => 'RL', 'el' => 'EL', 'ps' => 'PS'];
-            $examLabels = ['general' => 'สภาพทั่วไป', 'skin' => 'ผิวหนัง', 'head' => 'ศีรษะ', 'face' => 'ใบหน้า', 'eyes' => 'ตา', 'ears' => 'หู', 'nose' => 'จมูก', 'mouth' => 'ปาก',
-                'neck' => 'คอ', 'breast' => 'ทรวงอก/ปอด', 'breathe' => 'การหายใจ', 'lungs' => 'ปอด', 'heart' => 'หัวใจ', 'heart_sound' => 'เสียงหัวใจ', 'pulse' => 'ชีพจร',
-                'abdomen' => 'ท้อง', 'others' => 'อื่นๆ', 'neuro' => 'ระบบประสาท', 'movement' => 'การเคลื่อนไหว'];
-            $dev = $decode($ex['development_assessment']);
-            $pe = $decode($ex['physical_exam']) + $decode($ex['neurological']);
-            $beh = $decode($ex['behavior']);
-            $parts = [];
-            $delayed = array_filter($devLabels, fn($k) => in_array($dev[$k]['status'] ?? '', ['delay', 'fail'], true), ARRAY_FILTER_USE_KEY);
-            if ($delayed) {
-                $parts[] = 'พัฒนาการสงสัยล่าช้า ' . implode(', ', $delayed);
-            }
-            $abn = array_filter($examLabels, fn($k) => $isAbn($pe[$k] ?? null), ARRAY_FILTER_USE_KEY);
-            if ($abn) {
-                $parts[] = 'ตรวจร่างกายผิดปกติ ' . implode(', ', $abn);
-            }
-            if (($beh['status'] ?? '') === 'has') {
-                $parts[] = 'ปัญหาด้านพฤติกรรม' . (!empty($beh['detail']) ? ' (' . $beh['detail'] . ')' : '');
-            }
-            if ($parts) {
-                $hubItems[] = ['icon' => 'fa-solid fa-user-doctor', 'tone' => 'red', 'title' => 'ตรวจร่างกายจากกุมารแพทย์',
-                    'sub' => implode(' · ', $parts) . ' · ' . thaiDateShort($ex['exam_date']),
-                    'badge' => 'พบผลผิดปกติ', 'attn' => true, 'modal' => false, 'href' => 'health_external_history.php'];
-            }
+        $exParts = $ex ? hf_external_findings($ex) : [];
+        if ($exParts) {
+            $fs = $ex['followup_status'] ?? '';
+            $exBadge = ['' => 'ต้องแจ้งกลับ', 'acknowledged' => 'รับทราบแล้ว', 'scheduled' => 'นัดหมอ ' . thaiDateShort($ex['followup_date']), 'treated' => 'พาไปรักษาแล้ว'][$fs] ?? 'ต้องแจ้งกลับ';
+            $exTone = $fs === '' ? 'red' : ($fs === 'treated' ? 'green' : 'blue');
+            $exItem = ['id' => (int) $ex['id'], 'date' => $ex['exam_date'], 'parts' => $exParts, 'status' => $fs,
+                'followup_date' => $ex['followup_date'], 'note' => $ex['followup_note'], 'by_role' => $ex['followup_by_role'] ?? ''];
+            $hubItems[] = ['icon' => 'fa-solid fa-user-doctor', 'tone' => $exTone, 'title' => 'ตรวจร่างกายจากกุมารแพทย์',
+                'sub' => implode(' · ', $exParts) . ' · ' . thaiDateShort($ex['exam_date']),
+                'badge' => $exBadge, 'attn' => $fs === '', 'modal' => true, 'target' => '#externalModal'];
         }
     } catch (PDOException $e) {
         error_log('student_dashboard external: ' . $e->getMessage());
@@ -1038,7 +1025,7 @@ $viewTabs = [
                 <div class="hub-list">
                     <?php foreach ($hubItems as $it): ?>
                         <?php $isModal = !empty($it['modal']); ?>
-                        <<?= $isModal ? 'button type="button" data-bs-toggle="modal" data-bs-target="#dentalModal"' : 'a href="' . htmlspecialchars($it['href']) . '"' ?> class="hub-item<?= $it['attn'] ? ' attn' : '' ?>">
+                        <<?= $isModal ? 'button type="button" data-bs-toggle="modal" data-bs-target="' . htmlspecialchars($it['target'] ?? '#dentalModal') . '"' :'a href="' . htmlspecialchars($it['href']) . '"' ?> class="hub-item<?= $it['attn'] ? ' attn' : '' ?>">
                             <span class="hub-ic <?= $it['tone'] ?>"><i class="<?= htmlspecialchars($it['icon']) ?>"></i></span>
                             <span class="hub-main">
                                 <span class="hub-title d-block"><?= htmlspecialchars($it['title']) ?></span>
@@ -1142,17 +1129,17 @@ $viewTabs = [
                                     ?>
                                 </div>
                                 <div class="dental-actions">
-                                    <button type="button" data-follow="acknowledged" class="opt ack<?= $fs === 'acknowledged' ? ' active' : '' ?>">
+                                    <button type="button" data-follow-type="dental" data-follow-id="<?= (int) $dental['id'] ?>" data-follow="acknowledged" class="opt ack<?= $fs === 'acknowledged' ? ' active' : '' ?>">
                                         <span class="ic"><i class="bi bi-hand-thumbs-up"></i></span>
                                         <span class="tx"><b>รับทราบ</b><small>แจ้งศูนย์ว่าท่านทราบผลตรวจแล้ว</small></span>
                                         <span class="ring"><i class="bi bi-check-lg"></i></span>
                                     </button>
-                                    <button type="button" data-follow="scheduled" class="opt sch<?= $fs === 'scheduled' ? ' active' : '' ?>">
+                                    <button type="button" data-follow-type="dental" data-follow-id="<?= (int) $dental['id'] ?>" data-follow="scheduled" class="opt sch<?= $fs === 'scheduled' ? ' active' : '' ?>">
                                         <span class="ic"><i class="bi bi-calendar-event"></i></span>
                                         <span class="tx"><b>นัดหมอแล้ว</b><small>ระบุวันที่นัดพบทันตแพทย์</small></span>
                                         <span class="ring"><i class="bi bi-check-lg"></i></span>
                                     </button>
-                                    <button type="button" data-follow="treated" class="opt trt<?= $fs === 'treated' ? ' active' : '' ?>">
+                                    <button type="button" data-follow-type="dental" data-follow-id="<?= (int) $dental['id'] ?>" data-follow="treated" class="opt trt<?= $fs === 'treated' ? ' active' : '' ?>">
                                         <span class="ic"><i class="bi bi-check2-circle"></i></span>
                                         <span class="tx"><b>พาไปรักษาแล้ว</b><small>ระบุวันที่พาไปรักษา</small></span>
                                         <span class="ring"><i class="bi bi-check-lg"></i></span>
@@ -1170,10 +1157,75 @@ $viewTabs = [
 </div>
 <?php endif; ?>
 
-<?php if ($dental && $dental['has_decay']): ?>
+<?php if ($exItem): ?>
+<!-- ผลตรวจร่างกายจากกุมารแพทย์ที่ผิดปกติ + แจ้งกลับศูนย์ -->
+<div class="modal fade" id="externalModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius:1.25rem;overflow:hidden;">
+            <div class="dental-card">
+                <div class="dental-head">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <div>
+                        <div class="t">ตรวจร่างกายจากกุมารแพทย์</div>
+                        <div class="s">วันที่ตรวจ <?= htmlspecialchars(thaiDateShort($exItem['date'])) ?></div>
+                    </div>
+                </div>
+                <div class="dental-body">
+                    <div class="dental-banner urgent"><i class="bi bi-exclamation-triangle-fill me-1"></i>พบผลตรวจผิดปกติ<small>กรุณาติดต่อศูนย์เพื่อประสานการดูแลต่อ</small></div>
+                    <div class="dental-sec"><div class="lb">รายการที่พบ</div>
+                        <div class="dental-chips"><?php foreach ($exItem['parts'] as $x): ?><span class="dental-chip"><?= htmlspecialchars($x) ?></span><?php endforeach; ?></div></div>
+                    <div class="dental-follow">
+                        <div class="lb mb-1">แจ้งกลับศูนย์ — เลือกสิ่งที่ต้องการแจ้ง</div>
+                        <div class="now">
+                            <?php
+                            $fs = $exItem['status'];
+                            if ($fs === 'treated') {
+                                echo '<b>พาไปรักษาแล้ว</b> ' . htmlspecialchars(thaiDateShort($exItem['followup_date']));
+                            } elseif ($fs === 'scheduled') {
+                                echo '<b>นัดหมอแล้ว</b> วันที่ ' . htmlspecialchars(thaiDateShort($exItem['followup_date']));
+                            } elseif ($fs === 'acknowledged') {
+                                echo '<b>รับทราบแล้ว</b>';
+                            } else {
+                                echo '<span class="text-danger fw-bold">ยังไม่ได้แจ้งกลับ</span>';
+                            }
+                            if ($fs !== '' && $exItem['by_role'] === 'center') {
+                                echo '<div class="text-muted small mt-1"><i class="bi bi-building me-1"></i>ศูนย์เป็นผู้บันทึกให้</div>';
+                            }
+                            if (!empty($exItem['note'])) {
+                                echo '<div class="text-muted small mt-1">' . htmlspecialchars($exItem['note']) . '</div>';
+                            }
+                            ?>
+                        </div>
+                        <div class="dental-actions">
+                            <button type="button" data-follow-type="external" data-follow-id="<?= $exItem['id'] ?>" data-follow="acknowledged" class="opt ack<?= $fs === 'acknowledged' ? ' active' : '' ?>">
+                                <span class="ic"><i class="bi bi-hand-thumbs-up"></i></span>
+                                <span class="tx"><b>รับทราบ</b><small>แจ้งศูนย์ว่าท่านทราบผลตรวจแล้ว</small></span>
+                                <span class="ring"><i class="bi bi-check-lg"></i></span>
+                            </button>
+                            <button type="button" data-follow-type="external" data-follow-id="<?= $exItem['id'] ?>" data-follow="scheduled" class="opt sch<?= $fs === 'scheduled' ? ' active' : '' ?>">
+                                <span class="ic"><i class="bi bi-calendar-event"></i></span>
+                                <span class="tx"><b>นัดหมอแล้ว</b><small>ระบุวันที่นัดพบแพทย์</small></span>
+                                <span class="ring"><i class="bi bi-check-lg"></i></span>
+                            </button>
+                            <button type="button" data-follow-type="external" data-follow-id="<?= $exItem['id'] ?>" data-follow="treated" class="opt trt<?= $fs === 'treated' ? ' active' : '' ?>">
+                                <span class="ic"><i class="bi bi-check2-circle"></i></span>
+                                <span class="tx"><b>พาไปรักษาแล้ว</b><small>ระบุวันที่พาไปรักษา</small></span>
+                                <span class="ring"><i class="bi bi-check-lg"></i></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-3"><a href="health_external_history.php" class="small">ดูประวัติตรวจร่างกายทั้งหมด <i class="bi bi-arrow-right"></i></a></div>
+                </div>
+            </div>
+            <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">ปิด</button></div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php if (($dental && $dental['has_decay']) || $exItem): ?>
 <script>
     (function () {
-        const RECORD_ID = <?= (int) $dental['id'] ?>;
         const META = {
             acknowledged: { title: 'รับทราบผลตรวจ', sub: 'แจ้งศูนย์ว่าท่านทราบผลตรวจฟันแล้ว', cls: 'ack', icon: 'bi-hand-thumbs-up', ph: 'เช่น จะพาไปพบทันตแพทย์เร็วๆ นี้', dateLabel: '', quick: [] },
             scheduled: { title: 'นัดหมอแล้ว', sub: 'ระบุวันที่นัดพบทันตแพทย์ ศูนย์จะได้ช่วยติดตาม', cls: 'sch', icon: 'bi-calendar-event', ph: 'เช่น นัดที่โรงพยาบาล... เวลา...', dateLabel: 'วันที่นัดหมอ', quick: [['วันนี้', 0], ['พรุ่งนี้', 1], ['อีก 1 สัปดาห์', 7]] },
@@ -1188,7 +1240,7 @@ $viewTabs = [
                 const m = META[status];
                 const needDate = status !== 'acknowledged';
                 // ปิดหน้าต่างรายละเอียดชั่วคราว ไม่งั้น Bootstrap แย่งโฟกัสจนพิมพ์ในกล่องของ SweetAlert ไม่ได้
-                const modalEl = document.getElementById('dentalModal');
+                const modalEl = btn.closest('.modal');
                 const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 modal.hide();
                 const today = fmt(new Date());
@@ -1230,7 +1282,7 @@ $viewTabs = [
                 try {
                     const res = await fetch('../../include/function/health_followup_api.php', {
                         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                        body: JSON.stringify({ type: 'dental', id: RECORD_ID, status, date: r.value.date, note: r.value.note })
+                        body: JSON.stringify({ type: btn.dataset.followType, id: Number(btn.dataset.followId), status, date: r.value.date, note: r.value.note })
                     });
                     const data = await res.json();
                     if (data.status !== 'success') throw new Error(data.message || 'บันทึกไม่สำเร็จ');
