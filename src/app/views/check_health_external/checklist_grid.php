@@ -457,7 +457,7 @@ $doctorName = $isDoctor ? getFullName() : '';
 
     async function loadRounds(selectedId) {
         const res = await (await fetch('./process/manage_health_rounds.php?action=list', { headers: XHR })).json();
-        rounds = res.data || [];
+        rounds = (res.data || []).filter((r) => !IS_DOCTOR || r.status === 'open');   // แพทย์เห็นเฉพาะรอบที่เปิดอยู่
         const sel = byId('gRound');
         sel.innerHTML = rounds.map((r) => `<option value="${r.id}">${esc(r.academic_year)} · ${esc(r.title)}${r.status === 'open' ? '' : ' (ปิดแล้ว)'}</option>`).join('');
         const pick = rounds.find((r) => String(r.id) === String(selectedId)) || rounds.find((r) => r.status === 'open') || rounds[0];
