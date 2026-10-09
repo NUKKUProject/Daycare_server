@@ -230,7 +230,7 @@ $types = array_map(fn($t) => ['label' => $t['label'], 'icon' => $t['icon']], hf_
                     <td><span class="hf-chip ${s}"><i class="bi ${STATUS_ICON[s]}"></i>${STATUS_TEXT[s]}${when}</span>${s !== 'none' ? `<div class="hf-sub">${thaiDate(it.replied_at, true)}${who ? ' · ' + who : ''}</div>` : ''}</td>
                     <td class="hf-note">${esc(it.note || '')}</td>
                     <td><div class="hf-act"><button type="button" class="hf-btn${s === 'none' ? '' : ' edit'}" data-sid="${esc(it.source_id)}" data-type="${esc(it.source_type)}"><i class="bi ${s === 'none' ? 'bi-pencil-square' : 'bi-pencil'} me-1"></i>${s === 'none' ? 'บันทึกการติดตาม' : 'แก้ไข'}</button>
-                        <a class="hf-link" href="${esc(it.link)}"><i class="bi bi-box-arrow-up-right me-1"></i>ดูผลตรวจ</a></div></td>
+                        <button type="button" class="hf-link hf-view" data-sid="${esc(it.source_id)}" data-type="${esc(it.source_type)}"><i class="bi bi-eye me-1"></i>ดูผลตรวจ</button></div></td>
                 </tr>`;
             }).join('') + '</tbody></table>';
     }
@@ -246,6 +246,23 @@ $types = array_map(fn($t) => ['label' => $t['label'], 'icon' => $t['icon']], hf_
         const g = byId('hfGroup').value;
         const rooms = [...new Set(ITEMS.filter((i) => !g || i.child_group === g).map((i) => i.classroom).filter(Boolean))].sort();
         byId('hfRoom').innerHTML = '<option value="">ทุกห้อง</option>' + rooms.map((r) => `<option>${esc(r)}</option>`).join('');
+    }
+
+    // แสดงผลตรวจใน popup (ข้อมูลสรุปจากรายการ ไม่ต้องเปิดหน้าอื่น)
+    function openResult(it) {
+        const row = (label, value) => value ? `<div class="mb-2"><div class="text-muted small">${label}</div><div class="fw-bold">${esc(value)}</div></div>` : '';
+        const s = st(it);
+        const html = `<div style="text-align:left">
+            <div style="font-weight:700;font-size:1.15rem;color:#1E4F6F">${esc(it.nickname || it.name)}</div>
+            <div class="text-muted small mb-3">${esc(it.name)} · ห้อง ${esc(it.classroom || '-')}</div>
+            ${row('ประเภทการตรวจ', it.type_label)}
+            ${row('สิ่งที่พบ', it.detail + (it.count_text ? ' ' + it.count_text : ''))}
+            ${row('ระดับความเร่งด่วน', URG[it.urgency] || '')}
+            ${row('วันที่ตรวจ', thaiDate(it.checked_at))}
+            ${row('สถานะการตอบกลับ', STATUS_TEXT[s] + (it.status_date && s !== 'acknowledged' ? ' ' + thaiDate(it.status_date) : ''))}
+            ${row('หมายเหตุ', it.note)}
+        </div>`;
+        Swal.fire({ width: 520, html, confirmButtonText: 'ปิด', buttonsStyling: false, customClass: { popup: 'fo-popup', confirmButton: 'fo-cancel' } });
     }
 
     // บันทึก/แก้ไขการติดตามแทนผู้ปกครอง
@@ -309,9 +326,10 @@ $types = array_map(fn($t) => ['label' => $t['label'], 'icon' => $t['icon']], hf_
         byId('hfReset').addEventListener('click', () => { byId('hfSearch').value = ''; byId('hfGroup').value = ''; fillRooms(); byId('hfStatus').value = 'none'; typeFilter = 'all'; renderAll(); });
         let t; byId('hfSearch').addEventListener('input', () => { clearTimeout(t); t = setTimeout(renderAll, 250); });
         byId('hfTable').addEventListener('click', (e) => {
-            const b = e.target.closest('.hf-btn'); if (!b) return;
+            const b = e.target.closest('.hf-btn, .hf-view'); if (!b) return;
             const it = ITEMS.find((x) => x.source_type === b.dataset.type && String(x.source_id) === b.dataset.sid);
-            if (it) openFollowup(it);
+            if (!it) return;
+            if (b.classList.contains('hf-view')) openResult(it); else openFollowup(it);
         });
     });
 </script>
