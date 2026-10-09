@@ -252,11 +252,12 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
     }
 
     .eh-dev-item.pass { background: #e6f7ec; }
-    .eh-dev-item.fail { background: #fdecec; }
+    .eh-dev-item.fail, .eh-dev-item.delay { background: #fdecec; }
     .eh-dev-item.na { background: #eef1f4; }
 
     .eh-dev-item strong { display: block; font-size: 0.95rem; }
     .eh-dev-item span { color: #64748b; font-size: 0.75rem; }
+    .eh-dev-item.fail .eh-dev-status, .eh-dev-item.delay .eh-dev-status { color: #c0392b; font-weight: 700; }
 
     .eh-reco-box {
         background: #fff9e6;
@@ -330,13 +331,14 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
 
         function ehDevItem(code, label, obj) {
             obj = obj || {};
-            const cls = obj.status === 'pass' ? 'pass' : (obj.status === 'fail' ? 'fail' : 'na');
-            const statusLabel = obj.status === 'pass' ? 'ผ่าน' : (obj.status === 'fail' ? 'ไม่ผ่าน' : 'ไม่ได้ประเมิน');
+            const isDelay = obj.status === 'delay' || obj.status === 'fail';
+            const cls = obj.status === 'pass' ? 'pass' : (isDelay ? 'delay' : 'na');
+            const statusLabel = obj.status === 'pass' ? 'ผ่าน' : (isDelay ? 'สงสัยล่าช้า' : 'ไม่ได้ประเมิน');
             return `
                 <div class="eh-dev-item ${cls}">
                     <strong>${code}</strong>
                     <span>${ehEscapeHtml(label)}</span><br>
-                    <span>${statusLabel}${obj.score ? ' (ข้อที่ ' + ehEscapeHtml(obj.score) + ')' : ''}</span>
+                    <span class="eh-dev-status">${statusLabel}${obj.score ? ' (ข้อที่ ' + ehEscapeHtml(obj.score) + ')' : ''}</span>
                 </div>`;
         }
 

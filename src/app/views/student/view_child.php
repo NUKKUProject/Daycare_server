@@ -615,10 +615,11 @@ textarea.vx-input { height:auto; }
 
     .eh-dev-item { border-radius: 0.75rem; padding: 0.7rem 0.6rem; text-align: center; }
     .eh-dev-item.pass { background: #e6f7ec; }
-    .eh-dev-item.fail { background: #fdecec; }
+    .eh-dev-item.fail, .eh-dev-item.delay { background: #fdecec; }
     .eh-dev-item.na { background: #eef1f4; }
     .eh-dev-item strong { display: block; font-size: 0.95rem; }
     .eh-dev-item span { color: #64748b; font-size: 0.75rem; }
+    .eh-dev-item.fail .eh-dev-status, .eh-dev-item.delay .eh-dev-status { color: #c0392b; font-weight: 700; }
 
     .eh-reco-box {
         background: #fff9e6;
@@ -4490,13 +4491,14 @@ textarea.vx-input { height:auto; }
 
   function ehDevItem(code, label, obj) {
     obj = obj || {};
-    const cls = obj.status === 'pass' ? 'pass' : (obj.status === 'fail' ? 'fail' : 'na');
-    const statusLabel = obj.status === 'pass' ? 'ผ่าน' : (obj.status === 'fail' ? 'ไม่ผ่าน' : 'ไม่ได้ประเมิน');
+    const isDelay = obj.status === 'delay' || obj.status === 'fail';
+    const cls = obj.status === 'pass' ? 'pass' : (isDelay ? 'delay' : 'na');
+    const statusLabel = obj.status === 'pass' ? 'ผ่าน' : (isDelay ? 'สงสัยล่าช้า' : 'ไม่ได้ประเมิน');
     return `
       <div class="eh-dev-item ${cls}">
         <strong>${code}</strong>
         <span>${ehEscapeHtml(label)}</span><br>
-        <span>${statusLabel}${obj.score ? ' (ข้อที่ ' + ehEscapeHtml(obj.score) + ')' : ''}</span>
+        <span class="eh-dev-status">${statusLabel}${obj.score ? ' (ข้อที่ ' + ehEscapeHtml(obj.score) + ')' : ''}</span>
       </div>`;
   }
 
@@ -5371,7 +5373,7 @@ textarea.vx-input { height:auto; }
       if (status === 'pass') {
         statusHtml = '<span class="dev-pass"><i class="bi bi-check-circle-fill me-1"></i>ผ่าน</span>';
         if (score) noteHtml = 'ข้อที่ ' + score;
-      } else if (status === 'fail') {
+      } else if (status === 'delay' || status === 'fail') {
         statusHtml = '<span class="dev-delay"><i class="bi bi-exclamation-triangle-fill me-1"></i>สงสัยล่าช้า</span>';
         if (score) noteHtml = 'ข้อที่ ' + score;
       } else {
@@ -5649,7 +5651,7 @@ textarea.vx-input { height:auto; }
 
     function devStatusHtml(status) {
       if (status === 'pass') return '<span style="color:var(--success);font-weight:700;">ผ่าน</span>';
-      if (status === 'fail') return '<span style="color:var(--danger);font-weight:700;">สงสัยล่าช้า</span>';
+      if (status === 'delay' || status === 'fail') return '<span style="color:var(--danger);font-weight:700;">สงสัยล่าช้า</span>';
       return '<span style="color:var(--gray-400);">-</span>';
     }
 
