@@ -64,6 +64,15 @@ $doctorName = $isDoctor ? getFullName() : '';
     .hg .fillcol { border: 0; background: rgba(255, 255, 255, .25); color: #fff; border-radius: 5px; font-size: .7rem; padding: 0 5px; margin-left: 3px; cursor: pointer; }
     .hg .fillcol:hover { background: rgba(255, 255, 255, .45); }
     .hg-empty { padding: 3rem 1rem; text-align: center; color: #64748b; }
+    /* ช่องวันที่แสดงเป็นไทย (พ.ศ.) ส่วน input type=date จริงโปร่งใสซ้อนอยู่ข้างบน ค่าที่บันทึกยังเป็น ค.ศ. ตามเดิม */
+    .thd { position: relative; display: inline-block; }
+    .thd.block { display: block; }
+    .thd input[type=date] { position: absolute; inset: 0; width: 100% !important; height: 100% !important; opacity: 0; cursor: pointer; margin: 0; padding: 0; }
+    .thd-txt { display: block; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 3px 8px; height: 32px; line-height: 23px; min-width: 128px; background: #fff; font-size: .84rem; white-space: nowrap; }
+    .thd.block .thd-txt { height: 38px; line-height: 31px; border-color: #dee2e6; border-radius: .375rem; font-size: 1rem; padding: 3px 12px; }
+    .thd:focus-within .thd-txt { border-color: #1e4db7; box-shadow: 0 0 0 3px rgba(30, 77, 183, .15); }
+    .thd.off .thd-txt { background: #f1f5f9; color: #64748b; }
+    .thd-txt.empty { color: #94a3b8; }
 
     .hg-dock { position: sticky; bottom: 0; z-index: 30; background: #fff; border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 16px rgba(15, 36, 96, .08);
         padding: .7rem 1.25rem; display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; border-radius: 12px 12px 0 0; }
@@ -116,12 +125,12 @@ $doctorName = $isDoctor ? getFullName() : '';
                     </div>
                     <div class="fld">
                         <label for="gDate">วันที่ตรวจ</label>
-                        <input type="date" id="gDate" class="form-control">
+                        <span class="thd block"><input type="date" id="gDate"><span class="thd-txt"></span></span>
                         <div class="help">เลือกแล้วใส่ให้ทุกคนอัตโนมัติ</div>
                     </div>
                     <div class="fld">
                         <label for="gMDate">วันที่ชั่งน้ำหนัก / วัดส่วนสูง</label>
-                        <input type="date" id="gMDate" class="form-control">
+                        <span class="thd block"><input type="date" id="gMDate"><span class="thd-txt"></span></span>
                         <div class="help">เลือกแล้วใส่ให้ทุกคนอัตโนมัติ</div>
                     </div>
                     <?php if ($isDoctor): ?>
@@ -233,7 +242,30 @@ $doctorName = $isDoctor ? getFullName() : '';
     let rounds = [], round = null, rows = [], loadSeq = 0, saving = false;
     const closed = () => !round || round.status !== 'open';
     const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-    const one = (v) => (Array.isArray(v) ? (v[0] ?? '') : (v ?? ''));
+    // วันที่แบบไทย (พ.ศ.) สำหรับแสดงผลเท่านั้น ค่าจริงและที่บันทึกเป็น ค.ศ. (YYYY-MM-DD) เหมือนเดิม
+    const TH_MON = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    const thaiDate = (iso) => {
+        const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
+        return m ? `${+m[3]} ${TH_MON[+m[2] - 1]} ${+m[1] + 543}` : '';
+    };
+    const dateFld = (attrs, value, dis) =>
+        `<span class="thd${dis ? ' off' : ''}"><input type="date" ${attrs} value="${esc(value)}"${dis}><span class="thd-txt${value ? '' : ' empty'}">${esc(thaiDate(value) || 'เลือกวันที่')}</span></span>`;
+    function syncThd(input) {
+        const t = input.parentElement && input.parentElement.querySelector('.thd-txt');
+        if (!t) return;
+        t.textContent = thaiDate(input.value) || 'เลือกวันที่';
+        t.classList.toggle('empty', !input.value);
+        input.parentElement.classList.toggle('off', input.disabled);
+    }
+    const syncAllThd = () => document.querySelectorAll('.thd input[type=date]').forEach(syncThd);
+    document.addEventListener('click', (e) => {
+        const i = e.target.closest('.thd') && e.target.closest('.thd').querySelector('input');
+        if (i && !i.disabled && i.showPicker) { try { i.showPicker(); } catch (err) { /* เปิดตัวเลือกวันที่ไม่ได้ ใช้การพิมพ์ต่อ */ } }
+    });
+    document.addEventListener('input', (e) => { if (e.target.matches('.thd input')) syncThd(e.target); });
+    document.addEventListener('change', (e) => { if (e.target.matches('.thd input')) syncThd(e.target); });
+
+    const one = (v) =>(Array.isArray(v) ? (v[0] ?? '') : (v ?? ''));
 
     function toRow(c) {
         const rec = c.record, vs = rec?.vital_signs || {}, pm = rec?.physical_measures || {}, dv = rec?.development_assessment || {};
@@ -291,8 +323,8 @@ $doctorName = $isDoctor ? getFullName() : '';
         const num = (f, v, ph, step) => `<td><input class="f n" type="number" step="${step || '0.1'}" min="0" data-f="${f}" data-col="${f}" value="${esc(v)}" placeholder="${ph}"${dis}></td>`;
         let h = `<tr class="${cls}" data-i="${i}"><td class="c-no">${i + 1}</td>` +
             `<td class="c-nm"><div class="nick">${esc(r.nick || r.name)}</div>${r.nick ? `<div class="full">${esc(r.name)}</div>` : ''}</td>` +
-            `<td><input class="f d" type="date" data-f="date" data-col="date" value="${esc(r.date)}"${dis}><div class="age" data-age>${esc(ageText(r))}</div></td>` +
-            `<td><input class="f d" type="date" data-f="mdate" data-col="mdate" value="${esc(r.mdate)}"${dis}></td>` +
+            `<td>${dateFld('data-f="date" data-col="date"', r.date, dis)}<div class="age" data-age>${esc(ageText(r))}</div></td>` +
+            `<td>${dateFld('data-f="mdate" data-col="mdate"', r.mdate, dis)}</td>` +
             num('w', r.w, 'กก.') + num('h', r.h, 'ซม.') + num('temp', r.temp, '37.0') +
             `<td><input class="f n" style="width:78px" type="text" data-f="bp" data-col="bp" value="${esc(r.bp)}" placeholder="100/60"${dis}></td>` +
             `<td><select class="f" data-f="wfa" data-col="wfa"${dis}>${opts(WFA, r.wfa)}</select></td>` +
@@ -442,7 +474,7 @@ $doctorName = $isDoctor ? getFullName() : '';
             round = res.round;
             rows = res.data.map(toRow);
             byId('gClosed').style.display = closed() ? '' : 'none';
-            ['gFillNormal', 'gDate', 'gMDate'].forEach((id) => { byId(id).disabled = closed(); });
+            ['gFillNormal', 'gDate', 'gMDate'].forEach((id) => { byId(id).disabled = closed(); }); syncAllThd();
             render();
         } catch (e) {
             byId('gWrap').innerHTML = `<div class="hg-empty text-danger">โหลดไม่สำเร็จ: ${esc(e.message)}</div>`;
@@ -530,7 +562,7 @@ $doctorName = $isDoctor ? getFullName() : '';
     document.addEventListener('DOMContentLoaded', async () => {
         const url = new URLSearchParams(location.search);
         byId('gDate').value = today();
-        byId('gMDate').value = today();
+        byId('gMDate').value = today(); syncAllThd();
         await loadRounds(url.get('round_id'));
         if (url.get('child_group')) byId('gGroup').value = url.get('child_group');
         await loadClassrooms(url.get('classroom'));
