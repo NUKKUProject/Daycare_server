@@ -117,12 +117,12 @@ $doctorName = $isDoctor ? getFullName() : '';
                     <div class="fld">
                         <label for="gDate">วันที่ตรวจ</label>
                         <input type="date" id="gDate" class="form-control">
-                        <div class="help"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="gApplyDate"><i class="bi bi-calendar-check me-1"></i>ใช้กับทั้งห้อง</button></div>
+                        <div class="help">เลือกแล้วใส่ให้ทุกคนอัตโนมัติ</div>
                     </div>
                     <div class="fld">
                         <label for="gMDate">วันที่ชั่งน้ำหนัก / วัดส่วนสูง</label>
                         <input type="date" id="gMDate" class="form-control">
-                        <div class="help"><button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="gApplyMDate"><i class="bi bi-calendar-check me-1"></i>ใช้กับทั้งห้อง</button></div>
+                        <div class="help">เลือกแล้วใส่ให้ทุกคนอัตโนมัติ</div>
                     </div>
                     <?php if ($isDoctor): ?>
                         <div class="fld">
@@ -442,7 +442,7 @@ $doctorName = $isDoctor ? getFullName() : '';
             round = res.round;
             rows = res.data.map(toRow);
             byId('gClosed').style.display = closed() ? '' : 'none';
-            ['gApplyDate', 'gApplyMDate', 'gFillNormal', 'gDate', 'gMDate'].forEach((id) => { byId(id).disabled = closed(); });
+            ['gFillNormal', 'gDate', 'gMDate'].forEach((id) => { byId(id).disabled = closed(); });
             render();
         } catch (e) {
             byId('gWrap').innerHTML = `<div class="hg-empty text-danger">โหลดไม่สำเร็จ: ${esc(e.message)}</div>`;
@@ -544,15 +544,15 @@ $doctorName = $isDoctor ? getFullName() : '';
         byId('gReload').addEventListener('click', reload);
         let timer; byId('gSearch').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(reload, 450); });
 
-        byId('gApplyDate').addEventListener('click', () => {
-            const d = byId('gDate').value; if (!d) { Swal.fire('กรุณาเลือกวันที่ตรวจ', '', 'info'); return; }
+        byId('gDate').addEventListener('change', () => {
+            const d = byId('gDate').value; if (!d) return;
             let n = 0; rows.forEach((r) => { if (editable(r)) { r.date = d; if (r.id) r.dirty = true; n++; } });
-            render(); toast(`ตั้งวันที่ให้ ${n} คน`);
+            if (n) { render(); toast(`ตั้งวันที่ตรวจให้ ${n} คน`); }
         });
-        byId('gApplyMDate').addEventListener('click', () => {
-            const d = byId('gMDate').value; if (!d) { Swal.fire('กรุณาเลือกวันที่ชั่งน้ำหนัก / วัดส่วนสูง', '', 'info'); return; }
+        byId('gMDate').addEventListener('change', () => {
+            const d = byId('gMDate').value; if (!d) return;
             let n = 0; rows.forEach((r) => { if (editable(r)) { r.mdate = d; if (r.id) r.dirty = true; n++; } });
-            render(); toast(`ตั้งวันที่ชั่ง/วัดให้ ${n} คน`);
+            if (n) { render(); toast(`ตั้งวันที่ชั่ง/วัดให้ ${n} คน`); }
         });
         byId('gFillNormal').addEventListener('click', () => {
             let n = 0; rows.forEach((r) => { if (fillNormal(r, true)) n++; });
