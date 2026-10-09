@@ -196,6 +196,49 @@ if ($child) {
             'badge' => $badge, 'attn' => $fs === '', 'modal' => true];
     }
 
+    // 1.5) ผลตรวจร่างกายจากกุมารแพทย์ที่ผิดปกติ (เฉพาะผลที่แพทย์ตรวจแล้ว ใช้ผลล่าสุด)
+    try {
+        $exStmt = $pdo->prepare("
+            SELECT exam_date, doctor_name, behavior, development_assessment, physical_exam, neurological
+            FROM health_data_external
+            WHERE student_id = :s AND COALESCE(TRIM(doctor_name), '') <> ''
+            ORDER BY exam_date DESC NULLS LAST, id DESC
+            LIMIT 1
+        ");
+        $exStmt->execute(['s' => $studentid]);
+        $ex = $exStmt->fetch(PDO::FETCH_ASSOC);
+        if ($ex) {
+            $decode = fn($v) => is_array($j = json_decode((string) $v, true)) ? $j : [];
+            $isAbn = fn($v) => is_array($v) ? in_array('abnormal', $v, true) : $v === 'abnormal';
+            $devLabels = ['gm' => 'GM', 'fm' => 'FM', 'rl' => 'RL', 'el' => 'EL', 'ps' => 'PS'];
+            $examLabels = ['general' => 'สภาพทั่วไป', 'skin' => 'ผิวหนัง', 'head' => 'ศีรษะ', 'face' => 'ใบหน้า', 'eyes' => 'ตา', 'ears' => 'หู', 'nose' => 'จมูก', 'mouth' => 'ปาก',
+                'neck' => 'คอ', 'breast' => 'ทรวงอก/ปอด', 'breathe' => 'การหายใจ', 'lungs' => 'ปอด', 'heart' => 'หัวใจ', 'heart_sound' => 'เสียงหัวใจ', 'pulse' => 'ชีพจร',
+                'abdomen' => 'ท้อง', 'others' => 'อื่นๆ', 'neuro' => 'ระบบประสาท', 'movement' => 'การเคลื่อนไหว'];
+            $dev = $decode($ex['development_assessment']);
+            $pe = $decode($ex['physical_exam']) + $decode($ex['neurological']);
+            $beh = $decode($ex['behavior']);
+            $parts = [];
+            $delayed = array_filter($devLabels, fn($k) => in_array($dev[$k]['status'] ?? '', ['delay', 'fail'], true), ARRAY_FILTER_USE_KEY);
+            if ($delayed) {
+                $parts[] = 'พัฒนาการสงสัยล่าช้า ' . implode(', ', $delayed);
+            }
+            $abn = array_filter($examLabels, fn($k) => $isAbn($pe[$k] ?? null), ARRAY_FILTER_USE_KEY);
+            if ($abn) {
+                $parts[] = 'ตรวจร่างกายผิดปกติ ' . implode(', ', $abn);
+            }
+            if (($beh['status'] ?? '') === 'has') {
+                $parts[] = 'ปัญหาด้านพฤติกรรม' . (!empty($beh['detail']) ? ' (' . $beh['detail'] . ')' : '');
+            }
+            if ($parts) {
+                $hubItems[] = ['icon' => 'fa-solid fa-user-doctor', 'tone' => 'red', 'title' => 'ตรวจร่างกายจากกุมารแพทย์',
+                    'sub' => implode(' · ', $parts) . ' · ' . thaiDateShort($ex['exam_date']),
+                    'badge' => 'พบผลผิดปกติ', 'attn' => true, 'modal' => false, 'href' => 'health_external_history.php'];
+            }
+        }
+    } catch (PDOException $e) {
+        error_log('student_dashboard external: ' . $e->getMessage());
+    }
+
     // 2) สมุดสื่อสารประจำวัน (วันนี้)
     $nb = null;
     try {
