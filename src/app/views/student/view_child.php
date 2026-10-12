@@ -5371,7 +5371,9 @@ textarea.vx-input { height:auto; }
     }
 
     let html = '';
-    records.forEach((r, idx) => {
+    // แสดงครั้งล่าสุดไว้บนสุด (ลำดับเดิมยังใช้กับกราฟและหน้าต่างดูผล จึงวนจากท้ายมาต้น)
+    records.map((r, idx) => idx).reverse().forEach(idx => {
+      const r = records[idx];
       const measures = r.physical_measures || {};
       const examDate = r.exam_date || '';
       const dateStr = formatThaiDateShort(examDate);
