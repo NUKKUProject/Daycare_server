@@ -98,3 +98,23 @@ function tooth_find_existing(PDO $pdo, string $studentId, int $roundId): ?array
     $stmt->execute([':sid' => $studentId, ':rid' => $roundId]);
     return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 }
+
+/**
+ * ขอบเขตของการส่งออก: export_type = 'round' (รอบตรวจเดียว ใช้ round_id) หรือ 'academic_year' (ตรวจประจำปี ทั้งปีการศึกษา)
+ * คืน ['withRound' => bool, 'params' => พารามิเตอร์ของ tooth_effective_sql, 'year' => ปีการศึกษา, 'round' => แถวรอบ|null] หรือ null ถ้าข้อมูลไม่ครบ
+ */
+function tooth_export_scope(PDO $pdo, array $in): ?array
+{
+    if (($in['export_type'] ?? 'academic_year') === 'round') {
+        $round = tooth_get_round($pdo, (int) ($in['round_id'] ?? 0));
+        if (!$round) {
+            return null;
+        }
+        return ['withRound' => true, 'params' => [':year' => $round['academic_year'], ':round' => $round['id']], 'year' => $round['academic_year'], 'round' => $round];
+    }
+    $year = trim((string) ($in['academic_year'] ?? ''));
+    if ($year === '') {
+        return null;
+    }
+    return ['withRound' => false, 'params' => [':year' => $year], 'year' => $year, 'round' => null];
+}

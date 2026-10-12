@@ -13,33 +13,27 @@ try {
 // รับค่าจาก URL parameters
 $doctor = $_GET['doctor'] ?? '';
 
-// รอบตรวจที่เลือก
-$round = tooth_get_round($pdo, (int) ($_GET['round_id'] ?? 0));
-if (!$round) {
-    die('ไม่พบรอบตรวจ');
+// ขอบเขตการส่งออก: ตรวจประจำปี (ทั้งปีการศึกษา) หรือ รอบตรวจ (รอบเดียว)
+$scope = tooth_export_scope($pdo, $_GET);
+if (!$scope) {
+    die('กรุณาเลือกปีการศึกษาหรือรอบตรวจ');
 }
-$academic_year = $round['academic_year'];
+$academic_year = $scope['year'];
+$round = $scope['round'];   // null เมื่อเลือกตรวจประจำปี
 
-// ดึงข้อมูลจากฐานข้อมูล (เฉพาะรอบที่เลือก)
+// ดึงข้อมูลจากฐานข้อมูล
 if ($doctor === 'all') {
     // ไม่กรอง doctor_name
-    $sql = "SELECT * FROM (" . tooth_effective_sql(true) . ") t";
+    $sql = "SELECT * FROM (" . tooth_effective_sql($scope['withRound']) . ") t";
 
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':year' => $academic_year,
-        ':round' => $round['id']
-    ]);
+    $stmt->execute($scope['params']);
 } else {
     // กรอง doctor_name ตามค่าที่รับมา
-    $sql = "SELECT * FROM (" . tooth_effective_sql(true, true) . ") t WHERE doctor_name = :doctor";
+    $sql = "SELECT * FROM (" . tooth_effective_sql($scope['withRound'], true) . ") t WHERE doctor_name = :doctor";
 
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':year' => $academic_year,
-        ':round' => $round['id'],
-        ':doctor' => $doctor
-    ]);
+    $stmt->execute($scope['params'] + [':doctor' => $doctor]);
 }
 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -183,7 +177,7 @@ foreach ($data as $index => $row) {
     // โลโก้และหัวข้อ
     $pdf->Ln(20);
     $pdf->Image('../../../../public/assets/images/logo.png', 95.5, 3, 19, 20); // ปรับ path และขนาดโลโก้ตามต้องการ
-    $pdf->Cell(0, 10, iconv('UTF-8', 'cp874', 'ใบรับรองการตรวจสุขภาพช่องปาก ประจำปีการศึกษา ' . $academic_year . ' รอบที่ ' . $round['round_no']), 0, 1, 'C');
+    $pdf->Cell(0, 10, iconv('UTF-8', 'cp874', 'ใบรับรองการตรวจสุขภาพช่องปาก ประจำปีการศึกษา ' . $academic_year . ($round ? ' รอบที่ ' . $round['round_no'] : '')), 0, 1, 'C');
     $pdf->Ln(10);
 
     // บรรทัดที่ 1

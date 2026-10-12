@@ -11,18 +11,20 @@ try {
     die('ไม่สามารถเชื่อมต่อกับฐานข้อมูลได้: ' . $e->getMessage());
 }
 
-// รอบตรวจที่เลือก
-$round = tooth_get_round($pdo, (int) ($_POST['round_id'] ?? 0));
-if (!$round) {
+// ขอบเขตการส่งออก: ตรวจประจำปี (ทั้งปีการศึกษา) หรือ รอบตรวจ (รอบเดียว)
+$scope = tooth_export_scope($pdo, $_POST);
+if (!$scope) {
     http_response_code(400);
     header('Content-Type: text/plain; charset=utf-8');
-    echo 'กรุณาเลือกรอบตรวจ';
+    echo 'กรุณาเลือกปีการศึกษาหรือรอบตรวจ';
     exit;
 }
-$academic_year = $round['academic_year'];
+$academic_year = $scope['year'];
 
 // กำหนดชื่อไฟล์ก่อนส่ง header
-$filename = "รายงานผลตรวจสุขภาพช่องปาก_ปีการศึกษา_" . $academic_year . "_รอบที่_" . $round['round_no'] . ".csv";
+$filename = $scope['round']
+    ? "รายงานผลตรวจสุขภาพช่องปาก_ปีการศึกษา_" . $academic_year . "_รอบที่_" . $scope['round']['round_no'] . ".csv"
+    : "รายงานผลตรวจสุขภาพช่องปาก_ปีการศึกษา_" . $academic_year . ".csv";
 
 header('Content-Type: text/csv; charset=utf-8');
 // ใช้ filename*=UTF-8''... เพื่อรองรับชื่อไฟล์ภาษาไทย
@@ -38,23 +40,16 @@ $doctor = 'all';
 // ดึงข้อมูลจากฐานข้อมูล
 if ($doctor === 'all') {
     // ไม่กรอง doctor_name
-    $sql = "SELECT * FROM (" . tooth_effective_sql(true) . ") t";
+    $sql = "SELECT * FROM (" . tooth_effective_sql($scope['withRound']) . ") t";
 
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':year' => $academic_year,
-        ':round' => $round['id']
-    ]);
+    $stmt->execute($scope['params']);
 } else {
     // กรอง doctor_name ตามค่าที่รับมา
-    $sql = "SELECT * FROM (" . tooth_effective_sql(true, true) . ") t WHERE doctor_name = :doctor";
+    $sql = "SELECT * FROM (" . tooth_effective_sql($scope['withRound'], true) . ") t WHERE doctor_name = :doctor";
 
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':year' => $academic_year,
-        ':round' => $round['id'],
-        ':doctor' => $doctor
-    ]);
+    $stmt->execute($scope['params'] + [':doctor' => $doctor]);
 }
 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

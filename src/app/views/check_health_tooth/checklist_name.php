@@ -1829,17 +1829,40 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
         return toothRounds.map((r) => `<option value="${r.id}">${r.academic_year} · ${r.title}${r.status === 'open' ? '' : ' (ปิดแล้ว)'}</option>`).join('');
     }
 
+    const TOOTH_YEARS = <?= json_encode(array_map(fn($y) => (string) $y['name'], $academicYears), JSON_UNESCAPED_UNICODE) ?>;
+
+    // ช่องเลือกประเภทการส่งออก: ตรวจประจำปี (ทั้งปีการศึกษา) หรือ รอบตรวจ (รอบเดียว)
+    function toothExportFields() {
+        const yearOpts = TOOTH_YEARS.map((y, i) => `<option value="${y}"${i === 0 ? ' selected' : ''}>${y}</option>`).join('');
+        return `
+            <div class="mb-3">
+                <label class="form-label">เลือกประเภทการ Export</label>
+                <select name="export_type" class="form-select" onchange="toggleToothExportType(this)">
+                    <option value="academic_year">ตรวจประจำปี</option>
+                    <option value="round">รอบตรวจ</option>
+                </select>
+            </div>
+            <div class="mb-3" data-export-field="academic_year">
+                <label class="form-label">ปีการศึกษา</label>
+                <select name="academic_year" class="form-select">${yearOpts}</select>
+            </div>
+            <div class="mb-3" data-export-field="round" style="display:none;">
+                <label class="form-label">รอบตรวจ</label>
+                <select name="round_id" class="form-select">${toothRoundOptions()}</select>
+            </div>`;
+    }
+    function toggleToothExportType(sel) {
+        const form = sel.closest('form');
+        form.querySelectorAll('[data-export-field]').forEach((el) => { el.style.display = el.dataset.exportField === sel.value ? '' : 'none'; });
+    }
+
     function exportToPdf() {
         Swal.fire({
             title: 'Export ข้อมูลการตรวจสุขถาพ',
             html: `
             <form id="exportForm" class="text-start">           
                
-                <!-- ประจำปีการศึกษา -->
-                <div class="mb-3">
-                    <label class="form-label">รอบตรวจ</label>
-                      <select name="round_id" class="form-select">${toothRoundOptions()}</select>
-                </div>
+                ${toothExportFields()}
 
                 <!-- เลือกแพทย์ -->
                 <div class="mb-3">
@@ -2529,11 +2552,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
             title: 'Export ข้อมูลการตรวจสุขภาพ',
             html: `
                 <form id="exportFormExcel" class="text-start">                         
-                    <!-- วันที่ -->
-                    <div id="dailyField" class="mb-3">
-                       <label for="date" class="form-label">รอบตรวจ</label>
-                        <select name="round_id" class="form-select">${toothRoundOptions()}</select>
-                    </div>        
+                    ${toothExportFields()}
                     <input type="hidden" id="" name="doctor" value="all">       
                 </form>
             `,

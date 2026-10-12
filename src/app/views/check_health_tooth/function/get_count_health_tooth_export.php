@@ -4,24 +4,22 @@ require_once __DIR__ . '/tooth_exam_helpers.php';
 header('Content-Type: application/json; charset=utf-8');
 $pdo = getDatabaseConnection();
 
-// นับผลตรวจในรอบที่เลือก (1 เด็ก 1 รายการ)
-$roundId = (int) ($_POST['round_id'] ?? 0);
+// นับผลตรวจตามที่เลือก: ตรวจประจำปี (ทั้งปีการศึกษา) หรือ รอบตรวจ (รอบเดียว) 1 เด็ก 1 รายการ
 $doctorName = $_POST['doctor'] ?? 'all';
-$round = $roundId ? tooth_get_round($pdo, $roundId) : null;
+$scope = tooth_export_scope($pdo, $_POST);
 
-if (!$round) {
+if (!$scope) {
     echo json_encode(['count' => 0]);
     exit;
 }
 
-$params = [':year' => $round['academic_year'], ':round' => $round['id']];
 if ($doctorName === 'all' || $doctorName === '') {
-    $stmt = $pdo->prepare('SELECT COUNT(*) AS total FROM (' . tooth_effective_sql(true) . ') t');
-    $stmt->execute($params);
+    $stmt = $pdo->prepare('SELECT COUNT(*) AS total FROM (' . tooth_effective_sql($scope['withRound']) . ') t');
+    $stmt->execute($scope['params']);
 } else {
     // กรองตามชื่อแพทย์ (นับเฉพาะผลที่แพทย์ตรวจ)
-    $stmt = $pdo->prepare('SELECT COUNT(*) AS total FROM (' . tooth_effective_sql(true, true) . ') t WHERE doctor_name = :doctor');
-    $stmt->execute($params + [':doctor' => $doctorName]);
+    $stmt = $pdo->prepare('SELECT COUNT(*) AS total FROM (' . tooth_effective_sql($scope['withRound'], true) . ') t WHERE doctor_name = :doctor');
+    $stmt->execute($scope['params'] + [':doctor' => $doctorName]);
 }
 
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
