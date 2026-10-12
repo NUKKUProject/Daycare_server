@@ -63,8 +63,13 @@ $groups = get_childgroup();
     .tg td.gc-d3 { background: #fef2f2; } .tg td.gc-d4 { background: #f0f9ff; }
     .tg td.gc-sum { background: #fff7ed; } .tg td.gc-state { background: #f8fafc; }
     /* แถวที่ยังไม่ได้กรอก = เทาอ่อนทั้งแถว */
-    .tg tr.todo td { background: #f5f6f8 !important; }
-    .tg tr.todo input.f, .tg tr.todo select.f { background: #f5f6f8; border-color: #e2e5ea; }
+    .tg tr.todo td { background: #fafafb !important; }
+    /* แถวที่กรอกแล้วให้เห็นชัด: เขียว = บันทึกแล้ว  ฟ้า = พร้อมบันทึก  ส้มอ่อน = ติ๊กพัฒนาการไม่ครบ */
+    .tg tr.saved td { background: #dcfce7 !important; }
+    .tg tr.ready td { background: #dbeafe !important; }
+    .tg tr.partial td { background: #ffedd5 !important; }
+    .tg tr.saved input.f, .tg tr.ready input.f, .tg tr.partial input.f { background: #fff; }
+    .tg tr.todo input.f, .tg tr.todo select.f { background: #fafafb; border-color: #eceef1; }
     .tg tbody tr:hover td { filter: brightness(.97); }
     .tg tr.saved .c-no, .tg tr.saved .c-nm { box-shadow: inset 5px 0 0 #22c55e; }
     .tg tr.ready .c-nm { box-shadow: inset 5px 0 0 #3b82f6; }
