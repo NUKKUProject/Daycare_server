@@ -182,7 +182,7 @@ $groups = get_childgroup();
             </div>
             <div class="tg-legend" id="gLegend" style="display:none">
                 <span><i style="background:#22c55e"></i>บันทึกแล้ว</span><span><i style="background:#3b82f6"></i>พร้อมบันทึก (ครบ 5 ด้าน)</span>
-                <span><i style="background:#fb923c"></i>กรอกยังไม่ครบ (ยังบันทึกไม่ได้)</span><span><i style="background:#cbd5e1"></i>ยังไม่ได้กรอก</span>
+                <span><i style="background:#fb923c"></i>กำลังกรอก (ยังบันทึกไม่ได้)</span><span><i style="background:#cbd5e1"></i>ยังไม่ได้กรอก</span>
             </div>
             <div class="tg-wrap" id="gWrap">
                 <div class="tg-empty">
@@ -218,7 +218,7 @@ $groups = get_childgroup();
     ];
     const RESULT_NORMAL = 'สมวัย (ผ่านครบ 5 ด้าน)';
     const RESULT_DELAY = 'สงสัยล่าช้ากระตุ้นพัฒนาการภายใน 14-30 วัน';
-    const STATE_TEXT = { saved: 'บันทึกแล้ว', ready: 'พร้อมบันทึก', partial: 'ติ๊กพัฒนาการยังไม่ครบ 5 ด้าน', todo: 'ยังไม่ได้กรอก' };
+    const STATE_TEXT = { saved: 'บันทึกแล้ว', ready: 'พร้อมบันทึก', partial: 'กำลังกรอก (ยังบันทึกไม่ได้)', todo: 'ยังไม่ได้กรอก' };
 
     const PRE = Object.fromEntries(new URLSearchParams(location.search));
     let rows = [];
@@ -273,7 +273,7 @@ $groups = get_childgroup();
     // พัฒนาการต้องติ๊กครบ 5 ด้านหรือไม่ติ๊กเลย  แถวที่แก้แล้วบันทึกได้เมื่อครบ 5 ด้าน หรือไม่ติ๊กเลยแต่มีน้ำหนัก/ส่วนสูง/รอบศีรษะ
     const isReady = (r) => r.dirty && !!ageOf(r.birthday) && (complete(r) || (ticked(r) === 0 && hasMeasure(r)));
     const rowState = (r) => (r.dirty
-        ? (isReady(r) ? 'ready' : (ticked(r) ? 'partial' : 'todo'))
+        ? (isReady(r) ? 'ready' : 'partial')
         : (r.saved ? 'saved' : 'todo'));
 
     function header() {
@@ -356,7 +356,7 @@ $groups = get_childgroup();
         rows.forEach((r) => c[rowState(r)]++);
         byId('gSummary').innerHTML = rows.length
             ? `<span>${rows.length} คน</span><span class="tg-pill saved">บันทึกแล้ว ${c.saved}</span><span class="tg-pill ready">พร้อมบันทึก ${c.ready}</span>` +
-              (c.partial ? `<span class="tg-pill partial">พัฒนาการยังไม่ครบ 5 ด้าน ${c.partial}</span>` : '') +
+              (c.partial ? `<span class="tg-pill partial">กำลังกรอก ${c.partial}</span>` : '') +
               `<span class="tg-pill todo">ยังไม่ได้กรอก ${c.todo}</span>`
             : '<span class="text-muted">ยังไม่ได้โหลดรายชื่อ</span>';
         byId('gProgress').style.display = byId('gLegend').style.display = rows.length ? '' : 'none';
@@ -402,12 +402,12 @@ $groups = get_childgroup();
 
     async function saveAll() {
         const ready = rows.filter(isReady);
-        const partial = rows.filter((r) => r.dirty && !isReady(r) && ticked(r)).length;
+        const partial = rows.filter((r) => r.dirty && !isReady(r)).length;
         if (!ready.length) { Swal.fire({ icon: 'warning', title: 'ยังไม่มีข้อมูลให้บันทึก', text: 'กรอกน้ำหนัก/ส่วนสูง/รอบศีรษะ หรือเลือกผ่าน/ไม่ผ่านให้ครบทั้ง 5 ด้านในแถวที่ต้องการบันทึก', confirmButtonText: 'ตกลง' }); return; }
         const ok = await Swal.fire({
             title: `บันทึก ${ready.length} คน?`,
             html: `<div>วันที่ประเมิน ${esc(thaiShort(byId('gDate').value))}</div>` +
-                (partial ? `<div class="text-muted small mt-1">ข้าม ${partial} คนที่ติ๊กพัฒนาการไม่ครบ 5 ด้าน</div>` : ''),
+                (partial ? `<div class="text-muted small mt-1">ข้าม ${partial} คนที่ยังกรอกไม่พอบันทึก (พัฒนาการต้องติ๊กครบ 5 ด้าน หรือกรอกน้ำหนัก/ส่วนสูง/รอบศีรษะ และมีวันเกิด)</div>` : ''),
             showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#15803d'
         });
         if (!ok.isConfirmed) return;
