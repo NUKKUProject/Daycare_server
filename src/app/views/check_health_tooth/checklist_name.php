@@ -1823,6 +1823,12 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
     }
 
 
+    // ตัวเลือกรอบตรวจสำหรับ modal ส่งออก (รอบที่เปิดอยู่ก่อน แล้วรอบล่าสุด)
+    function toothRoundOptions() {
+        if (!toothRounds.length) return '<option value="">ไม่พบรอบตรวจ</option>';
+        return toothRounds.map((r) => `<option value="${r.id}">${r.academic_year} · ${r.title}${r.status === 'open' ? '' : ' (ปิดแล้ว)'}</option>`).join('');
+    }
+
     function exportToPdf() {
         Swal.fire({
             title: 'Export ข้อมูลการตรวจสุขถาพ',
@@ -1831,14 +1837,8 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                
                 <!-- ประจำปีการศึกษา -->
                 <div class="mb-3">
-                    <label class="form-label">ประจำปีการศึกษา</label>
-                      <select name="academic_year" class="form-select">
-                            <?php foreach ($academicYears as $index => $year): ?>
-                                <option value="<?= $year['name'] ?>" <?= $index === 0 ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($year['name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                    <label class="form-label">รอบตรวจ</label>
+                      <select name="round_id" class="form-select">${toothRoundOptions()}</select>
                 </div>
 
                 <!-- เลือกแพทย์ -->
@@ -2531,14 +2531,8 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
                 <form id="exportFormExcel" class="text-start">                         
                     <!-- วันที่ -->
                     <div id="dailyField" class="mb-3">
-                       <label for="date" class="form-label">ตรวจประจำปีการศึกษา</label>
-                        <select name="academic_year" class="form-select">
-                            <?php foreach ($academicYears as $index => $year): ?>
-                                <option value="<?= $year['name'] ?>" <?= $index === 0 ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($year['name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                       <label for="date" class="form-label">รอบตรวจ</label>
+                        <select name="round_id" class="form-select">${toothRoundOptions()}</select>
                     </div>        
                     <input type="hidden" id="" name="doctor" value="all">       
                 </form>

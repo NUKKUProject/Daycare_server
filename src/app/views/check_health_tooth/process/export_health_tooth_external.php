@@ -11,25 +11,33 @@ try {
 }
 
 // รับค่าจาก URL parameters
-$academic_year = $_GET['academic_year'] ?? '';
 $doctor = $_GET['doctor'] ?? '';
 
-// ดึงข้อมูลจากฐานข้อมูล
+// รอบตรวจที่เลือก
+$round = tooth_get_round($pdo, (int) ($_GET['round_id'] ?? 0));
+if (!$round) {
+    die('ไม่พบรอบตรวจ');
+}
+$academic_year = $round['academic_year'];
+
+// ดึงข้อมูลจากฐานข้อมูล (เฉพาะรอบที่เลือก)
 if ($doctor === 'all') {
     // ไม่กรอง doctor_name
-    $sql = "SELECT * FROM (" . tooth_effective_sql(false) . ") t";
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':year' => $academic_year
-    ]);
-} else {
-    // กรอง doctor_name ตามค่าที่รับมา
-    $sql = "SELECT * FROM (" . tooth_effective_sql(false, true) . ") t WHERE doctor_name = :doctor";
+    $sql = "SELECT * FROM (" . tooth_effective_sql(true) . ") t";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         ':year' => $academic_year,
+        ':round' => $round['id']
+    ]);
+} else {
+    // กรอง doctor_name ตามค่าที่รับมา
+    $sql = "SELECT * FROM (" . tooth_effective_sql(true, true) . ") t WHERE doctor_name = :doctor";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        ':year' => $academic_year,
+        ':round' => $round['id'],
         ':doctor' => $doctor
     ]);
 }
@@ -175,7 +183,7 @@ foreach ($data as $index => $row) {
     // โลโก้และหัวข้อ
     $pdf->Ln(20);
     $pdf->Image('../../../../public/assets/images/logo.png', 95.5, 3, 19, 20); // ปรับ path และขนาดโลโก้ตามต้องการ
-    $pdf->Cell(0, 10, iconv('UTF-8', 'cp874', 'ใบรับรองการตรวจสุขภาพช่องปาก ประจำปีการศึกษา ' . $academic_year ?? ''), 0, 1, 'C');
+    $pdf->Cell(0, 10, iconv('UTF-8', 'cp874', 'ใบรับรองการตรวจสุขภาพช่องปาก ประจำปีการศึกษา ' . $academic_year . ' รอบที่ ' . $round['round_no']), 0, 1, 'C');
     $pdf->Ln(10);
 
     // บรรทัดที่ 1

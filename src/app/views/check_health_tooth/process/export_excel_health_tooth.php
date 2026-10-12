@@ -4,19 +4,29 @@ require_once(__DIR__ . '../../../../../config/database.php');
 require_once __DIR__ . '/../function/tooth_exam_helpers.php';
 
 
-// กำหนดชื่อไฟล์ก่อนส่ง header
-$academic_year = $_POST['academic_year'] ?? '';
-$filename = "รายงานผลตรวจสุขช่องปาก_ปีการศึกษา_" . $academic_year . ".csv";
-
-header('Content-Type: text/csv; charset=utf-8');
-// ใช้ filename*=UTF-8''... เพื่อรองรับชื่อไฟล์ภาษาไทย
-header("Content-Disposition: attachment; filename*=UTF-8''" . rawurlencode($filename));
-// // เชื่อมต่อฐานข้อมูล
+// เชื่อมต่อฐานข้อมูล
 try {
     $pdo = getDatabaseConnection();
 } catch (PDOException $e) {
     die('ไม่สามารถเชื่อมต่อกับฐานข้อมูลได้: ' . $e->getMessage());
 }
+
+// รอบตรวจที่เลือก
+$round = tooth_get_round($pdo, (int) ($_POST['round_id'] ?? 0));
+if (!$round) {
+    http_response_code(400);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'กรุณาเลือกรอบตรวจ';
+    exit;
+}
+$academic_year = $round['academic_year'];
+
+// กำหนดชื่อไฟล์ก่อนส่ง header
+$filename = "รายงานผลตรวจสุขภาพช่องปาก_ปีการศึกษา_" . $academic_year . "_รอบที่_" . $round['round_no'] . ".csv";
+
+header('Content-Type: text/csv; charset=utf-8');
+// ใช้ filename*=UTF-8''... เพื่อรองรับชื่อไฟล์ภาษาไทย
+header("Content-Disposition: attachment; filename*=UTF-8''" . rawurlencode($filename));
 
 
 // รับค่าจาก URL parameters
@@ -28,19 +38,21 @@ $doctor = 'all';
 // ดึงข้อมูลจากฐานข้อมูล
 if ($doctor === 'all') {
     // ไม่กรอง doctor_name
-    $sql = "SELECT * FROM (" . tooth_effective_sql(false) . ") t";
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':year' => $academic_year
-    ]);
-} else {
-    // กรอง doctor_name ตามค่าที่รับมา
-    $sql = "SELECT * FROM (" . tooth_effective_sql(false, true) . ") t WHERE doctor_name = :doctor";
+    $sql = "SELECT * FROM (" . tooth_effective_sql(true) . ") t";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         ':year' => $academic_year,
+        ':round' => $round['id']
+    ]);
+} else {
+    // กรอง doctor_name ตามค่าที่รับมา
+    $sql = "SELECT * FROM (" . tooth_effective_sql(true, true) . ") t WHERE doctor_name = :doctor";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        ':year' => $academic_year,
+        ':round' => $round['id'],
         ':doctor' => $doctor
     ]);
 }
