@@ -44,7 +44,7 @@ $groups = get_childgroup();
     .tg th.g-d0 { background: #fde68a; } .tg th.g-d1 { background: #bbf7d0; } .tg th.g-d2 { background: #e9d5ff; }
     .tg th.g-d3 { background: #fecaca; } .tg th.g-d4 { background: #bae6fd; }
     .tg th.g-meas { background: #fef08a; } .tg td.gc-meas { background: #fefce8; }
-    .tg input.n { width: 64px; text-align: center; }
+    .tg input.n { width: 84px; min-width: 84px; text-align: center; }
     .tg th.g-sum { background: #fed7aa; } .tg th.g-state { background: #e2e8f0; }
     .tg td { padding: 3px; border-bottom: 1px solid #e2e8f0; text-align: center; background: #fff; }
     .tg .c-no { position: sticky; left: 0; z-index: 2; min-width: 36px; background: #fff; }
@@ -63,8 +63,8 @@ $groups = get_childgroup();
     .tg td.gc-d3 { background: #fef2f2; } .tg td.gc-d4 { background: #f0f9ff; }
     .tg td.gc-sum { background: #fff7ed; } .tg td.gc-state { background: #f8fafc; }
     /* แถวที่ยังไม่ได้กรอก = เทาอ่อนทั้งแถว */
-    .tg tr.todo td { background: #eceff3 !important; }
-    .tg tr.todo input.f, .tg tr.todo select.f { background: #eceff3; border-color: #d3d9e0; }
+    .tg tr.todo td { background: #f5f6f8 !important; }
+    .tg tr.todo input.f, .tg tr.todo select.f { background: #f5f6f8; border-color: #e2e5ea; }
     .tg tbody tr:hover td { filter: brightness(.97); }
     .tg tr.saved .c-no, .tg tr.saved .c-nm { box-shadow: inset 5px 0 0 #22c55e; }
     .tg tr.ready .c-nm { box-shadow: inset 5px 0 0 #3b82f6; }
