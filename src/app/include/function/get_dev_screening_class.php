@@ -1,0 +1,47 @@
+<?php
+// รายชื่อเด็กในห้อง พร้อมผลคัดกรองพัฒนาการของวันที่ประเมินที่เลือก (ครู/แอดมินเท่านั้น)
+require_once __DIR__ . '/../auth/auth.php';
+require_once __DIR__ . '/../../../config/database.php';
+require_once __DIR__ . '/dev_screening_functions.php';
+header('Content-Type: application/json');
+checkUserRole(['admin', 'teacher']);
+
+try {
+    $pdo = getDatabaseConnection();
+    $childGroup = $_GET['child_group'] ?? '';
+    $classroom = $_GET['classroom'] ?? '';
+    $date = $_GET['date'] ?? date('Y-m-d');
+
+    if ($childGroup === '') {
+        throw new Exception('กรุณาเลือกกลุ่มเรียน');
+    }
+    if (!DateTime::createFromFormat('Y-m-d', $date)) {
+        throw new Exception('วันที่ประเมินไม่ถูกต้อง');
+    }
+
+    $sql = "SELECT c.studentid, c.prefix_th, c.firstname_th, c.lastname_th, c.nickname,
+                   c.child_group, c.classroom, c.birthday,
+                   d.gm_status, d.gm_note, d.fm_status, d.fm_note, d.rl_status, d.rl_note,
+                   d.el_status, d.el_note, d.ps_status, d.ps_note
+            FROM children c
+            LEFT JOIN development_screenings d ON d.student_id = c.studentid AND d.assess_date = :date
+            WHERE c.status = 'กำลังศึกษา' AND c.child_group = :child_group";
+    $params = [':date' => $date, ':child_group' => $childGroup];
+
+    if ($classroom !== '') {
+        $sql .= " AND c.classroom = :classroom";
+        $params[':classroom'] = $classroom;
+    }
+    if (getUserRole() === 'teacher') {
+        $sql .= devScreeningTeacherScopeSql();
+        $params[':teacher_id'] = $_SESSION['user_id'];
+    }
+    $sql .= " ORDER BY c.classroom, c.firstname_th, c.lastname_th";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    echo json_encode(['status' => 'success', 'students' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+} catch (Exception $e) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+}

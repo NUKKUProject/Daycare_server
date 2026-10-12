@@ -80,6 +80,35 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </div>
 
+    <?php if ($is_admin || $is_teacher): ?>
+    <!-- คัดกรองพัฒนาการ 5 ด้าน (กรอกหลายคน) -->
+    <div class="card shadow-sm mb-4" id="devScreeningCard">
+        <div class="card-header bg-warning-subtle">
+            <h5 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i>คัดกรองพัฒนาการ 5 ด้าน (กรอกหลายคนพร้อมกัน)</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-end mb-3">
+                <div class="col-md-3">
+                    <label for="dsDate" class="form-label">วันที่ประเมิน</label>
+                    <input type="date" class="form-control" id="dsDate" value="<?php echo date('Y-m-d'); ?>">
+                </div>
+                <div class="col-md-9">
+                    <button type="button" class="btn btn-primary" onclick="dsLoad()">
+                        <i class="bi bi-people"></i> โหลดรายชื่อตามกลุ่มเรียน/ห้องเรียนที่เลือกด้านบน
+                    </button>
+                    <button type="button" class="btn btn-outline-success" onclick="dsSetAll('pass')">ติ๊ก "ผ่าน" ทุกคนทุกด้าน</button>
+                    <button type="button" class="btn btn-success" id="dsSaveBtn" onclick="dsSave()" disabled>
+                        <i class="bi bi-save"></i> บันทึกทั้งหมด
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive" id="dsTableWrap">
+                <div class="alert alert-info mb-0">เลือกกลุ่มเรียน/ห้องเรียนและวันที่ประเมิน แล้วกด "โหลดรายชื่อ"</div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- ตารางแสดงผล -->
     <div class="card shadow-sm">
         <div class="card-body">
@@ -90,6 +119,215 @@ if (isset($_SESSION['user_id'])) {
     </div>
 
 </main>
+<?php if ($is_admin || $is_teacher): ?>
+<script>
+// ===== คัดกรองพัฒนาการ 5 ด้าน (กรอกหลายคน) =====
+const DS_DOMAINS = [
+    { code: 'gm', label: 'การเคลื่อนไหว', en: 'Gross Motor (GM)' },
+    { code: 'fm', label: 'กล้ามเนื้อมัดเล็กและสติปัญญา', en: 'Fine Motor (FM)' },
+    { code: 'rl', label: 'การเข้าใจภาษา', en: 'Receptive Language (RL)' },
+    { code: 'el', label: 'การใช้ภาษา', en: 'Expressive Language (EL)' },
+    { code: 'ps', label: 'การช่วยเหลือตัวเองและสังคม', en: 'Personal and Social (PS)' }
+];
+const DS_RESULT_NORMAL = 'สมวัย (ผ่านครบ 5 ด้าน)';
+const DS_RESULT_DELAY = 'สงสัยล่าช้ากระตุ้นพัฒนาการภายใน 14-30 วัน';
+let dsStudents = [];
+
+function dsEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function dsThaiDate(iso) {
+    if (!iso) return '-';
+    const [y, m, d] = iso.split('-').map(Number);
+    const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    return d + ' ' + months[m - 1] + ' ' + (y + 543);
+}
+
+// อายุเต็มเป็น ปี/เดือน/วัน (ตรงกับฝั่งเซิร์ฟเวอร์: DateTime::diff)
+function dsAge(birthIso, assessIso) {
+    if (!birthIso || !assessIso) return null;
+    const b = new Date(birthIso + 'T00:00:00'), a = new Date(assessIso + 'T00:00:00');
+    if (a < b) return null;
+    let y = a.getFullYear() - b.getFullYear();
+    let m = a.getMonth() - b.getMonth();
+    let d = a.getDate() - b.getDate();
+    if (d < 0) {
+        m--;
+        d += new Date(a.getFullYear(), a.getMonth(), 0).getDate();
+    }
+    if (m < 0) { y--; m += 12; }
+    return { y, m, d, months: y * 12 + m };
+}
+
+function dsAgeRange(months) {
+    const steps = [1, 2, 4, 6, 9, 12, 18, 24, 30, 36, 42, 48, 54, 60, 66];
+    if (months < 1) return 'แรกเกิด - 1 เดือน 29 วัน';
+    for (let i = steps.length - 1; i >= 0; i--) {
+        if (months >= steps[i]) {
+            const to = steps[i + 1] || 72;
+            return `อายุ ${steps[i]} เดือน (${steps[i]} เดือน - ${to - 1} เดือน 29 วัน)`;
+        }
+    }
+    return '';
+}
+
+function dsAddDays(iso, n) {
+    const d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() + n);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function dsLoad() {
+    const group = document.getElementById('child_group').value;
+    const classroom = document.getElementById('classroom').value;
+    const date = document.getElementById('dsDate').value;
+    const wrap = document.getElementById('dsTableWrap');
+    if (!group) { wrap.innerHTML = '<div class="alert alert-warning mb-0">กรุณาเลือกกลุ่มเรียนด้านบนก่อน</div>'; return; }
+    if (!date) { wrap.innerHTML = '<div class="alert alert-warning mb-0">กรุณาเลือกวันที่ประเมิน</div>'; return; }
+
+    wrap.innerHTML = '<div class="text-muted">กำลังโหลด...</div>';
+    const qs = new URLSearchParams({ child_group: group, classroom: classroom, date: date });
+    fetch('../include/function/get_dev_screening_class.php?' + qs)
+        .then(r => r.json())
+        .then(res => {
+            if (res.status !== 'success') throw new Error(res.message || 'โหลดข้อมูลไม่สำเร็จ');
+            dsStudents = res.students;
+            dsRender();
+        })
+        .catch(e => { wrap.innerHTML = '<div class="alert alert-danger mb-0">' + dsEsc(e.message) + '</div>'; });
+}
+
+function dsRender() {
+    const wrap = document.getElementById('dsTableWrap');
+    const date = document.getElementById('dsDate').value;
+    document.getElementById('dsSaveBtn').disabled = dsStudents.length === 0;
+    if (!dsStudents.length) { wrap.innerHTML = '<div class="alert alert-info mb-0">ไม่พบเด็กในห้องที่เลือก</div>'; return; }
+
+    let html = '<table class="table table-bordered table-sm align-middle ds-table"><thead class="table-light text-center"><tr>' +
+        '<th rowspan="2">ชื่อ-นามสกุล</th><th rowspan="2">วันเดือนปีเกิด</th><th rowspan="2">วันที่ประเมิน</th>' +
+        '<th rowspan="2">อายุ ณ วันที่ตรวจ</th><th rowspan="2">อายุ (เดือน)</th><th rowspan="2">ช่วงอายุเกณฑ์ที่ใช้</th>' +
+        '<th colspan="5">พัฒนาการ 5 ด้าน (ผ่าน / ไม่ผ่าน + รายละเอียดเพิ่มเติม)</th>' +
+        '<th rowspan="2">ผ่าน (ด้าน)</th><th rowspan="2">ไม่ผ่าน (ด้าน)</th><th rowspan="2">ผลการคัดกรอง</th><th rowspan="2">ประเมินซ้ำภายใน 1 เดือน (วันที่)</th></tr><tr>';
+    DS_DOMAINS.forEach(d => { html += `<th class="ds-domain">${d.label}<br><small>${d.en}</small></th>`; });
+    html += '</tr></thead><tbody>';
+
+    dsStudents.forEach((s, i) => {
+        const age = dsAge(s.birthday, date);
+        html += `<tr data-i="${i}">
+            <td class="text-nowrap">${dsEsc((s.prefix_th || '') + s.firstname_th + ' ' + s.lastname_th)}</td>
+            <td class="text-nowrap">${dsThaiDate(s.birthday)}</td>
+            <td class="text-nowrap">${dsThaiDate(date)}</td>
+            <td class="text-nowrap">${age ? `${age.y} ปี ${age.m} เดือน ${age.d} วัน` : '<span class="text-danger">วันเกิดไม่ถูกต้อง</span>'}</td>
+            <td class="text-center">${age ? age.months : '-'}</td>
+            <td class="small">${age ? dsEsc(dsAgeRange(age.months)) : '-'}</td>`;
+        DS_DOMAINS.forEach(d => {
+            const st = s[d.code + '_status'] || '';
+            const note = s[d.code + '_note'] || '';
+            html += `<td class="ds-domain">
+                <div class="form-check form-check-inline me-1"><input class="form-check-input" type="radio" name="ds_${i}_${d.code}" value="pass" ${st === 'pass' ? 'checked' : ''} onchange="dsUpdateRow(${i})"><label class="form-check-label small">ผ่าน</label></div>
+                <div class="form-check form-check-inline me-0"><input class="form-check-input" type="radio" name="ds_${i}_${d.code}" value="fail" ${st === 'fail' ? 'checked' : ''} onchange="dsUpdateRow(${i})"><label class="form-check-label small">ไม่ผ่าน</label></div>
+                <input type="text" class="form-control form-control-sm mt-1" name="ds_${i}_${d.code}_note" placeholder="รายละเอียดเพิ่มเติม" value="${dsEsc(note)}">
+            </td>`;
+        });
+        html += `<td class="text-center ds-pass">-</td><td class="text-center ds-fail">-</td><td class="ds-result small">-</td><td class="ds-recheck text-nowrap">-</td></tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+    dsStudents.forEach((_, i) => dsUpdateRow(i));
+}
+
+function dsRowStatuses(i) {
+    const out = {};
+    DS_DOMAINS.forEach(d => {
+        const el = document.querySelector(`input[name="ds_${i}_${d.code}"]:checked`);
+        out[d.code] = el ? el.value : '';
+    });
+    return out;
+}
+
+// นับผ่าน/ไม่ผ่านและสรุปผลจากการติ๊ก
+function dsUpdateRow(i) {
+    const row = document.querySelector(`#dsTableWrap tr[data-i="${i}"]`);
+    if (!row) return;
+    const st = dsRowStatuses(i);
+    const ticked = Object.values(st).filter(Boolean).length;
+    const pass = Object.values(st).filter(v => v === 'pass').length;
+    const fail = Object.values(st).filter(v => v === 'fail').length;
+    const date = document.getElementById('dsDate').value;
+
+    row.querySelector('.ds-pass').textContent = ticked ? pass : '-';
+    row.querySelector('.ds-fail').textContent = ticked ? fail : '-';
+    const res = row.querySelector('.ds-result'), re = row.querySelector('.ds-recheck');
+    if (ticked < DS_DOMAINS.length) {
+        res.textContent = ticked ? 'ติ๊กยังไม่ครบ 5 ด้าน' : '-';
+        res.className = 'ds-result small text-muted';
+        re.textContent = '-';
+    } else if (fail === 0) {
+        res.textContent = DS_RESULT_NORMAL;
+        res.className = 'ds-result small text-success fw-bold';
+        re.textContent = '-';
+    } else {
+        res.textContent = DS_RESULT_DELAY;
+        res.className = 'ds-result small text-danger fw-bold';
+        re.textContent = dsThaiDate(dsAddDays(date, 30));
+    }
+}
+
+function dsSetAll(value) {
+    dsStudents.forEach((_, i) => {
+        DS_DOMAINS.forEach(d => {
+            const el = document.querySelector(`input[name="ds_${i}_${d.code}"][value="${value}"]`);
+            if (el) el.checked = true;
+        });
+        dsUpdateRow(i);
+    });
+}
+
+function dsSave() {
+    const date = document.getElementById('dsDate').value;
+    const rows = [];
+    let incomplete = 0;
+    dsStudents.forEach((s, i) => {
+        const st = dsRowStatuses(i);
+        const ticked = Object.values(st).filter(Boolean).length;
+        if (ticked === 0) return;
+        if (ticked < DS_DOMAINS.length) { incomplete++; return; }
+        const row = { student_id: s.studentid };
+        DS_DOMAINS.forEach(d => {
+            row[d.code] = { status: st[d.code], note: document.querySelector(`input[name="ds_${i}_${d.code}_note"]`).value };
+        });
+        rows.push(row);
+    });
+    if (incomplete) { alert('มีเด็ก ' + incomplete + ' คน ที่ติ๊กไม่ครบ 5 ด้าน กรุณาติ๊กให้ครบก่อนบันทึก'); return; }
+    if (!rows.length) { alert('ยังไม่ได้ติ๊กผลพัฒนาการของเด็กคนใดเลย'); return; }
+
+    const btn = document.getElementById('dsSaveBtn');
+    btn.disabled = true;
+    fetch('../include/process/save_dev_screening_bulk.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assess_date: date, rows: rows })
+    })
+        .then(r => r.json())
+        .then(res => {
+            if (res.status !== 'success') throw new Error(res.message || 'บันทึกไม่สำเร็จ');
+            let msg = 'บันทึกสำเร็จ ' + res.saved + ' คน';
+            if (res.errors && res.errors.length) msg += '\nบันทึกไม่ได้:\n' + res.errors.join('\n');
+            alert(msg);
+        })
+        .catch(e => alert('เกิดข้อผิดพลาด: ' + e.message))
+        .finally(() => { btn.disabled = false; });
+}
+
+// เปลี่ยนวันที่ประเมินแล้วให้โหลดใหม่ (อายุและผลที่เคยบันทึกในวันนั้นเปลี่ยนตาม)
+document.getElementById('dsDate').addEventListener('change', () => { if (dsStudents.length) dsLoad(); });
+</script>
+<style>
+.ds-table { font-size: 0.85rem; min-width: 1500px; }
+.ds-table .ds-domain { min-width: 150px; }
+</style>
+<?php endif; ?>
     <script>
         // โหลดห้องเรียนเมื่อเลือกกลุ่มเรียน
     function loadClassrooms() {
