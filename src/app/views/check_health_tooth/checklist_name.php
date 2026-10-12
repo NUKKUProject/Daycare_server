@@ -224,9 +224,15 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
 <main class="main-content">
     <div class="container-fluid px-4">
-        <div class="mb-3">
-            <h2 class="mb-1">บันทึกการตรวจสุขภาพช่องปาก</h2>
-            <div class="text-muted">ทำตามลำดับ 1 → 2 → 3</div>
+        <div class="mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <h2 class="mb-1">บันทึกการตรวจสุขภาพช่องปาก</h2>
+                <div class="text-muted">ทำตามลำดับ 1 → 2 → 3</div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-success" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> ส่งออก Excel</button>
+                <button type="button" class="btn btn-danger" onclick="exportToPdf()"><i class="fas fa-file-pdf"></i> ส่งออก PDF</button>
+            </div>
         </div>
 
         <div id="noRoundNotice" class="alert alert-warning" style="display:none;"></div>
