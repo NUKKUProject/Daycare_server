@@ -22,7 +22,7 @@ $groups = get_childgroup();
     .sec-sub { font-size: .8rem; color: #64748b; line-height: 1.3; }
     .fgrid { display: grid; gap: .75rem 1rem; }
     .fgrid.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .fgrid.c3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr) auto; }
+    .fgrid.c3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
     @media (max-width: 992px) { .fgrid.c4, .fgrid.c3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 576px) { .fgrid.c4, .fgrid.c3 { grid-template-columns: 1fr; } }
     .fld > label { display: block; font-size: .78rem; font-weight: 700; color: #475569; margin-bottom: .2rem; }
@@ -132,7 +132,7 @@ $groups = get_childgroup();
                     <span class="gs">2</span>
                     <div>
                         <div class="sec-title">เลือกเด็ก</div>
-                        <div class="sec-sub">เลือกแล้วรายชื่อขึ้นเอง</div>
+                        <div class="sec-sub">เลือกกลุ่มและห้อง รายชื่อทั้งห้องขึ้นเอง</div>
                     </div>
                 </div>
                 <div class="fgrid c3">
@@ -147,11 +147,7 @@ $groups = get_childgroup();
                     </div>
                     <div class="fld">
                         <label for="gRoom">ห้องเรียน</label>
-                        <select id="gRoom" class="form-select"><option value="">ทุกห้องในกลุ่ม</option></select>
-                    </div>
-                    <div class="fld">
-                        <label for="gSearch">หรือค้นหาชื่อ / รหัส</label>
-                        <input type="text" id="gSearch" class="form-control" placeholder="พิมพ์ชื่อ ชื่อเล่น หรือรหัส" autocomplete="off">
+                        <select id="gRoom" class="form-select"><option value="">-- เลือก --</option></select>
                     </div>
                     <div class="fld">
                         <label>&nbsp;</label>
@@ -180,7 +176,7 @@ $groups = get_childgroup();
             </div>
             <div class="tg-wrap" id="gWrap">
                 <div class="tg-empty">
-                    <div class="big">เลือกกลุ่มหรือห้องเรียนด้านบน</div>
+                    <div class="big">เลือกกลุ่มเรียนและห้องเรียนด้านบน</div>
                     รายชื่อเด็กจะขึ้นให้อัตโนมัติ แล้วกรอกต่อในตารางได้เลย
                 </div>
             </div>
@@ -310,7 +306,7 @@ $groups = get_childgroup();
 
     function render() {
         const wrap = byId('gWrap');
-        if (!rows.length) { wrap.innerHTML = '<div class="tg-empty"><div class="big">ไม่พบรายชื่อเด็กตามเงื่อนไข</div>ลองเปลี่ยนกลุ่ม ห้อง หรือคำค้นหา</div>'; summary(); return; }
+        if (!rows.length) { wrap.innerHTML = '<div class="tg-empty"><div class="big">ไม่พบรายชื่อเด็กตามเงื่อนไข</div>ลองเปลี่ยนกลุ่มหรือห้อง</div>'; summary(); return; }
         const sc = { top: wrap.scrollTop, left: wrap.scrollLeft };
         wrap.innerHTML = '<table class="tg">' + header() + '<tbody>' + rows.map(rowHtml).join('') + '</tbody></table>';
         wrap.scrollTop = sc.top; wrap.scrollLeft = sc.left;
@@ -362,16 +358,16 @@ $groups = get_childgroup();
 
     // userClick = กดปุ่ม "โหลดใหม่" เอง (ถ้ายังไม่เลือกเงื่อนไข จะเตือน) นอกนั้นโหลดอัตโนมัติเมื่อเปลี่ยนตัวกรอง
     async function loadList(userClick) {
-        const group = byId('gGroup').value, room = byId('gRoom').value, search = byId('gSearch').value.trim(), date = byId('gDate').value;
+        const group = byId('gGroup').value, room = byId('gRoom').value, date = byId('gDate').value;
         if (!date) { if (userClick) Swal.fire({ icon: 'info', title: 'กรุณาเลือกวันที่ประเมิน', confirmButtonText: 'ตกลง' }); return; }
-        if (!group && !room && !search) {
-            if (userClick) Swal.fire({ icon: 'info', title: 'เลือกกลุ่ม/ห้องเรียน หรือค้นหาชื่อเด็กก่อน', confirmButtonText: 'ตกลง' });
+        if (!group || !room) {
+            if (userClick) Swal.fire({ icon: 'info', title: 'เลือกกลุ่มเรียนและห้องเรียนก่อน', confirmButtonText: 'ตกลง' });
             return;
         }
         if (!(await confirmDiscard())) return;
         byId('gWrap').innerHTML = '<div class="tg-empty"><div class="spinner-border text-primary"></div></div>';
         try {
-            const q = new URLSearchParams({ child_group: group, classroom: room, search: search, date: date });
+            const q = new URLSearchParams({ child_group: group, classroom: room, date: date });
             const res = await fetch(`${API_LIST}?${q}`, { headers: XHR });
             const data = await res.json();
             if (data.status !== 'success') throw new Error(data.message || 'โหลดไม่สำเร็จ');
@@ -431,7 +427,7 @@ $groups = get_childgroup();
 
     function loadRooms() {
         const group = byId('gGroup').value, sel = byId('gRoom');
-        sel.innerHTML = '<option value="">ทุกห้องในกลุ่ม</option>';
+        sel.innerHTML = '<option value="">-- เลือก --</option>';
         if (!group) return Promise.resolve();
         return fetch(`../include/function/get_classrooms.php?child_group=${encodeURIComponent(group)}`)
             .then((r) => r.json())
@@ -445,7 +441,6 @@ $groups = get_childgroup();
         byId('gDate').value = PRE.date || todayStr();
         byId('gGroup').addEventListener('change', async () => { await loadRooms(); loadList(false); });
         byId('gRoom').addEventListener('change', () => loadList(false));
-        byId('gSearch').addEventListener('input', debounce(() => loadList(false), 450));
         byId('gLoad').addEventListener('click', () => loadList(true));
         byId('gSave').addEventListener('click', saveAll);
         // เปลี่ยนวันที่ประเมิน = โหลดใหม่ (ผลที่บันทึกไว้ของวันนั้นและอายุเปลี่ยนตาม)
@@ -489,7 +484,6 @@ $groups = get_childgroup();
     async function applyPreselect() {
         if (PRE.child_group) { byId('gGroup').value = PRE.child_group; await loadRooms(); }
         if (PRE.classroom) byId('gRoom').value = PRE.classroom;
-        if (PRE.search) byId('gSearch').value = PRE.search;
         loadList(false);
     }
 

@@ -12,9 +12,8 @@ try {
     $classroom = $_GET['classroom'] ?? '';
     $date = $_GET['date'] ?? date('Y-m-d');
 
-    $search = trim($_GET['search'] ?? '');
-    if ($childGroup === '' && $classroom === '' && $search === '') {
-        throw new Exception('กรุณาเลือกกลุ่มเรียน ห้องเรียน หรือค้นหาชื่อเด็ก');
+    if ($childGroup === '' || $classroom === '') {
+        throw new Exception('กรุณาเลือกกลุ่มเรียนและห้องเรียน');
     }
     if (!DateTime::createFromFormat('Y-m-d', $date)) {
         throw new Exception('วันที่ประเมินไม่ถูกต้อง');
@@ -34,19 +33,9 @@ try {
             WHERE c.status = 'กำลังศึกษา'";
     $params = [':date' => $date];
 
-    if ($childGroup !== '') {
-        $sql .= " AND c.child_group = :child_group";
-        $params[':child_group'] = $childGroup;
-    }
-    if ($search !== '') {
-        $sql .= " AND (c.firstname_th ILIKE :search OR c.lastname_th ILIKE :search
-                       OR c.nickname ILIKE :search OR c.studentid ILIKE :search)";
-        $params[':search'] = '%' . $search . '%';
-    }
-    if ($classroom !== '') {
-        $sql .= " AND c.classroom = :classroom";
-        $params[':classroom'] = $classroom;
-    }
+    $sql .= " AND c.child_group = :child_group AND c.classroom = :classroom";
+    $params[':child_group'] = $childGroup;
+    $params[':classroom'] = $classroom;
     if (getUserRole() === 'teacher') {
         $sql .= devScreeningTeacherScopeSql();
         $params[':teacher_id'] = $_SESSION['user_id'];
