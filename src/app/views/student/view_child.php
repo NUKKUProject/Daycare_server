@@ -1815,30 +1815,6 @@ textarea.vx-input { height:auto; }
       </div>
     </div>
 
-    <!-- Development Assessment -->
-    <div class="content-card mb-4">
-      <div class="content-card-header">
-        <div class="section-title">
-          <i class="bi bi-clipboard2-pulse icon-warning" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;"></i>
-          ผลการประเมินพัฒนาการ (ล่าสุด)
-        </div>
-      </div>
-      <div class="content-card-body" style="padding:0;">
-        <table class="dev-table">
-          <thead>
-            <tr>
-              <th>ด้านพัฒนาการ</th>
-              <th>ผลการประเมิน</th>
-              <th>หมายเหตุ</th>
-            </tr>
-          </thead>
-          <tbody id="growth-dev-body">
-            <tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-hourglass-split me-2"></i>รอข้อมูล</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
     <!-- Development Screening (ครู/แอดมินเป็นผู้กรองในหน้า growth_history; ที่นี่ดูได้อย่างเดียว) -->
     <div class="content-card mb-4">
       <div class="content-card-header">
@@ -5342,7 +5318,7 @@ textarea.vx-input { height:auto; }
               : stv === 'pass' ? '<span class="dev-pass"><i class="bi bi-check-circle-fill me-1"></i>ผ่าน</span>'
               : '<span class="dev-delay"><i class="bi bi-x-circle-fill me-1"></i>ไม่ผ่าน</span>';
             return '<tr><td>' + label + '</td><td>' + statusHtml + '</td>' +
-              '<td style="font-size:0.82rem;">' + (r[c + '_note'] ? esc(r[c + '_note']) : '-') + '</td></tr>';
+              '<td style="font-size:0.82rem;">' + ([r[c + '_issue'] ? 'ข้อที่ ' + esc(r[c + '_issue']) : '', r[c + '_note'] ? esc(r[c + '_note']) : ''].filter(Boolean).join(' · ') || '-') + '</td></tr>';
           }).join('');
           return '<div style="border:1px solid var(--gray-200);border-radius:10px;margin-bottom:1rem;overflow:hidden;">' +
             '<div style="padding:.75rem 1rem;background:var(--gray-50);font-size:.85rem;line-height:1.7;">' +
@@ -5372,7 +5348,7 @@ textarea.vx-input { height:auto; }
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-hourglass-split me-2"></i>กำลังโหลดข้อมูล...</td></tr>';
     }
 
-    fetch('../../include/function/get_student_growth_external.php?student_id=' + encodeURIComponent(studentId))
+    fetch('../../include/function/get_student_growth_grid.php?student_id=' + encodeURIComponent(studentId))
       .then(r => r.json())
       .then(result => {
         if (result.status !== 'success') {
@@ -5386,10 +5362,6 @@ textarea.vx-input { height:auto; }
         if (tbody2) {
           tbody2.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--danger);"><i class="bi bi-exclamation-triangle me-2"></i>' + error.message + '</td></tr>';
         }
-        const devBody = document.getElementById('growth-dev-body');
-        if (devBody) {
-          devBody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:1rem;color:var(--danger);"><i class="bi bi-exclamation-triangle me-2"></i>' + error.message + '</td></tr>';
-        }
       });
   }
 
@@ -5398,8 +5370,8 @@ textarea.vx-input { height:auto; }
     const records = result.all_records || [];
 
     const studentSex = current ? (current.sex === 'ชาย' ? 'M' : 'F') : 'M';
+    window._growthCurrent = current;
     renderGrowthStats(current);
-    renderGrowthDev(current);
     renderGrowthHistory(records);
     renderGrowthCharts(records, studentSex);
   }
@@ -5454,51 +5426,6 @@ textarea.vx-input { height:auto; }
     }
   }
 
-  function renderGrowthDev(record) {
-    const tbody = document.getElementById('growth-dev-body');
-    if (!tbody) return;
-
-    if (!record || !record.development_assessment) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-info-circle me-2"></i>ไม่มีข้อมูลการประเมินพัฒนาการ</td></tr>';
-      return;
-    }
-
-    const dev = record.development_assessment;
-    const devItems = [
-      { code: 'gm', label: 'การเคลื่อนไหว (GM)', icon: 'bi-person-walking', color: 'var(--primary)' },
-      { code: 'fm', label: 'กล้ามเนื้อมัดเล็กและสติปัญญา (FM)', icon: 'bi-hand-index', color: 'var(--info)' },
-      { code: 'rl', label: 'การเข้าใจภาษา (RL)', icon: 'bi-ear', color: 'var(--success)' },
-      { code: 'el', label: 'การใช้ภาษา (EL)', icon: 'bi-chat-dots', color: 'var(--warning)' },
-      { code: 'ps', label: 'การช่วยเหลือตัวเองและสังคม (PS)', icon: 'bi-people', color: 'var(--danger)' }
-    ];
-
-    let html = '';
-    devItems.forEach(item => {
-      const data = dev[item.code] || {};
-      const status = data.status || '';
-      const score = data.score || '';
-      let statusHtml = '';
-      let noteHtml = '-';
-
-      if (status === 'pass') {
-        statusHtml = '<span class="dev-pass"><i class="bi bi-check-circle-fill me-1"></i>ผ่าน</span>';
-        if (score) noteHtml = 'ข้อที่ ' + score;
-      } else if (status === 'delay' || status === 'fail') {
-        statusHtml = '<span class="dev-delay"><i class="bi bi-exclamation-triangle-fill me-1"></i>สงสัยล่าช้า</span>';
-        if (score) noteHtml = 'ข้อที่ ' + score;
-      } else {
-        statusHtml = '<span style="color:var(--gray-400);">-</span>';
-      }
-
-      html += '<tr>' +
-        '<td><i class="bi ' + item.icon + ' me-2" style="color:' + item.color + ';"></i>' + item.label + '</td>' +
-        '<td>' + statusHtml + '</td>' +
-        '<td style="font-size:0.78rem;color:var(--gray-400);">' + noteHtml + '</td>' +
-      '</tr>';
-    });
-    tbody.innerHTML = html;
-  }
-
   function renderGrowthHistory(records) {
     const tbody = document.getElementById('growth-history-body');
     if (!tbody) return;
@@ -5551,6 +5478,24 @@ textarea.vx-input { height:auto; }
     window._growthRecords = records;
   }
 
+  // แปลผลเทียบเกณฑ์มาตรฐาน (±1/±2 SD ตามอายุเป็นเดือน) ให้ป้ายสถานะของการ์ดน้ำหนัก/ส่วนสูง/BMI ล่าสุด
+  const GROWTH_BAND_LABELS = {
+    weight: ['น้ำหนักน้อยกว่าเกณฑ์', 'น้ำหนักค่อนข้างน้อย', 'น้ำหนักตามเกณฑ์', 'น้ำหนักค่อนข้างมาก', 'น้ำหนักมากกว่าเกณฑ์'],
+    height: ['เตี้ย', 'ค่อนข้างเตี้ย', 'ส่วนสูงตามเกณฑ์', 'ค่อนข้างสูง', 'สูง'],
+    bmi: ['ผอม', 'ค่อนข้างผอม', 'สมส่วน', 'ท้วม', 'อ้วน']
+  };
+  function applyGrowthBandStatus(indicator, refData, unit) {
+    const cur = window._growthCurrent;
+    if (!cur) return;
+    const m = cur.physical_measures || {};
+    const value = parseFloat(indicator === 'bmi' ? cur.bmi : m[indicator]);
+    if (!value || isNaN(value)) return;
+    const idx = Math.min(Math.max(Math.round((cur.age_year || 0) * 12 + (cur.age_month || 0)), 0), refData.ages.length - 1);
+    const at = k => refData[k][idx];
+    const level = value < at('minus2sd') ? 0 : value < at('minus1sd') ? 1 : value <= at('plus1sd') ? 2 : value <= at('plus2sd') ? 3 : 4;
+    setGrowthStat(indicator, String(value), unit, [GROWTH_BAND_LABELS[indicator][level]]);
+  }
+
   function renderGrowthCharts(records, sex) {
     if (!records || records.length < 1) return;
 
@@ -5581,9 +5526,9 @@ textarea.vx-input { height:auto; }
       }));
 
     // Fetch reference data and build charts
-    fetchRefData('weight', sex, chartData => buildChart('chartWeight', 'น้ำหนักตามเกณฑ์อายุ', 'น้ำหนัก (กก.)', chartData, childDataWeight, '#3b82f6', 2.5, 35));
-    fetchRefData('height', sex, chartData => buildChart('chartHeight', 'ส่วนสูงตามเกณฑ์อายุ', 'ส่วนสูง (ซม.)', chartData, childDataHeight, '#22c55e', 40, 130));
-    fetchRefData('bmi', sex, chartData => buildChart('chartBMI', 'BMI ตามเกณฑ์อายุ', 'BMI (กก./ม.²)', chartData, childDataBMI, '#f59e0b', 10, 25));
+    fetchRefData('weight', sex, chartData => { buildChart('chartWeight', 'น้ำหนักตามเกณฑ์อายุ', 'น้ำหนัก (กก.)', chartData, childDataWeight, '#3b82f6', 2.5, 35); applyGrowthBandStatus('weight', chartData, 'กก.'); });
+    fetchRefData('height', sex, chartData => { buildChart('chartHeight', 'ส่วนสูงตามเกณฑ์อายุ', 'ส่วนสูง (ซม.)', chartData, childDataHeight, '#22c55e', 40, 130); applyGrowthBandStatus('height', chartData, 'ซม.'); });
+    fetchRefData('bmi', sex, chartData => { buildChart('chartBMI', 'BMI ตามเกณฑ์อายุ', 'BMI (กก./ม.²)', chartData, childDataBMI, '#f59e0b', 10, 25); applyGrowthBandStatus('bmi', chartData, 'BMI'); });
   }
 
   function fetchRefData(indicator, sex, callback) {

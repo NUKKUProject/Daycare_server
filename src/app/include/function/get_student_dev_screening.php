@@ -11,26 +11,15 @@ try {
     if ($studentId === '') {
         throw new Exception('Missing student_id parameter');
     }
-    if (getUserRole() === 'student' && $studentId !== ($_SESSION['username'] ?? null)) {
-        http_response_code(403);
-        throw new Exception('ไม่มีสิทธิ์ดูข้อมูลนี้');
-    }
-
     $pdo = getDatabaseConnection();
-    if (getUserRole() === 'teacher') {
-        $chk = $pdo->prepare("SELECT 1 FROM children c WHERE c.studentid = :sid" . devScreeningTeacherScopeSql());
-        $chk->execute([':sid' => $studentId, ':teacher_id' => $_SESSION['user_id']]);
-        if (!$chk->fetch()) {
-            http_response_code(403);
-            throw new Exception('ไม่มีสิทธิ์ดูข้อมูลนี้');
-        }
-    }
+    devScreeningAssertCanView($pdo, $studentId);
 
     $stmt = $pdo->prepare("
         SELECT g.id, DATE(g.created_at) AS assess_date, c.birthday,
                g.age_year, g.age_month, g.age_day, g.age_months, g.age_range,
                g.gm_status, g.gm_note, g.fm_status, g.fm_note, g.rl_status, g.rl_note,
                g.el_status, g.el_note, g.ps_status, g.ps_note,
+               g.gm_issue, g.fm_issue, g.rl_issue, g.el_issue, g.ps_issue,
                g.dev_result, g.recheck_date
         FROM growth_records g
         JOIN children c ON c.studentid = g.student_id

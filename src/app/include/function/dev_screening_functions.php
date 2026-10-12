@@ -56,3 +56,21 @@ function devScreeningTeacherScopeSql(): string
           AND c.classroom = ANY(string_to_array(t.classroom_ids, ','))
     )";
 }
+
+// สิทธิ์ดูข้อมูลของเด็ก 1 คน: ผู้ปกครองดูได้เฉพาะลูกตัวเอง ครูดูได้เฉพาะเด็กในกลุ่ม/ห้องที่ดูแล แอดมินดูได้ทั้งหมด
+// ไม่มีสิทธิ์ = ตอบ 403 แล้วโยน Exception
+function devScreeningAssertCanView(PDO $pdo, string $studentId): void
+{
+    if (getUserRole() === 'student' && $studentId !== ($_SESSION['username'] ?? null)) {
+        http_response_code(403);
+        throw new Exception('ไม่มีสิทธิ์ดูข้อมูลนี้');
+    }
+    if (getUserRole() === 'teacher') {
+        $chk = $pdo->prepare("SELECT 1 FROM children c WHERE c.studentid = :sid" . devScreeningTeacherScopeSql());
+        $chk->execute([':sid' => $studentId, ':teacher_id' => $_SESSION['user_id']]);
+        if (!$chk->fetch()) {
+            http_response_code(403);
+            throw new Exception('ไม่มีสิทธิ์ดูข้อมูลนี้');
+        }
+    }
+}
