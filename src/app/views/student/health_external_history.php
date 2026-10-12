@@ -81,6 +81,11 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
 
     .eh-badge.checked { background: #e6f7ec; color: #1e7e42; }
     .eh-badge.pending { background: #fff4e0; color: #a15c00; }
+    .eh-badge.abnormal { background: #fdecec; color: #c0392b; }
+    .eh-badge.normal { background: #e6f7ec; color: #1e7e42; }
+    .eh-record-card.abn { border-left-color: #dc2626; }
+    .eh-findings { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+    .eh-finding { background: #fdecec; border-radius: 999px; color: #b91c1c; font-size: 0.8rem; font-weight: 600; padding: 0.2rem 0.7rem; }
 
     .eh-record-meta {
         color: #64748b;
@@ -342,6 +347,26 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
                 </div>`;
         }
 
+        // รายการที่ผิดปกติของผลตรวจ 1 ครั้ง (ว่าง = ปกติ) ตรงกับที่ศูนย์ใช้ติดตามผล
+        const EH_DEV = { gm: 'GM', fm: 'FM', rl: 'RL', el: 'EL', ps: 'PS' };
+        const EH_EXAM = { general: 'สภาพทั่วไป', skin: 'ผิวหนัง', head: 'ศีรษะ', face: 'ใบหน้า', eyes: 'ตา', ears: 'หู', nose: 'จมูก', mouth: 'ปาก',
+            neck: 'คอ', breast: 'ทรวงอก/ปอด', breathe: 'การหายใจ', lungs: 'ปอด', heart: 'หัวใจ', heart_sound: 'เสียงหัวใจ', pulse: 'ชีพจร',
+            abdomen: 'ท้อง', others: 'อื่นๆ', neuro: 'ระบบประสาท', movement: 'การเคลื่อนไหว' };
+
+        function ehFindings(r) {
+            const dev = ehParseJson(r.development_assessment);
+            const pe = Object.assign({}, ehParseJson(r.physical_exam), ehParseJson(r.neurological));
+            const beh = ehParseJson(r.behavior);
+            const isAbn = (v) => Array.isArray(v) ? v.includes('abnormal') : v === 'abnormal';
+            const out = [];
+            const delayed = Object.keys(EH_DEV).filter((k) => dev[k] && ['delay', 'fail'].includes(dev[k].status)).map((k) => EH_DEV[k]);
+            if (delayed.length) out.push('พัฒนาการสงสัยล่าช้า ' + delayed.join(', '));
+            const abn = Object.keys(EH_EXAM).filter((k) => isAbn(pe[k])).map((k) => EH_EXAM[k]);
+            if (abn.length) out.push('ตรวจร่างกายผิดปกติ ' + abn.join(', '));
+            if (beh.status === 'has') out.push('ปัญหาด้านพฤติกรรม' + (beh.detail ? ' (' + beh.detail + ')' : ''));
+            return out;
+        }
+
         function ehShowDetail(index) {
             const r = ehRecords[index];
             const vital = ehParseJson(r.vital_signs);
@@ -459,16 +484,18 @@ $child = $studentid !== '' ? getChildById($studentid) : false;
 
             container.innerHTML = records.map((r, index) => {
                 const checked = !!r.doctor_name;
+                const findings = checked ? ehFindings(r) : [];
                 return `
-                    <div class="eh-record-card">
+                    <div class="eh-record-card${findings.length ? ' abn' : ''}">
                         <div class="eh-record-top">
                             <span class="eh-record-title"><i class="bi bi-calendar3 me-1"></i>${ehFormatDate(r.exam_date)}</span>
-                            <span class="eh-badge ${checked ? 'checked' : 'pending'}">${checked ? 'หมอตรวจแล้ว' : 'รอแพทย์ตรวจ'}</span>
+                            <span>${findings.length ? '<span class="eh-badge abnormal me-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>พบผลผิดปกติ</span>' : (checked ? '<span class="eh-badge normal me-1">ผลปกติ</span>' : '')}<span class="eh-badge ${checked ? 'checked' : 'pending'}">${checked ? 'หมอตรวจแล้ว' : 'รอแพทย์ตรวจ'}</span></span>
                         </div>
                         <div class="eh-record-meta">
-                            <i class="bi bi-calendar3 me-1"></i>ปีการศึกษา ${ehEscapeHtml(r.academic_year || '-')}
+                            <i class="bi bi-calendar3 me-1"></i>ปีการศึกษา ${ehEscapeHtml(r.academic_year || '-')} · รอบที่ ${ehEscapeHtml(r.check_round || 1)}
                             ${checked ? ' &nbsp;•&nbsp; <i class="bi bi-person-badge me-1"></i>แพทย์: ' + ehEscapeHtml(r.doctor_name) : ''}
                         </div>
+                        ${findings.length ? '<div class="eh-findings">' + findings.map((f) => '<span class="eh-finding">' + ehEscapeHtml(f) + '</span>').join('') + '</div>' : ''}
                         <div class="eh-record-actions">
                             <button type="button" class="eh-btn-view" onclick="ehShowDetail(${index})">
                                 <i class="bi bi-eye me-1"></i>ดูรายละเอียด
