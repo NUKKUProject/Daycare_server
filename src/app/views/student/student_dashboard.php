@@ -184,10 +184,8 @@ if ($dental) {
 $hubItems = [];
 if ($child) {
     // 1) สุขภาพช่องปาก
-    if (!$dental) {
-        $hubItems[] = ['icon' => 'fa-solid fa-tooth', 'tone' => 'gray', 'title' => 'สุขภาพช่องปาก', 'sub' => 'ยังไม่มีผลตรวจจากทันตแพทย์', 'badge' => 'ยังไม่มีผล', 'attn' => false, 'modal' => false, 'href' => 'health_tooth_history.php'];
-    } elseif (!$dental['has_decay']) {
-        // ผลปกติ ไม่ต้องแสดงในศูนย์รวม (ดูย้อนหลังได้ที่เมนูตรวจสุขภาพช่องปาก)
+    if (!$dental || !$dental['has_decay']) {
+        // ยังไม่มีผลตรวจ หรือผลปกติ ไม่ต้องแสดงในศูนย์รวม (ดูย้อนหลังได้ที่เมนูตรวจสุขภาพช่องปาก)
     } else {
         $fs = $dental['followup_status'] ?? '';
         $badge = ['' => 'ต้องแจ้งกลับ', 'acknowledged' => 'รับทราบแล้ว', 'scheduled' => 'นัดหมอ ' . thaiDateShort($dental['followup_date']), 'treated' => 'พาไปรักษาแล้ว'][$fs] ?? 'ต้องแจ้งกลับ';
