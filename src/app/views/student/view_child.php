@@ -1846,38 +1846,30 @@ textarea.vx-input { height:auto; }
       </div>
     </div>
 
-    <!-- Chart Grid: กราฟมาตรฐาน 4 แบบเหมือนหน้าประวัติการเจริญเติบโต -->
+    <!-- Chart Grid -->
     <div class="chart-grid">
       <div class="chart-card">
         <div class="chart-card-header">
-          <div class="chart-card-title"><i class="bi bi-bar-chart me-1"></i>น้ำหนักตามเกณฑ์อายุ (0-5 ปี)</div>
+          <div class="chart-card-title"><i class="bi bi-bar-chart me-1"></i>น้ำหนักตามเกณฑ์อายุ</div>
         </div>
-        <div class="chart-card-body" style="height:380px;">
+        <div class="chart-card-body">
           <canvas id="chartWeight"></canvas>
         </div>
       </div>
       <div class="chart-card">
         <div class="chart-card-header">
-          <div class="chart-card-title"><i class="bi bi-bar-chart me-1"></i>ความยาว/ส่วนสูงตามเกณฑ์อายุ (0-5 ปี)</div>
+          <div class="chart-card-title"><i class="bi bi-bar-chart me-1"></i>ส่วนสูงตามเกณฑ์อายุ</div>
         </div>
-        <div class="chart-card-body" style="height:380px;">
+        <div class="chart-card-body">
           <canvas id="chartHeight"></canvas>
         </div>
       </div>
       <div class="chart-card">
         <div class="chart-card-header">
-          <div class="chart-card-title"><i class="bi bi-bar-chart me-1"></i>น้ำหนักตามเกณฑ์ความยาว/ส่วนสูง</div>
+          <div class="chart-card-title"><i class="bi bi-bar-chart me-1"></i>BMI ตามเกณฑ์อายุ</div>
         </div>
-        <div class="chart-card-body" style="height:380px;">
-          <canvas id="chartWeightHeight"></canvas>
-        </div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-card-header">
-          <div class="chart-card-title"><i class="bi bi-bar-chart me-1"></i>เส้นรอบวงศีรษะ (แรกเกิด - 5 ปี)</div>
-        </div>
-        <div class="chart-card-body" style="height:380px;">
-          <canvas id="chartHead"></canvas>
+        <div class="chart-card-body">
+          <canvas id="chartBMI"></canvas>
         </div>
       </div>
     </div>
@@ -2162,7 +2154,6 @@ textarea.vx-input { height:auto; }
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" integrity="sha384-jrOgQzBlDeUNdmQn3rUt/PZD+pdcRBdWd/HWRqRo+n2OR2QtGyjSaJC0GiCeH+ir" crossorigin="anonymous"></script>
-<script src="../../../public/assets/js/growth_standard_charts.js?v=<?= @filemtime(__DIR__ . '/../../../public/assets/js/growth_standard_charts.js') ?: time() ?>"></script>
 
 <script>
 (function () {
@@ -5284,7 +5275,7 @@ textarea.vx-input { height:auto; }
   });
 
   /* ── Load Growth Data ── */
-  let growthCharts = { weight: null, height: null, weight_height: null, head: null };
+  let growthCharts = { weight: null, height: null };
 
   function loadGrowthData() {
     const tbody = document.getElementById('growth-history-body');
@@ -5442,38 +5433,39 @@ textarea.vx-input { height:auto; }
     setGrowthStat(indicator, String(value), unit, [GROWTH_BAND_LABELS[indicator][level]]);
   }
 
-  // กราฟมาตรฐาน 4 แบบ ใช้ชุดเดียวกับหน้าประวัติการเจริญเติบโต (growth_standard_charts.js)
   function renderGrowthCharts(records, sex) {
-    Object.values(growthCharts).forEach(c => { if (c) { c.destroy(); } });
-    growthCharts = { weight: null, height: null, weight_height: null, head: null };
     if (!records || records.length < 1) return;
 
-    // ใช้ได้ทั้งแถวที่มีวัดครบและไม่ครบ: แต่ละกราฟเลือกเฉพาะแถวที่มีค่าที่กราฟนั้นต้องใช้
-    const rows = records.map(r => {
-      const m = r.physical_measures || {};
-      return { created_at: r.exam_date, age_year: r.age_year || 0, age_month: r.age_month || 0,
-               weight: m.weight, height: m.height, head_circumference: m.head_circ };
-    });
-    const sets = {
-      weight: rows.filter(r => r.weight),
-      height: rows.filter(r => r.height),
-      weight_height: rows.filter(r => r.weight && r.height),
-      head: rows.filter(r => r.head_circumference)
-    };
-    const canvases = { weight: 'chartWeight', height: 'chartHeight', weight_height: 'chartWeightHeight', head: 'chartHead' };
+    // Destroy existing charts
+    Object.values(growthCharts).forEach(c => { if (c) { c.destroy(); } });
+    growthCharts = { weight: null, height: null, bmi: null };
 
-    Object.keys(canvases).forEach(type => {
-      const el = document.getElementById(canvases[type]);
-      if (!el || !sets[type].length) return;
-      const options = getChartOptions(type);
-      options.maintainAspectRatio = false;
-      growthCharts[type] = new Chart(el, { type: 'line', data: prepareChartData(type, sets[type]), options: options });
-    });
+    // Build child data series (age in months)
+    const childDataWeight = records
+      .filter(r => r.physical_measures && r.physical_measures.weight)
+      .map(r => ({
+        x: (r.age_year || 0) * 12 + (r.age_month || 0),
+        y: parseFloat(r.physical_measures.weight)
+      }));
 
-    // ป้ายสถานะของการ์ดน้ำหนัก/ส่วนสูง/BMI ล่าสุด เทียบเกณฑ์ ±SD ตามเพศ
-    fetchRefData('weight', sex, d => applyGrowthBandStatus('weight', d, 'กก.'));
-    fetchRefData('height', sex, d => applyGrowthBandStatus('height', d, 'ซม.'));
-    fetchRefData('bmi', sex, d => applyGrowthBandStatus('bmi', d, 'BMI'));
+    const childDataHeight = records
+      .filter(r => r.physical_measures && r.physical_measures.height)
+      .map(r => ({
+        x: (r.age_year || 0) * 12 + (r.age_month || 0),
+        y: parseFloat(r.physical_measures.height)
+      }));
+
+    const childDataBMI = records
+      .filter(r => r.bmi)
+      .map(r => ({
+        x: (r.age_year || 0) * 12 + (r.age_month || 0),
+        y: parseFloat(r.bmi)
+      }));
+
+    // Fetch reference data and build charts
+    fetchRefData('weight', sex, chartData => { buildChart('chartWeight', 'น้ำหนักตามเกณฑ์อายุ', 'น้ำหนัก (กก.)', chartData, childDataWeight, '#3b82f6', 2.5, 35); applyGrowthBandStatus('weight', chartData, 'กก.'); });
+    fetchRefData('height', sex, chartData => { buildChart('chartHeight', 'ส่วนสูงตามเกณฑ์อายุ', 'ส่วนสูง (ซม.)', chartData, childDataHeight, '#22c55e', 40, 130); applyGrowthBandStatus('height', chartData, 'ซม.'); });
+    fetchRefData('bmi', sex, chartData => { buildChart('chartBMI', 'BMI ตามเกณฑ์อายุ', 'BMI (กก./ม.²)', chartData, childDataBMI, '#f59e0b', 10, 25); applyGrowthBandStatus('bmi', chartData, 'BMI'); });
   }
 
   function fetchRefData(indicator, sex, callback) {
@@ -5485,6 +5477,118 @@ textarea.vx-input { height:auto; }
         }
       })
       .catch(error => console.error('Failed to load growth reference data (' + indicator + '):', error));
+  }
+
+  function buildChart(canvasId, title, yLabel, refData, childPoints, childColor, yMin, yMax) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+
+    // Build reference datasets
+    const refDatasets = [
+      {
+        label: '+2 SD',
+        data: refData.ages.map((age, i) => ({ x: age, y: refData.plus2sd[i] })),
+        borderColor: 'rgba(239,68,68,0.6)',
+        borderDash: [6, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: '+1',
+        backgroundColor: 'rgba(239,68,68,0.05)'
+      },
+      {
+        label: '+1 SD',
+        data: refData.ages.map((age, i) => ({ x: age, y: refData.plus1sd[i] })),
+        borderColor: 'rgba(249,115,22,0.6)',
+        borderDash: [6, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: '+1',
+        backgroundColor: 'rgba(249,115,22,0.05)'
+      },
+      {
+        label: 'Median',
+        data: refData.ages.map((age, i) => ({ x: age, y: refData.median[i] })),
+        borderColor: 'rgba(34,197,94,0.7)',
+        borderDash: [6, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: '+1',
+        backgroundColor: 'rgba(34,197,94,0.08)'
+      },
+      {
+        label: '-1 SD',
+        data: refData.ages.map((age, i) => ({ x: age, y: refData.minus1sd[i] })),
+        borderColor: 'rgba(249,115,22,0.6)',
+        borderDash: [6, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: '+1',
+        backgroundColor: 'rgba(249,115,22,0.05)'
+      },
+      {
+        label: '-2 SD',
+        data: refData.ages.map((age, i) => ({ x: age, y: refData.minus2sd[i] })),
+        borderColor: 'rgba(239,68,68,0.6)',
+        borderDash: [6, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: false,
+        backgroundColor: 'rgba(239,68,68,0.05)'
+      },
+      // Child data
+      {
+        label: 'ข้อมูลของเด็ก',
+        data: childPoints,
+        borderColor: childColor,
+        backgroundColor: childColor,
+        borderWidth: 2.5,
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        pointBackgroundColor: childColor,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        fill: false,
+        tension: 0.3,
+        order: 1
+      }
+    ];
+
+    growthCharts[canvasId.replace('chart', '').toLowerCase()] = new Chart(ctx, {
+      type: 'line',
+      data: { datasets: refDatasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { intersect: false, mode: 'nearest' },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 14, padding: 12, font: { size: 11 } }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + (canvasId === 'chartBMI' ? '' : '');
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            title: { display: true, text: 'อายุ (เดือน)' },
+            min: 0,
+            max: 60,
+            ticks: { stepSize: 6 }
+          },
+          y: {
+            title: { display: true, text: yLabel },
+            min: yMin,
+            max: yMax
+          }
+        }
+      }
+    });
   }
 
   function formatThaiDateShort(dateStr) {
