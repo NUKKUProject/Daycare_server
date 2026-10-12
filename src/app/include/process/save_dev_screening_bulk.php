@@ -45,6 +45,7 @@ try {
     }
     $childStmt = $pdo->prepare($childSql);
 
+    $setBirth = $pdo->prepare("UPDATE children SET birthday = :b WHERE studentid = :sid AND birthday IS NULL");
     $findStmt = $pdo->prepare("SELECT id FROM growth_records
         WHERE student_id = :sid AND DATE(created_at) = :d AND is_draft = false
         ORDER BY id DESC LIMIT 1");
@@ -64,7 +65,19 @@ try {
             $errors[] = "$sid: ไม่พบเด็ก หรือไม่มีสิทธิ์บันทึก";
             continue;
         }
-        $age = $child['birthday'] ? devScreeningAge($child['birthday'], $assessDate) : null;
+        // เด็กที่ยังไม่มีวันเกิด: ใช้วันเกิดที่ครู/แอดมินเลือกมา และบันทึกลงข้อมูลเด็กด้วย (ไม่ทับวันเกิดที่มีอยู่แล้ว)
+        $birthday = $child['birthday'];
+        if (!$birthday) {
+            $given = (string)($row['birthday'] ?? '');
+            $gd = DateTime::createFromFormat('Y-m-d', $given);
+            if (!$gd || $gd->format('Y-m-d') !== $given || $given > $assessDate) {
+                $errors[] = "$sid: ยังไม่ระบุวันเกิด หรือวันเกิดไม่ถูกต้อง";
+                continue;
+            }
+            $birthday = $given;
+            $setBirth->execute([':b' => $birthday, ':sid' => $sid]);
+        }
+        $age = devScreeningAge($birthday, $assessDate);
         if (!$age) {
             $errors[] = "$sid: วันเกิดไม่ถูกต้องหรือวันที่ประเมินก่อนวันเกิด";
             continue;

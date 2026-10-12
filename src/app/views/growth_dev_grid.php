@@ -251,7 +251,8 @@ $groups = get_childgroup();
             birthday: c.birthday, st: {}, note: {}, issue: {}, dirty: false,
             weight: nv(c.weight), height: nv(c.height), head: nv(c.head_circumference),
             range: RANGES.some(([v]) => v === c.age_range) ? c.age_range : (age ? defaultRange(age.months) : '0-2'),
-            saved: c.growth_id !== null && c.growth_id !== undefined
+            saved: c.growth_id !== null && c.growth_id !== undefined,
+            noBirth: !c.birthday, rangeTouched: false
         };
         DOMAINS.forEach(([k]) => { r.st[k] = c[k + '_status'] || ''; r.note[k] = c[k + '_note'] || ''; r.issue[k] = nv(c[k + '_issue']); });
         return r;
@@ -262,7 +263,7 @@ $groups = get_childgroup();
     const complete = (r) => ticked(r) === DOMAINS.length;
     const hasMeasure = (r) => r.weight !== '' || r.height !== '' || r.head !== '';
     // พัฒนาการต้องติ๊กครบ 5 ด้านหรือไม่ติ๊กเลย  แถวที่แก้แล้วบันทึกได้เมื่อครบ 5 ด้าน หรือไม่ติ๊กเลยแต่มีน้ำหนัก/ส่วนสูง/รอบศีรษะ
-    const isReady = (r) => r.dirty && (complete(r) || (ticked(r) === 0 && hasMeasure(r)));
+    const isReady = (r) => r.dirty && !!ageOf(r.birthday) && (complete(r) || (ticked(r) === 0 && hasMeasure(r)));
     const rowState = (r) => (r.dirty
         ? (isReady(r) ? 'ready' : (ticked(r) ? 'partial' : 'todo'))
         : (r.saved ? 'saved' : 'todo'));
@@ -295,8 +296,8 @@ $groups = get_childgroup();
         let h = `<tr class="${st}" data-i="${i}">` +
             `<td class="c-no gc-child">${i + 1}</td>` +
             `<td class="c-nm gc-child"><div class="nick">${r.nick ? esc(r.nick) : esc(r.name)}</div>${r.nick ? `<div class="full">${esc(r.name)}</div>` : ''}</td>` +
-            td('gc-child nw', esc(thaiShort(r.birthday))) +
-            td('gc-age nw c-age', age ? `${age.y} ปี ${age.m} ด. ${age.d} ว.` : '<span class="text-danger">วันเกิดไม่ถูกต้อง</span>') +
+            td('gc-child nw', r.noBirth ? `<input class="f" type="date" data-b="1" max="${byId('gDate').value}" value="${esc(r.birthday || '')}" title="ยังไม่ได้ระบุวันเกิด เลือกวันเกิดได้" aria-label="วันเกิด" style="min-width:130px">` : esc(thaiShort(r.birthday))) +
+            td('gc-age nw c-age', age ? `${age.y} ปี ${age.m} ด. ${age.d} ว.` : '<span class="text-danger">ยังไม่ระบุวันเกิด</span>') +
             td('gc-age c-mon', age ? age.months : '-') +
             td('gc-age', `<select class="f" data-r="1" aria-label="ช่วงอายุเกณฑ์ที่ใช้">${RANGES.map(([v, t]) => `<option value="${v}"${r.range === v ? ' selected' : ''}>${t}</option>`).join('')}</select>`) +
             meas('weight', r.weight, 'น้ำหนัก') + meas('height', r.height, 'ส่วนสูง') + meas('head', r.head, 'เส้นรอบศีรษะ');
@@ -330,6 +331,10 @@ $groups = get_childgroup();
         tr.className = st;
         tr.querySelector('.c-pass').textContent = s.pass; tr.querySelector('.c-fail').textContent = s.fail;
         tr.querySelector('.c-res').innerHTML = s.res; tr.querySelector('.c-re').textContent = s.re;
+        const ag = ageOf(r.birthday);
+        tr.querySelector('.c-age').innerHTML = ag ? `${ag.y} ปี ${ag.m} ด. ${ag.d} ว.` : '<span class="text-danger">ยังไม่ระบุวันเกิด</span>';
+        tr.querySelector('.c-mon').textContent = ag ? ag.months : '-';
+        const rs = tr.querySelector('select[data-r]'); if (rs) rs.value = r.range;
         const chip = tr.querySelector('.st'); chip.className = 'st ' + st; chip.textContent = STATE_TEXT[st];
         tr.querySelectorAll('select[data-k]').forEach((sel) => {
             sel.value = r.st[sel.dataset.k];
@@ -403,7 +408,7 @@ $groups = get_childgroup();
             const body = {
                 assess_date: byId('gDate').value,
                 rows: ready.map((r) => {
-                    const o = { student_id: r.sid, age_range: r.range, weight: r.weight, height: r.height, head_circumference: r.head };
+                    const o = { student_id: r.sid, birthday: r.noBirth ? r.birthday : null, age_range: r.range, weight: r.weight, height: r.height, head_circumference: r.head };
                     DOMAINS.forEach(([k]) => { o[k] = { status: r.st[k], note: r.note[k], issue: r.issue[k] }; });
                     return o;
                 })
@@ -460,9 +465,13 @@ $groups = get_childgroup();
         });
         wrap.addEventListener('change', (e) => {
             const el = e.target, tr = el.closest('tr[data-i]');
-            if (!tr || !(el.dataset.k || el.dataset.r)) return;
+            if (!tr || !(el.dataset.k || el.dataset.r || el.dataset.b)) return;
             const r = rows[+tr.dataset.i];
-            if (el.dataset.r) r.range = el.value; else r.st[el.dataset.k] = el.value;
+            if (el.dataset.b) {
+                r.birthday = el.value;
+                const ag = ageOf(r.birthday);
+                if (ag && !r.rangeTouched) r.range = defaultRange(ag.months);
+            } else if (el.dataset.r) { r.range = el.value; r.rangeTouched = true; } else r.st[el.dataset.k] = el.value;
             r.dirty = true;
             refreshRow(+tr.dataset.i);
         });
