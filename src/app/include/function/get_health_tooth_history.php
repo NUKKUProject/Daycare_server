@@ -13,19 +13,20 @@ try {
     }
     // ผู้ปกครอง (student) เห็นเฉพาะรายการที่แพทย์ตรวจแล้ว (มีชื่อแพทย์)
     $doctorFilter = (($_SESSION['role'] ?? '') === 'student')
-        ? "AND doctor_name IS NOT NULL AND TRIM(doctor_name) <> ''"
+        ? "AND h.doctor_name IS NOT NULL AND TRIM(h.doctor_name) <> ''"
         : '';
 
     $pdo = getDatabaseConnection();
     $stmt = $pdo->prepare("
-        SELECT id, academic_year, doctor_name, age_year, age_month, age_day,
-               total_teeth, decayed_teeth, oral_components, teeth_status,
-               missing_teeth_detail, decayed_teeth_positions, treatments,
-               other_treatment_detail, urgency, updated_at, created_at
-        FROM health_tooth_external
-        WHERE student_id = :student_id
+        SELECT h.id, h.academic_year, h.doctor_name, h.age_year, h.age_month, h.age_day,
+               h.total_teeth, h.decayed_teeth, h.oral_components, h.teeth_status,
+               h.missing_teeth_detail, h.decayed_teeth_positions, h.treatments,
+               h.other_treatment_detail, h.urgency, h.updated_at, h.created_at, r.round_no
+        FROM health_tooth_external h
+        LEFT JOIN tooth_exam_rounds r ON r.id = h.round_id
+        WHERE h.student_id = :student_id
           $doctorFilter
-        ORDER BY academic_year DESC, created_at DESC
+        ORDER BY h.academic_year DESC, r.round_no DESC NULLS LAST, h.created_at DESC
     ");
     $stmt->execute(['student_id' => $studentid]);
     $records = $stmt->fetchAll(PDO::FETCH_ASSOC);

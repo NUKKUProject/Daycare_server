@@ -662,6 +662,11 @@ textarea.vx-input { height:auto; }
 
     .th-badge.checked { background: #e6f7ec; color: #1e7e42; }
     .th-badge.pending { background: #fff4e0; color: #a15c00; }
+    .eh-badge.abnormal, .th-badge.abnormal { background: #fdecec; color: #c0392b; }
+    .eh-badge.normal, .th-badge.normal { background: #e6f7ec; color: #1e7e42; }
+    .eh-record-card.abn, .th-record-card.abn { border-left-color: #dc2626; }
+    .eh-findings, .th-findings { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+    .eh-finding, .th-finding { background: #fdecec; border-radius: 999px; color: #b91c1c; font-size: 0.8rem; font-weight: 600; padding: 0.2rem 0.7rem; }
 
     .th-record-meta { color: #64748b; font-size: 0.85rem; margin-top: 0.5rem; }
     .th-record-actions { margin-top: 0.8rem; }
@@ -4502,6 +4507,26 @@ textarea.vx-input { height:auto; }
       </div>`;
   }
 
+  // รายการที่ผิดปกติของผลตรวจ 1 ครั้ง (ว่าง = ปกติ) ใช้เกณฑ์เดียวกับหน้าติดตามสุขภาพของศูนย์
+  const EH_DEV = { gm: 'GM', fm: 'FM', rl: 'RL', el: 'EL', ps: 'PS' };
+  const EH_EXAM = { general: 'สภาพทั่วไป', skin: 'ผิวหนัง', head: 'ศีรษะ', face: 'ใบหน้า', eyes: 'ตา', ears: 'หู', nose: 'จมูก', mouth: 'ปาก',
+    neck: 'คอ', breast: 'ทรวงอก/ปอด', breathe: 'การหายใจ', lungs: 'ปอด', heart: 'หัวใจ', heart_sound: 'เสียงหัวใจ', pulse: 'ชีพจร',
+    abdomen: 'ท้อง', others: 'อื่นๆ', neuro: 'ระบบประสาท', movement: 'การเคลื่อนไหว' };
+
+  function ehFindings(r) {
+    const dev = ehParseJson(r.development_assessment);
+    const pe = Object.assign({}, ehParseJson(r.physical_exam), ehParseJson(r.neurological));
+    const beh = ehParseJson(r.behavior);
+    const isAbn = (v) => Array.isArray(v) ? v.includes('abnormal') : v === 'abnormal';
+    const out = [];
+    const delayed = Object.keys(EH_DEV).filter((k) => dev[k] && ['delay', 'fail'].includes(dev[k].status)).map((k) => EH_DEV[k]);
+    if (delayed.length) out.push('พัฒนาการสงสัยล่าช้า ' + delayed.join(', '));
+    const abn = Object.keys(EH_EXAM).filter((k) => isAbn(pe[k])).map((k) => EH_EXAM[k]);
+    if (abn.length) out.push('ตรวจร่างกายผิดปกติ ' + abn.join(', '));
+    if (beh.status === 'has') out.push('ปัญหาด้านพฤติกรรม' + (beh.detail ? ' (' + beh.detail + ')' : ''));
+    return out;
+  }
+
   window.ehShowDetail = function(index) {
     const r = ehRecords[index];
     const vital = ehParseJson(r.vital_signs);
@@ -4618,16 +4643,18 @@ textarea.vx-input { height:auto; }
 
     container.innerHTML = records.map((r, index) => {
       const checked = !!r.doctor_name;
+      const findings = checked ? ehFindings(r) : [];
       return `
-        <div class="eh-record-card">
+        <div class="eh-record-card${findings.length ? ' abn' : ''}">
           <div class="eh-record-top">
             <span class="eh-record-title"><i class="bi bi-calendar3 me-1"></i>${ehFormatDate(r.exam_date)}</span>
-            <span class="eh-badge ${checked ? 'checked' : 'pending'}">${checked ? 'หมอตรวจแล้ว' : 'รอแพทย์ตรวจ'}</span>
+            <span>${findings.length ? '<span class="eh-badge abnormal me-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>พบผลผิดปกติ</span>' : (checked ? '<span class="eh-badge normal me-1">ผลปกติ</span>' : '')}<span class="eh-badge ${checked ? 'checked' : 'pending'}">${checked ? 'หมอตรวจแล้ว' : 'รอแพทย์ตรวจ'}</span></span>
           </div>
           <div class="eh-record-meta">
-            <i class="bi bi-mortarboard me-1"></i>ปีการศึกษา ${ehEscapeHtml(r.academic_year || '-')}
+            <i class="bi bi-mortarboard me-1"></i>ปีการศึกษา ${ehEscapeHtml(r.academic_year || '-')} · รอบที่ ${ehEscapeHtml(r.check_round || 1)}
             ${checked ? ' &nbsp;•&nbsp; <i class="bi bi-person-badge me-1"></i>แพทย์: ' + ehEscapeHtml(ehFormatDoctorName(r.doctor_name)) : ''}
           </div>
+          ${findings.length ? '<div class="eh-findings">' + findings.map((f) => '<span class="eh-finding">' + ehEscapeHtml(f) + '</span>').join('') + '</div>' : ''}
           <div class="eh-record-actions">
             <button type="button" class="eh-btn-view" onclick="ehShowDetail(${index})">
               <i class="bi bi-eye me-1"></i>ดูรายละเอียด
@@ -4699,6 +4726,22 @@ textarea.vx-input { height:auto; }
     if (urgency === 'not_urgent') return '<span class="th-pill good">ไม่เร่งด่วน</span>';
     if (urgency === 'preventable') return '<span class="th-pill info">ป้องกันได้</span>';
     return '<span class="th-pill info">ไม่ระบุ</span>';
+  }
+
+  // รายการที่ผิดปกติของผลตรวจฟัน 1 ครั้ง (ว่าง = ปกติ) ใช้เกณฑ์เดียวกับหน้าติดตามสุขภาพของศูนย์
+  function thFindings(r) {
+    const treatments = thParseJson(r.treatments, []);
+    const positions = thParseJson(r.decayed_teeth_positions);
+    const decayed = parseInt(r.decayed_teeth, 10) || 0;
+    const out = [];
+    if (decayed > 0 || r.teeth_status === 'abnormal') {
+      const where = Object.keys(thPositionLabels).filter((k) => (positions[k] || 0) > 0).map((k) => thPositionLabels[k]);
+      out.push('พบฟันผุ' + (decayed > 0 ? ' ' + decayed + ' ซี่' : '') + (where.length ? ' (' + where.join(', ') + ')' : ''));
+      if (r.urgency === 'urgent') out.push('ควรรักษาโดยด่วน');
+      else if (r.urgency === 'preventable') out.push('ผัดผ่อนได้');
+    }
+    if (Array.isArray(treatments) && treatments.length) out.push('ต้องรักษา: ' + treatments.map((t) => thTreatmentLabels[t] || t).join(', '));
+    return out;
   }
 
   window.thShowDetail = function(index) {
@@ -4788,16 +4831,18 @@ textarea.vx-input { height:auto; }
     container.innerHTML = records.map((r, index) => {
       const checked = !!r.doctor_name;
       const hasDecay = r.teeth_status === 'abnormal';
+      const findings = checked ? thFindings(r) : [];
       return `
-        <div class="th-record-card">
+        <div class="th-record-card${findings.length ? ' abn' : ''}">
           <div class="th-record-top">
-            <span class="th-record-title"><i class="bi bi-mortarboard me-1"></i>ปีการศึกษา ${thEscapeHtml(r.academic_year || '-')}</span>
-            <span class="th-badge ${checked ? 'checked' : 'pending'}">${checked ? 'ทันตแพทย์ตรวจแล้ว' : 'รอทันตแพทย์ตรวจ'}</span>
+            <span class="th-record-title"><i class="bi bi-mortarboard me-1"></i>ปีการศึกษา ${thEscapeHtml(r.academic_year || '-')}${r.round_no ? ' · รอบที่ ' + thEscapeHtml(r.round_no) : ''}</span>
+            <span>${findings.length ? '<span class="th-badge abnormal me-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>พบผลผิดปกติ</span>' : (checked ? '<span class="th-badge normal me-1">ผลปกติ</span>' : '')}<span class="th-badge ${checked ? 'checked' : 'pending'}">${checked ? 'ทันตแพทย์ตรวจแล้ว' : 'รอทันตแพทย์ตรวจ'}</span></span>
           </div>
           <div class="th-record-meta">
             <i class="bi bi-${hasDecay ? 'exclamation-triangle text-danger' : 'check-circle text-success'} me-1"></i>${hasDecay ? 'มีฟันผุ' : 'ยังไม่มีฟันผุ'}
             ${checked ? ' &nbsp;•&nbsp; <i class="bi bi-person-badge me-1"></i>ทันตแพทย์: ' + thEscapeHtml(r.doctor_name) : ''}
           </div>
+          ${findings.length ? '<div class="th-findings">' + findings.map((f) => '<span class="th-finding">' + thEscapeHtml(f) + '</span>').join('') + '</div>' : ''}
           <div class="th-record-actions">
             <button type="button" class="th-btn-view" onclick="thShowDetail(${index})">
               <i class="bi bi-eye me-1"></i>ดูรายละเอียด
