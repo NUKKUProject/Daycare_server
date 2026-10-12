@@ -15,21 +15,13 @@ function devScreeningAge(string $birthday, string $assessDate): ?array
     return ['year' => $d->y, 'month' => $d->m, 'day' => $d->d, 'months' => $d->y * 12 + $d->m];
 }
 
-// ช่วงอายุเกณฑ์ DSPM ที่ใช้ประเมิน: ใช้เกณฑ์ของอายุเต็มที่ใกล้ที่สุดที่ไม่เกินอายุเด็ก
-function devScreeningAgeRange(int $months): string
+// ช่วงอายุเกณฑ์ตามตัวเลือกเดิมของหน้าบันทึกกราฟการเจริญเติบโต (growth_records.age_range)
+const DEV_SCREENING_AGE_RANGES = ['0-2', '2-5'];
+
+// ค่าเริ่มต้นตามอายุเด็ก: ต่ำกว่า 2 ปี = 0-2 ที่เหลือ = 2-5
+function devScreeningDefaultRange(int $months): string
 {
-    $steps = [1, 2, 4, 6, 9, 12, 18, 24, 30, 36, 42, 48, 54, 60, 66];
-    if ($months < 1) {
-        return 'แรกเกิด - 1 เดือน 29 วัน';
-    }
-    for ($i = count($steps) - 1; $i >= 0; $i--) {
-        if ($months >= $steps[$i]) {
-            $from = $steps[$i];
-            $to = $steps[$i + 1] ?? 72;
-            return "อายุ {$from} เดือน ({$from} เดือน - " . ($to - 1) . " เดือน 29 วัน)";
-        }
-    }
-    return '';
+    return $months < 24 ? '0-2' : '2-5';
 }
 
 // สรุปผลจากการติ๊ก: $statuses = ['gm'=>'pass'|'delay', ...] ครบ 5 ด้าน

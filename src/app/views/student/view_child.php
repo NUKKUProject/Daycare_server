@@ -5348,7 +5348,7 @@ textarea.vx-input { height:auto; }
             '<div style="padding:.75rem 1rem;background:var(--gray-50);font-size:.85rem;line-height:1.7;">' +
               '<div><strong>วันที่ประเมิน:</strong> ' + formatThaiDateShort(r.assess_date) + ' &nbsp; <strong>วันเกิด:</strong> ' + formatThaiDateShort(r.birthday) + '</div>' +
               (r.age_year != null ? '<div><strong>อายุ ณ วันที่ตรวจ:</strong> ' + r.age_year + ' ปี ' + r.age_month + ' เดือน ' + r.age_day + ' วัน (' + r.age_months + ' เดือน)</div>' : '') +
-              (r.age_range ? '<div><strong>ช่วงอายุเกณฑ์ที่ใช้:</strong> ' + esc(r.age_range) + '</div>' : '') +
+              (r.age_range ? '<div><strong>ช่วงอายุเกณฑ์ที่ใช้:</strong> ' + esc(r.age_range) + ' ปี</div>' : '') +
             '</div>' +
             '<table class="dev-table"><thead><tr><th>ด้านพัฒนาการ</th><th>ผลการประเมิน</th><th>รายละเอียดเพิ่มเติม</th></tr></thead><tbody>' + rows + '</tbody></table>' +
             '<div style="padding:.75rem 1rem;font-size:.85rem;line-height:1.7;">' +

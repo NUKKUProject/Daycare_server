@@ -28,7 +28,7 @@ try {
 
     $stmt = $pdo->prepare("
         SELECT g.id, DATE(g.created_at) AS assess_date, c.birthday,
-               g.age_year, g.age_month, g.age_day, g.age_months, g.dev_age_range AS age_range,
+               g.age_year, g.age_month, g.age_day, g.age_months, g.age_range,
                g.gm_status, g.gm_note, g.fm_status, g.fm_note, g.rl_status, g.rl_note,
                g.el_status, g.el_note, g.ps_status, g.ps_note,
                g.dev_result, g.recheck_date

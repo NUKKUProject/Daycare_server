@@ -43,6 +43,8 @@ $groups = get_childgroup();
     .tg th.g-child { background: #e2e8f0; } .tg th.g-age { background: #dbeafe; }
     .tg th.g-d0 { background: #fde68a; } .tg th.g-d1 { background: #bbf7d0; } .tg th.g-d2 { background: #e9d5ff; }
     .tg th.g-d3 { background: #fecaca; } .tg th.g-d4 { background: #bae6fd; }
+    .tg th.g-meas { background: #fef08a; } .tg td.gc-meas { background: #fefce8; }
+    .tg input.n { width: 64px; text-align: center; }
     .tg th.g-sum { background: #fed7aa; } .tg th.g-state { background: #e2e8f0; }
     .tg td { padding: 3px; border-bottom: 1px solid #e2e8f0; text-align: center; background: #fff; }
     .tg .c-no { position: sticky; left: 0; z-index: 2; min-width: 36px; background: #fff; }
@@ -181,7 +183,7 @@ $groups = get_childgroup();
                 </div>
             </div>
             <div class="tg-hint">
-                Tab ไปช่องถัดไป · Enter ลงแถวถัดไป · ปุ่ม "ผ่านครบ" ติ๊กผ่านทั้ง 5 ด้านให้ · จำนวนผ่าน/ไม่ผ่าน ผลคัดกรอง และวันประเมินซ้ำ (+30 วัน เมื่อมีด้านไม่ผ่าน) ระบบคำนวณจากที่ติ๊กให้เอง · อายุคำนวณจากวันเกิดให้
+                Tab ไปช่องถัดไป · Enter ลงแถวถัดไป · ช่วงอายุเกณฑ์เลือกจาก 0-2 ปี หรือ 2-5 ปี (ตั้งให้ตามอายุเด็ก แก้เองได้) · กรอกน้ำหนัก ส่วนสูง เส้นรอบศีรษะ ข้อที่ และรายละเอียดเพิ่มเติมได้ · พัฒนาการต้องเลือกผ่าน/ไม่ผ่านให้ครบ 5 ด้าน (หรือไม่เลือกเลยถ้าบันทึกเฉพาะการเจริญเติบโต) · ปุ่ม "ผ่านครบ" ติ๊กผ่านทั้ง 5 ด้านให้ · ผลคัดกรองและวันประเมินซ้ำ (+30 วัน เมื่อมีด้านไม่ผ่าน) ระบบคำนวณให้เอง
             </div>
         </div>
 
@@ -208,7 +210,7 @@ $groups = get_childgroup();
     ];
     const RESULT_NORMAL = 'สมวัย (ผ่านครบ 5 ด้าน)';
     const RESULT_DELAY = 'สงสัยล่าช้ากระตุ้นพัฒนาการภายใน 14-30 วัน';
-    const STATE_TEXT = { saved: 'บันทึกแล้ว', ready: 'พร้อมบันทึก', partial: 'ยังไม่ครบ 5 ด้าน', todo: 'ยังไม่ได้กรอก' };
+    const STATE_TEXT = { saved: 'บันทึกแล้ว', ready: 'พร้อมบันทึก', partial: 'ติ๊กพัฒนาการยังไม่ครบ 5 ด้าน', todo: 'ยังไม่ได้กรอก' };
 
     const PRE = Object.fromEntries(new URLSearchParams(location.search));
     let rows = [];
@@ -233,43 +235,47 @@ $groups = get_childgroup();
         if (m < 0) { y--; m += 12; }
         return { y, m, d, months: y * 12 + m };
     }
-    function ageRange(months) {
-        const steps = [1, 2, 4, 6, 9, 12, 18, 24, 30, 36, 42, 48, 54, 60, 66];
-        if (months < 1) return 'แรกเกิด - 1 เดือน 29 วัน';
-        for (let i = steps.length - 1; i >= 0; i--) {
-            if (months >= steps[i]) { const to = steps[i + 1] || 72; return `อายุ ${steps[i]} เดือน (${steps[i]} เดือน - ${to - 1} เดือน 29 วัน)`; }
-        }
-        return '';
-    }
+    // ช่วงอายุเกณฑ์: ตัวเลือกเดิมของหน้าบันทึกกราฟการเจริญเติบโต (เริ่มต้นตามอายุเด็ก)
+    const RANGES = [['0-2', '0-2 ปี'], ['2-5', '2-5 ปี']];
+    const defaultRange = (months) => (months < 24 ? '0-2' : '2-5');
     function plus30(iso) {
         const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + 30);
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
+    const nv = (v) => (v === null || v === undefined ? '' : String(v));
     function toRow(c) {
+        const age = ageOf(c.birthday);
         const r = {
             sid: c.studentid, nick: c.nickname || '', name: [c.prefix_th, c.firstname_th, c.lastname_th].filter(Boolean).join(' '),
-            birthday: c.birthday, st: {}, note: {}, dirty: false
+            birthday: c.birthday, st: {}, note: {}, issue: {}, dirty: false,
+            weight: nv(c.weight), height: nv(c.height), head: nv(c.head_circumference),
+            range: RANGES.some(([v]) => v === c.age_range) ? c.age_range : (age ? defaultRange(age.months) : '0-2'),
+            saved: c.growth_id !== null && c.growth_id !== undefined
         };
-        DOMAINS.forEach(([k]) => { r.st[k] = c[k + '_status'] || ''; r.note[k] = c[k + '_note'] || ''; });
-        r.saved = DOMAINS.every(([k]) => r.st[k] === 'pass' || r.st[k] === 'delay');
+        DOMAINS.forEach(([k]) => { r.st[k] = c[k + '_status'] || ''; r.note[k] = c[k + '_note'] || ''; r.issue[k] = nv(c[k + '_issue']); });
         return r;
     }
     const ticked = (r) => DOMAINS.filter(([k]) => r.st[k]).length;
     const passN = (r) => DOMAINS.filter(([k]) => r.st[k] === 'pass').length;
     const failN = (r) => DOMAINS.filter(([k]) => r.st[k] === 'delay').length;
     const complete = (r) => ticked(r) === DOMAINS.length;
-    const rowState = (r) => (r.dirty ? (complete(r) ? 'ready' : (ticked(r) ? 'partial' : 'todo'))
-        : (r.saved ? 'saved' : (ticked(r) ? 'partial' : 'todo')));
+    const hasMeasure = (r) => r.weight !== '' || r.height !== '' || r.head !== '';
+    // พัฒนาการต้องติ๊กครบ 5 ด้านหรือไม่ติ๊กเลย  แถวที่แก้แล้วบันทึกได้เมื่อครบ 5 ด้าน หรือไม่ติ๊กเลยแต่มีน้ำหนัก/ส่วนสูง/รอบศีรษะ
+    const isReady = (r) => r.dirty && (complete(r) || (ticked(r) === 0 && hasMeasure(r)));
+    const rowState = (r) => (r.dirty
+        ? (isReady(r) ? 'ready' : (ticked(r) ? 'partial' : 'todo'))
+        : (r.saved ? 'saved' : 'todo'));
 
     function header() {
         return '<thead><tr class="h1">' +
-            '<th class="g-child" colspan="3">เด็ก</th><th class="g-age" colspan="3">อายุ</th>' +
-            DOMAINS.map((d, i) => `<th class="g-d${i}" colspan="2" title="${esc(d[2])}">${esc(d[1])} (${d[0].toUpperCase()})</th>`).join('') +
+            '<th class="g-child" colspan="3">เด็ก</th><th class="g-age" colspan="3">อายุ</th><th class="g-meas" colspan="3">การเจริญเติบโต</th>' +
+            DOMAINS.map((d, i) => `<th class="g-d${i}" colspan="3" title="${esc(d[2])}">${esc(d[1])} (${d[0].toUpperCase()})</th>`).join('') +
             '<th class="g-sum" colspan="4">สรุป</th><th class="g-state" colspan="2">สถานะ</th></tr>' +
             '<tr class="h2"><th class="c-no">#</th><th class="c-nm">ชื่อ</th><th>วันเดือนปีเกิด</th>' +
             '<th>อายุ ณ วันที่ตรวจ</th><th>อายุ (เดือน)</th><th>ช่วงอายุเกณฑ์ที่ใช้</th>' +
-            DOMAINS.map(() => '<th>ผล</th><th>รายละเอียดเพิ่มเติม</th>').join('') +
+            '<th>น้ำหนัก (กก.)</th><th>ส่วนสูง (ซม.)</th><th>เส้นรอบศีรษะ (ซม.)</th>' +
+            DOMAINS.map(() => '<th>ผล</th><th>ข้อที่</th><th>รายละเอียดเพิ่มเติม</th>').join('') +
             '<th>ผ่าน (ด้าน)</th><th>ไม่ผ่าน (ด้าน)</th><th>ผลการคัดกรอง</th><th>ประเมินซ้ำภายใน 1 เดือน</th>' +
             '<th>สถานะ</th><th></th></tr></thead>';
     }
@@ -285,17 +291,20 @@ $groups = get_childgroup();
     function rowHtml(r, i) {
         const st = rowState(r), age = ageOf(r.birthday), s = summaryCells(r);
         const td = (cls, inner) => `<td class="${cls}">${inner}</td>`;
+        const meas = (m, v, label) => td('gc-meas', `<input class="f n" type="number" min="0" step="0.1" data-m="${m}" value="${esc(v)}" aria-label="${label}">`);
         let h = `<tr class="${st}" data-i="${i}">` +
             `<td class="c-no gc-child">${i + 1}</td>` +
             `<td class="c-nm gc-child"><div class="nick">${r.nick ? esc(r.nick) : esc(r.name)}</div>${r.nick ? `<div class="full">${esc(r.name)}</div>` : ''}</td>` +
             td('gc-child nw', esc(thaiShort(r.birthday))) +
             td('gc-age nw c-age', age ? `${age.y} ปี ${age.m} ด. ${age.d} ว.` : '<span class="text-danger">วันเกิดไม่ถูกต้อง</span>') +
             td('gc-age c-mon', age ? age.months : '-') +
-            td('gc-age rng c-rng', age ? esc(ageRange(age.months)) : '-');
+            td('gc-age', `<select class="f" data-r="1" aria-label="ช่วงอายุเกณฑ์ที่ใช้">${RANGES.map(([v, t]) => `<option value="${v}"${r.range === v ? ' selected' : ''}>${t}</option>`).join('')}</select>`) +
+            meas('weight', r.weight, 'น้ำหนัก') + meas('height', r.height, 'ส่วนสูง') + meas('head', r.head, 'เส้นรอบศีรษะ');
         DOMAINS.forEach(([k], di) => {
             const v = r.st[k];
             h += td('gc-d' + di, `<select class="f ${v === 'pass' ? 'is-pass' : v === 'delay' ? 'is-delay' : ''}" data-k="${k}" aria-label="${esc(DOMAINS[di][1])}">` +
                 `<option value="">-</option><option value="pass"${v === 'pass' ? ' selected' : ''}>ผ่าน</option><option value="delay"${v === 'delay' ? ' selected' : ''}>ไม่ผ่าน</option></select>`) +
+                td('gc-d' + di, `<input class="f n" type="number" min="1" data-iss="${k}" value="${esc(r.issue[k])}" aria-label="ข้อที่">`) +
                 td('gc-d' + di, `<input class="f t" type="text" maxlength="200" data-n="${k}" value="${esc(r.note[k])}" placeholder="รายละเอียดเพิ่มเติม">`);
         });
         h += td('gc-sum cnt c-pass', s.pass) + td('gc-sum cnt c-fail', s.fail) + td('gc-sum c-res', s.res) + td('gc-sum nw c-re', s.re) +
@@ -334,7 +343,7 @@ $groups = get_childgroup();
         rows.forEach((r) => c[rowState(r)]++);
         byId('gSummary').innerHTML = rows.length
             ? `<span>${rows.length} คน</span><span class="tg-pill saved">บันทึกแล้ว ${c.saved}</span><span class="tg-pill ready">พร้อมบันทึก ${c.ready}</span>` +
-              (c.partial ? `<span class="tg-pill partial">ยังไม่ครบ 5 ด้าน ${c.partial}</span>` : '') +
+              (c.partial ? `<span class="tg-pill partial">พัฒนาการยังไม่ครบ 5 ด้าน ${c.partial}</span>` : '') +
               `<span class="tg-pill todo">ยังไม่ได้กรอก ${c.todo}</span>`
             : '<span class="text-muted">ยังไม่ได้โหลดรายชื่อ</span>';
         byId('gProgress').style.display = byId('gLegend').style.display = rows.length ? '' : 'none';
@@ -342,7 +351,7 @@ $groups = get_childgroup();
             byId('gProgressText').textContent = `บันทึกแล้ว ${c.saved} / ${rows.length} คน`;
             byId('gProgressBar').style.width = Math.round(c.saved * 100 / rows.length) + '%';
         }
-        const ready = rows.filter((r) => r.dirty && complete(r)).length;
+        const ready = rows.filter(isReady).length;
         const btn = byId('gSave');
         btn.disabled = !ready;
         btn.innerHTML = `<i class="bi bi-check-circle me-1"></i>บันทึกทั้งห้อง${ready ? ` (${ready} คน)` : ''}`;
@@ -379,13 +388,13 @@ $groups = get_childgroup();
     }
 
     async function saveAll() {
-        const ready = rows.filter((r) => r.dirty && complete(r));
-        const partial = rows.filter((r) => r.dirty && ticked(r) && !complete(r)).length;
-        if (!ready.length) { Swal.fire({ icon: 'warning', title: 'ยังไม่มีข้อมูลให้บันทึก', text: 'ต้องเลือกผ่าน/ไม่ผ่านให้ครบทั้ง 5 ด้านในแถวที่ต้องการบันทึก', confirmButtonText: 'ตกลง' }); return; }
+        const ready = rows.filter(isReady);
+        const partial = rows.filter((r) => r.dirty && !isReady(r) && ticked(r)).length;
+        if (!ready.length) { Swal.fire({ icon: 'warning', title: 'ยังไม่มีข้อมูลให้บันทึก', text: 'กรอกน้ำหนัก/ส่วนสูง/รอบศีรษะ หรือเลือกผ่าน/ไม่ผ่านให้ครบทั้ง 5 ด้านในแถวที่ต้องการบันทึก', confirmButtonText: 'ตกลง' }); return; }
         const ok = await Swal.fire({
             title: `บันทึก ${ready.length} คน?`,
             html: `<div>วันที่ประเมิน ${esc(thaiShort(byId('gDate').value))}</div>` +
-                (partial ? `<div class="text-muted small mt-1">ข้าม ${partial} คนที่ยังติ๊กไม่ครบ 5 ด้าน</div>` : ''),
+                (partial ? `<div class="text-muted small mt-1">ข้าม ${partial} คนที่ติ๊กพัฒนาการไม่ครบ 5 ด้าน</div>` : ''),
             showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#15803d'
         });
         if (!ok.isConfirmed) return;
@@ -394,8 +403,8 @@ $groups = get_childgroup();
             const body = {
                 assess_date: byId('gDate').value,
                 rows: ready.map((r) => {
-                    const o = { student_id: r.sid };
-                    DOMAINS.forEach(([k]) => { o[k] = { status: r.st[k], note: r.note[k] }; });
+                    const o = { student_id: r.sid, age_range: r.range, weight: r.weight, height: r.height, head_circumference: r.head };
+                    DOMAINS.forEach(([k]) => { o[k] = { status: r.st[k], note: r.note[k], issue: r.issue[k] }; });
                     return o;
                 })
             };
@@ -446,21 +455,25 @@ $groups = get_childgroup();
         // เปลี่ยนวันที่ประเมิน = โหลดใหม่ (ผลที่บันทึกไว้ของวันนั้นและอายุเปลี่ยนตาม)
         byId('gDate').addEventListener('change', () => { if (rows.length) loadList(false); });
         byId('gFillPass').addEventListener('click', () => {
-            rows.forEach((r) => { if (!r.saved && !r.dirty && !ticked(r)) { DOMAINS.forEach(([k]) => { r.st[k] = 'pass'; }); r.dirty = true; } });
+            rows.forEach((r) => { if (!r.dirty && !ticked(r)) { DOMAINS.forEach(([k]) => { r.st[k] = 'pass'; }); r.dirty = true; } });
             render();
         });
         wrap.addEventListener('change', (e) => {
             const el = e.target, tr = el.closest('tr[data-i]');
-            if (!tr || !el.dataset.k) return;
+            if (!tr || !(el.dataset.k || el.dataset.r)) return;
             const r = rows[+tr.dataset.i];
-            r.st[el.dataset.k] = el.value; r.dirty = true;
+            if (el.dataset.r) r.range = el.value; else r.st[el.dataset.k] = el.value;
+            r.dirty = true;
             refreshRow(+tr.dataset.i);
         });
         wrap.addEventListener('input', (e) => {
             const el = e.target, tr = el.closest('tr[data-i]');
-            if (!tr || !el.dataset.n) return;
+            if (!tr || !(el.dataset.n || el.dataset.m || el.dataset.iss)) return;
             const r = rows[+tr.dataset.i];
-            r.note[el.dataset.n] = el.value; r.dirty = true;
+            if (el.dataset.n) r.note[el.dataset.n] = el.value;
+            else if (el.dataset.iss) r.issue[el.dataset.iss] = el.value;
+            else r[el.dataset.m] = el.value;
+            r.dirty = true;
             refreshRow(+tr.dataset.i);
         });
         wrap.addEventListener('click', (e) => {

@@ -22,7 +22,9 @@ try {
     $sql = "SELECT c.studentid, c.prefix_th, c.firstname_th, c.lastname_th, c.nickname,
                    c.child_group, c.classroom, c.birthday,
                    d.gm_status, d.gm_note, d.fm_status, d.fm_note, d.rl_status, d.rl_note,
-                   d.el_status, d.el_note, d.ps_status, d.ps_note
+                   d.el_status, d.el_note, d.ps_status, d.ps_note,
+                   d.gm_issue, d.fm_issue, d.rl_issue, d.el_issue, d.ps_issue,
+                   d.id AS growth_id, d.weight, d.height, d.head_circumference, d.age_range
             FROM children c
             LEFT JOIN (
                 SELECT DISTINCT ON (student_id) *

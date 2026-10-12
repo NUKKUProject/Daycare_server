@@ -12,7 +12,6 @@ ALTER TABLE growth_records
     ADD COLUMN IF NOT EXISTS el_note        TEXT,
     ADD COLUMN IF NOT EXISTS ps_note        TEXT,
     ADD COLUMN IF NOT EXISTS age_months     INTEGER,        -- อายุ ณ วันประเมิน (เดือนเต็ม)
-    ADD COLUMN IF NOT EXISTS dev_age_range  VARCHAR(100),   -- ช่วงอายุเกณฑ์พัฒนาการที่ใช้ (แยกจาก age_range ของกราฟน้ำหนัก/ส่วนสูง)
     ADD COLUMN IF NOT EXISTS dev_pass_count INTEGER,
     ADD COLUMN IF NOT EXISTS dev_fail_count INTEGER,
     ADD COLUMN IF NOT EXISTS dev_result     VARCHAR(10) CHECK (dev_result IN ('normal', 'delay')),
