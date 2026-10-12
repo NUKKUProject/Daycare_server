@@ -1851,25 +1851,28 @@ textarea.vx-input { height:auto; }
       <div class="chart-card">
         <div class="chart-card-header">
           <div class="chart-card-title"><i class="bi bi-bar-chart me-1"></i>น้ำหนักตามเกณฑ์อายุ</div>
+          <button type="button" class="btn-chart-expand" onclick="expandGrowthChart('chartWeight')" title="ขยายดูเต็มจอ" aria-label="ขยายกราฟ"><i class="bi bi-arrows-fullscreen"></i></button>
         </div>
         <div class="chart-card-body">
-          <canvas id="chartWeight"></canvas>
+          <canvas id="chartWeight" style="cursor:zoom-in;" onclick="expandGrowthChart('chartWeight')"></canvas>
         </div>
       </div>
       <div class="chart-card">
         <div class="chart-card-header">
           <div class="chart-card-title"><i class="bi bi-bar-chart me-1"></i>ส่วนสูงตามเกณฑ์อายุ</div>
+          <button type="button" class="btn-chart-expand" onclick="expandGrowthChart('chartHeight')" title="ขยายดูเต็มจอ" aria-label="ขยายกราฟ"><i class="bi bi-arrows-fullscreen"></i></button>
         </div>
         <div class="chart-card-body">
-          <canvas id="chartHeight"></canvas>
+          <canvas id="chartHeight" style="cursor:zoom-in;" onclick="expandGrowthChart('chartHeight')"></canvas>
         </div>
       </div>
       <div class="chart-card">
         <div class="chart-card-header">
           <div class="chart-card-title"><i class="bi bi-bar-chart me-1"></i>BMI ตามเกณฑ์อายุ</div>
+          <button type="button" class="btn-chart-expand" onclick="expandGrowthChart('chartBMI')" title="ขยายดูเต็มจอ" aria-label="ขยายกราฟ"><i class="bi bi-arrows-fullscreen"></i></button>
         </div>
         <div class="chart-card-body">
-          <canvas id="chartBMI"></canvas>
+          <canvas id="chartBMI" style="cursor:zoom-in;" onclick="expandGrowthChart('chartBMI')"></canvas>
         </div>
       </div>
     </div>
@@ -2097,6 +2100,21 @@ textarea.vx-input { height:auto; }
         <button type="button" class="btn px-4 fw-semibold" style="border-radius:8px;background:linear-gradient(135deg,#0f2460 0%,#1a3a8f 60%,#1e4db7 100%);color:#fff;border:none;" data-bs-dismiss="modal">
           <i class="bi bi-x-circle me-2"></i>ปิด
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Growth Chart (ขยายกราฟเต็มจอ) ===== -->
+<div class="modal fade" id="growthChartModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-graph-up me-2 text-primary"></i><span id="growthChartModalTitle">กราฟ</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div style="position:relative;height:70vh;"><canvas id="chartExpanded"></canvas></div>
       </div>
     </div>
   </div>
@@ -5479,9 +5497,29 @@ textarea.vx-input { height:auto; }
       .catch(error => console.error('Failed to load growth reference data (' + indicator + '):', error));
   }
 
+  // กดกราฟ/ปุ่มขยายเพื่อดูเต็มจอใน popup (ใช้ข้อมูลและเส้นเกณฑ์ชุดเดียวกับกราฟเล็ก)
+  const growthChartSpecs = {};
+  window.expandGrowthChart = function (canvasId) {
+    const spec = growthChartSpecs[canvasId];
+    if (!spec) return;
+    if (growthCharts.expanded) { growthCharts.expanded.destroy(); growthCharts.expanded = null; }
+    document.getElementById('growthChartModalTitle').textContent = spec.title;
+    const modalEl = document.getElementById('growthChartModal');
+    modalEl.addEventListener('shown.bs.modal', function draw() {
+      modalEl.removeEventListener('shown.bs.modal', draw);
+      buildChart('chartExpanded', spec.title, spec.yLabel, spec.refData, spec.childPoints, spec.childColor, spec.yMin, spec.yMax);
+    });
+    modalEl.addEventListener('hidden.bs.modal', function clean() {
+      modalEl.removeEventListener('hidden.bs.modal', clean);
+      if (growthCharts.expanded) { growthCharts.expanded.destroy(); growthCharts.expanded = null; }
+    });
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  };
+
   function buildChart(canvasId, title, yLabel, refData, childPoints, childColor, yMin, yMax) {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
+    if (canvasId !== 'chartExpanded') growthChartSpecs[canvasId] = { title: title, yLabel: yLabel, refData: refData, childPoints: childPoints, childColor: childColor, yMin: yMin, yMax: yMax };
 
     // Build reference datasets
     const refDatasets = [

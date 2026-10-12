@@ -1095,3 +1095,18 @@
       .btn-action, .icon-btn, .search-bar { display: none !important; }
       .content-card { box-shadow: none; border: 1px solid #ddd; }
     }
+
+    /* ปุ่มขยายกราฟ (เปิด popup ดูเต็มจอ) */
+    .btn-chart-expand {
+      border: 1px solid var(--gray-200);
+      background: #fff;
+      color: var(--gray-500);
+      border-radius: 8px;
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .btn-chart-expand:hover { color: var(--primary); border-color: var(--primary); }
