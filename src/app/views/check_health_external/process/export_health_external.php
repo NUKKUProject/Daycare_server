@@ -108,7 +108,8 @@ foreach ($data as $index => $row) {
 
     // แปลงค่าจาก JSON
     $vitalSigns = json_decode($row['vital_signs'], true);
-    $bpDate = (!empty($vitalSigns['bp_date'])) ? thaiMonth($vitalSigns['bp_date']) : '-';
+    $bpDateRaw = !empty($row['measurement_date']) ? $row['measurement_date'] : ($vitalSigns['bp_date'] ?? '');   // วันที่ตรวจความดัน = วันที่วัด (measurement_date)
+    $bpDate = (!empty($bpDateRaw)) ? thaiMonth($bpDateRaw) : '-';
     $behavior = json_decode($row['behavior'], true);
     $detail = $behavior['detail'] ?? '';
     $status = $behavior['status'] ?? '';
