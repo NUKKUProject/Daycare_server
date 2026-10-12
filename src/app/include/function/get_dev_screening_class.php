@@ -24,7 +24,12 @@ try {
                    d.gm_status, d.gm_note, d.fm_status, d.fm_note, d.rl_status, d.rl_note,
                    d.el_status, d.el_note, d.ps_status, d.ps_note
             FROM children c
-            LEFT JOIN development_screenings d ON d.student_id = c.studentid AND d.assess_date = :date
+            LEFT JOIN (
+                SELECT DISTINCT ON (student_id) *
+                FROM growth_records
+                WHERE DATE(created_at) = :date AND is_draft = false
+                ORDER BY student_id, id DESC
+            ) d ON d.student_id = c.studentid
             WHERE c.status = 'กำลังศึกษา' AND c.child_group = :child_group";
     $params = [':date' => $date, ':child_group' => $childGroup];
 

@@ -32,7 +32,7 @@ function devScreeningAgeRange(int $months): string
     return '';
 }
 
-// สรุปผลจากการติ๊ก: $statuses = ['gm'=>'pass'|'fail', ...] ครบ 5 ด้าน
+// สรุปผลจากการติ๊ก: $statuses = ['gm'=>'pass'|'delay', ...] ครบ 5 ด้าน
 function devScreeningSummary(array $statuses, string $assessDate): array
 {
     $pass = 0;

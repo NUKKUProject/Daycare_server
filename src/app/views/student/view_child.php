@@ -5335,26 +5335,27 @@ textarea.vx-input { height:auto; }
           return;
         }
         box.innerHTML = res.records.map(r => {
-          const delay = r.result === 'delay';
+          const delay = r.dev_result === 'delay';
           const rows = domains.map(([c, label]) => {
-            const ok = r[c + '_status'] === 'pass';
-            return '<tr><td>' + label + '</td>' +
-              '<td>' + (ok ? '<span class="dev-pass"><i class="bi bi-check-circle-fill me-1"></i>ผ่าน</span>'
-                           : '<span class="dev-delay"><i class="bi bi-x-circle-fill me-1"></i>ไม่ผ่าน</span>') + '</td>' +
+            const stv = r[c + '_status'];
+            const statusHtml = !stv ? '<span style="color:var(--gray-400);">-</span>'
+              : stv === 'pass' ? '<span class="dev-pass"><i class="bi bi-check-circle-fill me-1"></i>ผ่าน</span>'
+              : '<span class="dev-delay"><i class="bi bi-x-circle-fill me-1"></i>ไม่ผ่าน</span>';
+            return '<tr><td>' + label + '</td><td>' + statusHtml + '</td>' +
               '<td style="font-size:0.82rem;">' + (r[c + '_note'] ? esc(r[c + '_note']) : '-') + '</td></tr>';
           }).join('');
           return '<div style="border:1px solid var(--gray-200);border-radius:10px;margin-bottom:1rem;overflow:hidden;">' +
             '<div style="padding:.75rem 1rem;background:var(--gray-50);font-size:.85rem;line-height:1.7;">' +
               '<div><strong>วันที่ประเมิน:</strong> ' + formatThaiDateShort(r.assess_date) + ' &nbsp; <strong>วันเกิด:</strong> ' + formatThaiDateShort(r.birthday) + '</div>' +
-              '<div><strong>อายุ ณ วันที่ตรวจ:</strong> ' + r.age_year + ' ปี ' + r.age_month + ' เดือน ' + r.age_day + ' วัน (' + r.age_months + ' เดือน)</div>' +
-              '<div><strong>ช่วงอายุเกณฑ์ที่ใช้:</strong> ' + esc(r.age_range) + '</div>' +
+              (r.age_year != null ? '<div><strong>อายุ ณ วันที่ตรวจ:</strong> ' + r.age_year + ' ปี ' + r.age_month + ' เดือน ' + r.age_day + ' วัน (' + r.age_months + ' เดือน)</div>' : '') +
+              (r.age_range ? '<div><strong>ช่วงอายุเกณฑ์ที่ใช้:</strong> ' + esc(r.age_range) + '</div>' : '') +
             '</div>' +
             '<table class="dev-table"><thead><tr><th>ด้านพัฒนาการ</th><th>ผลการประเมิน</th><th>รายละเอียดเพิ่มเติม</th></tr></thead><tbody>' + rows + '</tbody></table>' +
             '<div style="padding:.75rem 1rem;font-size:.85rem;line-height:1.7;">' +
               '<div>ผ่าน <strong>' + r.pass_count + '</strong> ด้าน &nbsp; ไม่ผ่าน <strong>' + r.fail_count + '</strong> ด้าน</div>' +
-              '<div><strong>ผลการคัดกรองพัฒนาการ:</strong> ' +
+              (r.dev_result ? '<div><strong>ผลการคัดกรองพัฒนาการ:</strong> ' +
                 (delay ? '<span class="dev-delay">สงสัยล่าช้ากระตุ้นพัฒนาการภายใน 14-30 วัน</span>'
-                       : '<span class="dev-pass">สมวัย (ผ่านครบ 5 ด้าน)</span>') + '</div>' +
+                       : '<span class="dev-pass">สมวัย (ผ่านครบ 5 ด้าน)</span>') + '</div>' : '') +
               (delay && r.recheck_date ? '<div><strong>ประเมินซ้ำภายใน 1 เดือน:</strong> ภายในวันที่ ' + formatThaiDateShort(r.recheck_date) + '</div>' : '') +
             '</div></div>';
         }).join('');

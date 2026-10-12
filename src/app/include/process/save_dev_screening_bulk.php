@@ -1,10 +1,12 @@
 <?php
-// บันทึกผลคัดกรองพัฒนาการหลายคนพร้อมกัน (ครู/แอดมินเท่านั้น) ระบบคำนวณอายุ สรุปผล และวันประเมินซ้ำเอง
+// บันทึกผลคัดกรองพัฒนาการหลายคนพร้อมกัน (ครู/แอดมินเท่านั้น) ลงตาราง growth_records เดิม
+// ระบบคำนวณอายุ สรุปผล และวันประเมินซ้ำเอง  ถ้าเด็กมีแถวของวันนั้นอยู่แล้ว (เช่น บันทึกน้ำหนัก/ส่วนสูงไว้) จะเติมลงแถวเดิม
 require_once __DIR__ . '/../auth/auth.php';
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../function/dev_screening_functions.php';
 header('Content-Type: application/json');
 checkUserRole(['admin', 'teacher']);
+date_default_timezone_set('Asia/Bangkok');
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -24,32 +26,37 @@ try {
     $isTeacher = getUserRole() === 'teacher';
     $recordedBy = function_exists('getFullName') ? getFullName() : ($_SESSION['username'] ?? '');
 
-    $childSql = "SELECT c.birthday FROM children c WHERE c.studentid = :sid";
+    $childSql = "SELECT c.birthday, c.child_group, c.sex FROM children c WHERE c.studentid = :sid";
     if ($isTeacher) {
         $childSql .= devScreeningTeacherScopeSql();
     }
     $childStmt = $pdo->prepare($childSql);
 
-    $upsert = $pdo->prepare("
-        INSERT INTO development_screenings
-            (student_id, assess_date, birthday, age_year, age_month, age_day, age_months, age_range,
+    $findStmt = $pdo->prepare("SELECT id FROM growth_records
+        WHERE student_id = :sid AND DATE(created_at) = :d AND is_draft = false
+        ORDER BY id DESC LIMIT 1");
+
+    $devCols = "age_year = :age_year, age_month = :age_month, age_day = :age_day,
+        age_months = :age_months, dev_age_range = :age_range,
+        gm_status = :gm_status, gm_note = :gm_note, fm_status = :fm_status, fm_note = :fm_note,
+        rl_status = :rl_status, rl_note = :rl_note, el_status = :el_status, el_note = :el_note,
+        ps_status = :ps_status, ps_note = :ps_note,
+        dev_pass_count = :pass_count, dev_fail_count = :fail_count, dev_result = :result,
+        recheck_date = :recheck_date, dev_recorded_by = :recorded_by";
+
+    $updateStmt = $pdo->prepare("UPDATE growth_records SET $devCols, updated_at = NOW() WHERE id = :id");
+
+    $insertStmt = $pdo->prepare("
+        INSERT INTO growth_records
+            (student_id, child_group, sex, created_at, is_draft,
+             age_year, age_month, age_day, age_months, dev_age_range,
              gm_status, gm_note, fm_status, fm_note, rl_status, rl_note, el_status, el_note, ps_status, ps_note,
-             pass_count, fail_count, result, recheck_date, recorded_by)
+             dev_pass_count, dev_fail_count, dev_result, recheck_date, dev_recorded_by)
         VALUES
-            (:student_id, :assess_date, :birthday, :age_year, :age_month, :age_day, :age_months, :age_range,
+            (:student_id, :child_group, :sex, :created_at, false,
+             :age_year, :age_month, :age_day, :age_months, :age_range,
              :gm_status, :gm_note, :fm_status, :fm_note, :rl_status, :rl_note, :el_status, :el_note, :ps_status, :ps_note,
-             :pass_count, :fail_count, :result, :recheck_date, :recorded_by)
-        ON CONFLICT (student_id, assess_date) DO UPDATE SET
-            birthday = EXCLUDED.birthday, age_year = EXCLUDED.age_year, age_month = EXCLUDED.age_month,
-            age_day = EXCLUDED.age_day, age_months = EXCLUDED.age_months, age_range = EXCLUDED.age_range,
-            gm_status = EXCLUDED.gm_status, gm_note = EXCLUDED.gm_note,
-            fm_status = EXCLUDED.fm_status, fm_note = EXCLUDED.fm_note,
-            rl_status = EXCLUDED.rl_status, rl_note = EXCLUDED.rl_note,
-            el_status = EXCLUDED.el_status, el_note = EXCLUDED.el_note,
-            ps_status = EXCLUDED.ps_status, ps_note = EXCLUDED.ps_note,
-            pass_count = EXCLUDED.pass_count, fail_count = EXCLUDED.fail_count, result = EXCLUDED.result,
-            recheck_date = EXCLUDED.recheck_date, recorded_by = EXCLUDED.recorded_by, updated_at = NOW()
-    ");
+             :pass_count, :fail_count, :result, :recheck_date, :recorded_by)");
 
     $saved = 0;
     $errors = [];
@@ -76,7 +83,7 @@ try {
         $bind = [];
         foreach (DEV_SCREENING_DOMAINS as $d) {
             $st = $row[$d]['status'] ?? '';
-            if ($st !== 'pass' && $st !== 'fail') {
+            if ($st !== 'pass' && $st !== 'delay') {
                 $errors[] = "$sid: ยังไม่ได้ติ๊กผ่าน/ไม่ผ่านครบทั้ง 5 ด้าน";
                 continue 2;
             }
@@ -87,10 +94,7 @@ try {
         }
 
         $sum = devScreeningSummary($statuses, $assessDate);
-        $upsert->execute($bind + [
-            ':student_id' => $sid,
-            ':assess_date' => $assessDate,
-            ':birthday' => $child['birthday'],
+        $bind += [
             ':age_year' => $age['year'],
             ':age_month' => $age['month'],
             ':age_day' => $age['day'],
@@ -101,7 +105,20 @@ try {
             ':result' => $sum['result'],
             ':recheck_date' => $sum['recheck_date'],
             ':recorded_by' => $recordedBy,
-        ]);
+        ];
+
+        $findStmt->execute([':sid' => $sid, ':d' => $assessDate]);
+        $existingId = $findStmt->fetchColumn();
+        if ($existingId) {
+            $updateStmt->execute($bind + [':id' => $existingId]);
+        } else {
+            $insertStmt->execute($bind + [
+                ':student_id' => $sid,
+                ':child_group' => $child['child_group'],
+                ':sex' => $child['sex'],
+                ':created_at' => $assessDate . ' ' . date('H:i:s'),
+            ]);
+        }
         $saved++;
     }
     $pdo->commit();

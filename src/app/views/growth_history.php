@@ -226,7 +226,7 @@ function dsRender() {
             const note = s[d.code + '_note'] || '';
             html += `<td class="ds-domain">
                 <div class="form-check form-check-inline me-1"><input class="form-check-input" type="radio" name="ds_${i}_${d.code}" value="pass" ${st === 'pass' ? 'checked' : ''} onchange="dsUpdateRow(${i})"><label class="form-check-label small">ผ่าน</label></div>
-                <div class="form-check form-check-inline me-0"><input class="form-check-input" type="radio" name="ds_${i}_${d.code}" value="fail" ${st === 'fail' ? 'checked' : ''} onchange="dsUpdateRow(${i})"><label class="form-check-label small">ไม่ผ่าน</label></div>
+                <div class="form-check form-check-inline me-0"><input class="form-check-input" type="radio" name="ds_${i}_${d.code}" value="delay" ${st === 'delay' ? 'checked' : ''} onchange="dsUpdateRow(${i})"><label class="form-check-label small">ไม่ผ่าน</label></div>
                 <input type="text" class="form-control form-control-sm mt-1" name="ds_${i}_${d.code}_note" placeholder="รายละเอียดเพิ่มเติม" value="${dsEsc(note)}">
             </td>`;
         });
@@ -253,7 +253,7 @@ function dsUpdateRow(i) {
     const st = dsRowStatuses(i);
     const ticked = Object.values(st).filter(Boolean).length;
     const pass = Object.values(st).filter(v => v === 'pass').length;
-    const fail = Object.values(st).filter(v => v === 'fail').length;
+    const fail = Object.values(st).filter(v => v === 'delay').length;
     const date = document.getElementById('dsDate').value;
 
     row.querySelector('.ds-pass').textContent = ticked ? pass : '-';
