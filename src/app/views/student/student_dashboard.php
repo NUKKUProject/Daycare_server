@@ -199,7 +199,7 @@ if ($child) {
     $exItem = null;
     try {
         $exStmt = $pdo->prepare("
-            SELECT e.id, e.exam_date, e.behavior, e.development_assessment, e.physical_exam, e.neurological,
+            SELECT e.id, e.exam_date, e.academic_year, e.check_round, e.behavior, e.development_assessment, e.physical_exam, e.neurological,
                    f.status AS followup_status, f.followup_date, f.note AS followup_note, f.by_role AS followup_by_role
             FROM health_data_external e
             LEFT JOIN health_followups f ON f.source_type = 'external' AND f.source_id = e.id
@@ -214,7 +214,7 @@ if ($child) {
             $fs = $ex['followup_status'] ?? '';
             $exBadge = ['' => 'ต้องแจ้งกลับ', 'acknowledged' => 'รับทราบแล้ว', 'scheduled' => 'นัดหมอ ' . thaiDateShort($ex['followup_date']), 'treated' => 'พาไปรักษาแล้ว'][$fs] ?? 'ต้องแจ้งกลับ';
             $exTone = $fs === '' ? 'red' : ($fs === 'treated' ? 'green' : 'blue');
-            $exItem = ['id' => (int) $ex['id'], 'date' => $ex['exam_date'], 'parts' => $exParts, 'status' => $fs,
+            $exItem = ['id' => (int) $ex['id'], 'date' => $ex['exam_date'], 'round' => trim(($ex['academic_year'] ? 'ปีการศึกษา ' . $ex['academic_year'] : '') . ' รอบที่ ' . ((int) $ex['check_round'] ?: 1)), 'parts' => $exParts, 'status' => $fs,
                 'followup_date' => $ex['followup_date'], 'note' => $ex['followup_note'], 'by_role' => $ex['followup_by_role'] ?? ''];
             $hubItems[] = ['icon' => 'fa-solid fa-user-doctor', 'tone' => $exTone, 'title' => 'ตรวจร่างกายจากกุมารแพทย์',
                 'sub' => implode(' · ', $exParts) . ' · ' . thaiDateShort($ex['exam_date']),
@@ -1165,7 +1165,7 @@ $viewTabs = [
                     <i class="fa-solid fa-user-doctor"></i>
                     <div>
                         <div class="t">ตรวจร่างกายจากกุมารแพทย์</div>
-                        <div class="s">วันที่ตรวจ <?= htmlspecialchars(thaiDateShort($exItem['date'])) ?></div>
+                        <div class="s">วันที่ตรวจ <?= htmlspecialchars(thaiDateShort($exItem['date'])) ?> · <?= htmlspecialchars($exItem['round']) ?></div>
                     </div>
                 </div>
                 <div class="dental-body">
