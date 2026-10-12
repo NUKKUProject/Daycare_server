@@ -1815,19 +1815,6 @@ textarea.vx-input { height:auto; }
       </div>
     </div>
 
-    <!-- Development Screening (ครู/แอดมินเป็นผู้กรองในหน้า growth_history; ที่นี่ดูได้อย่างเดียว) -->
-    <div class="content-card mb-4">
-      <div class="content-card-header">
-        <div class="section-title">
-          <i class="bi bi-clipboard2-check icon-success" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;"></i>
-          ผลการคัดกรองพัฒนาการ 5 ด้าน
-        </div>
-      </div>
-      <div class="content-card-body" id="dev-screening-body">
-        <div style="text-align:center;padding:1.5rem;color:var(--gray-400);"><i class="bi bi-hourglass-split me-2"></i>รอข้อมูล</div>
-      </div>
-    </div>
-
     <!-- Growth History Table -->
     <div class="content-card mb-4">
       <div class="content-card-header">
@@ -5290,59 +5277,7 @@ textarea.vx-input { height:auto; }
   /* ── Load Growth Data ── */
   let growthCharts = { weight: null, height: null };
 
-  function loadDevScreening() {
-    const box = document.getElementById('dev-screening-body');
-    if (!box) return;
-    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const domains = [
-      ['gm', 'การเคลื่อนไหว Gross Motor (GM)'],
-      ['fm', 'การใช้กล้ามเนื้อมัดเล็กและสติปัญญา Fine Motor (FM)'],
-      ['rl', 'การเข้าใจภาษา Receptive Language (RL)'],
-      ['el', 'การใช้ภาษา Expressive Language (EL)'],
-      ['ps', 'การช่วยเหลือตัวเองและสังคม Personal and Social (PS)']
-    ];
-
-    fetch('../../include/function/get_student_dev_screening.php?student_id=' + encodeURIComponent(studentId))
-      .then(r => r.json())
-      .then(res => {
-        if (res.status !== 'success') throw new Error(res.message || 'ไม่สามารถโหลดข้อมูลได้');
-        if (!res.records.length) {
-          box.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--gray-400);"><i class="bi bi-info-circle me-2"></i>ยังไม่มีผลการคัดกรองพัฒนาการ</div>';
-          return;
-        }
-        box.innerHTML = res.records.map(r => {
-          const delay = r.dev_result === 'delay';
-          const rows = domains.map(([c, label]) => {
-            const stv = r[c + '_status'];
-            const statusHtml = !stv ? '<span style="color:var(--gray-400);">-</span>'
-              : stv === 'pass' ? '<span class="dev-pass"><i class="bi bi-check-circle-fill me-1"></i>ผ่าน</span>'
-              : '<span class="dev-delay"><i class="bi bi-x-circle-fill me-1"></i>ไม่ผ่าน</span>';
-            return '<tr><td>' + label + '</td><td>' + statusHtml + '</td>' +
-              '<td style="font-size:0.82rem;">' + ([r[c + '_issue'] ? 'ข้อที่ ' + esc(r[c + '_issue']) : '', r[c + '_note'] ? esc(r[c + '_note']) : ''].filter(Boolean).join(' · ') || '-') + '</td></tr>';
-          }).join('');
-          return '<div style="border:1px solid var(--gray-200);border-radius:10px;margin-bottom:1rem;overflow:hidden;">' +
-            '<div style="padding:.75rem 1rem;background:var(--gray-50);font-size:.85rem;line-height:1.7;">' +
-              '<div><strong>วันที่ประเมิน:</strong> ' + formatThaiDateShort(r.assess_date) + ' &nbsp; <strong>วันเกิด:</strong> ' + formatThaiDateShort(r.birthday) + '</div>' +
-              (r.age_year != null ? '<div><strong>อายุ ณ วันที่ตรวจ:</strong> ' + r.age_year + ' ปี ' + r.age_month + ' เดือน ' + r.age_day + ' วัน (' + r.age_months + ' เดือน)</div>' : '') +
-              (r.age_range ? '<div><strong>ช่วงอายุเกณฑ์ที่ใช้:</strong> ' + esc(r.age_range) + ' ปี</div>' : '') +
-            '</div>' +
-            '<table class="dev-table"><thead><tr><th>ด้านพัฒนาการ</th><th>ผลการประเมิน</th><th>รายละเอียดเพิ่มเติม</th></tr></thead><tbody>' + rows + '</tbody></table>' +
-            '<div style="padding:.75rem 1rem;font-size:.85rem;line-height:1.7;">' +
-              '<div>ผ่าน <strong>' + r.pass_count + '</strong> ด้าน &nbsp; ไม่ผ่าน <strong>' + r.fail_count + '</strong> ด้าน</div>' +
-              (r.dev_result ? '<div><strong>ผลการคัดกรองพัฒนาการ:</strong> ' +
-                (delay ? '<span class="dev-delay">สงสัยล่าช้ากระตุ้นพัฒนาการภายใน 14-30 วัน</span>'
-                       : '<span class="dev-pass">สมวัย (ผ่านครบ 5 ด้าน)</span>') + '</div>' : '') +
-              (delay && r.recheck_date ? '<div><strong>ประเมินซ้ำภายใน 1 เดือน:</strong> ภายในวันที่ ' + formatThaiDateShort(r.recheck_date) + '</div>' : '') +
-            '</div></div>';
-        }).join('');
-      })
-      .catch(e => {
-        box.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--danger);"><i class="bi bi-exclamation-triangle me-2"></i>' + esc(e.message) + '</div>';
-      });
-  }
-
   function loadGrowthData() {
-    loadDevScreening();
     const tbody = document.getElementById('growth-history-body');
     if (tbody) {
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--gray-400);"><i class="bi bi-hourglass-split me-2"></i>กำลังโหลดข้อมูล...</td></tr>';
@@ -5704,11 +5639,22 @@ textarea.vx-input { height:auto; }
       return '<span style="color:' + (isGood ? 'var(--success)' : 'var(--danger)') + ';font-weight:700;">' + label + '</span>';
     }
 
-    function devStatusHtml(status) {
-      if (status === 'pass') return '<span style="color:var(--success);font-weight:700;">ผ่าน</span>';
-      if (status === 'delay' || status === 'fail') return '<span style="color:var(--danger);font-weight:700;">สงสัยล่าช้า</span>';
+    function devStatusHtml(d) {
+      d = d || {};
+      const esc2 = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const extra = [d.score ? 'ข้อที่ ' + esc2(d.score) : '', d.note ? esc2(d.note) : ''].filter(Boolean).join(' · ');
+      const extraHtml = extra ? '<div style="font-size:0.75rem;font-weight:400;color:var(--gray-500);">' + extra + '</div>' : '';
+      if (d.status === 'pass') return '<span style="color:var(--success);font-weight:700;">ผ่าน</span>' + extraHtml;
+      if (d.status === 'delay' || d.status === 'fail') return '<span style="color:var(--danger);font-weight:700;">ไม่ผ่าน</span>' + extraHtml;
       return '<span style="color:var(--gray-400);">-</span>';
     }
+    const devSummaryHtml = record.dev_result
+      ? '<div style="margin-top:0.5rem;font-size:0.85rem;line-height:1.6;"><strong>ผลการคัดกรอง:</strong> ' +
+        (record.dev_result === 'delay'
+          ? '<span style="color:var(--danger);font-weight:700;">สงสัยล่าช้ากระตุ้นพัฒนาการภายใน 14-30 วัน</span>'
+          : '<span style="color:var(--success);font-weight:700;">สมวัย (ผ่านครบ 5 ด้าน)</span>') +
+        (record.dev_result === 'delay' && record.recheck_date ? '<br><strong>ประเมินซ้ำภายใน 1 เดือน:</strong> ภายในวันที่ ' + formatThaiDateLong(record.recheck_date) : '') + '</div>'
+      : '';
 
     const content = `
       <div class="row g-3">
@@ -5775,28 +5721,29 @@ textarea.vx-input { height:auto; }
             <div class="info-row">
               <div class="info-row-icon"><i class="bi bi-person-walking"></i></div>
               <div class="info-row-label">GM</div>
-              <div class="info-row-value">${devStatusHtml((dev.gm || {}).status)}</div>
+              <div class="info-row-value">${devStatusHtml(dev.gm)}</div>
             </div>
             <div class="info-row">
               <div class="info-row-icon"><i class="bi bi-hand-index"></i></div>
               <div class="info-row-label">FM</div>
-              <div class="info-row-value">${devStatusHtml((dev.fm || {}).status)}</div>
+              <div class="info-row-value">${devStatusHtml(dev.fm)}</div>
             </div>
             <div class="info-row">
               <div class="info-row-icon"><i class="bi bi-ear"></i></div>
               <div class="info-row-label">RL</div>
-              <div class="info-row-value">${devStatusHtml((dev.rl || {}).status)}</div>
+              <div class="info-row-value">${devStatusHtml(dev.rl)}</div>
             </div>
             <div class="info-row">
               <div class="info-row-icon"><i class="bi bi-chat-dots"></i></div>
               <div class="info-row-label">EL</div>
-              <div class="info-row-value">${devStatusHtml((dev.el || {}).status)}</div>
+              <div class="info-row-value">${devStatusHtml(dev.el)}</div>
             </div>
             <div class="info-row">
               <div class="info-row-icon"><i class="bi bi-people"></i></div>
               <div class="info-row-label">PS</div>
-              <div class="info-row-value">${devStatusHtml((dev.ps || {}).status)}</div>
+              <div class="info-row-value">${devStatusHtml(dev.ps)}</div>
             </div>
+            ${devSummaryHtml}
           </div>
         </div>
       </div>
