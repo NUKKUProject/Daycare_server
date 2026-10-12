@@ -45,8 +45,6 @@ $groups = get_childgroup();
     .tg th.g-d3 { background: #fecaca; } .tg th.g-d4 { background: #bae6fd; }
     .tg th.g-meas { background: #fef08a; } .tg td.gc-meas { background: #fefce8; }
     .tg input.n { width: 64px; text-align: center; }
-    .tg .f.filled { background: #ecfdf5; border-color: #34d399; }
-    .tg .f.empty { background: #fff7ed; border-color: #fb923c; }
     .tg th.g-sum { background: #fed7aa; } .tg th.g-state { background: #e2e8f0; }
     .tg td { padding: 3px; border-bottom: 1px solid #e2e8f0; text-align: center; background: #fff; }
     .tg .c-no { position: sticky; left: 0; z-index: 2; min-width: 36px; background: #fff; }
@@ -64,6 +62,9 @@ $groups = get_childgroup();
     .tg td.gc-d0 { background: #fffbeb; } .tg td.gc-d1 { background: #f0fdf4; } .tg td.gc-d2 { background: #faf5ff; }
     .tg td.gc-d3 { background: #fef2f2; } .tg td.gc-d4 { background: #f0f9ff; }
     .tg td.gc-sum { background: #fff7ed; } .tg td.gc-state { background: #f8fafc; }
+    /* แถวที่ยังไม่ได้กรอก = เทาอ่อนทั้งแถว */
+    .tg tr.todo td { background: #eceff3 !important; }
+    .tg tr.todo input.f, .tg tr.todo select.f { background: #eceff3; border-color: #d3d9e0; }
     .tg tbody tr:hover td { filter: brightness(.97); }
     .tg tr.saved .c-no, .tg tr.saved .c-nm { box-shadow: inset 5px 0 0 #22c55e; }
     .tg tr.ready .c-nm { box-shadow: inset 5px 0 0 #3b82f6; }
@@ -175,8 +176,8 @@ $groups = get_childgroup();
                 <div class="bar"><span id="gProgressBar" style="width:0%"></span></div>
             </div>
             <div class="tg-legend" id="gLegend" style="display:none">
-                <span><i style="background:#34d399"></i>ช่องที่กรอกแล้ว</span><span><i style="background:#fb923c"></i>ช่องที่ยังไม่กรอก</span><span><i style="background:#22c55e"></i>แถวที่บันทึกแล้ว</span><span><i style="background:#3b82f6"></i>แถวพร้อมบันทึก</span>
-                <span><i style="background:#fb923c"></i>พัฒนาการติ๊กไม่ครบ 5 ด้าน (ยังบันทึกไม่ได้)</span><span><i style="background:#cbd5e1"></i>ยังไม่ได้กรอก</span>
+                <span><i style="background:#22c55e"></i>บันทึกแล้ว</span><span><i style="background:#3b82f6"></i>พร้อมบันทึก (ครบ 5 ด้าน)</span>
+                <span><i style="background:#fb923c"></i>กรอกยังไม่ครบ (ยังบันทึกไม่ได้)</span><span><i style="background:#cbd5e1"></i>ยังไม่ได้กรอก</span>
             </div>
             <div class="tg-wrap" id="gWrap">
                 <div class="tg-empty">
@@ -321,18 +322,8 @@ $groups = get_childgroup();
         if (!rows.length) { wrap.innerHTML = '<div class="tg-empty"><div class="big">ไม่พบรายชื่อเด็กตามเงื่อนไข</div>ลองเปลี่ยนกลุ่มหรือห้อง</div>'; summary(); return; }
         const sc = { top: wrap.scrollTop, left: wrap.scrollLeft };
         wrap.innerHTML = '<table class="tg">' + header() + '<tbody>' + rows.map(rowHtml).join('') + '</tbody></table>';
-        wrap.querySelectorAll('tbody tr').forEach(markFilled);
         wrap.scrollTop = sc.top; wrap.scrollLeft = sc.left;
         summary();
-    }
-
-    // แบ่งสีช่อง: กรอกแล้ว = เขียว  ยังไม่กรอก = ส้ม (เฉพาะช่องหลัก: วันเกิด น้ำหนัก ส่วนสูง รอบศีรษะ ผลพัฒนาการ) ช่องข้อที่/รายละเอียดไม่บังคับ จึงไม่ขึ้นส้ม
-    function markFilled(tr) {
-        tr.querySelectorAll('input.f, select.f').forEach((el) => {
-            const has = el.value !== '', optional = !!(el.dataset.n || el.dataset.iss);
-            el.classList.toggle('filled', has);
-            el.classList.toggle('empty', !has && !optional);
-        });
     }
 
     // อัปเดตเฉพาะแถวที่แก้ (ไม่วาดตารางใหม่ เพื่อไม่ให้เสียโฟกัส)
@@ -352,7 +343,6 @@ $groups = get_childgroup();
             sel.value = r.st[sel.dataset.k];
             sel.className = 'f ' + (sel.value === 'pass' ? 'is-pass' : sel.value === 'delay' ? 'is-delay' : '');
         });
-        markFilled(tr);
         summary();
     }
 
