@@ -178,7 +178,7 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                     ['label' => 'ตรวจสุขภาพโดยกุมารแพทย์', 'href' => '/app/views/check_health_external/checklist_name.php', 'match' => 'check_health_external', 'icon' => 'fa-solid fa-user-doctor'],
                                     ['label' => 'ตรวจสุขภาพช่องปาก', 'href' => '/app/views/check_health_tooth/checklist_name.php', 'match' => 'check_health_tooth', 'icon' => 'fa-solid fa-tooth'],
                                     ['label' => 'ติดตามสุขภาพ', 'href' => '/app/views/health_followup.php', 'match' => 'health_followup.php', 'icon' => 'bi bi-heart-pulse', 'badge' => hf_pending_count()],
-                                    ['label' => 'กราฟการเจริญเติบโต', 'href' => '/app/views/growth_history.php', 'match' => 'growth_history.php', 'icon' => 'bi bi-graph-up'],
+                                    ['label' => 'กราฟการเจริญเติบโต', 'href' => '/app/views/growth_dev_grid.php', 'match' => 'growth_dev_grid.php', 'icon' => 'bi bi-graph-up'],
                                 ],
                             ],
                             [
@@ -226,7 +226,7 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                     ['label' => 'ตรวจสุขภาพโดยกุมารแพทย์', 'href' => '/app/views/check_health_external/checklist_name.php', 'match' => 'check_health_external', 'icon' => 'fa-solid fa-user-doctor'],
                                     ['label' => 'ตรวจสุขภาพช่องปาก', 'href' => '/app/views/check_health_tooth/checklist_name.php', 'match' => 'check_health_tooth', 'icon' => 'fa-solid fa-tooth'],
                                     ['label' => 'ติดตามสุขภาพ', 'href' => '/app/views/health_followup.php', 'match' => 'health_followup.php', 'icon' => 'bi bi-heart-pulse', 'badge' => hf_pending_count()],
-                                    ['label' => 'กราฟการเจริญเติบโต', 'href' => '/app/views/growth_history.php', 'match' => 'growth_history.php', 'icon' => 'bi bi-graph-up'],
+                                    ['label' => 'กราฟการเจริญเติบโต', 'href' => '/app/views/growth_dev_grid.php', 'match' => 'growth_dev_grid.php', 'icon' => 'bi bi-graph-up'],
                                 ],
                             ],
                         ];
