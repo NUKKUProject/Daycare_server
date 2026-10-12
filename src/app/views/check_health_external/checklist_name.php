@@ -26,6 +26,16 @@ if (isset($_SESSION['user_id'])) {
 
 // ดึงข้อมูลปีการศึกษาทั้งหมด
 $academicYears = getAcademicYears();
+// ปีการศึกษาที่มีผลตรวจ/รอบตรวจในระบบจริง (ใช้ในตัวเลือก "ตรวจประจำปี" ตอนส่งออก)
+$examYears = [];
+try {
+    $examYears = getDatabaseConnection()->query("SELECT DISTINCT y FROM (SELECT academic_year::text AS y FROM health_data_external UNION ALL SELECT academic_year::text FROM health_exam_rounds) t WHERE y IS NOT NULL AND y <> '' ORDER BY y DESC")->fetchAll(PDO::FETCH_COLUMN);
+} catch (Throwable $e) {
+    error_log('health exam years: ' . $e->getMessage());
+}
+if (!$examYears) {
+    $examYears = array_map(fn($y) => (string) $y['name'], $academicYears);
+}
 //ดึงข้อมูลแพทย์
 $doctorListJson = getListDoctors();                // ได้ JSON string
 $response = json_decode($doctorListJson, true);    // แปลงเป็น array
@@ -3462,8 +3472,8 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
 
     function showExportExcelModal() {
         // สร้างตัวเลือกปีการศึกษา
-        const yearOptions = <?php echo json_encode($academicYears); ?>.map((year, index) => 
-            `<option value="${year.name}" ${index === 0 ? 'selected' : ''}>${year.name}</option>`
+        const yearOptions = <?php echo json_encode(array_values($examYears), JSON_UNESCAPED_UNICODE); ?>.map((year, index) => 
+            `<option value="${year}" ${index === 0 ? 'selected' : ''}>${year}</option>`
         ).join('');
 
         // สร้างตัวเลือกรอบตรวจ

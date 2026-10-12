@@ -22,6 +22,16 @@ if (isset($_SESSION['user_id'])) {
 
 // ดึงข้อมูลปีการศึกษาทั้งหมด
 $academicYears = getAcademicYears();
+// ปีการศึกษาที่มีข้อมูลตรวจ/รอบตรวจในระบบจริง (ใช้ในตัวเลือก "ตรวจประจำปี" ตอนส่งออก)
+$toothExamYears = [];
+try {
+    $toothExamYears = getDatabaseConnection()->query("SELECT DISTINCT y FROM (SELECT academic_year::text AS y FROM health_tooth_external UNION ALL SELECT academic_year::text FROM tooth_exam_rounds) t WHERE y IS NOT NULL AND y <> '' ORDER BY y DESC")->fetchAll(PDO::FETCH_COLUMN);
+} catch (Throwable $e) {
+    error_log('tooth exam years: ' . $e->getMessage());
+}
+if (!$toothExamYears) {
+    $toothExamYears = array_map(fn($y) => (string) $y['name'], $academicYears);
+}
 //ดึงข้อมูลแพทย์
 $doctorListJson = getListDoctors();                // ได้ JSON string
 $response = json_decode($doctorListJson, true);    // แปลงเป็น array
@@ -1829,7 +1839,7 @@ $doctors = $response['data'] ?? [];                // เอาเฉพาะ '
         return toothRounds.map((r) => `<option value="${r.id}">${r.academic_year} · ${r.title}${r.status === 'open' ? '' : ' (ปิดแล้ว)'}</option>`).join('');
     }
 
-    const TOOTH_YEARS = <?= json_encode(array_map(fn($y) => (string) $y['name'], $academicYears), JSON_UNESCAPED_UNICODE) ?>;
+    const TOOTH_YEARS = <?= json_encode(array_values($toothExamYears), JSON_UNESCAPED_UNICODE) ?>;
 
     // ช่องเลือกประเภทการส่งออก: ตรวจประจำปี (ทั้งปีการศึกษา) หรือ รอบตรวจ (รอบเดียว)
     function toothExportFields() {
