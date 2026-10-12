@@ -87,8 +87,40 @@ $currentTop = isset($academicYears[0]['name']) ? (int) $academicYears[0]['name']
                 <td class="text-center">${r.doctor_count}</td>
                 <td><span class="rd-badge ${open ? 'rd-open' : 'rd-closed'}">${open ? 'เปิดอยู่' : 'ปิดแล้ว'}</span></td>
                 <td class="text-end"><button class="btn btn-sm ${open ? 'btn-outline-danger' : 'btn-outline-success'}" data-act="${open ? 'close' : 'reopen'}" data-id="${r.id}" data-title="${esc(r.title)}">
-                    <i class="bi ${open ? 'bi-lock' : 'bi-unlock'} me-1"></i>${open ? 'ปิดรอบ' : 'เปิดรอบอีกครั้ง'}</button></td></tr>`;
+                    <i class="bi ${open ? 'bi-lock' : 'bi-unlock'} me-1"></i>${open ? 'ปิดรอบ' : 'เปิดรอบอีกครั้ง'}</button>
+                    <button class="btn btn-sm btn-outline-primary ms-1" data-act="edit" data-id="${r.id}" data-title="${esc(r.title)}" data-start="${esc(r.start_date || '')}" data-end="${esc(r.end_date || '')}" title="แก้ไขรอบ"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-secondary ms-1" data-act="delete" data-id="${r.id}" data-title="${esc(r.title)}" ${+r.child_count > 0 ? 'disabled title="ลบไม่ได้ เพราะมีข้อมูลการตรวจแล้ว"' : 'title="ลบรอบ"'}><i class="bi bi-trash"></i></button></td></tr>`;
         }).join('') : '<tr><td colspan="6" class="text-center text-muted py-4">ยังไม่มีรอบตรวจ กด "เปิดรอบใหม่"</td></tr>';
+    }
+
+    async function editRound(d) {
+        const r = await Swal.fire({
+            title: 'แก้ไขรอบตรวจ',
+            html: `<div class="text-start">
+                <label class="form-label mt-2">ชื่อรอบ</label><input id="swTitle" class="form-control" maxlength="150" value="${esc(d.title)}">
+                <div class="row"><div class="col-6"><label class="form-label mt-2">วันเริ่ม</label><input id="swStart" type="date" class="form-control" value="${esc(d.start)}"></div>
+                <div class="col-6"><label class="form-label mt-2">วันสิ้นสุด</label><input id="swEnd" type="date" class="form-control" value="${esc(d.end)}"></div></div>
+                <div class="small text-muted mt-2">ปีการศึกษาและลำดับรอบแก้ไม่ได้ เพราะผูกกับข้อมูลที่บันทึกไว้</div></div>`,
+            showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#15803d',
+            preConfirm: () => {
+                const title = byId('swTitle').value.trim();
+                if (!title) { Swal.showValidationMessage('กรุณาระบุชื่อรอบ'); return false; }
+                return { id: +d.id, title, start_date: byId('swStart').value, end_date: byId('swEnd').value };
+            }
+        });
+        if (!r.isConfirmed) return;
+        try { const res = await call('update', r.value); Swal.fire({ icon: 'success', title: res.message, timer: 1500, showConfirmButton: false }); load(); }
+        catch (e) { Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: e.message }); }
+    }
+
+    async function deleteRound(d) {
+        const ok = await Swal.fire({
+            icon: 'warning', title: `ลบ "${d.title}"?`, text: 'ลบได้เฉพาะรอบที่ยังไม่มีข้อมูลการตรวจ และกู้คืนไม่ได้',
+            showCancelButton: true, confirmButtonText: 'ลบรอบ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#dc2626'
+        });
+        if (!ok.isConfirmed) return;
+        try { const res = await call('delete', { id: +d.id }); Swal.fire({ icon: 'success', title: res.message, timer: 1500, showConfirmButton: false }); load(); }
+        catch (e) { Swal.fire({ icon: 'error', title: 'ลบไม่ได้', text: e.message }); }
     }
 
     async function newRound() {
@@ -113,6 +145,8 @@ $currentTop = isset($academicYears[0]['name']) ? (int) $academicYears[0]['name']
         byId('rNew').addEventListener('click', newRound);
         byId('rBody').addEventListener('click', async (e) => {
             const b = e.target.closest('button[data-act]'); if (!b) return;
+            if (b.dataset.act === 'edit') { editRound(b.dataset); return; }
+            if (b.dataset.act === 'delete') { deleteRound(b.dataset); return; }
             const close = b.dataset.act === 'close';
             const ok = await Swal.fire({
                 icon: close ? 'warning' : 'question', title: close ? `ปิด "${b.dataset.title}"?` : `เปิด "${b.dataset.title}" อีกครั้ง?`,

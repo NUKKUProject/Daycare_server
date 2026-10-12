@@ -78,6 +78,42 @@ try {
         out(['status' => 'success', 'message' => 'เปิดรอบอีกครั้งแล้ว']);
     }
 
+    // แก้ไขชื่อรอบ / ช่วงวันที่ (ปีการศึกษาและลำดับรอบไม่เปลี่ยน เพราะผูกกับข้อมูลที่บันทึก)
+    if ($action === 'update') {
+        $id = (int) ($input['id'] ?? 0);
+        if (!$id || !tooth_get_round($pdo, $id)) {
+            out(['status' => 'error', 'message' => 'ไม่พบรอบตรวจ'], 404);
+        }
+        $title = trim((string) ($input['title'] ?? ''));
+        if ($title === '') {
+            out(['status' => 'error', 'message' => 'กรุณาระบุชื่อรอบ'], 400);
+        }
+        $date = fn($v) => (!empty($v) && DateTime::createFromFormat('Y-m-d', $v)) ? $v : null;
+        $s = $date($input['start_date'] ?? null);
+        $e = $date($input['end_date'] ?? null);
+        if ($s && $e && $e < $s) {
+            out(['status' => 'error', 'message' => 'วันสิ้นสุดต้องไม่ก่อนวันเริ่ม'], 400);
+        }
+        $pdo->prepare('UPDATE tooth_exam_rounds SET title = :t, start_date = :s, end_date = :e WHERE id = :id')
+            ->execute([':t' => mb_substr($title, 0, 150), ':s' => $s, ':e' => $e, ':id' => $id]);
+        out(['status' => 'success', 'message' => 'บันทึกการแก้ไขรอบแล้ว']);
+    }
+
+    // ลบรอบ: ลบได้เฉพาะรอบที่ยังไม่มีข้อมูลการตรวจ
+    if ($action === 'delete') {
+        $id = (int) ($input['id'] ?? 0);
+        if (!$id || !tooth_get_round($pdo, $id)) {
+            out(['status' => 'error', 'message' => 'ไม่พบรอบตรวจ'], 404);
+        }
+        $cnt = $pdo->prepare('SELECT COUNT(*) FROM health_tooth_external WHERE round_id = :id');
+        $cnt->execute([':id' => $id]);
+        if ((int) $cnt->fetchColumn() > 0) {
+            out(['status' => 'error', 'message' => 'ลบไม่ได้ เพราะรอบนี้มีข้อมูลการตรวจแล้ว'], 409);
+        }
+        $pdo->prepare('DELETE FROM tooth_exam_rounds WHERE id = :id')->execute([':id' => $id]);
+        out(['status' => 'success', 'message' => 'ลบรอบแล้ว']);
+    }
+
     out(['status' => 'error', 'message' => 'คำสั่งไม่ถูกต้อง'], 400);
 } catch (Exception $e) {
     error_log('manage_tooth_rounds: ' . $e->getMessage());
