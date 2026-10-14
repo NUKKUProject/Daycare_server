@@ -24,7 +24,8 @@ try {
                    d.gm_status, d.gm_note, d.fm_status, d.fm_note, d.rl_status, d.rl_note,
                    d.el_status, d.el_note, d.ps_status, d.ps_note,
                    d.gm_issue, d.fm_issue, d.rl_issue, d.el_issue, d.ps_issue,
-                   d.id AS growth_id, d.weight, d.height, d.head_circumference, d.age_range
+                   d.id AS growth_id, d.weight, d.height, d.head_circumference, d.age_range,
+                   d.age_year, d.age_month, d.age_day, d.age_months, d.dev_result, d.recheck_date, d.dev_recorded_by
             FROM children c
             LEFT JOIN (
                 SELECT DISTINCT ON (student_id) *

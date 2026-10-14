@@ -112,7 +112,10 @@ $groups = get_childgroup();
     <div class="container-fluid px-4">
         <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
             <h2 class="page-title">กรอกผลคัดกรองพัฒนาการทั้งห้อง</h2>
-            <a href="growth_history.php" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>กลับหน้าประวัติการเจริญเติบโต</a>
+            <div class="d-flex gap-2">
+                <a href="growth_dev_view.php" id="gGoView" class="btn btn-primary btn-sm" title="ดูผลที่บันทึกของทั้งห้อง (ดูอย่างเดียว)"><i class="bi bi-table me-1"></i>ดูผลที่บันทึก</a>
+                <a href="growth_history.php" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>กลับหน้าประวัติการเจริญเติบโต</a>
+            </div>
         </div>
 
         <div class="tg-card">
@@ -465,6 +468,10 @@ $groups = get_childgroup();
         byId('gRoom').addEventListener('change', () => loadList(false));
         byId('gLoad').addEventListener('click', () => loadList(true));
         byId('gSave').addEventListener('click', saveAll);
+        // ลิงก์ไปหน้าดูผลที่บันทึก พร้อมกลุ่ม/ห้อง/วันที่ที่เลือกไว้
+        byId('gGoView').addEventListener('click', (e) => {
+            e.currentTarget.href = 'growth_dev_view.php?' + new URLSearchParams({ child_group: byId('gGroup').value, classroom: byId('gRoom').value, date: byId('gDate').value });
+        });
         // เปลี่ยนวันที่ประเมิน = โหลดใหม่ (ผลที่บันทึกไว้ของวันนั้นและอายุเปลี่ยนตาม)
         byId('gDate').addEventListener('change', () => { if (rows.length) loadList(false); });
         byId('gFillPass').addEventListener('click', () => {

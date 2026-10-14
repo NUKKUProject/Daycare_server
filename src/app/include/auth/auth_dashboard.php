@@ -179,6 +179,7 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                     ['label' => 'ตรวจสุขภาพช่องปาก', 'href' => '/app/views/check_health_tooth/checklist_name.php', 'match' => 'check_health_tooth', 'icon' => 'fa-solid fa-tooth'],
                                     ['label' => 'ติดตามสุขภาพ', 'href' => '/app/views/health_followup.php', 'match' => 'health_followup.php', 'icon' => 'bi bi-heart-pulse', 'badge' => hf_pending_count()],
                                     ['label' => 'กราฟการเจริญเติบโต', 'href' => '/app/views/growth_dev_grid.php', 'match' => 'growth_dev_grid.php', 'icon' => 'bi bi-graph-up'],
+                                    ['label' => 'ผลคัดกรองพัฒนาการ', 'href' => '/app/views/growth_dev_view.php', 'match' => 'growth_dev_view.php', 'icon' => 'bi bi-clipboard2-data'],
                                 ],
                             ],
                             [
@@ -227,6 +228,7 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                     ['label' => 'ตรวจสุขภาพช่องปาก', 'href' => '/app/views/check_health_tooth/checklist_name.php', 'match' => 'check_health_tooth', 'icon' => 'fa-solid fa-tooth'],
                                     ['label' => 'ติดตามสุขภาพ', 'href' => '/app/views/health_followup.php', 'match' => 'health_followup.php', 'icon' => 'bi bi-heart-pulse', 'badge' => hf_pending_count()],
                                     ['label' => 'กราฟการเจริญเติบโต', 'href' => '/app/views/growth_dev_grid.php', 'match' => 'growth_dev_grid.php', 'icon' => 'bi bi-graph-up'],
+                                    ['label' => 'ผลคัดกรองพัฒนาการ', 'href' => '/app/views/growth_dev_view.php', 'match' => 'growth_dev_view.php', 'icon' => 'bi bi-clipboard2-data'],
                                 ],
                             ],
                         ];
