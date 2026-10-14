@@ -180,13 +180,13 @@ $groups = get_childgroup();
         return '<thead><tr class="h1">' +
             '<th class="g-child" colspan="3">เด็ก</th><th class="g-age" colspan="3">อายุ</th><th class="g-meas" colspan="3">การเจริญเติบโต</th>' +
             DOMAINS.map((d, i) => `<th class="g-d${i}" colspan="3" title="${esc(d[2])}">${esc(d[1])} (${d[0].toUpperCase()})</th>`).join('') +
-            '<th class="g-sum" colspan="4">สรุป</th><th class="g-state" colspan="2">การบันทึก</th></tr>' +
+            '<th class="g-sum" colspan="4">สรุป</th><th class="g-state" colspan="3">การบันทึก</th></tr>' +
             '<tr class="h2"><th class="c-no">#</th><th class="c-nm">ชื่อ</th><th>วันเดือนปีเกิด</th>' +
             '<th>อายุ ณ วันที่ตรวจ</th><th>อายุ (เดือน)</th><th>ช่วงอายุเกณฑ์ที่ใช้</th>' +
             '<th>น้ำหนัก (กก.)</th><th>ส่วนสูง (ซม.)</th><th>เส้นรอบศีรษะ (ซม.)</th>' +
             DOMAINS.map(() => '<th>ผล</th><th>ข้อที่</th><th>รายละเอียดเพิ่มเติม</th>').join('') +
             '<th>ผ่าน (ด้าน)</th><th>ไม่ผ่าน (ด้าน)</th><th>ผลการคัดกรอง</th><th>ประเมินซ้ำภายใน 1 เดือน</th>' +
-            '<th>สถานะ</th><th>ผู้บันทึก</th></tr></thead>';
+            '<th>สถานะ</th><th>ผู้บันทึก</th><th>กราฟ</th></tr></thead>';
     }
 
     function rowHtml(s, i) {
@@ -211,7 +211,8 @@ $groups = get_childgroup();
             td('', f.result === 'delay' ? `<span class="res delay">${RESULT_DELAY}</span>` : f.result === 'normal' ? `<span class="res normal">${RESULT_NORMAL}</span>` : '-') +
             td('nw', f.result === 'delay' && f.recheck ? esc(thaiShort(f.recheck)) : '-') +
             td('', `<span class="st ${f.saved ? 'saved' : 'todo'}">${f.saved ? 'บันทึกแล้ว' : 'ยังไม่ได้บันทึก'}</span>`) +
-            td('nw', f.saved && s.dev_recorded_by ? esc(s.dev_recorded_by) : '-') + '</tr>';
+            td('nw', f.saved && s.dev_recorded_by ? esc(s.dev_recorded_by) : '-') +
+            td('', f.saved && f.hasMeasure ? `<button type="button" class="btn btn-sm btn-primary" data-chart="${esc(s.studentid)}" data-name="${esc(s.nickname || s.firstname_th)}"><i class="bi bi-graph-up"></i> ดูกราฟ</button>` : '-') + '</tr>';
         return h;
     }
 
@@ -252,6 +253,69 @@ $groups = get_childgroup();
         }
     }
 
+    // ===== กราฟการเจริญเติบโตรายคน (popup): น้ำหนัก/ส่วนสูง/BMI ตามเกณฑ์อายุ =====
+    const CHART_DEFS = [
+        { key: 'weight', id: 'vcWeight', title: 'น้ำหนักตามเกณฑ์อายุ', y: 'น้ำหนัก (กก.)', color: '#3b82f6', min: 2.5, max: 35, get: (r) => r.physical_measures.weight },
+        { key: 'height', id: 'vcHeight', title: 'ส่วนสูงตามเกณฑ์อายุ', y: 'ส่วนสูง (ซม.)', color: '#22c55e', min: 40, max: 130, get: (r) => r.physical_measures.height },
+        { key: 'bmi', id: 'vcBmi', title: 'BMI ตามเกณฑ์อายุ', y: 'BMI (กก./ม.²)', color: '#f59e0b', min: 10, max: 25, get: (r) => r.bmi }
+    ];
+    let popupCharts = [];
+
+    function drawChart(def, ref, points) {
+        const band = (label, arr, color, fill) => ({ label, data: ref.ages.map((a, i) => ({ x: a, y: arr[i] })), borderColor: color, borderDash: [6, 4], borderWidth: 1.5, pointRadius: 0, fill, backgroundColor: color.replace(/[\d.]+\)$/, '0.06)') });
+        const chart = new Chart(byId(def.id), {
+            type: 'line',
+            data: { datasets: [
+                band('+2 SD', ref.plus2sd, 'rgba(239,68,68,0.6)', '+1'), band('+1 SD', ref.plus1sd, 'rgba(249,115,22,0.6)', '+1'),
+                band('Median', ref.median, 'rgba(34,197,94,0.7)', '+1'), band('-1 SD', ref.minus1sd, 'rgba(249,115,22,0.6)', '+1'),
+                band('-2 SD', ref.minus2sd, 'rgba(239,68,68,0.6)', false),
+                { label: 'ข้อมูลของเด็ก', data: points, borderColor: def.color, backgroundColor: def.color, borderWidth: 2.5, pointRadius: 5, pointHoverRadius: 8, pointBorderColor: '#fff', pointBorderWidth: 2, fill: false, tension: 0.3, order: 1 }
+            ] },
+            options: {
+                responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'nearest' },
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 14, font: { size: 11 } } }, title: { display: true, text: def.title } },
+                scales: { x: { type: 'linear', title: { display: true, text: 'อายุ (เดือน)' }, min: 0, max: 60, ticks: { stepSize: 6 } },
+                          y: { title: { display: true, text: def.y }, min: def.min, max: def.max } }
+            }
+        });
+        popupCharts.push(chart);
+    }
+
+    async function showChartsFor(studentId, name) {
+        try {
+            const res = await fetch(`../include/function/get_student_growth_grid.php?student_id=${encodeURIComponent(studentId)}`, { headers: XHR });
+            const data = await res.json();
+            if (data.status !== 'success') throw new Error(data.message || 'โหลดข้อมูลไม่สำเร็จ');
+            const records = (data.all_records || []).filter((r) => r.physical_measures && (r.physical_measures.weight || r.physical_measures.height));
+            if (!records.length) { Swal.fire({ icon: 'info', title: 'ยังไม่มีข้อมูลน้ำหนัก/ส่วนสูงของเด็กคนนี้', confirmButtonText: 'ตกลง' }); return; }
+            const sex = (data.current_record || records[0]).sex === 'ชาย' ? 'M' : 'F';
+            const monthsOf = (r) => (r.age_year || 0) * 12 + (r.age_month || 0);
+            const over = records.some((r) => monthsOf(r) > 60);
+
+            popupCharts.forEach((c) => c.destroy()); popupCharts = [];
+            Swal.fire({
+                title: `กราฟการเจริญเติบโต - ${esc(name)}`,
+                width: '95%', showCloseButton: true, showConfirmButton: false,
+                html: (over ? '<div class="alert alert-warning py-1 small">มีครั้งที่อายุเกิน 60 เดือน จุดนั้นอยู่นอกช่วงของกราฟ (0-60 เดือน)</div>' : '') +
+                    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem;">' +
+                    CHART_DEFS.map((d) => `<div style="position:relative;height:340px;"><canvas id="${d.id}"></canvas></div>`).join('') + '</div>',
+                didOpen: () => {
+                    CHART_DEFS.forEach(async (def) => {
+                        const points = records.filter((r) => def.get(r)).map((r) => ({ x: monthsOf(r), y: parseFloat(def.get(r)) }));
+                        try {
+                            const rr = await fetch(`../include/function/get_growth_reference.php?indicator=${def.key}&sex=${sex}`);
+                            const ref = await rr.json();
+                            if (ref.status === 'success') drawChart(def, ref, points);
+                        } catch (e) { console.error(e); }
+                    });
+                },
+                willClose: () => { popupCharts.forEach((c) => c.destroy()); popupCharts = []; }
+            });
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: e.message, confirmButtonText: 'ตกลง' });
+        }
+    }
+
     function loadRooms() {
         const group = byId('gGroup').value, sel = byId('gRoom');
         sel.innerHTML = '<option value="">-- เลือก --</option>';
@@ -276,6 +340,10 @@ $groups = get_childgroup();
 
     document.addEventListener('DOMContentLoaded', async () => {
         enableDragScroll(byId('gWrap'));
+        byId('gWrap').addEventListener('click', (e) => {
+            const b = e.target.closest('button[data-chart]');
+            if (b) showChartsFor(b.dataset.chart, b.dataset.name);
+        });
         byId('gDate').value = PRE.date || todayStr();
         byId('gGroup').addEventListener('change', async () => { await loadRooms(); load(); });
         byId('gRoom').addEventListener('change', load);
