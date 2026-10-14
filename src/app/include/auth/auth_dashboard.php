@@ -172,8 +172,8 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                 ],
                             ],
                             [
-                                'title' => 'สุขภาพเด็ก',
-                                'icon' => 'bi bi-heart-pulse',
+                                'title' => 'ตรวจสุขภาพโดยแพทย์',
+                                'icon' => 'fa-solid fa-user-doctor',
                                 'items' => [
                                     ['label' => 'ตรวจสุขภาพโดยกุมารแพทย์', 'href' => '/app/views/check_health_external/checklist_name.php', 'match' => 'check_health_external', 'icon' => 'fa-solid fa-user-doctor'],
                                     ['label' => 'ตรวจสุขภาพช่องปาก', 'href' => '/app/views/check_health_tooth/checklist_name.php', 'match' => 'check_health_tooth', 'icon' => 'fa-solid fa-tooth'],
@@ -228,8 +228,8 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                 ],
                             ],
                             [
-                                'title' => 'สุขภาพเด็ก',
-                                'icon' => 'bi bi-heart-pulse',
+                                'title' => 'ตรวจสุขภาพโดยแพทย์',
+                                'icon' => 'fa-solid fa-user-doctor',
                                 'items' => [
                                     ['label' => 'ตรวจสุขภาพโดยกุมารแพทย์', 'href' => '/app/views/check_health_external/checklist_name.php', 'match' => 'check_health_external', 'icon' => 'fa-solid fa-user-doctor'],
                                     ['label' => 'ตรวจสุขภาพช่องปาก', 'href' => '/app/views/check_health_tooth/checklist_name.php', 'match' => 'check_health_tooth', 'icon' => 'fa-solid fa-tooth'],
