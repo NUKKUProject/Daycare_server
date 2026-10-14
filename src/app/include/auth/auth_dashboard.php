@@ -157,6 +157,8 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                     ['label' => 'แสกนเช็คชื่อกลับบ้าน', 'href' => '/app/views/teacher/scan_checkout.php', 'match' => 'scan_checkout.php', 'icon' => 'bi bi-qr-code-scan'],
                                     ['label' => 'สมุดสื่อสารประจำวัน', 'href' => '/app/views/teacher/daily_notebook.php', 'match' => 'daily_notebook.php', 'icon' => 'bi bi-journal-text'],
                                     ['label' => 'เมนูอาหารรายวัน', 'href' => '/app/views/teacher/daily_menu.php', 'match' => 'daily_menu.php', 'icon' => 'cil-restaurant'],
+                                    ['label' => 'ตรวจร่างกายประจำวัน', 'href' => '/app/views/checklist_history.php', 'match' => 'checklist_history.php', 'icon' => 'fa-solid fa-stethoscope'],
+                                    ['label' => 'ประวัติการมาเรียน', 'href' => '/app/views/attendance_history.php', 'match' => 'attendance_history.php', 'icon' => 'bi bi-archive-fill'],
                                 ],
                             ],
                             [
@@ -170,16 +172,21 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                 ],
                             ],
                             [
-                                'title' => 'ประวัติและรายงาน',
-                                'icon' => 'bi bi-clock-history',
+                                'title' => 'สุขภาพเด็ก',
+                                'icon' => 'bi bi-heart-pulse',
                                 'items' => [
-                                    ['label' => 'ประวัติการมาเรียน', 'href' => '/app/views/attendance_history.php', 'match' => 'attendance_history.php', 'icon' => 'bi bi-archive-fill'],
-                                    ['label' => 'ตรวจร่างกายประจำวัน', 'href' => '/app/views/checklist_history.php', 'match' => 'checklist_history.php', 'icon' => 'fa-solid fa-stethoscope'],
                                     ['label' => 'ตรวจสุขภาพโดยกุมารแพทย์', 'href' => '/app/views/check_health_external/checklist_name.php', 'match' => 'check_health_external', 'icon' => 'fa-solid fa-user-doctor'],
                                     ['label' => 'ตรวจสุขภาพช่องปาก', 'href' => '/app/views/check_health_tooth/checklist_name.php', 'match' => 'check_health_tooth', 'icon' => 'fa-solid fa-tooth'],
                                     ['label' => 'ติดตามสุขภาพ', 'href' => '/app/views/health_followup.php', 'match' => 'health_followup.php', 'icon' => 'bi bi-heart-pulse', 'badge' => hf_pending_count()],
-                                    ['label' => 'กราฟการเจริญเติบโต', 'href' => '/app/views/growth_dev_grid.php', 'match' => 'growth_dev_grid.php', 'icon' => 'bi bi-graph-up'],
-                                    ['label' => 'ผลคัดกรองพัฒนาการ', 'href' => '/app/views/growth_dev_view.php', 'match' => 'growth_dev_view.php', 'icon' => 'bi bi-clipboard2-data'],
+                                ],
+                            ],
+                            [
+                                'title' => 'การเจริญเติบโตและพัฒนาการ',
+                                'icon' => 'bi bi-graph-up',
+                                'items' => [
+                                    ['label' => 'กรอกผลการเจริญเติบโตและพัฒนาการ', 'href' => '/app/views/growth_dev_grid.php', 'match' => 'growth_dev_grid.php', 'icon' => 'bi bi-pencil-square'],
+                                    ['label' => 'ดูผลและกราฟรายห้อง', 'href' => '/app/views/growth_dev_view.php', 'match' => 'growth_dev_view.php', 'icon' => 'bi bi-clipboard2-data'],
+                                    ['label' => 'ประวัติการเจริญเติบโตรายคน', 'href' => '/app/views/growth_history.php', 'match' => 'growth_history.php', 'icon' => 'bi bi-clock-history'],
                                 ],
                             ],
                             [
@@ -209,6 +216,8 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                     ['label' => 'แสกนเช็คชื่อกลับบ้าน', 'href' => '/app/views/teacher/scan_checkout.php', 'match' => 'scan_checkout.php', 'icon' => 'bi bi-qr-code-scan'],
                                     ['label' => 'สมุดสื่อสารประจำวัน', 'href' => '/app/views/teacher/daily_notebook.php', 'match' => 'daily_notebook.php', 'icon' => 'bi bi-journal-text'],
                                     ['label' => 'เมนูอาหารรายวัน', 'href' => '/app/views/teacher/daily_menu.php', 'match' => 'daily_menu.php', 'icon' => 'cil-restaurant'],
+                                    ['label' => 'ตรวจร่างกายประจำวัน', 'href' => '/app/views/checklist_history.php', 'match' => 'checklist_history.php', 'icon' => 'fa-solid fa-stethoscope'],
+                                    ['label' => 'ประวัติการมาเรียน', 'href' => '/app/views/attendance_history.php', 'match' => 'attendance_history.php', 'icon' => 'bi bi-archive-fill'],
                                 ],
                             ],
                             [
@@ -219,16 +228,21 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                 ],
                             ],
                             [
-                                'title' => 'ประวัติและรายงาน',
-                                'icon' => 'bi bi-clock-history',
+                                'title' => 'สุขภาพเด็ก',
+                                'icon' => 'bi bi-heart-pulse',
                                 'items' => [
-                                    ['label' => 'ประวัติการมาเรียน', 'href' => '/app/views/attendance_history.php', 'match' => 'attendance_history.php', 'icon' => 'bi bi-archive-fill'],
-                                    ['label' => 'ตรวจร่างกายประจำวัน', 'href' => '/app/views/checklist_history.php', 'match' => 'checklist_history.php', 'icon' => 'fa-solid fa-stethoscope'],
                                     ['label' => 'ตรวจสุขภาพโดยกุมารแพทย์', 'href' => '/app/views/check_health_external/checklist_name.php', 'match' => 'check_health_external', 'icon' => 'fa-solid fa-user-doctor'],
                                     ['label' => 'ตรวจสุขภาพช่องปาก', 'href' => '/app/views/check_health_tooth/checklist_name.php', 'match' => 'check_health_tooth', 'icon' => 'fa-solid fa-tooth'],
                                     ['label' => 'ติดตามสุขภาพ', 'href' => '/app/views/health_followup.php', 'match' => 'health_followup.php', 'icon' => 'bi bi-heart-pulse', 'badge' => hf_pending_count()],
-                                    ['label' => 'กราฟการเจริญเติบโต', 'href' => '/app/views/growth_dev_grid.php', 'match' => 'growth_dev_grid.php', 'icon' => 'bi bi-graph-up'],
-                                    ['label' => 'ผลคัดกรองพัฒนาการ', 'href' => '/app/views/growth_dev_view.php', 'match' => 'growth_dev_view.php', 'icon' => 'bi bi-clipboard2-data'],
+                                ],
+                            ],
+                            [
+                                'title' => 'การเจริญเติบโตและพัฒนาการ',
+                                'icon' => 'bi bi-graph-up',
+                                'items' => [
+                                    ['label' => 'กรอกผลการเจริญเติบโตและพัฒนาการ', 'href' => '/app/views/growth_dev_grid.php', 'match' => 'growth_dev_grid.php', 'icon' => 'bi bi-pencil-square'],
+                                    ['label' => 'ดูผลและกราฟรายห้อง', 'href' => '/app/views/growth_dev_view.php', 'match' => 'growth_dev_view.php', 'icon' => 'bi bi-clipboard2-data'],
+                                    ['label' => 'ประวัติการเจริญเติบโตรายคน', 'href' => '/app/views/growth_history.php', 'match' => 'growth_history.php', 'icon' => 'bi bi-clock-history'],
                                 ],
                             ],
                         ];
