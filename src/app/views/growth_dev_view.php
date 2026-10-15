@@ -216,7 +216,7 @@ $groups = get_childgroup();
             td('nw', f.result === 'delay' && f.recheck ? esc(thaiShort(f.recheck)) : '-') +
             td('', `<span class="st ${f.saved ? 'saved' : 'todo'}">${f.saved ? 'บันทึกแล้ว' : 'ยังไม่ได้บันทึก'}</span>`) +
             td('nw', f.saved && s.dev_recorded_by ? esc(s.dev_recorded_by) : '-') +
-            td('c-chart', f.saved && f.hasMeasure ? `<button type="button" class="btn-chart" data-chart="${esc(s.studentid)}" data-name="${esc(s.nickname || s.firstname_th)}"><i class="bi bi-graph-up-arrow"></i>ดูกราฟ</button>` : '-') + '</tr>';
+            td('c-chart', `<button type="button" class="btn-chart" data-chart="${esc(s.studentid)}" data-name="${esc(s.nickname || s.firstname_th)}"><i class="bi bi-graph-up-arrow"></i>ดูกราฟ</button>`) + '</tr>';
         return h;
     }
 
