@@ -1,6 +1,8 @@
 <?php
+require_once __DIR__ . '/../auth/auth.php';
 require_once(__DIR__ . '/../../../config/database.php');
 header('Content-Type: application/json');
+checkUserRole(['admin', 'teacher']);
 
 try {
     if (!isset($_POST['record_id'])) {
