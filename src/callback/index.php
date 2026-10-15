@@ -222,6 +222,7 @@ try {
                     session_regenerate_id(true); // ป้องกัน Session Fixation Attack
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['username'] = $user['username'];
+                    $_SESSION['full_name'] = trim($firstname_th . ' ' . $lastname_th); // ชื่อจริงจาก SSO ใช้แสดงเป็นผู้บันทึก/ผู้ตรวจ
                     $_SESSION['role'] = $role;
                     $_SESSION['email'] = $mail;
                     $_SESSION['last_activity'] = time(); // เพิ่มบรรทัดนี้

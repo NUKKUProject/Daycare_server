@@ -193,6 +193,10 @@ function getFullName()
             if ($username) {
                 $fullName = $username; // ใช้ username เป็นชื่อ
             }
+            // ชื่อจริงที่ได้จาก SSO ตอนล็อกอิน (ถ้ามี) ใช้แทน username ที่เป็นอีเมล
+            if (!empty($_SESSION['full_name'])) {
+                $fullName = $_SESSION['full_name'];
+            }
         }
         elseif ($role === 'doctor') {
             // แสดงชื่อผู้ใช้เป็น username สำหรับ admin
