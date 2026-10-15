@@ -68,6 +68,52 @@ if (isset($_SESSION['user_id'])) {
     .gh-empty { text-align: center; padding: 2.5rem 1rem; color: #64748b; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, .06); }
     .gh-empty > i { display: block; font-size: 2rem; color: #94a3b8; margin-bottom: .4rem; }
     .gh-empty .big { font-size: 1.05rem; font-weight: 700; color: #334155; margin-bottom: .25rem; }
+
+    /* ===== Modal / popup (SweetAlert + Bootstrap) ===== */
+    .swal2-popup { border-radius: 16px; padding: 1.25rem 1.5rem 1.4rem; font-family: inherit; box-shadow: 0 20px 60px rgba(15, 36, 96, .25); }
+    .swal2-title { color: #0f2460; font-size: 1.3rem; font-weight: 700; padding: .25rem 2.5rem .75rem 0; text-align: left; border-bottom: 1px solid #e2e8f0; margin-bottom: .75rem; }
+    .swal2-icon + .swal2-title, .swal2-icon ~ .swal2-title { text-align: center; border-bottom: 0; padding-right: 0; }
+    .swal2-html-container { margin: .25rem 0 0; text-align: left; font-size: .92rem; }
+    .swal2-close { color: #64748b; border-radius: 10px; width: 36px; height: 36px; font-size: 1.6rem; transition: background-color .15s, color .15s; }
+    .swal2-close:hover { background: #fee2e2; color: #b91c1c; }
+    .swal2-actions { gap: .5rem; margin-top: 1.1rem; }
+    .swal2-styled.swal2-confirm, .swal2-styled.swal2-cancel, .swal2-styled.swal2-deny { border-radius: 10px; font-weight: 700; padding: .55rem 1.3rem; box-shadow: none; }
+    .swal2-html-container .form-label { font-size: .8rem; font-weight: 700; color: #475569; margin-bottom: .2rem; }
+    .swal2-html-container .form-control, .swal2-html-container .form-select { border-radius: 8px; font-size: .9rem; }
+    .swal2-html-container .card { border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: none; }
+    .swal2-html-container .card-title { font-size: .85rem; font-weight: 700; color: #0f2460; }
+    .swal2-html-container .table { font-size: .85rem; }
+    .swal2-html-container .table th { background: #f1f5f9; color: #475569; font-weight: 700; }
+    .modal-content { border: 0; border-radius: 16px; box-shadow: 0 20px 60px rgba(15, 36, 96, .25); }
+    .modal-header { border-bottom: 1px solid #e2e8f0; padding: 1rem 1.25rem; }
+    .modal-title { color: #0f2460; font-weight: 700; }
+    .modal-footer { border-top: 1px solid #e2e8f0; }
+
+    /* รายละเอียดการเจริญเติบโต (ปุ่ม "ดูผล") */
+    .ghm { text-align: left; }
+    .ghm-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .6rem; margin-bottom: .9rem; }
+    .ghm-tile { background: #f1f5f9; border-radius: 12px; padding: .6rem .85rem; }
+    .ghm-tile span { display: block; font-size: .72rem; font-weight: 700; color: #64748b; }
+    .ghm-tile b { font-size: 1rem; color: #0f2460; }
+    .ghm-tile small { font-weight: 400; color: #64748b; }
+    .ghm-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: .9rem; margin-bottom: .9rem; }
+    .ghm-box { border: 1px solid #e2e8f0; border-radius: 12px; padding: .8rem 1rem; }
+    .ghm-box h6 { font-size: .9rem; font-weight: 700; color: #0f2460; margin: 0 0 .5rem; display: flex; align-items: center; gap: .4rem; }
+    .ghm-row { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; padding: .4rem 0; border-top: 1px solid #f1f5f9; }
+    .ghm-row:first-of-type { border-top: 0; }
+    .ghm-row-label { font-size: .84rem; color: #334155; display: flex; align-items: center; gap: .4rem; }
+    .ghm-row-label i { color: #1e4db7; }
+    .ghm-row-val { text-align: right; }
+    .ghm-extra { font-size: .74rem; color: #64748b; margin-top: 2px; }
+    .ghm-chip { display: inline-block; font-size: .76rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; }
+    .ghm-chip.ok { background: #dcfce7; color: #15803d; } .ghm-chip.bad { background: #fee2e2; color: #b91c1c; }
+    .ghm-chip.warn { background: #fef3c7; color: #b45309; } .ghm-chip.muted { background: #f1f5f9; color: #94a3b8; }
+    .ghm-result { margin-top: .6rem; padding: .55rem .8rem; border-radius: 10px; font-size: .84rem; line-height: 1.6; }
+    .ghm-result.ok { background: #f0fdf4; color: #15803d; } .ghm-result.bad { background: #fef2f2; color: #b91c1c; }
+    .ghm-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: .9rem; }
+    .ghm-chart { border: 1px solid #e2e8f0; border-radius: 12px; padding: .7rem .9rem; }
+    .ghm-chart h6 { font-size: .82rem; font-weight: 700; color: #0f2460; margin: 0 0 .4rem; }
+    .ghm-hint { margin-top: .6rem; font-size: .76rem; color: #94a3b8; text-align: center; }
 </style>
 
     <main class="main-content">
@@ -1835,154 +1881,68 @@ function showAddGrowthModal(studentId, studentName) {
                 }
 
                 // สร้าง HTML สำหรับ modal
+                const ghmEsc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                const ghmVal = (v, unit) => (v === null || v === undefined || v === '' ? '-' : `${ghmEsc(parseFloat(v))}<small> ${unit}</small>`);
+                const ghmStatusChip = (text) => {
+                    if (!text || text === 'ไม่สามารถประเมินได้') return `<span class="ghm-chip muted">${text ? ghmEsc(text) : '-'}</span>`;
+                    const good = /ตามเกณฑ์|สมส่วน|ปกติ|เปอร์เซ็นไทล์ที่ (15|50)/.test(text);
+                    return `<span class="ghm-chip ${good ? 'ok' : 'warn'}">${ghmEsc(text)}</span>`;
+                };
+                const ghmDev = [
+                    ['gm', 'ด้านการเคลื่อนไหว (GM)', 'bi-person-walking'],
+                    ['fm', 'ด้านกล้ามเนื้อมัดเล็กและสติปัญญา (FM)', 'bi-hand-index'],
+                    ['rl', 'ด้านการเข้าใจภาษา (RL)', 'bi-ear'],
+                    ['el', 'ด้านการใช้ภาษา (EL)', 'bi-chat-dots'],
+                    ['ps', 'ด้านการช่วยเหลือตัวเองและสังคม (PS)', 'bi-people']
+                ].map(([k, label, icon]) => {
+                    const st = record[k + '_status'];
+                    const pill = st === 'pass' ? '<span class="ghm-chip ok">ผ่าน</span>'
+                        : st ? '<span class="ghm-chip bad">ไม่ผ่าน</span>' : '<span class="ghm-chip muted">-</span>';
+                    const extra = [record[k + '_issue'] ? `ข้อที่ ${ghmEsc(record[k + '_issue'])}` : '', record[k + '_note'] ? ghmEsc(record[k + '_note']) : ''].filter(Boolean).join(' · ');
+                    return `<div class="ghm-row"><div class="ghm-row-label"><i class="bi ${icon}"></i>${label}</div><div class="ghm-row-val">${pill}${extra ? `<div class="ghm-extra">${extra}</div>` : ''}</div></div>`;
+                }).join('');
+                const ghmAllDev = ['gm', 'fm', 'rl', 'el', 'ps'].every(k => record[k + '_status']);
+                const ghmFail = ['gm', 'fm', 'rl', 'el', 'ps'].some(k => record[k + '_status'] && record[k + '_status'] !== 'pass');
+                const ghmResult = record.dev_result || (ghmAllDev ? (ghmFail ? 'delay' : 'normal') : null);
+                const ghmDevResult = ghmResult
+                    ? `<div class="ghm-result ${ghmResult === 'delay' ? 'bad' : 'ok'}"><strong>ผลการคัดกรอง:</strong> ${ghmResult === 'delay' ? 'สงสัยล่าช้ากระตุ้นพัฒนาการภายใน 14-30 วัน' : 'สมวัย (ผ่านครบ 5 ด้าน)'}` +
+                      (ghmResult === 'delay' && record.recheck_date ? `<br><strong>ประเมินซ้ำภายใน 1 เดือน:</strong> ภายในวันที่ ${new Date(record.recheck_date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}` : '') + '</div>'
+                    : '';
+
                 const detailsHtml = `
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h5>ข้อมูลการวัด</h5>
-                            <table class="table table-bordered">
-                                <tr>
-                                    <th>อายุ</th>
-                                    <td>${record.age_year || 0}ปี ${record.age_month || 0}เดือน ${record.age_day || 0}วัน</td>
-                                </tr>
-                                <tr>
-                                    <th>น้ำหนัก</th>
-                                    <td>${record.weight || 0} กก.</td>
-                                </tr>
-                                <tr>
-                                    <th>ส่วนสูง</th>
-                                    <td>${record.height || 0} ซม.</td>
-                                </tr>
-                                <tr>
-                                    <th>เส้นรอบวงศีรษะ</th>
-                                    <td>${record.head_circumference || 0} ซม.</td>
-                                </tr>
-                                <tr>
-                                    <th>วันที่บันทึก</th>
-                                    <td>${record.created_at ? new Date(record.created_at).toLocaleDateString('th-TH', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    }) : '-'}</td>
-                                </tr>
-                            </table>
+                    <div class="ghm">
+                        <div class="ghm-tiles">
+                            <div class="ghm-tile"><span>วันที่บันทึก</span><b>${record.created_at ? new Date(record.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : '-'}</b></div>
+                            <div class="ghm-tile"><span>อายุ</span><b>${record.age_year || 0} ปี ${record.age_month || 0} เดือน ${record.age_day || 0} วัน</b></div>
+                            <div class="ghm-tile"><span>น้ำหนัก</span><b>${ghmVal(record.weight, 'กก.')}</b></div>
+                            <div class="ghm-tile"><span>ส่วนสูง</span><b>${ghmVal(record.height, 'ซม.')}</b></div>
+                            <div class="ghm-tile"><span>เส้นรอบศีรษะ</span><b>${ghmVal(record.head_circumference, 'ซม.')}</b></div>
                         </div>
-                        <div class="col-md-6">
-                            <h5>ผลการประเมิน</h5>
-                            <table class="table table-bordered">
-                                <tr>
-                                    <th>น้ำหนักตามเกณฑ์อายุ</th>
-                                    <td>${record.growth_status.weight || '-'}</td>
-                                </tr>
-                                <tr>
-                                    <th>ส่วนสูงตามเกณฑ์อายุ</th>
-                                    <td>${record.growth_status.height_age || '-'}</td>
-                                </tr>
-                                <tr>
-                                    <th>น้ำหนักตามเกณฑ์ส่วนสูง</th>
-                                    <td>${record.growth_status.weight_height || '-'}</td>
-                                </tr>
-                                <tr>
-                                    <th>เส้นรอบวงศีรษะ</th>
-                                    <td>${record.growth_status.head || '-'}</td>
-                                </tr>
-                            </table>
+
+                        <div class="ghm-cols">
+                            <section class="ghm-box">
+                                <h6><i class="bi bi-clipboard-check"></i>ผลการประเมินการเจริญเติบโต</h6>
+                                <div class="ghm-row"><div class="ghm-row-label">น้ำหนักตามเกณฑ์อายุ</div><div class="ghm-row-val">${ghmStatusChip(record.growth_status.weight)}</div></div>
+                                <div class="ghm-row"><div class="ghm-row-label">ส่วนสูงตามเกณฑ์อายุ</div><div class="ghm-row-val">${ghmStatusChip(record.growth_status.height_age)}</div></div>
+                                <div class="ghm-row"><div class="ghm-row-label">น้ำหนักตามเกณฑ์ส่วนสูง</div><div class="ghm-row-val">${ghmStatusChip(record.growth_status.weight_height)}</div></div>
+                                <div class="ghm-row"><div class="ghm-row-label">เส้นรอบศีรษะ</div><div class="ghm-row-val">${ghmStatusChip(record.growth_status.head)}</div></div>
+                            </section>
+                            <section class="ghm-box">
+                                <h6><i class="bi bi-puzzle"></i>ผลการประเมินพัฒนาการ</h6>
+                                ${ghmDev}
+                                ${ghmDevResult}
+                            </section>
                         </div>
-                        <div class="col-md-12 mt-4">
-                        <h5>ผลการประเมินพัฒนาการ</h5>
-                        <table class="table table-bordered">
-                            <tr>
-                                <th style="width: 40%">ด้านการเคลื่อนไหว (GM)</th>
-                                <td>
-                                    ${record.gm_status ? `
-                                        <span class="badge ${record.gm_status === 'pass' ? 'bg-success' : 'bg-warning'}">
-                                            ${record.gm_status === 'pass' ? 'ผ่าน' : 'สงสัยล่าช้า'}
-                                        </span>
-                                        ${record.gm_issue ? `<br>ข้อที่สงสัยล่าช้า: ${record.gm_issue}` : ''}
-                                    ` : '-'}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>ด้านกล้ามเนื้อมัดเล็กและสติปัญญา (FM)</th>
-                                <td>
-                                    ${record.fm_status ? `
-                                        <span class="badge ${record.fm_status === 'pass' ? 'bg-success' : 'bg-warning'}">
-                                            ${record.fm_status === 'pass' ? 'ผ่าน' : 'สงสัยล่าช้า'}
-                                        </span>
-                                        ${record.fm_issue ? `<br>ข้อที่สงสัยล่าช้า: ${record.fm_issue}` : ''}
-                                    ` : '-'}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>ด้านการเข้าใจภาษา (RL)</th>
-                                <td>
-                                    ${record.rl_status ? `
-                                        <span class="badge ${record.rl_status === 'pass' ? 'bg-success' : 'bg-warning'}">
-                                            ${record.rl_status === 'pass' ? 'ผ่าน' : 'สงสัยล่าช้า'}
-                                        </span>
-                                        ${record.rl_issue ? `<br>ข้อที่สงสัยล่าช้า: ${record.rl_issue}` : ''}
-                                    ` : '-'}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>ด้านการใช้ภาษา (EL)</th>
-                                <td>
-                                    ${record.el_status ? `
-                                        <span class="badge ${record.el_status === 'pass' ? 'bg-success' : 'bg-warning'}">
-                                            ${record.el_status === 'pass' ? 'ผ่าน' : 'สงสัยล่าช้า'}
-                                        </span>
-                                        ${record.el_issue ? `<br>ข้อที่สงสัยล่าช้า: ${record.el_issue}` : ''}
-                                    ` : '-'}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>ด้านการช่วยเหลือตัวเองและสังคม (PS)</th>
-                                <td>
-                                    ${record.ps_status ? `
-                                        <span class="badge ${record.ps_status === 'pass' ? 'bg-success' : 'bg-warning'}">
-                                            ${record.ps_status === 'pass' ? 'ผ่าน' : 'สงสัยล่าช้า'}
-                                        </span>
-                                        ${record.ps_issue ? `<br>ข้อที่สงสัยล่าช้า: ${record.ps_issue}` : ''}
-                                    ` : '-'}
-                                </td>
-                            </tr>
-                        </table>
+
+                        <div class="ghm-charts">
+                            <div class="ghm-chart"><h6>น้ำหนักตามเกณฑ์อายุ (0-5 ปี) เพศ${sex}</h6><canvas id="weightChart"></canvas></div>
+                            <div class="ghm-chart"><h6>ความยาว/ส่วนสูงตามเกณฑ์อายุ (0-5 ปี) เพศ${sex}</h6><canvas id="heightChart"></canvas></div>
+                            <div class="ghm-chart"><h6>น้ำหนักตามเกณฑ์ความยาว/ส่วนสูง (${ghmEsc(record.age_range || '0-2')} ปี) เพศ${sex}</h6><canvas id="weightHeightChart"></canvas></div>
+                            <div class="ghm-chart"><h6>เส้นรอบวงศีรษะ (แรกเกิด - 5 ปี) เพศ${sex}</h6><canvas id="headChart"></canvas></div>
+                        </div>
+                        <div class="ghm-hint"><i class="bi bi-zoom-in"></i> กดที่กราฟเพื่อขยายดูเต็มจอ</div>
                     </div>
-                    </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <div class="card">
-                                    <div class="card-body">
-                                    <h6 class="card-title">กราฟแสดงน้ำหนักตามเกณฑ์อายุของเด็กอายุ 0-5 ปี เพศ${sex}</h6>
-                                        <canvas id="weightChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <div class="card">
-                                    <div class="card-body">
-                                    <h6 class="card-title">กราฟแสดงความยาว/ส่วนสูงตามเกณฑ์อายุของเด็กอายุ 0-5 ปี เพศ${sex}</h6>
-                                        <canvas id="heightChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <div class="card">
-                                    <div class="card-body">
-                                    <h6 class="card-title">กราฟแสดงน้ำหนักตามเกณฑ์ความยาว/ส่วนสูงของเด็กอายุ ${record.age_range || '0-2'} ปี เพศ${sex}</h6>
-                                        <canvas id="weightHeightChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <div class="card">
-                                    <div class="card-body">
-                                    <h6 class="card-title">กราฟแสดงเส้นรอบวงศีรษะเด็กแรกเกิด - 5 ปี เพศ${sex}</h6>
-                                        <canvas id="headChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                `;
 
                 // แสดง Modal
                     Swal.fire({
