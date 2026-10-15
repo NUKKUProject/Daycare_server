@@ -119,6 +119,11 @@ if (isset($_SESSION['user_id'])) {
     .ghm-chart { border: 1px solid #e2e8f0; border-radius: 12px; padding: .8rem 1rem 1rem; }
     .ghm-chart h6 { font-size: .82rem; font-weight: 700; color: #0f2460; margin: 0 0 .4rem; }
     .ghm-hint { margin-top: .6rem; font-size: .76rem; color: #94a3b8; text-align: center; }
+    .ghm-tabs { display: flex; gap: .4rem; border-bottom: 2px solid #e2e8f0; margin-bottom: .9rem; }
+    .ghm-tab { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1rem; border: 0; background: none; font-weight: 700; font-size: .9rem; color: #64748b; border-bottom: 3px solid transparent; margin-bottom: -2px; cursor: pointer; transition: color .15s, border-color .15s; }
+    .ghm-tab:hover { color: #1e4db7; }
+    .ghm-tab.active { color: #1e4db7; border-bottom-color: #1e4db7; }
+    .ghm-loading { text-align: center; color: #64748b; padding: 2rem 0; }
 </style>
 
     <main class="main-content">
@@ -309,7 +314,6 @@ if (isset($_SESSION['user_id'])) {
                                 <td class="nw">
                                     ${has ? `
                                         <button type="button" class="gh-btn info" data-act="detail" ${d}><i class="bi bi-eye"></i>ดูผล</button>
-                                        <button type="button" class="gh-btn primary" data-act="overview" ${d}><i class="bi bi-graph-up"></i>กราฟ</button>
                                     ` : (GH_CAN_MANAGE ? `<button type="button" class="gh-btn add" data-act="add" ${d}><i class="bi bi-plus-circle"></i>เพิ่มข้อมูล</button>` : '<span class="gh-dash">-</span>')}
                                 </td>
                                 ${GH_CAN_MANAGE ? `<td class="nw">${has ? `
@@ -1921,6 +1925,11 @@ function showAddGrowthModal(studentId, studentName) {
 
                 const detailsHtml = `
                     <div class="ghm">
+                        <div class="ghm-tabs">
+                            <button type="button" class="ghm-tab active" data-tab="now"><i class="bi bi-clipboard2-pulse"></i>ผลครั้งนี้</button>
+                            <button type="button" class="ghm-tab" data-tab="trend"><i class="bi bi-graph-up"></i>กราฟและประวัติ</button>
+                        </div>
+                        <div class="ghm-pane" data-pane="now">
                         <div class="ghm-tiles">
                             <div class="ghm-tile"><span>วันที่บันทึก</span><b>${record.created_at ? new Date(record.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : '-'}</b></div>
                             <div class="ghm-tile"><span>อายุ</span><b>${record.age_year || 0} ปี ${record.age_month || 0} เดือน ${record.age_day || 0} วัน</b></div>
@@ -1944,13 +1953,10 @@ function showAddGrowthModal(studentId, studentName) {
                             </section>
                         </div>
 
-                        <div class="ghm-charts">
-                            <div class="ghm-chart"><h6>น้ำหนักตามเกณฑ์อายุ (0-5 ปี) เพศ${sex}</h6><div class="ghm-canvas"><canvas id="weightChart"></canvas></div></div>
-                            <div class="ghm-chart"><h6>ความยาว/ส่วนสูงตามเกณฑ์อายุ (0-5 ปี) เพศ${sex}</h6><div class="ghm-canvas"><canvas id="heightChart"></canvas></div></div>
-                            <div class="ghm-chart"><h6>น้ำหนักตามเกณฑ์ความยาว/ส่วนสูง (${ghmEsc(record.age_range || '0-2')} ปี) เพศ${sex}</h6><div class="ghm-canvas"><canvas id="weightHeightChart"></canvas></div></div>
-                            <div class="ghm-chart"><h6>เส้นรอบวงศีรษะ (แรกเกิด - 5 ปี) เพศ${sex}</h6><div class="ghm-canvas"><canvas id="headChart"></canvas></div></div>
                         </div>
-                        <div class="ghm-hint"><i class="bi bi-zoom-in"></i> กดที่กราฟเพื่อขยายดูเต็มจอ</div>
+                        <div class="ghm-pane" data-pane="trend" style="display:none">
+                            <div id="ghmTrend" class="ghm-loading"><div class="spinner-border spinner-border-sm text-primary me-2"></div>กำลังโหลดกราฟและประวัติ...</div>
+                        </div>
                     </div>
                 `;
 
@@ -1962,33 +1968,69 @@ function showAddGrowthModal(studentId, studentName) {
                         showCloseButton: true,
                         showConfirmButton: false,
                     allowOutsideClick: true,
-                        didRender: () => {
-                        try {
-                            const charts = [
-                                { id: 'weightChart', type: 'weight' },
-                                { id: 'heightChart', type: 'height' },
-                                { id: 'weightHeightChart', type: 'weight_height' },
-                                { id: 'headChart', type: 'head' }
-                            ];
+                    didOpen: () => {
+                        const popup = Swal.getHtmlContainer();
+                        let trendLoaded = false;
 
-                            charts.forEach(chart => {
-                                const chartElement = document.getElementById(chart.id);
-                                if (chartElement) {
-                                    console.log('Creating chart:', chart.id, 'with sex:', sex); // Debug log
-                                const newChart = new Chart(chartElement, {
-                                    type: 'line',
-                                        data: prepareChartData(chart.type, allRecords, record.sex),
-                                    options: getChartOptions(chart.type)
+                        // สลับแท็บ: "ผลครั้งนี้" แสดงทันที ส่วน "กราฟและประวัติ" โหลดข้อมูลทุกครั้งแล้ววาดกราฟตอนเปิดครั้งแรก
+                        popup.querySelectorAll('.ghm-tab').forEach(tab => tab.addEventListener('click', () => {
+                            popup.querySelectorAll('.ghm-tab').forEach(t => t.classList.toggle('active', t === tab));
+                            popup.querySelectorAll('.ghm-pane').forEach(p => { p.style.display = p.dataset.pane === tab.dataset.tab ? '' : 'none'; });
+                            if (tab.dataset.tab === 'trend' && !trendLoaded) {
+                                trendLoaded = true;
+                                loadTrend();
+                            }
+                        }));
+
+                        function loadTrend() {
+                            const box = document.getElementById('ghmTrend');
+                            fetch(`../include/function/get_student_growth_records.php?student_id=${encodeURIComponent(studentId)}`)
+                                .then(r => r.json())
+                                .then(res => {
+                                    if (res.status !== 'success' || !res.all_records || !res.all_records.length) throw new Error('ไม่พบข้อมูลการเจริญเติบโต');
+                                    const everyRecord = res.all_records;
+                                    const rows = [...everyRecord].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                                    box.className = '';
+                                    box.innerHTML = `
+                                        <div class="ghm-box mb-3">
+                                            <h6><i class="bi bi-table"></i>ประวัติการบันทึกทั้งหมด (ล่าสุดอยู่บนสุด)</h6>
+                                            <div class="table-responsive" style="max-height:240px;overflow:auto;">
+                                                <table class="table table-sm table-bordered mb-0">
+                                                    <thead><tr><th>วันที่บันทึก</th><th>อายุ</th><th>น้ำหนัก</th><th>ส่วนสูง</th><th>เส้นรอบศีรษะ</th></tr></thead>
+                                                    <tbody>${rows.map(x => `
+                                                        <tr${String(x.id) === String(record.id) ? ' class="table-primary"' : ''}>
+                                                            <td>${new Date(x.created_at).toLocaleDateString('th-TH')}</td>
+                                                            <td>${x.age_year} ปี ${x.age_month} เดือน ${x.age_day} วัน</td>
+                                                            <td>${ghmVal(x.weight, 'กก.')}</td>
+                                                            <td>${ghmVal(x.height, 'ซม.')}</td>
+                                                            <td>${ghmVal(x.head_circumference, 'ซม.')}</td>
+                                                        </tr>`).join('')}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div class="ghm-hint" style="text-align:left;">แถวสีฟ้าคือครั้งที่กำลังดูอยู่</div>
+                                        </div>
+                                        <div class="ghm-charts">
+                                            <div class="ghm-chart"><h6>น้ำหนักตามเกณฑ์อายุ (0-5 ปี) เพศ${sex}</h6><div class="ghm-canvas"><canvas id="weightChart"></canvas></div></div>
+                                            <div class="ghm-chart"><h6>ความยาว/ส่วนสูงตามเกณฑ์อายุ (0-5 ปี) เพศ${sex}</h6><div class="ghm-canvas"><canvas id="heightChart"></canvas></div></div>
+                                            <div class="ghm-chart"><h6>น้ำหนักตามเกณฑ์ความยาว/ส่วนสูง (${ghmEsc(record.age_range || '0-2')} ปี) เพศ${sex}</h6><div class="ghm-canvas"><canvas id="weightHeightChart"></canvas></div></div>
+                                            <div class="ghm-chart"><h6>เส้นรอบวงศีรษะ (แรกเกิด - 5 ปี) เพศ${sex}</h6><div class="ghm-canvas"><canvas id="headChart"></canvas></div></div>
+                                        </div>
+                                        <div class="ghm-hint"><i class="bi bi-zoom-in"></i> กดที่กราฟเพื่อขยายดูเต็มจอ</div>`;
+
+                                    [['weightChart', 'weight'], ['heightChart', 'height'], ['weightHeightChart', 'weight_height'], ['headChart', 'head']].forEach(([id, type]) => {
+                                        const el = document.getElementById(id);
+                                        if (!el) return;
+                                        new Chart(el, { type: 'line', data: prepareChartData(type, everyRecord, record.sex), options: getChartOptions(type) });
+                                        el.onclick = () => expandChart(type, everyRecord, record.student_name, record.sex);
+                                        el.style.cursor = 'pointer';
+                                    });
+                                })
+                                .catch(err => {
+                                    box.className = 'ghm-loading';
+                                    box.innerHTML = `<span class="text-danger">${ghmEsc(err.message || 'โหลดไม่สำเร็จ')}</span>`;
+                                    trendLoaded = false;
                                 });
-
-                                chartElement.onclick = () => {
-                                        expandChart(chart.type, allRecords, record.student_name, record.sex);
-                                };
-                                chartElement.style.cursor = 'pointer';
-                                }
-                            });
-                        } catch (error) {
-                            console.error('Error creating charts:', error);
                         }
                     }
                 });
