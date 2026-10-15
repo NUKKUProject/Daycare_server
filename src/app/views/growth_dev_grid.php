@@ -8,6 +8,8 @@ require_once __DIR__ . '/../include/function/child_functions.php';
 require_once __DIR__ . '/../include/auth/auth_dashboard.php';
 
 $groups = get_childgroup();
+$isAdmin = getUserRole() === 'admin';
+$defaultRecorder = getFullName();
 ?>
 
 <style>
@@ -133,6 +135,11 @@ $groups = get_childgroup();
                         <label for="gDate">วันที่ประเมิน</label>
                         <input type="date" id="gDate" class="form-control">
                         <div class="help">อายุ ช่วงอายุเกณฑ์ และวันประเมินซ้ำคำนวณจากวันนี้</div>
+                    </div>
+                    <div class="fld">
+                        <label for="gRecorder">ผู้บันทึก</label>
+                        <input type="text" id="gRecorder" class="form-control" maxlength="100" value="<?= htmlspecialchars($defaultRecorder) ?>"<?= $isAdmin ? '' : ' readonly' ?>>
+                        <div class="help"><?= $isAdmin ? 'ผู้ดูแลระบบพิมพ์ชื่อผู้บันทึกแทนได้ (เช่น บันทึกแทนครู)' : 'บันทึกในชื่อของคุณ' ?></div>
                     </div>
                 </div>
             </div>
@@ -418,6 +425,7 @@ $groups = get_childgroup();
         try {
             const body = {
                 assess_date: byId('gDate').value,
+                recorder: byId('gRecorder').value.trim(),
                 rows: ready.map((r) => {
                     const o = { student_id: r.sid, birthday: r.noBirth ? r.birthday : null, age_range: r.range, weight: r.weight, height: r.height, head_circumference: r.head };
                     DOMAINS.forEach(([k]) => { o[k] = { status: r.st[k], note: r.note[k], issue: r.issue[k] }; });

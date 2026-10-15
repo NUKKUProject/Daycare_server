@@ -38,6 +38,13 @@ try {
     $pdo = getDatabaseConnection();
     $isTeacher = getUserRole() === 'teacher';
     $recordedBy = function_exists('getFullName') ? getFullName() : ($_SESSION['username'] ?? '');
+    // ผู้ดูแลระบบบันทึกในนามผู้อื่นได้ (ครูใช้ชื่อตัวเองเสมอ)
+    if (getUserRole() === 'admin') {
+        $given = trim((string)($input['recorder'] ?? ''));
+        if ($given !== '') {
+            $recordedBy = mb_substr($given, 0, 100);
+        }
+    }
 
     $childSql = "SELECT c.birthday, c.child_group, c.sex FROM children c WHERE c.studentid = :sid";
     if ($isTeacher) {

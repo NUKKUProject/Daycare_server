@@ -45,7 +45,11 @@ $groups = get_childgroup();
     .tg .full { font-size: .72rem; color: #64748b; line-height: 1.15; }
     .tg td.nw { white-space: nowrap; font-size: .8rem; }
     .tg td.note { text-align: left; min-width: 140px; max-width: 220px; font-size: .78rem; color: #475569; }
-    .tg .pass { color: #15803d; font-weight: 700; } .tg .delay { color: #b91c1c; font-weight: 700; }
+    .tg span.pass { color: #15803d; font-weight: 700; } .tg span.delay { color: #b91c1c; font-weight: 700; }
+    .tg .btn-chart { display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap; padding: 4px 12px; border-radius: 999px; border: 1.5px solid #bfdbfe; background: #eff6ff; color: #1d4ed8; font-size: .78rem; font-weight: 700; cursor: pointer; transition: background-color .15s, color .15s, border-color .15s, box-shadow .15s; }
+    .tg .btn-chart:hover { background: #1d4ed8; border-color: #1d4ed8; color: #fff; box-shadow: 0 2px 8px rgba(29, 78, 216, .3); }
+    .tg .btn-chart:active { transform: scale(.96); }
+    .tg td.c-chart { min-width: 110px; }
     .tg .cnt { font-weight: 700; font-size: .95rem; }
     .tg .res { font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: normal; display: inline-block; min-width: 150px; }
     .tg .res.normal { background: #dcfce7; color: #15803d; } .tg .res.delay { background: #fee2e2; color: #b91c1c; }
@@ -212,7 +216,7 @@ $groups = get_childgroup();
             td('nw', f.result === 'delay' && f.recheck ? esc(thaiShort(f.recheck)) : '-') +
             td('', `<span class="st ${f.saved ? 'saved' : 'todo'}">${f.saved ? 'บันทึกแล้ว' : 'ยังไม่ได้บันทึก'}</span>`) +
             td('nw', f.saved && s.dev_recorded_by ? esc(s.dev_recorded_by) : '-') +
-            td('', f.saved && f.hasMeasure ? `<button type="button" class="btn btn-sm btn-primary" data-chart="${esc(s.studentid)}" data-name="${esc(s.nickname || s.firstname_th)}"><i class="bi bi-graph-up"></i> ดูกราฟ</button>` : '-') + '</tr>';
+            td('c-chart', f.saved && f.hasMeasure ? `<button type="button" class="btn-chart" data-chart="${esc(s.studentid)}" data-name="${esc(s.nickname || s.firstname_th)}"><i class="bi bi-graph-up-arrow"></i>ดูกราฟ</button>` : '-') + '</tr>';
         return h;
     }
 
