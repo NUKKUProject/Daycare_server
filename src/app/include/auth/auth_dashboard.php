@@ -185,7 +185,7 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                 'icon' => 'bi bi-graph-up',
                                 'items' => [
                                     ['label' => 'กรอกผลการเจริญเติบโตและพัฒนาการ', 'href' => '/app/views/growth_dev_grid.php', 'match' => 'growth_dev_grid.php', 'icon' => 'bi bi-pencil-square'],
-                                    ['label' => 'ดูผลและกราฟรายห้อง', 'href' => '/app/views/growth_dev_view.php', 'match' => 'growth_dev_view.php', 'icon' => 'bi bi-clipboard2-data'],
+                                    ['label' => 'ดูผลและกราฟรายห้อง', 'href' => '/app/views/growth_dev_view.php', 'match' => 'growth_dev_view.php', 'icon' => 'bi bi-bar-chart-line'],
                                     ['label' => 'ประวัติการเจริญเติบโตรายคน', 'href' => '/app/views/growth_history.php', 'match' => 'growth_history.php', 'icon' => 'bi bi-clock-history'],
                                 ],
                             ],
@@ -241,7 +241,7 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                 'icon' => 'bi bi-graph-up',
                                 'items' => [
                                     ['label' => 'กรอกผลการเจริญเติบโตและพัฒนาการ', 'href' => '/app/views/growth_dev_grid.php', 'match' => 'growth_dev_grid.php', 'icon' => 'bi bi-pencil-square'],
-                                    ['label' => 'ดูผลและกราฟรายห้อง', 'href' => '/app/views/growth_dev_view.php', 'match' => 'growth_dev_view.php', 'icon' => 'bi bi-clipboard2-data'],
+                                    ['label' => 'ดูผลและกราฟรายห้อง', 'href' => '/app/views/growth_dev_view.php', 'match' => 'growth_dev_view.php', 'icon' => 'bi bi-bar-chart-line'],
                                     ['label' => 'ประวัติการเจริญเติบโตรายคน', 'href' => '/app/views/growth_history.php', 'match' => 'growth_history.php', 'icon' => 'bi bi-clock-history'],
                                 ],
                             ],
