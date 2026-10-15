@@ -139,7 +139,7 @@ $defaultRecorder = getFullName();
                     <div class="fld">
                         <label for="gRecorder">ผู้บันทึก</label>
                         <input type="text" id="gRecorder" class="form-control" maxlength="100" value="<?= htmlspecialchars($defaultRecorder) ?>"<?= $isAdmin ? '' : ' readonly' ?>>
-                        <div class="help"><?= $isAdmin ? 'ผู้ดูแลระบบพิมพ์ชื่อผู้บันทึกแทนได้ (เช่น บันทึกแทนครู)' : 'บันทึกในชื่อของคุณ' ?></div>
+                        <div class="help"><?= $isAdmin ? 'ผู้ดูแลระบบแก้เป็นชื่อจริงหรือบันทึกแทนครูได้ ระบบจำชื่อที่พิมพ์ไว้ให้' : 'บันทึกในชื่อของคุณ' ?></div>
                     </div>
                 </div>
             </div>
@@ -468,10 +468,26 @@ $defaultRecorder = getFullName();
             .catch(console.error);
     }
 
+    // ผู้ดูแลระบบ: ชื่อผู้บันทึกเริ่มต้นเป็นอีเมลที่ล็อกอิน (ระบบไม่มีช่องชื่อจริงของแอดมิน)
+    // จึงจำชื่อที่พิมพ์ไว้ในเบราว์เซอร์นี้ ครั้งต่อไปขึ้นให้เอง  ล้างช่องแล้วออกจากช่อง = กลับไปใช้อีเมล
+    const RECORDER_KEY = 'devRecorderName:' + <?= json_encode($_SESSION['username'] ?? '') ?>;
+    const RECORDER_DEFAULT = <?= json_encode($defaultRecorder) ?>;
+    function initRecorderName() {
+        const el = byId('gRecorder');
+        if (el.readOnly) return;
+        try { const saved = localStorage.getItem(RECORDER_KEY); if (saved) el.value = saved; } catch (e) { /* ไม่เป็นไร */ }
+        el.addEventListener('change', () => {
+            const v = el.value.trim();
+            if (!v) el.value = RECORDER_DEFAULT;
+            try { v && v !== RECORDER_DEFAULT ? localStorage.setItem(RECORDER_KEY, v) : localStorage.removeItem(RECORDER_KEY); } catch (e) { /* ไม่เป็นไร */ }
+        });
+    }
+
     function init() {
         const wrap = byId('gWrap');
         enableDragScroll(wrap);
         byId('gDate').value = PRE.date || todayStr();
+        initRecorderName();
         byId('gGroup').addEventListener('change', async () => { await loadRooms(); loadList(false); });
         byId('gRoom').addEventListener('change', () => loadList(false));
         byId('gLoad').addEventListener('click', () => loadList(true));
