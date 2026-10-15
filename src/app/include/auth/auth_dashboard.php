@@ -177,7 +177,7 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                 'items' => [
                                     ['label' => 'ตรวจสุขภาพโดยกุมารแพทย์', 'href' => '/app/views/check_health_external/checklist_name.php', 'match' => 'check_health_external', 'icon' => 'fa-solid fa-user-doctor'],
                                     ['label' => 'ตรวจสุขภาพช่องปาก', 'href' => '/app/views/check_health_tooth/checklist_name.php', 'match' => 'check_health_tooth', 'icon' => 'fa-solid fa-tooth'],
-                                    ['label' => 'ติดตามสุขภาพ', 'href' => '/app/views/health_followup.php', 'match' => 'health_followup.php', 'icon' => 'bi bi-heart-pulse', 'badge' => hf_pending_count()],
+                                    ['label' => 'ติดตามสุขภาพ', 'href' => '/app/views/health_followup.php', 'match' => 'health_followup.php', 'icon' => 'bi bi-bell', 'badge' => hf_pending_count()],
                                 ],
                             ],
                             [
@@ -233,7 +233,7 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                 'items' => [
                                     ['label' => 'ตรวจสุขภาพโดยกุมารแพทย์', 'href' => '/app/views/check_health_external/checklist_name.php', 'match' => 'check_health_external', 'icon' => 'fa-solid fa-user-doctor'],
                                     ['label' => 'ตรวจสุขภาพช่องปาก', 'href' => '/app/views/check_health_tooth/checklist_name.php', 'match' => 'check_health_tooth', 'icon' => 'fa-solid fa-tooth'],
-                                    ['label' => 'ติดตามสุขภาพ', 'href' => '/app/views/health_followup.php', 'match' => 'health_followup.php', 'icon' => 'bi bi-heart-pulse', 'badge' => hf_pending_count()],
+                                    ['label' => 'ติดตามสุขภาพ', 'href' => '/app/views/health_followup.php', 'match' => 'health_followup.php', 'icon' => 'bi bi-bell', 'badge' => hf_pending_count()],
                                 ],
                             ],
                             [
