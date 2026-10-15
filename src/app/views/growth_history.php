@@ -65,6 +65,24 @@ if (isset($_SESSION['user_id'])) {
     .modal-title { color: #0f2460; font-weight: 700; }
     .modal-footer { border-top: 1px solid #e2e8f0; }
     .export-option { padding: 10px 0; }
+    .gh-btn { display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; padding: 4px 14px; border-radius: 999px; border: 1.5px solid transparent; font-size: .8rem; font-weight: 700; cursor: pointer; transition: background-color .15s, color .15s, box-shadow .15s; }
+    .gh-btn:active { transform: scale(.96); }
+    .gh-btn.primary { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; } .gh-btn.primary:hover { background: #1d4ed8; border-color: #1d4ed8; color: #fff; box-shadow: 0 2px 8px rgba(29, 78, 216, .3); }
+
+    /* modal ข้อมูลทั้งหมดของเด็ก */
+    .ghm-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .6rem; margin-bottom: .9rem; }
+    .ghm-tile { background: #f1f5f9; border-radius: 12px; padding: .6rem .85rem; }
+    .ghm-tile span { display: block; font-size: .72rem; font-weight: 700; color: #64748b; }
+    .ghm-tile b { font-size: 1rem; color: #0f2460; }
+    .ghm-tile small { font-weight: 400; color: #64748b; }
+    .ghm-box { border: 1px solid #e2e8f0; border-radius: 12px; padding: .8rem 1rem; }
+    .ghm-box h6 { font-size: .9rem; font-weight: 700; color: #0f2460; margin: 0 0 .5rem; display: flex; align-items: center; gap: .4rem; }
+    .ghm-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 1.1rem; }
+    .ghm-chart { border: 1px solid #e2e8f0; border-radius: 12px; padding: .8rem 1rem 1rem; }
+    .ghm-chart h6 { font-size: .82rem; font-weight: 700; color: #0f2460; margin: 0 0 .4rem; }
+    .ghm-canvas { position: relative; height: 380px; }
+    .ghm-empty { height: 100%; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: .85rem; }
+    #childModal .modal-body { background: #fff; }
 </style>
 
 <main class="main-content">
@@ -72,7 +90,7 @@ if (isset($_SESSION['user_id'])) {
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
             <div>
                 <h2 class="gh-title">ประวัติการบันทึกการเจริญเติบโตของเด็ก</h2>
-                <div class="gh-sub">รายการที่บันทึกทุกครั้ง เรียงล่าสุดไว้บนสุด ดูผลและกราฟรายห้องได้ที่หน้า "ดูผลและกราฟรายห้อง"</div>
+                <div class="gh-sub">รายชื่อเด็กที่มีประวัติการบันทึก กด "ดูกราฟ" เพื่อดูข้อมูลทั้งหมดของเด็กคนนั้น</div>
             </div>
             <div class="gh-top-actions">
                 <?php if ($is_admin || $is_teacher): ?>
@@ -130,6 +148,21 @@ if (isset($_SESSION['user_id'])) {
     </div>
 </main>
 
+<!-- ===== Modal: ข้อมูลทั้งหมดของเด็ก (ประวัติ + กราฟ) ===== -->
+<div class="modal fade" id="childModal" tabindex="-1" aria-labelledby="childModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-graph-up me-2 text-primary"></i><span id="childModalTitle">ข้อมูลการเจริญเติบโต</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="childModalBody"></div>
+        </div>
+    </div>
+</div>
+
+<script src="../../public/assets/js/growth_standard_charts.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/growth_standard_charts.js') ?: time() ?>"></script>
+
 <script>
     const GH_CAN_MANAGE = <?= ($is_admin || $is_teacher) ? 'true' : 'false' ?>;
     const GH_IS_STUDENT = <?= $is_student ? 'true' : 'false' ?>;
@@ -167,7 +200,9 @@ if (isset($_SESSION['user_id'])) {
         if (result === 'delay') return '<span class="gh-chip bad">สงสัยล่าช้า</span>';
         return st.length ? '<span class="gh-chip muted">ติ๊กไม่ครบ</span>' : '<span class="gh-dash">-</span>';
     }
+    const fullNameOf = (r) => `${r.prefix_th || ''}${r.firstname_th || ''} ${r.lastname_th || ''}`.trim();
 
+    // รายชื่อเด็ก: 1 แถวต่อ 1 คน (สรุปครั้งล่าสุด) กด "ดูกราฟ" เพื่อดูข้อมูลทั้งหมดของเด็กคนนั้น
     function loadResults() {
         const table = el('resultTable'), summary = el('ghSummary');
         const q = new URLSearchParams({ date_from: el('date_from').value, date_to: el('date_to').value });
@@ -175,7 +210,7 @@ if (isset($_SESSION['user_id'])) {
             q.set('child_group', el('child_group').value); q.set('classroom', el('classroom').value); q.set('search', el('search').value.trim());
             if (!q.get('child_group') && !q.get('classroom') && !q.get('search')) {
                 summary.style.display = 'none';
-                table.innerHTML = '<div class="gh-empty"><i class="bi bi-clock-history"></i><div class="big">เลือกกลุ่มเรียน ห้องเรียน หรือค้นหาชื่อเด็ก</div>ประวัติการบันทึกจะแสดงที่นี่</div>';
+                table.innerHTML = '<div class="gh-empty"><i class="bi bi-people"></i><div class="big">เลือกกลุ่มเรียน ห้องเรียน หรือค้นหาชื่อเด็ก</div>รายชื่อเด็กที่มีประวัติการบันทึกจะแสดงที่นี่</div>';
                 return;
             }
         }
@@ -185,48 +220,127 @@ if (isset($_SESSION['user_id'])) {
             .then(r => r.json())
             .then(res => {
                 if (res.status !== 'success') throw new Error(res.message || 'โหลดข้อมูลไม่สำเร็จ');
-                const rows = res.rows;
-                if (!rows.length) {
+                if (!res.rows.length) {
                     summary.style.display = 'none';
                     table.innerHTML = '<div class="gh-empty"><i class="bi bi-inbox"></i><div class="big">ไม่พบประวัติการบันทึก</div>ลองเปลี่ยนห้อง ช่วงวันที่ หรือคำค้นหา</div>';
                     return;
                 }
-                const kids = new Set(rows.map(r => r.student_id)).size;
-                summary.innerHTML = `<span class="gh-pill">${rows.length} รายการ</span><span class="gh-pill">${kids} คน</span>` +
-                    (res.truncated ? `<span class="gh-note">แสดง ${res.limit} รายการล่าสุด ผลที่เก่ากว่านั้นไม่แสดง ลองจำกัดช่วงวันที่</span>` : '');
+                // รายการเรียงล่าสุดก่อนอยู่แล้ว: แถวแรกของเด็กแต่ละคนคือครั้งล่าสุด
+                const kids = new Map();
+                res.rows.forEach(r => {
+                    if (!kids.has(r.student_id)) kids.set(r.student_id, { latest: r, count: 0 });
+                    kids.get(r.student_id).count++;
+                });
+                const list = [...kids.values()].sort((a, b) => fullNameOf(a.latest).localeCompare(fullNameOf(b.latest), 'th'));
+
+                summary.innerHTML = `<span class="gh-pill">${list.length} คน</span><span class="gh-pill">${res.rows.length} รายการบันทึก</span>` +
+                    (res.truncated ? `<span class="gh-note">แสดง ${res.limit} รายการล่าสุด จำนวนครั้งของบางคนอาจไม่ครบ ลองจำกัดช่วงวันที่</span>` : '');
                 summary.style.display = '';
 
-                let prevDate = null;
-                const body = rows.map((r, i) => {
-                    const fullName = `${r.prefix_th || ''}${r.firstname_th || ''} ${r.lastname_th || ''}`.trim();
-                    const start = r.record_date !== prevDate; prevDate = r.record_date;
-                    const grid = `growth_dev_grid.php?${new URLSearchParams({ child_group: r.child_group, classroom: r.classroom, date: r.record_date })}`;
-                    const d = `data-rid="${ghEsc(r.id)}" data-name="${ghEsc(fullName)}"`;
-                    return `<tr class="${start ? 'daystart' : ''}">
+                const body = list.map(({ latest: r, count }, i) => `<tr>
+                        <td>${i + 1}</td>
+                        <td class="left"><div class="gh-name">${ghEsc(fullNameOf(r))}</div><div class="gh-nick">${r.nickname ? 'ชื่อเล่น ' + ghEsc(r.nickname) + ' · ' : ''}${ghEsc(r.child_group)} · ${ghEsc(r.classroom)}</div></td>
+                        <td>${count}</td>
                         <td class="nw">${ghDate(r.record_date)}</td>
-                        <td class="left"><div class="gh-name">${ghEsc(fullName)}</div><div class="gh-nick">${r.nickname ? 'ชื่อเล่น ' + ghEsc(r.nickname) + ' · ' : ''}${ghEsc(r.child_group)} · ${ghEsc(r.classroom)}</div></td>
-                        <td class="nw">${ghEsc(r.age_year)} ปี ${ghEsc(r.age_month)} ด. ${ghEsc(r.age_day)} ว.</td>
                         <td class="nw">${ghNum(r.weight, 'กก.')}</td>
                         <td class="nw">${ghNum(r.height, 'ซม.')}</td>
                         <td class="nw">${ghNum(r.head_circumference, 'ซม.')}</td>
                         <td>${devChip(r)}</td>
-                        <td class="nw">${r.dev_recorded_by ? ghEsc(r.dev_recorded_by) : '<span class="gh-dash">-</span>'}</td>
-                        ${GH_CAN_MANAGE ? `<td class="nw">
-                            <a class="gh-icon info" href="growth_dev_view.php?${new URLSearchParams({ child_group: r.child_group, classroom: r.classroom, date: r.record_date })}" title="ดูผลและกราฟของห้อง" aria-label="ดูผลและกราฟ"><i class="bi bi-graph-up"></i></a>
-                            <a class="gh-icon warn" href="${grid}" title="แก้ไขที่หน้ากรอกผล" aria-label="แก้ไข"><i class="bi bi-pencil"></i></a>
-                            <button type="button" class="gh-icon danger" data-act="delete" title="ลบ" aria-label="ลบ" ${d}><i class="bi bi-trash"></i></button>
-                        </td>` : ''}
-                    </tr>`;
-                }).join('');
+                        <td class="nw"><button type="button" class="gh-btn primary" data-act="open" data-sid="${ghEsc(r.student_id)}"><i class="bi bi-graph-up"></i>ดูกราฟ</button></td>
+                    </tr>`).join('');
 
                 table.innerHTML = `<div class="gh-tablecard"><div class="gh-table-wrap"><table class="gh-table">
-                    <thead><tr><th>วันที่บันทึก</th><th class="left">ชื่อ-นามสกุล</th><th>อายุ</th><th>น้ำหนัก</th><th>ส่วนสูง</th><th>รอบศีรษะ</th><th>ผลพัฒนาการ</th><th>ผู้บันทึก</th>${GH_CAN_MANAGE ? '<th>จัดการ</th>' : ''}</tr></thead>
+                    <thead><tr><th>#</th><th class="left">ชื่อ-นามสกุล</th><th>บันทึกแล้ว (ครั้ง)</th><th>ครั้งล่าสุด</th><th>น้ำหนักล่าสุด</th><th>ส่วนสูงล่าสุด</th><th>รอบศีรษะล่าสุด</th><th>ผลพัฒนาการล่าสุด</th><th>ข้อมูลทั้งหมด</th></tr></thead>
                     <tbody>${body}</tbody></table></div></div>`;
             })
             .catch(err => {
                 summary.style.display = 'none';
                 table.innerHTML = `<div class="gh-empty"><i class="bi bi-exclamation-triangle text-danger"></i><div class="big">โหลดข้อมูลไม่สำเร็จ</div>${ghEsc(err.message)}</div>`;
             });
+    }
+
+    // ===== Modal ข้อมูลทั้งหมดของเด็ก 1 คน: สรุปล่าสุด + ประวัติทุกครั้ง + กราฟ 4 แบบ =====
+    let childCharts = [];
+    let currentChildId = null;
+    const childModal = () => bootstrap.Modal.getOrCreateInstance(el('childModal'));
+
+    function destroyChildCharts() { childCharts.forEach(c => c.destroy()); childCharts = []; }
+
+    function openChild(studentId) {
+        currentChildId = studentId;
+        destroyChildCharts();
+        el('childModalTitle').textContent = 'ข้อมูลการเจริญเติบโต';
+        el('childModalBody').innerHTML = '<div class="gh-empty" style="box-shadow:none"><div class="spinner-border text-primary"></div></div>';
+        childModal().show();
+
+        fetch(`../include/function/get_growth_history_list.php?student_id=${encodeURIComponent(studentId)}`)
+            .then(r => r.json())
+            .then(res => {
+                if (res.status !== 'success' || !res.rows.length) throw new Error(res.message || 'ไม่พบข้อมูลของเด็กคนนี้');
+                renderChild(res.rows);
+            })
+            .catch(err => { el('childModalBody').innerHTML = `<div class="gh-empty" style="box-shadow:none"><div class="big text-danger">โหลดไม่สำเร็จ</div>${ghEsc(err.message)}</div>`; });
+    }
+
+    function renderChild(rows) {
+        const latest = rows[0];
+        const name = fullNameOf(latest);
+        const sexText = latest.sex === 'ชาย' || latest.sex === 'M' ? 'ชาย' : 'หญิง';
+        el('childModalTitle').textContent = `ข้อมูลการเจริญเติบโต - ${name}`;
+
+        const tiles = `<div class="ghm-tiles">
+            <div class="ghm-tile"><span>กลุ่มเรียน / ห้อง</span><b>${ghEsc(latest.child_group)} · ${ghEsc(latest.classroom)}</b></div>
+            <div class="ghm-tile"><span>บันทึกแล้ว</span><b>${rows.length} ครั้ง</b></div>
+            <div class="ghm-tile"><span>ครั้งล่าสุด</span><b>${ghDate(latest.record_date)}</b></div>
+            <div class="ghm-tile"><span>น้ำหนักล่าสุด</span><b>${ghNum(latest.weight, 'กก.')}</b></div>
+            <div class="ghm-tile"><span>ส่วนสูงล่าสุด</span><b>${ghNum(latest.height, 'ซม.')}</b></div>
+            <div class="ghm-tile"><span>รอบศีรษะล่าสุด</span><b>${ghNum(latest.head_circumference, 'ซม.')}</b></div>
+        </div>`;
+
+        const histRows = rows.map(r => `<tr>
+                <td class="nw">${ghDate(r.record_date)}</td>
+                <td class="nw">${ghEsc(r.age_year)} ปี ${ghEsc(r.age_month)} ด. ${ghEsc(r.age_day)} ว.</td>
+                <td class="nw">${ghNum(r.weight, 'กก.')}</td>
+                <td class="nw">${ghNum(r.height, 'ซม.')}</td>
+                <td class="nw">${ghNum(r.head_circumference, 'ซม.')}</td>
+                <td>${devChip(r)}</td>
+                <td class="nw">${r.dev_recorded_by ? ghEsc(r.dev_recorded_by) : '<span class="gh-dash">-</span>'}</td>
+                ${GH_CAN_MANAGE ? `<td class="nw">
+                    <a class="gh-icon warn" href="growth_dev_grid.php?${new URLSearchParams({ child_group: r.child_group, classroom: r.classroom, date: r.record_date })}" title="แก้ไขที่หน้ากรอกผล" aria-label="แก้ไข"><i class="bi bi-pencil"></i></a>
+                    <button type="button" class="gh-icon danger" data-act="delete" data-rid="${ghEsc(r.id)}" data-name="${ghEsc(name)}" title="ลบ" aria-label="ลบ"><i class="bi bi-trash"></i></button>
+                </td>` : ''}
+            </tr>`).join('');
+
+        const history = `<div class="ghm-box mb-3">
+            <h6><i class="bi bi-table"></i>ประวัติการบันทึกทุกครั้ง (ล่าสุดอยู่บนสุด)</h6>
+            <div class="gh-table-wrap" style="max-height:260px;"><table class="gh-table">
+                <thead><tr><th>วันที่บันทึก</th><th>อายุ</th><th>น้ำหนัก</th><th>ส่วนสูง</th><th>รอบศีรษะ</th><th>ผลพัฒนาการ</th><th>ผู้บันทึก</th>${GH_CAN_MANAGE ? '<th>จัดการ</th>' : ''}</tr></thead>
+                <tbody>${histRows}</tbody></table></div>
+        </div>`;
+
+        const range = (latest.age_year || 0) * 12 + (latest.age_month || 0) < 24 ? '0-2' : '2-5';
+        const charts = `<div class="ghm-charts">
+            <div class="ghm-chart"><h6>น้ำหนักตามเกณฑ์อายุ (0-5 ปี) เพศ${sexText}</h6><div class="ghm-canvas"><canvas id="weightChart"></canvas></div></div>
+            <div class="ghm-chart"><h6>ความยาว/ส่วนสูงตามเกณฑ์อายุ (0-5 ปี) เพศ${sexText}</h6><div class="ghm-canvas"><canvas id="heightChart"></canvas></div></div>
+            <div class="ghm-chart"><h6>น้ำหนักตามเกณฑ์ความยาว/ส่วนสูง (${range} ปี) เพศ${sexText}</h6><div class="ghm-canvas"><canvas id="weightHeightChart"></canvas></div></div>
+            <div class="ghm-chart"><h6>เส้นรอบวงศีรษะ (แรกเกิด - 5 ปี) เพศ${sexText}</h6><div class="ghm-canvas"><canvas id="headChart"></canvas></div></div>
+        </div>`;
+
+        el('childModalBody').innerHTML = tiles + history + charts;
+
+        // กราฟใช้ข้อมูลทุกครั้ง (กราฟเรียงตามเวลาเอง) เฉพาะครั้งที่มีค่าที่กราฟนั้นต้องใช้
+        const has = (r, ...ks) => ks.every(k => r[k] !== null && r[k] !== undefined && r[k] !== '' && parseFloat(r[k]) > 0);
+        const sets = {
+            weight: rows.filter(r => has(r, 'weight')), height: rows.filter(r => has(r, 'height')),
+            weight_height: rows.filter(r => has(r, 'weight', 'height')), head: rows.filter(r => has(r, 'head_circumference'))
+        };
+        destroyChildCharts();
+        [['weightChart', 'weight'], ['heightChart', 'height'], ['weightHeightChart', 'weight_height'], ['headChart', 'head']].forEach(([id, type]) => {
+            const canvas = el(id);
+            if (!canvas) return;
+            if (!sets[type].length) { canvas.parentElement.innerHTML = '<div class="ghm-empty">ยังไม่มีข้อมูลสำหรับกราฟนี้</div>'; return; }
+            childCharts.push(new Chart(canvas, { type: 'line', data: prepareChartData(type, sets[type], latest.sex), options: getChartOptions(type) }));
+        });
     }
 
     function deleteRecord(recordId, name) {
@@ -243,17 +357,21 @@ if (isset($_SESSION['user_id'])) {
                     if (res.status !== 'success') throw new Error(res.message || 'ลบไม่สำเร็จ');
                     Swal.fire({ icon: 'success', title: 'ลบเรียบร้อย', timer: 1200, showConfirmButton: false });
                     loadResults();
+                    if (currentChildId) openChild(currentChildId);
                 })
                 .catch(err => Swal.fire('ผิดพลาด', err.message, 'error'));
         });
     }
 
     document.addEventListener('click', (e) => {
-        const b = e.target.closest('#resultTable button[data-act="delete"]');
-        if (b) deleteRecord(b.dataset.rid, b.dataset.name);
+        const open = e.target.closest('#resultTable button[data-act="open"]');
+        if (open) { openChild(open.dataset.sid); return; }
+        const del = e.target.closest('#childModalBody button[data-act="delete"]');
+        if (del) deleteRecord(del.dataset.rid, del.dataset.name);
     });
 
     document.addEventListener('DOMContentLoaded', async () => {
+        el('childModal').addEventListener('hidden.bs.modal', () => { destroyChildCharts(); currentChildId = null; });
         el('searchForm').addEventListener('submit', (e) => { e.preventDefault(); loadResults(); });
         el('date_from').addEventListener('change', loadResults);
         el('date_to').addEventListener('change', loadResults);

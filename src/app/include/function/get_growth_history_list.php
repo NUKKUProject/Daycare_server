@@ -14,11 +14,12 @@ try {
     $childGroup = $_GET['child_group'] ?? '';
     $classroom = $_GET['classroom'] ?? '';
     $search = trim($_GET['search'] ?? '');
+    $studentId = trim($_GET['student_id'] ?? '');
     $from = $_GET['date_from'] ?? '';
     $to = $_GET['date_to'] ?? '';
 
     $isStudent = getUserRole() === 'student';
-    if (!$isStudent && $childGroup === '' && $classroom === '' && $search === '') {
+    if (!$isStudent && $studentId === '' && $childGroup === '' && $classroom === '' && $search === '') {
         throw new Exception('กรุณาเลือกกลุ่มเรียน ห้องเรียน หรือค้นหาชื่อเด็ก');
     }
     foreach ([$from, $to] as $d) {
@@ -31,7 +32,7 @@ try {
                    g.age_year, g.age_month, g.age_day, g.weight, g.height, g.head_circumference,
                    g.gm_status, g.fm_status, g.rl_status, g.el_status, g.ps_status,
                    g.dev_result, g.dev_recorded_by,
-                   c.prefix_th, c.firstname_th, c.lastname_th, c.nickname, c.child_group, c.classroom
+                   c.prefix_th, c.firstname_th, c.lastname_th, c.nickname, c.child_group, c.classroom, c.sex
             FROM growth_records g
             JOIN children c ON c.studentid = g.student_id
             WHERE g.is_draft = false";
@@ -44,6 +45,10 @@ try {
         if (getUserRole() === 'teacher') {
             $sql .= devScreeningTeacherScopeSql();
             $params[':teacher_id'] = $_SESSION['user_id'];
+        }
+        if ($studentId !== '') {
+            $sql .= " AND g.student_id = :sid";
+            $params[':sid'] = $studentId;
         }
         if ($childGroup !== '') {
             $sql .= " AND c.child_group = :child_group";
