@@ -110,8 +110,13 @@ if (isset($_SESSION['user_id'])) {
     .ghm-chip.warn { background: #fef3c7; color: #b45309; } .ghm-chip.muted { background: #f1f5f9; color: #94a3b8; }
     .ghm-result { margin-top: .6rem; padding: .55rem .8rem; border-radius: 10px; font-size: .84rem; line-height: 1.6; }
     .ghm-result.ok { background: #f0fdf4; color: #15803d; } .ghm-result.bad { background: #fef2f2; color: #b91c1c; }
-    .ghm-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: .9rem; }
-    .ghm-chart { border: 1px solid #e2e8f0; border-radius: 12px; padding: .7rem .9rem; }
+    .ghm-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 1.1rem; }
+    .ghm-canvas { position: relative; height: 380px; }
+    /* กราฟในป๊อปอัปอื่น (กราฟภาพรวม) ให้การ์ดสูงพอ ไม่บีบกราฟ */
+    .swal2-html-container .col-md-6 > .card > .card-body { display: flex; flex-direction: column; height: 400px; padding: .9rem 1rem; }
+    .swal2-html-container .col-md-6 > .card > .card-body canvas { flex: 1 1 0; min-height: 0; }
+    .swal2-html-container .col-md-6 > .card .card-title { margin-bottom: .5rem; }
+    .ghm-chart { border: 1px solid #e2e8f0; border-radius: 12px; padding: .8rem 1rem 1rem; }
     .ghm-chart h6 { font-size: .82rem; font-weight: 700; color: #0f2460; margin: 0 0 .4rem; }
     .ghm-hint { margin-top: .6rem; font-size: .76rem; color: #94a3b8; text-align: center; }
 </style>
@@ -1289,7 +1294,7 @@ function showAddGrowthModal(studentId, studentName) {
         const modalHtml = `
             <div class="card">
                 <div class="card-body">
-                    <canvas id="expandedChart" style="height: 70vh;"></canvas>
+                    <div style="position:relative;height:70vh;"><canvas id="expandedChart"></canvas></div>
                 </div>
             </div>
         `;
@@ -1715,13 +1720,18 @@ function showAddGrowthModal(studentId, studentName) {
     function getChartOptions(type) {
         const options = {
             responsive: true,
+            maintainAspectRatio: false,   // ให้กราฟสูงตามกรอบที่กำหนด ไม่บีบตามสัดส่วนความกว้าง
+            layout: { padding: { top: 4, right: 8 } },
             plugins: {
                 legend: {
-                    position: 'top'
+                    position: 'bottom',
+                    labels: { boxWidth: 14, padding: 10, font: { size: 11 } }
                 },
                 title: {
                     display: true,
-                    text: getChartTitle(type)
+                    text: getChartTitle(type),
+                    font: { size: 13 },
+                    padding: { bottom: 6 }
                 }
             }
         };
@@ -1935,10 +1945,10 @@ function showAddGrowthModal(studentId, studentName) {
                         </div>
 
                         <div class="ghm-charts">
-                            <div class="ghm-chart"><h6>น้ำหนักตามเกณฑ์อายุ (0-5 ปี) เพศ${sex}</h6><canvas id="weightChart"></canvas></div>
-                            <div class="ghm-chart"><h6>ความยาว/ส่วนสูงตามเกณฑ์อายุ (0-5 ปี) เพศ${sex}</h6><canvas id="heightChart"></canvas></div>
-                            <div class="ghm-chart"><h6>น้ำหนักตามเกณฑ์ความยาว/ส่วนสูง (${ghmEsc(record.age_range || '0-2')} ปี) เพศ${sex}</h6><canvas id="weightHeightChart"></canvas></div>
-                            <div class="ghm-chart"><h6>เส้นรอบวงศีรษะ (แรกเกิด - 5 ปี) เพศ${sex}</h6><canvas id="headChart"></canvas></div>
+                            <div class="ghm-chart"><h6>น้ำหนักตามเกณฑ์อายุ (0-5 ปี) เพศ${sex}</h6><div class="ghm-canvas"><canvas id="weightChart"></canvas></div></div>
+                            <div class="ghm-chart"><h6>ความยาว/ส่วนสูงตามเกณฑ์อายุ (0-5 ปี) เพศ${sex}</h6><div class="ghm-canvas"><canvas id="heightChart"></canvas></div></div>
+                            <div class="ghm-chart"><h6>น้ำหนักตามเกณฑ์ความยาว/ส่วนสูง (${ghmEsc(record.age_range || '0-2')} ปี) เพศ${sex}</h6><div class="ghm-canvas"><canvas id="weightHeightChart"></canvas></div></div>
+                            <div class="ghm-chart"><h6>เส้นรอบวงศีรษะ (แรกเกิด - 5 ปี) เพศ${sex}</h6><div class="ghm-canvas"><canvas id="headChart"></canvas></div></div>
                         </div>
                         <div class="ghm-hint"><i class="bi bi-zoom-in"></i> กดที่กราฟเพื่อขยายดูเต็มจอ</div>
                     </div>
@@ -2097,7 +2107,7 @@ function showAddGrowthModal(studentId, studentName) {
         const modalHtml = `
             <div class="card">
                 <div class="card-body">
-                    <canvas id="expandedChart" style="height: 70vh;"></canvas>
+                    <div style="position:relative;height:70vh;"><canvas id="expandedChart"></canvas></div>
                 </div>
             </div>
         `;
