@@ -19,82 +19,122 @@ if (isset($_SESSION['user_id'])) {
 ?>
 <body>
 
+<style>
+    .gh-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, .06); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .gh-title { font-size: 1.5rem; font-weight: 700; color: #0f2460; margin: 0; }
+    .gh-sub { font-size: .85rem; color: #64748b; margin-top: .15rem; }
+    .gh-label { display: block; font-size: .78rem; font-weight: 700; color: #475569; margin-bottom: .2rem; }
+    .gh-filters { display: grid; gap: .75rem 1rem; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; }
+    @media (max-width: 992px) { .gh-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 576px) { .gh-filters { grid-template-columns: 1fr; } }
+    .gh-filter-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .85rem; }
+    .gh-top-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+    .gh-pills { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: .75rem; }
+    .gh-pill { border-radius: 999px; padding: 3px 14px; font-weight: 700; font-size: .8rem; background: #e2e8f0; color: #475569; }
+    .gh-pill.ok { background: #dcfce7; color: #15803d; } .gh-pill.todo { background: #f1f5f9; color: #64748b; }
+
+    .gh-class { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, .06); margin-bottom: 1rem; overflow: hidden; }
+    .gh-class-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; padding: .75rem 1.1rem; background: linear-gradient(90deg, #1e4db7, #3b6fd4); color: #fff; }
+    .gh-class-title { font-weight: 700; font-size: 1.02rem; display: flex; align-items: center; gap: .5rem; }
+    .gh-class-count { font-size: .85rem; opacity: .95; }
+    .gh-table-wrap { overflow-x: auto; }
+    .gh-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .88rem; }
+    .gh-table th { background: #f1f5f9; color: #475569; font-size: .76rem; font-weight: 700; padding: 8px 10px; text-align: center; white-space: nowrap; border-bottom: 1px solid #cbd5e1; position: sticky; top: 0; }
+    .gh-table td { padding: 8px 10px; text-align: center; border-bottom: 1px solid #eef2f6; vertical-align: middle; }
+    .gh-table .left { text-align: left; }
+    .gh-table .nw { white-space: nowrap; }
+    .gh-table tbody tr:hover td { background: #f8fafc; }
+    .gh-table tr.none td { color: #94a3b8; }
+    .gh-table tr.has td:first-child { box-shadow: inset 4px 0 0 #22c55e; }
+    .gh-table tr.none td:first-child { box-shadow: inset 4px 0 0 #cbd5e1; }
+    .gh-name { font-weight: 700; color: #0f2460; line-height: 1.2; }
+    .gh-table tr.none .gh-name { color: #64748b; }
+    .gh-nick { font-size: .74rem; color: #64748b; }
+    .gh-dash { color: #cbd5e1; }
+    .gh-table small { color: #94a3b8; }
+    .gh-chip { font-size: .74rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+    .gh-chip.ok { background: #dcfce7; color: #15803d; } .gh-chip.todo { background: #e5e7eb; color: #64748b; }
+
+    .gh-btn { display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; padding: 4px 12px; border-radius: 999px; border: 1.5px solid transparent; font-size: .78rem; font-weight: 700; cursor: pointer; transition: background-color .15s, color .15s, box-shadow .15s; }
+    .gh-btn:active { transform: scale(.96); }
+    .gh-btn.info { background: #ecfeff; border-color: #a5f3fc; color: #0e7490; } .gh-btn.info:hover { background: #0e7490; color: #fff; }
+    .gh-btn.primary { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; } .gh-btn.primary:hover { background: #1d4ed8; color: #fff; }
+    .gh-btn.add { background: #f0fdf4; border-color: #86efac; color: #15803d; } .gh-btn.add:hover { background: #15803d; color: #fff; }
+    .gh-icon { width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; border: 1.5px solid #e2e8f0; background: #fff; cursor: pointer; transition: background-color .15s, color .15s; }
+    .gh-icon.warn { color: #b45309; } .gh-icon.warn:hover { background: #f59e0b; border-color: #f59e0b; color: #fff; }
+    .gh-icon.danger { color: #b91c1c; } .gh-icon.danger:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
+
+    .gh-empty { text-align: center; padding: 2.5rem 1rem; color: #64748b; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, .06); }
+    .gh-empty > i { display: block; font-size: 2rem; color: #94a3b8; margin-bottom: .4rem; }
+    .gh-empty .big { font-size: 1.05rem; font-weight: 700; color: #334155; margin-bottom: .25rem; }
+</style>
+
     <main class="main-content">
-<div class="checklist-container">
-        <h2 class="mb-4">ประวัติการบันทึกกราฟการเจริญเติบโตของเด็ก</h2>
-    <!-- ฟอร์มค้นหา -->
-    <div class="card search-card">
-        <div class="card-body">
-            <form id="searchForm" method="GET" class="row g-3">
-                <div class="col-md-3">
-                    <label for="child_group" class="form-label">กลุ่มเรียน</label>
-                    <select name="child_group" id="child_group" class="form-select" onchange="loadClassrooms()">
-                        <option value="">-- เลือกกลุ่มเรียน --</option>
-                        <?php
-                        $groups = get_childgroup();
-                        foreach ($groups as $group) {
-                            if (!empty($group['child_group'])) {
-                                $selected = (isset($_GET['child_group']) && $_GET['child_group'] == $group['child_group']) ? 'selected' : '';
-                                echo "<option value='" . $group['child_group'] . "' $selected>" . $group['child_group'] . "</option>";
+    <div class="container-fluid px-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <div>
+                <h2 class="gh-title">ประวัติการบันทึกการเจริญเติบโตของเด็ก</h2>
+                <div class="gh-sub">ดูผลการวัดและผลประเมินรายวัน แยกตามห้องเรียน</div>
+            </div>
+            <div class="gh-top-actions">
+                <?php if ($is_admin || $is_teacher): ?>
+                <button type="button" class="btn btn-success btn-sm" onclick="openDevGrid()"><i class="bi bi-pencil-square me-1"></i>กรอกผลทั้งห้อง</button>
+                <a href="growth_dev_view.php" class="btn btn-primary btn-sm"><i class="bi bi-table me-1"></i>ดูผลรายห้อง</a>
+                <?php endif; ?>
+                <button type="button" class="btn btn-outline-success btn-sm" onclick="exportToExcel()"><i class="bi bi-file-excel me-1"></i>Export Excel</button>
+            </div>
+        </div>
+
+        <!-- ตัวกรอง -->
+        <div class="gh-card">
+            <form id="searchForm" method="GET">
+                <div class="gh-filters">
+                    <div>
+                        <label for="child_group" class="gh-label">กลุ่มเรียน</label>
+                        <select name="child_group" id="child_group" class="form-select" onchange="loadClassrooms()">
+                            <option value="">-- เลือกกลุ่มเรียน --</option>
+                            <?php
+                            $groups = get_childgroup();
+                            foreach ($groups as $group) {
+                                if (!empty($group['child_group'])) {
+                                    $selected = (isset($_GET['child_group']) && $_GET['child_group'] == $group['child_group']) ? 'selected' : '';
+                                    echo "<option value='" . htmlspecialchars($group['child_group']) . "' $selected>" . htmlspecialchars($group['child_group']) . "</option>";
+                                }
                             }
-                        }
-                        ?>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label for="classroom" class="form-label">ห้องเรียน</label>
-                    <select name="classroom" id="classroom" class="form-select">
-                        <option value="">-- เลือกห้องเรียน --</option>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label for="date" class="form-label">วันที่</label>
-                    <input type="date" class="form-control" id="date" name="date"
-                        value="<?php echo htmlspecialchars(isset($_GET['date']) ? $_GET['date'] : date('Y-m-d'));?>">
-                </div>
-
-                <div class="col-md-3">
-                    <label for="search" class="form-label">ค้นหาชื่อ</label>
-                    <input type="text" class="form-control" id="search" name="search" placeholder="ชื่อ-นามสกุล"
-                        value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
-                </div>
-
-                <div class="col-12">
-                    <div class="search-buttons">
-                        <button type="submit" class="btn btn-search">
-                            <i class="bi bi-search"></i>
-                            ค้นหา
-                        </button>
-                        <button type="button" class="btn btn-reset" onclick="resetForm()">
-                            <i class="bi bi-x-circle"></i>
-                            รีเซ็ต
-                        </button>
-                        <button type="button" class="btn btn-success" onclick="exportToExcel()">
-                            <i class="bi bi-file-excel"></i> Export Excel
-                        </button>
-                        <?php if ($is_admin || $is_teacher): ?>
-                        <button type="button" class="btn btn-warning" onclick="openDevGrid()">
-                            <i class="bi bi-clipboard2-pulse"></i> กรอกคัดกรองพัฒนาการทั้งห้อง
-                        </button>
-                        <?php endif; ?>
+                            ?>
+                        </select>
                     </div>
+                    <div>
+                        <label for="classroom" class="gh-label">ห้องเรียน</label>
+                        <select name="classroom" id="classroom" class="form-select">
+                            <option value="">-- เลือกห้องเรียน --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="date" class="gh-label">วันที่</label>
+                        <input type="date" class="form-control" id="date" name="date"
+                            value="<?php echo htmlspecialchars(isset($_GET['date']) ? $_GET['date'] : date('Y-m-d')); ?>">
+                    </div>
+                    <div>
+                        <label for="search" class="gh-label">ค้นหาชื่อ</label>
+                        <input type="text" class="form-control" id="search" name="search" placeholder="ชื่อ-นามสกุล / ชื่อเล่น / รหัส" autocomplete="off"
+                            value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                    </div>
+                </div>
+                <div class="gh-filter-actions">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i>ค้นหา</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="resetForm()"><i class="bi bi-x-circle me-1"></i>รีเซ็ต</button>
                 </div>
             </form>
         </div>
-    </div>
 
-
-    <!-- ตารางแสดงผล -->
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <div class="table-responsive" id="resultTable">
-                <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
-            </div>
+        <!-- ผลลัพธ์ -->
+        <div class="gh-pills" id="ghSummary" style="display:none"></div>
+        <div id="resultTable">
+            <div class="gh-empty"><i class="bi bi-funnel"></i><div class="big">เลือกกลุ่มเรียน ห้องเรียน หรือค้นหาชื่อเด็ก</div>ผลการบันทึกจะแสดงที่นี่</div>
         </div>
     </div>
-
 </main>
     <script>
     // เปิดหน้ากรอกคัดกรองพัฒนาการทั้งห้อง พร้อมกลุ่มเรียน/ห้องเรียนที่เลือกไว้
@@ -136,133 +176,131 @@ if (isset($_SESSION['user_id'])) {
     }
 
     // รีเซ็ตฟอร์ม
+    // รีเซ็ตตัวกรอง (คงรายการกลุ่มเรียนไว้ ล้างเฉพาะค่าที่เลือก)
     function resetForm() {
         document.getElementById('searchForm').reset();
-        document.getElementById('child_group').innerHTML = '<option value="">-- เลือกห้องเรียน --</option>';
+        document.getElementById('child_group').value = '';
         document.getElementById('classroom').innerHTML = '<option value="">-- เลือกห้องเรียน --</option>';
-        loadResults(); // โหลดผลลัพธ์ใหม่
+        document.getElementById('date').value = new Date().toLocaleDateString('sv-SE');
+        document.getElementById('search').value = '';
+        loadResults();
     }
+
+    const ghEsc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const ghNum = (v, unit) => (v === null || v === undefined || v === '' ? '<span class="gh-dash">-</span>' : `${ghEsc(parseFloat(v))} <small>${unit}</small>`);
+    const GH_CAN_MANAGE = <?= ($is_admin || $is_teacher) ? 'true' : 'false' ?>;
 
     // โหลดผลลัพธ์
     function loadResults() {
         const formData = new FormData(document.getElementById('searchForm'));
         const searchValue = formData.get('search');
-        
+        const table = document.getElementById('resultTable');
+        const summary = document.getElementById('ghSummary');
+
         if (!formData.get('child_group') && !formData.get('classroom') && !searchValue) {
-            const table = document.getElementById('resultTable');
-            table.innerHTML = '<div class="alert alert-info">กรุณาเลือกกลุ่มเรียน, ห้องเรียน หรือค้นหาจากชื่อนักเรียน แล้วกดปุ่มค้นหา</div>';
+            summary.style.display = 'none';
+            table.innerHTML = '<div class="gh-empty"><i class="bi bi-funnel"></i><div class="big">เลือกกลุ่มเรียน ห้องเรียน หรือค้นหาชื่อเด็ก</div>ผลการบันทึกจะแสดงที่นี่</div>';
             return;
         }
 
-        // เปลี่ยนจาก GET เป็น POST
-        fetch('../include/function/get_growth_history.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            const table = document.getElementById('resultTable');
-            if (data.length === 0) {
-                table.innerHTML = '<div class="alert alert-info">ไม่พบข้อมูล</div>';
-                return;
-            }
+        table.innerHTML = '<div class="gh-empty"><div class="spinner-border text-primary"></div></div>';
+        fetch('../include/function/get_growth_history.php', { method: 'POST', body: formData })
+            .then(response => response.json())
+            .then(data => {
+                if (!Array.isArray(data)) throw new Error(data.message || 'โหลดข้อมูลไม่สำเร็จ');
+                if (data.length === 0) {
+                    summary.style.display = 'none';
+                    table.innerHTML = '<div class="gh-empty"><i class="bi bi-inbox"></i><div class="big">ไม่พบข้อมูล</div>ลองเปลี่ยนกลุ่ม ห้อง วันที่ หรือคำค้นหา</div>';
+                    return;
+                }
 
-            // จัดกลุ่มข้อมูลตามกลุ่มเรียนและห้องเรียน
-            const groupedData = groupStudentsByClass(data);
+                const recorded = data.filter(s => s.id != null).length;
+                summary.innerHTML =
+                    `<span class="gh-pill">ทั้งหมด ${data.length} คน</span>` +
+                    `<span class="gh-pill ok">บันทึกแล้ว ${recorded}</span>` +
+                    `<span class="gh-pill todo">ยังไม่มีการบันทึก ${data.length - recorded}</span>`;
+                summary.style.display = '';
 
-            let html = '';
-            Object.entries(groupedData).forEach(([key, group]) => {
-                html += `
-                    <div class="card mb-4">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0">กลุ่มเรียน: ${group.child_group} | ห้องเรียน: ${group.classroom}</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>รหัสนักเรียน</th>
-                                            <th>ชื่อ-นามสกุล</th>
-                                            <th>ชื่อเล่น</th>
-                                            <th>สถานะ</th>
-                                            <th>เวลาที่บันทึก</th>
-                                            <th>ผลการประเมิน</th>
-                                            <?php if ($is_admin || $is_teacher): ?>
-                                            <th>จัดการ</th>
-                                            <?php endif; ?>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                `;
-
-                group.students.forEach(student => {
-                    const hasRecord = student.id != null;
-                    const age = hasRecord ? 
-                        `${student.age_year}ปี ${student.age_month}เดือน ${student.age_day}วัน` : '-';
-                    const recordTime = hasRecord ? 
-                        new Date(student.created_at).toLocaleTimeString('th-TH', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        }) + ' น.' : '-';
-
+                let html = '';
+                Object.values(groupStudentsByClass(data)).forEach(group => {
+                    const done = group.students.filter(s => s.id != null).length;
                     html += `
-                                                <tr>
-                            <td>${student.studentid}</td>
-                            <td>${student.prefix_th}${student.firstname_th} ${student.lastname_th}</td>
-                            <td>${student.nickname}</td>
-                            <td>
-                                <span class="badge ${hasRecord ? 'bg-success' : 'bg-secondary'}">
-                                    ${hasRecord ? 'บันทึกแล้ว' : 'ยังไม่มีการบันทึก'}
-                                </span>
-                            </td>
-                            <td>${recordTime}</td>
-                            <td>
-                                ${hasRecord ? `
-                                    <button type="button" class="btn btn-info btn-sm" onclick="showGrowthDetails('${student.studentid}', '${student.id}')">
-                                        <i class="bi bi-eye"></i> ดูผลการประเมิน
-                                    </button>
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="showGrowthOverview('${student.studentid}')">
-                                        <i class="bi bi-graph-up"></i> ดูกราฟภาพรวม
-                                    </button>
-                                ` : `
-                                    <button type="button" class="btn btn-success btn-sm" onclick="showAddGrowthModal('${student.studentid}', '${student.prefix_th}${student.firstname_th} ${student.lastname_th}')">
-                                        <i class="bi bi-plus-circle"></i> เพิ่มข้อมูล
-                                    </button>
-                                `}
-                            </td>
-                            <?php if ($is_admin || $is_teacher): ?>
-                            <td>
-                                ${hasRecord ? `
-                                    <button type="button" class="btn btn-warning btn-sm" onclick="editRecord('${student.id}')">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-danger btn-sm" onclick="deleteRecord('${student.id}')">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                ` : '-'}
-                            </td>
-                            <?php endif; ?>
-                        </tr>
-                    `;
-                });
-
-                html += `
-                                    </tbody>
-                                </table>
-                            </div>
+                    <section class="gh-class">
+                        <div class="gh-class-head">
+                            <div class="gh-class-title"><i class="bi bi-people-fill"></i>${ghEsc(group.child_group)} · ห้อง ${ghEsc(group.classroom)}</div>
+                            <div class="gh-class-count">บันทึกแล้ว <strong>${done}</strong> / ${group.students.length} คน</div>
                         </div>
-                    </div>
-                `;
-            });
+                        <div class="gh-table-wrap">
+                        <table class="gh-table">
+                            <thead><tr>
+                                <th>#</th><th>รหัส</th><th class="left">ชื่อ-นามสกุล</th><th>สถานะ</th><th>เวลาที่บันทึก</th><th>อายุ</th>
+                                <th>น้ำหนัก</th><th>ส่วนสูง</th><th>รอบศีรษะ</th><th>ผลการประเมิน</th>${GH_CAN_MANAGE ? '<th>จัดการ</th>' : ''}
+                            </tr></thead>
+                            <tbody>`;
 
-            table.innerHTML = html;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            table.innerHTML = '<div class="alert alert-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
-        });
+                    group.students.forEach((s, i) => {
+                        const has = s.id != null;
+                        const fullName = `${s.prefix_th || ''}${s.firstname_th || ''} ${s.lastname_th || ''}`.trim();
+                        const time = has ? new Date(s.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '-';
+                        const age = has ? `${s.age_year} ปี ${s.age_month} ด. ${s.age_day} ว.` : '-';
+                        const d = `data-sid="${ghEsc(s.studentid)}" data-rid="${has ? ghEsc(s.id) : ''}" data-name="${ghEsc(fullName)}"`;
+                        html += `
+                            <tr class="${has ? 'has' : 'none'}">
+                                <td>${i + 1}</td>
+                                <td class="nw">${ghEsc(s.studentid)}</td>
+                                <td class="left"><div class="gh-name">${ghEsc(fullName)}</div>${s.nickname ? `<div class="gh-nick">ชื่อเล่น ${ghEsc(s.nickname)}</div>` : ''}</td>
+                                <td><span class="gh-chip ${has ? 'ok' : 'todo'}">${has ? 'บันทึกแล้ว' : 'ยังไม่มีการบันทึก'}</span></td>
+                                <td class="nw">${time}</td>
+                                <td class="nw">${age}</td>
+                                <td class="nw">${has ? ghNum(s.weight, 'กก.') : '<span class="gh-dash">-</span>'}</td>
+                                <td class="nw">${has ? ghNum(s.height, 'ซม.') : '<span class="gh-dash">-</span>'}</td>
+                                <td class="nw">${has ? ghNum(s.head_circumference, 'ซม.') : '<span class="gh-dash">-</span>'}</td>
+                                <td class="nw">
+                                    ${has ? `
+                                        <button type="button" class="gh-btn info" data-act="detail" ${d}><i class="bi bi-eye"></i>ดูผล</button>
+                                        <button type="button" class="gh-btn primary" data-act="overview" ${d}><i class="bi bi-graph-up"></i>กราฟ</button>
+                                    ` : (GH_CAN_MANAGE ? `<button type="button" class="gh-btn add" data-act="add" ${d}><i class="bi bi-plus-circle"></i>เพิ่มข้อมูล</button>` : '<span class="gh-dash">-</span>')}
+                                </td>
+                                ${GH_CAN_MANAGE ? `<td class="nw">${has ? `
+                                    <button type="button" class="gh-icon warn" data-act="edit" title="แก้ไข" aria-label="แก้ไข" ${d}><i class="bi bi-pencil"></i></button>
+                                    <button type="button" class="gh-icon danger" data-act="delete" title="ลบ" aria-label="ลบ" ${d}><i class="bi bi-trash"></i></button>
+                                ` : '<span class="gh-dash">-</span>'}</td>` : ''}
+                            </tr>`;
+                    });
+
+                    html += `</tbody></table></div></section>`;
+                });
+                table.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                summary.style.display = 'none';
+                table.innerHTML = `<div class="gh-empty"><i class="bi bi-exclamation-triangle text-danger"></i><div class="big">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>${ghEsc(error.message)}</div>`;
+            });
     }
+
+    // ปุ่มในตาราง: ใช้ data-attribute แทนการฝังชื่อใน onclick (ชื่อที่มีอัญประกาศจะไม่ทำให้ปุ่มพัง)
+    document.addEventListener('click', (e) => {
+        const b = e.target.closest('#resultTable button[data-act]');
+        if (!b) return;
+        const { act, sid, rid, name } = b.dataset;
+        if (act === 'detail') showGrowthDetails(sid, rid);
+        else if (act === 'overview') showGrowthOverview(sid);
+        else if (act === 'add') showAddGrowthModal(sid, name);
+        else if (act === 'edit') editRecord(rid);
+        else if (act === 'delete') deleteRecord(rid);
+    });
+
+    // ตัวกรอง: เปลี่ยนแล้วโหลดผลใหม่เอง กด Enter/ค้นหาก็โหลดโดยไม่ต้องรีเฟรชหน้า
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('searchForm');
+        form.addEventListener('submit', (e) => { e.preventDefault(); loadResults(); });
+        document.getElementById('child_group').addEventListener('change', () => loadResults());
+        document.getElementById('classroom').addEventListener('change', () => loadResults());
+        document.getElementById('date').addEventListener('change', () => loadResults());
+        let t;
+        document.getElementById('search').addEventListener('input', () => { clearTimeout(t); t = setTimeout(loadResults, 450); });
+    });
 
     // เพิ่มฟังก์ชันจัดกลุ่มข้อมูล
     function groupStudentsByClass(students) {
@@ -301,9 +339,8 @@ if (isset($_SESSION['user_id'])) {
                 loadResults();
             }, 500);
         } else {
-            // แสดงข้อความแนะนำเมื่อโหลดหน้าครั้งแรก
-            const table = document.getElementById('resultTable');
-            table.innerHTML = '<div class="alert alert-info">กรุณาเลือกกลุ่มเรียน, ห้องเรียน หรือค้นหาจากชื่อนักเรียน แล้วกดปุ่มค้นหา</div>';
+            // ไม่ได้เลือกกลุ่ม แต่มีวันที่/คำค้นหาใน URL ก็โหลดผลเลย (ถ้าไม่มี จะคงข้อความแนะนำเริ่มต้นไว้)
+            if (urlParams.get('search')) { document.getElementById('search').value = urlParams.get('search'); loadResults(); }
         }
 
         // กรอกข้อมูลอื่นๆ จาก URL parameters
