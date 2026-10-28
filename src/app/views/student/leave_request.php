@@ -15,127 +15,150 @@ $nick = $child['nickname'] ?? '';
 ?>
 
 <style>
-    .lv-wrap { max-width: 1100px; margin: 0 auto; }
-    .lv-header { background: radial-gradient(circle at 92% 15%, rgba(255,255,255,.22) 0 8%, transparent 8.5%), radial-gradient(circle at 78% 95%, rgba(255,255,255,.12) 0 12%, transparent 12.5%), linear-gradient(120deg, #1E4F6F 0%, #26648E 58%, #4f88aa 100%); border-radius: 1.75rem; color: #fff; padding: 1.5rem 2rem; margin-bottom: 1.25rem; box-shadow: 0 18px 40px rgba(38, 100, 142, .2); position: relative; overflow: hidden; }
-    .lv-header .t { font-size: .85rem; opacity: .75; }
-    .lv-header .n { font-size: clamp(1.3rem, 5vw, 1.8rem); font-weight: 800; line-height: 1.15; }
-    .lv-header .f { font-size: .85rem; opacity: .85; }
-    .lv-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
-    @media (max-width: 992px) { .lv-grid { grid-template-columns: 1fr; } }
-    .lv-card { background: #fff; border: 1px solid #d9e6ee; border-radius: 1.25rem; box-shadow: 0 12px 30px rgba(15, 23, 42, .06); padding: 1.25rem 1.4rem; }
-    .lv-card h5 { font-size: 1.1rem; font-weight: 800; color: #1E4F6F; margin: 0 0 .75rem; padding-bottom: .7rem; border-bottom: 1px solid #d9e6ee; display: flex; align-items: center; gap: .55rem; }
-    .lv-card h5 i { width: 34px; height: 34px; border-radius: .7rem; background: #ebf4fb; color: #26648E !important; display: inline-flex; align-items: center; justify-content: center; font-size: 1.05rem; }
-    .lv-card .form-control:focus, .lv-card .form-select:focus { border-color: #26648E; box-shadow: 0 0 0 .2rem rgba(38, 100, 142, .2); }
-    .lv-card .form-control, .lv-card .form-select { border-color: #cbd9e3; border-radius: .7rem; }
-    .lv-label { display: block; font-size: .8rem; font-weight: 700; color: #2c3e50; margin: .8rem 0 .3rem; }
+    /* โทนเดียวกับ Dashboard ผู้ปกครอง: #26648E / #1E4F6F / #ebf4fb  หน้าเดียวคอลัมน์เดียว แบ่งเป็นขั้นตอนสั้นๆ ให้อ่านง่าย */
+    .lv-wrap { max-width: 720px; margin: 0 auto; padding-bottom: 2rem; }
+    .lv-header { background: radial-gradient(circle at 92% 15%, rgba(255,255,255,.22) 0 8%, transparent 8.5%), linear-gradient(120deg, #1E4F6F 0%, #26648E 58%, #4f88aa 100%); border-radius: 1.5rem; color: #fff; padding: 1.1rem 1.6rem; margin-bottom: 1rem; box-shadow: 0 14px 32px rgba(38, 100, 142, .2); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .lv-header .t { font-size: .8rem; opacity: .8; }
+    .lv-header .n { font-size: clamp(1.25rem, 4.5vw, 1.6rem); font-weight: 800; line-height: 1.15; }
+    .lv-header .f { font-size: .82rem; opacity: .85; }
+    .lv-header .ic { width: 48px; height: 48px; border-radius: 14px; background: rgba(255,255,255,.18); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+
+    .lv-card { background: #fff; border: 1px solid #d9e6ee; border-radius: 1.25rem; box-shadow: 0 12px 30px rgba(15, 23, 42, .05); padding: 1.4rem 1.5rem; margin-bottom: 1rem; }
+    .lv-card-title { font-size: 1.05rem; font-weight: 800; color: #1E4F6F; margin: 0 0 1rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .lv-card-title .count { font-size: .78rem; font-weight: 700; color: #64748b; background: #ebf4fb; border-radius: 999px; padding: 2px 12px; }
+
+    /* ขั้นตอนของฟอร์ม */
+    .lv-step + .lv-step { margin-top: 1.4rem; }
+    .lv-step-title { display: flex; align-items: center; gap: .55rem; font-size: .9rem; font-weight: 800; color: #1E4F6F; margin-bottom: .6rem; }
+    .lv-step-title .no { width: 24px; height: 24px; border-radius: 50%; background: #26648E; color: #fff; font-size: .75rem; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .lv-step-title .opt { font-size: .75rem; font-weight: 600; color: #94a3b8; }
+
+    /* ประเภทการลา: การ์ดเตี้ย ไอคอนซ้ายข้อความขวา */
     .lv-types { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
     .lv-type { position: relative; }
-    .lv-type input { position: absolute; opacity: 0; pointer-events: none; }
-    .lv-type label { display: flex; flex-direction: column; align-items: center; gap: .2rem; padding: .85rem .5rem; border: 2px solid #e2e8f0; border-radius: 14px; background: #fff; font-weight: 800; color: #475569; cursor: pointer; text-align: center; transition: border-color .15s, background-color .15s, color .15s; }
-    .lv-type label i { font-size: 1.5rem; }
-    .lv-type label small { font-weight: 400; font-size: .72rem; color: #94a3b8; }
-    .lv-type input:checked + label { border-color: #26648E; background: #ebf4fb; color: #1E4F6F; box-shadow: 0 6px 16px rgba(38, 100, 142, .16); }
-    .lv-type input:focus-visible + label { outline: 3px solid #93c5fd; }
-    .lv-illness { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
-    @media (max-width: 480px) { .lv-illness { grid-template-columns: 1fr; } }
-    .lv-ill { position: relative; }
-    .lv-ill input { position: absolute; opacity: 0; pointer-events: none; }
-    .lv-ill label { display: block; padding: .55rem .8rem; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: .9rem; font-weight: 600; color: #475569; cursor: pointer; transition: border-color .15s, background-color .15s; }
-    .lv-ill input:checked + label { border-color: #dc2626; background: #fef2f2; color: #b91c1c; }
-    .lv-ill input:focus-visible + label { outline: 3px solid #fca5a5; }
-    .lv-ill.wide { grid-column: 1 / -1; }
-    .lv-actions { margin-top: 1.1rem; display: flex; gap: .5rem; }
-    .lv-submit { background: #26648E; border-color: #26648E; color: #fff; font-weight: 800; padding: .6rem 1.5rem; border-radius: .8rem; box-shadow: 0 6px 16px rgba(38, 100, 142, .25); }
+    .lv-type input, .lv-chipopt input { position: absolute; opacity: 0; pointer-events: none; }
+    .lv-type label { display: flex; align-items: center; gap: .7rem; padding: .7rem .9rem; border: 2px solid #d9e6ee; border-radius: 1rem; background: #fff; font-weight: 800; color: #475569; cursor: pointer; transition: border-color .15s, background-color .15s, color .15s; }
+    .lv-type label i { width: 38px; height: 38px; border-radius: .8rem; background: #f1f5f9; color: #64748b; font-size: 1.15rem; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background-color .15s, color .15s; }
+    .lv-type label small { display: block; font-weight: 500; font-size: .72rem; color: #94a3b8; }
+    .lv-type input:checked + label { border-color: #26648E; background: #ebf4fb; color: #1E4F6F; }
+    .lv-type input:checked + label i { background: #26648E; color: #fff; }
+    .lv-type input:focus-visible + label, .lv-chipopt input:focus-visible + label { outline: 3px solid #93c5fd; outline-offset: 2px; }
+
+    /* โรคที่ป่วย: ชิปกะทัดรัด เลือกแล้วเป็นสีธีมทึบ */
+    .lv-chips { display: flex; flex-wrap: wrap; gap: .45rem; }
+    .lv-chipopt { position: relative; }
+    .lv-chipopt label { display: inline-block; padding: .4rem .95rem; border: 1.5px solid #d9e6ee; border-radius: 999px; font-size: .88rem; font-weight: 600; color: #475569; background: #fff; cursor: pointer; transition: border-color .15s, background-color .15s, color .15s; }
+    .lv-chipopt label:hover { border-color: #26648E; }
+    .lv-chipopt input:checked + label { background: #26648E; border-color: #26648E; color: #fff; }
+
+    /* วันที่ */
+    .lv-dates { display: flex; align-items: center; gap: .6rem; }
+    .lv-dates .sep { color: #94a3b8; font-weight: 700; }
+    .lv-dates .form-control { flex: 1 1 0; min-width: 0; }
+    .lv-days { display: inline-block; margin-top: .5rem; font-size: .8rem; font-weight: 700; color: #1E4F6F; background: #ebf4fb; border-radius: 999px; padding: 2px 12px; }
+    .lv-days:empty { display: none; }
+
+    .lv-card .form-control, .lv-card .form-select { border-color: #cbd9e3; border-radius: .75rem; }
+    .lv-card .form-control:focus { border-color: #26648E; box-shadow: 0 0 0 .2rem rgba(38, 100, 142, .2); }
+
+    .lv-actions { margin-top: 1.5rem; }
+    .lv-submit { width: 100%; background: #26648E; border-color: #26648E; color: #fff; font-weight: 800; padding: .75rem 1.5rem; border-radius: .9rem; box-shadow: 0 8px 18px rgba(38, 100, 142, .25); }
     .lv-submit:hover:not(:disabled) { background: #1E4F6F; border-color: #1E4F6F; color: #fff; }
-    .lv-days { font-size: .82rem; color: #64748b; margin-top: .35rem; }
-    .lv-item { border: 1px solid #d9e6ee; border-left: 5px solid #26648E; border-radius: .9rem; padding: .7rem .9rem; margin-bottom: .6rem; }
+    .lv-reset { display: block; margin: .6rem auto 0; border: 0; background: none; color: #94a3b8; font-size: .82rem; cursor: pointer; }
+    .lv-reset:hover { color: #475569; text-decoration: underline; }
+
+    /* ประวัติ */
+    .lv-item { border: 1px solid #d9e6ee; border-left: 5px solid #26648E; border-radius: .9rem; padding: .75rem .95rem; margin-bottom: .6rem; }
     .lv-item.cancelled { opacity: .6; background: #f8fafc; border-left-color: #cbd5e1; }
     .lv-item.st-pending { border-left-color: #f59e0b; } .lv-item.st-approved { border-left-color: #22c55e; } .lv-item.st-rejected { border-left-color: #ef4444; }
     .lv-item .top { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .6rem; }
     .lv-item .when { font-weight: 800; color: #1E4F6F; }
-    .lv-item .meta { font-size: .8rem; color: #64748b; margin-top: .25rem; }
+    .lv-item .meta { font-size: .8rem; color: #64748b; margin-top: .3rem; }
     .lv-chip { font-size: .72rem; font-weight: 800; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
     .lv-chip.sick { background: #fee2e2; color: #b91c1c; } .lv-chip.personal { background: #dcebf3; color: #1E4F6F; }
     .lv-chip.pending { background: #fef3c7; color: #b45309; } .lv-chip.approved { background: #dcfce7; color: #15803d; }
     .lv-chip.rejected { background: #fee2e2; color: #b91c1c; } .lv-chip.cancelled { background: #e5e7eb; color: #64748b; }
-    .lv-decision { font-size: .78rem; margin-top: .3rem; padding: .3rem .6rem; border-radius: 8px; background: #f1f5f9; color: #475569; }
     .lv-chip.past { background: #f1f5f9; color: #64748b; } .lv-chip.now { background: #fef3c7; color: #b45309; }
+    .lv-decision { font-size: .78rem; margin-top: .35rem; padding: .35rem .6rem; border-radius: .6rem; background: #f1f5f9; color: #475569; }
     .lv-cancel { margin-left: auto; border: 1.5px solid #fecaca; background: #fff; color: #b91c1c; border-radius: 999px; font-size: .75rem; font-weight: 700; padding: 2px 12px; cursor: pointer; }
     .lv-cancel:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
-    .lv-empty { text-align: center; color: #94a3b8; padding: 1.5rem .5rem; }
+    .lv-empty { text-align: center; color: #94a3b8; padding: 1rem .5rem; font-size: .9rem; }
 </style>
 
 <main class="main-content">
     <div class="container-fluid px-3 px-lg-4">
         <div class="lv-wrap">
             <div class="lv-header">
-                <div class="t">แจ้งการลา</div>
-                <div class="n"><?= htmlspecialchars($nick !== '' ? $nick : $childName) ?></div>
-                <?php if ($nick !== ''): ?><div class="f"><?= htmlspecialchars($childName) ?></div><?php endif; ?>
+                <div>
+                    <div class="t">แจ้งการลา</div>
+                    <div class="n"><?= htmlspecialchars($nick !== '' ? $nick : $childName) ?></div>
+                    <?php if ($nick !== ''): ?><div class="f"><?= htmlspecialchars($childName) ?></div><?php endif; ?>
+                </div>
+                <div class="ic"><i class="bi bi-calendar-x"></i></div>
             </div>
 
-            <div class="lv-grid">
-                <!-- ฟอร์มแจ้งลา -->
-                <div class="lv-card">
-                    <h5><i class="bi bi-calendar-x text-primary"></i>แจ้งลาใหม่</h5>
-                    <form id="leaveForm" novalidate>
-                        <span class="lv-label" style="margin-top:0">ประเภทการลา</span>
+            <!-- ฟอร์มแจ้งลา: 4 ขั้นตอน -->
+            <div class="lv-card">
+                <h5 class="lv-card-title">แจ้งลาใหม่</h5>
+                <form id="leaveForm" novalidate>
+                    <div class="lv-step">
+                        <div class="lv-step-title"><span class="no">1</span>ประเภทการลา</div>
                         <div class="lv-types">
                             <div class="lv-type">
                                 <input type="radio" name="leave_type" id="typePersonal" value="personal">
-                                <label for="typePersonal"><i class="bi bi-briefcase"></i>ลากิจ<small>ธุระส่วนตัว / ครอบครัว</small></label>
+                                <label for="typePersonal"><i class="bi bi-briefcase"></i><span>ลากิจ<small>ธุระส่วนตัว / ครอบครัว</small></span></label>
                             </div>
                             <div class="lv-type">
                                 <input type="radio" name="leave_type" id="typeSick" value="sick">
-                                <label for="typeSick"><i class="bi bi-thermometer-half"></i>ลาป่วย<small>เด็กไม่สบาย</small></label>
+                                <label for="typeSick"><i class="bi bi-thermometer-half"></i><span>ลาป่วย<small>เด็กไม่สบาย</small></span></label>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- ลาป่วย: เลือกโรค -->
-                        <div id="sickBox" style="display:none">
-                            <span class="lv-label">โรคที่ป่วย</span>
-                            <div class="lv-illness">
-                                <?php foreach (LEAVE_COMMON_DISEASES as $key => $label): ?>
-                                    <div class="lv-ill">
-                                        <input type="radio" name="illness" id="ill_<?= $key ?>" value="<?= $key ?>">
-                                        <label for="ill_<?= $key ?>"><?= htmlspecialchars($label) ?></label>
-                                    </div>
-                                <?php endforeach; ?>
-                                <div class="lv-ill wide">
-                                    <input type="radio" name="illness" id="ill_other" value="other">
-                                    <label for="ill_other">อื่นๆ (ระบุโรค)</label>
+                    <!-- ลาป่วย: เลือกโรค -->
+                    <div class="lv-step" id="sickBox" style="display:none">
+                        <div class="lv-step-title"><span class="no">2</span>โรคที่ป่วย</div>
+                        <div class="lv-chips">
+                            <?php foreach (LEAVE_COMMON_DISEASES as $key => $label): ?>
+                                <div class="lv-chipopt">
+                                    <input type="radio" name="illness" id="ill_<?= $key ?>" value="<?= $key ?>">
+                                    <label for="ill_<?= $key ?>"><?= htmlspecialchars($label) ?></label>
                                 </div>
-                            </div>
-                            <input type="text" class="form-control mt-2" id="illnessOther" maxlength="150" placeholder="พิมพ์ชื่อโรคหรืออาการที่ป่วย" style="display:none">
-                        </div>
-
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <label class="lv-label" for="startDate">ลาตั้งแต่วันที่</label>
-                                <input type="date" class="form-control" id="startDate">
-                            </div>
-                            <div class="col-6">
-                                <label class="lv-label" for="endDate">ถึงวันที่</label>
-                                <input type="date" class="form-control" id="endDate">
+                            <?php endforeach; ?>
+                            <div class="lv-chipopt">
+                                <input type="radio" name="illness" id="ill_other" value="other">
+                                <label for="ill_other">อื่นๆ</label>
                             </div>
                         </div>
-                        <div class="lv-days" id="dayCount"></div>
+                        <input type="text" class="form-control mt-2" id="illnessOther" maxlength="150" placeholder="พิมพ์ชื่อโรคหรืออาการที่ป่วย" style="display:none">
+                    </div>
 
-                        <label class="lv-label" for="reason"><span id="reasonLabel">รายละเอียด / เหตุผล</span> <span class="text-muted fw-normal" id="reasonHint">(ไม่บังคับ)</span></label>
-                        <textarea class="form-control" id="reason" rows="3" maxlength="500" placeholder="เช่น มีไข้ ไอ น้ำมูก หรือธุระของครอบครัว"></textarea>
-
-                        <div class="lv-actions">
-                            <button type="submit" class="btn lv-submit" id="btnSubmit"><i class="bi bi-send me-1"></i>ส่งแจ้งลา</button>
-                            <button type="reset" class="btn btn-outline-secondary" id="btnReset">ล้างฟอร์ม</button>
+                    <div class="lv-step">
+                        <div class="lv-step-title"><span class="no" id="noDate">2</span>วันที่ลา</div>
+                        <div class="lv-dates">
+                            <input type="date" class="form-control" id="startDate" aria-label="ลาตั้งแต่วันที่">
+                            <span class="sep">ถึง</span>
+                            <input type="date" class="form-control" id="endDate" aria-label="ถึงวันที่">
                         </div>
-                    </form>
-                </div>
+                        <span class="lv-days" id="dayCount"></span>
+                    </div>
 
-                <!-- ประวัติการลา -->
-                <div class="lv-card">
-                    <h5><i class="bi bi-clock-history text-primary"></i>ประวัติการลา</h5>
-                    <div id="leaveList"><div class="lv-empty"><div class="spinner-border spinner-border-sm text-primary me-2"></div>กำลังโหลด...</div></div>
-                </div>
+                    <div class="lv-step">
+                        <div class="lv-step-title"><span class="no" id="noReason">3</span><span id="reasonLabel">รายละเอียด / เหตุผล</span> <span class="opt" id="reasonHint">(ไม่บังคับ)</span></div>
+                        <textarea class="form-control" id="reason" rows="2" maxlength="500" placeholder="เช่น มีไข้ ไอ น้ำมูก หรือธุระของครอบครัว"></textarea>
+                    </div>
+
+                    <div class="lv-actions">
+                        <button type="submit" class="btn lv-submit" id="btnSubmit"><i class="bi bi-send me-1"></i>ส่งแจ้งลา</button>
+                        <button type="reset" class="lv-reset" id="btnReset">ล้างฟอร์ม</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ประวัติการลา -->
+            <div class="lv-card">
+                <h5 class="lv-card-title">ประวัติการลา <span class="count" id="leaveCount" style="display:none"></span></h5>
+                <div id="leaveList"><div class="lv-empty"><div class="spinner-border spinner-border-sm text-primary me-2"></div>กำลังโหลด...</div></div>
             </div>
         </div>
     </div>
@@ -161,7 +184,7 @@ $nick = $child['nickname'] ?? '';
         if (!s || !e) { $('dayCount').textContent = ''; return; }
         const n = Math.round((new Date(e + 'T00:00:00') - new Date(s + 'T00:00:00')) / 86400000) + 1;
         $('dayCount').textContent = n > 0 ? `รวม ${n} วัน` : 'วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มลา';
-        $('dayCount').style.color = n > 0 && n <= MAX_DAYS ? '#64748b' : '#b91c1c';
+        $('dayCount').style.color = n > 0 && n <= MAX_DAYS ? '' : '#b91c1c';
     }
 
     // ประเภทการลา: ลาป่วยแสดงรายการโรค  ลากิจต้องระบุเหตุผล
@@ -170,6 +193,9 @@ $nick = $child['nickname'] ?? '';
         $('sickBox').style.display = t === 'sick' ? '' : 'none';
         $('reasonHint').textContent = t === 'personal' ? '(จำเป็น)' : '(ไม่บังคับ)';
         $('reason').placeholder = t === 'personal' ? 'ระบุเหตุผลการลากิจ' : 'เช่น มีไข้ ไอ น้ำมูก';
+        // เลขขั้นตอน: ลาป่วยมีขั้น "โรคที่ป่วย" เพิ่ม
+        $('noDate').textContent = t === 'sick' ? '3' : '2';
+        $('noReason').textContent = t === 'sick' ? '4' : '3';
     }
     function syncIllness() {
         const other = selectedIllness() === 'other';
@@ -226,6 +252,8 @@ $nick = $child['nickname'] ?? '';
             const data = await res.json();
             if (data.status !== 'success') throw new Error(data.message || 'โหลดไม่สำเร็จ');
             todayStr = data.today || todayStr;
+            $('leaveCount').style.display = data.rows.length ? '' : 'none';
+            $('leaveCount').textContent = data.rows.length + ' รายการ';
             if (!data.rows.length) { box.innerHTML = '<div class="lv-empty"><i class="bi bi-inbox fs-3 d-block mb-1"></i>ยังไม่มีประวัติการลา</div>'; return; }
             box.innerHTML = data.rows.map((r) => {
                 const cancelled = r.status === 'cancelled';
