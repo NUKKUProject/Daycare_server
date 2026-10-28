@@ -83,6 +83,48 @@ $nick = $child['nickname'] ?? '';
     .lv-cancel { margin-left: auto; border: 1.5px solid #fecaca; background: #fff; color: #b91c1c; border-radius: 999px; font-size: .75rem; font-weight: 700; padding: 2px 12px; cursor: pointer; }
     .lv-cancel:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
     .lv-empty { text-align: center; color: #94a3b8; padding: 1rem .5rem; font-size: .9rem; }
+
+    /* ===== สองคอลัมน์ (ซ้าย ฟอร์ม / ขวา ประวัติ) + สีที่สื่อความหมาย ===== */
+    .lv-wrap { max-width: 1180px; }
+    .lv-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 1rem; align-items: start; }
+    @media (max-width: 992px) { .lv-grid { grid-template-columns: 1fr; } }
+    .lv-grid .lv-card { margin-bottom: 0; }
+    .lv-card.form { border-top: 5px solid #2563eb; }
+    .lv-card.hist { border-top: 5px solid #0d9488; position: sticky; top: 76px; }
+    @media (max-width: 992px) { .lv-card.hist { position: static; } }
+    .lv-card.form .lv-card-title { color: #1d4ed8; }
+    .lv-card.hist .lv-card-title { color: #0f766e; }
+    .lv-card.hist .lv-card-title .count { background: #ccfbf1; color: #0f766e; }
+    .lv-step-title .no { background: #2563eb; }
+
+    /* ประเภทการลา: ลากิจ = น้ำเงิน, ลาป่วย = แดงชมพู (เห็นต่างกันทันที) */
+    .lv-type.personal label i { background: #dbeafe; color: #2563eb; }
+    .lv-type.sick label i { background: #ffe4e6; color: #e11d48; }
+    .lv-type.personal label:hover { border-color: #93c5fd; } .lv-type.sick label:hover { border-color: #fda4af; }
+    .lv-type.personal input:checked + label { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; }
+    .lv-type.personal input:checked + label i { background: #2563eb; color: #fff; }
+    .lv-type.sick input:checked + label { border-color: #e11d48; background: #fff1f2; color: #be123c; }
+    .lv-type.sick input:checked + label i { background: #e11d48; color: #fff; }
+
+    /* โรคที่ป่วยใช้โทนเดียวกับลาป่วย */
+    .lv-chipopt label { border-color: #fecdd3; background: #fff7f8; color: #9f1239; }
+    .lv-chipopt label:hover { border-color: #fb7185; }
+    .lv-chipopt input:checked + label { background: #e11d48; border-color: #e11d48; color: #fff; box-shadow: 0 4px 10px rgba(225, 29, 72, .25); }
+
+    .lv-days { background: #dbeafe; color: #1d4ed8; }
+    .lv-card .form-control:focus { border-color: #2563eb; box-shadow: 0 0 0 .2rem rgba(37, 99, 235, .2); }
+
+    /* ปุ่มส่ง = เขียว (การกระทำหลัก) */
+    .lv-submit { background: #16a34a; border-color: #16a34a; box-shadow: 0 8px 18px rgba(22, 163, 74, .28); }
+    .lv-submit:hover:not(:disabled) { background: #15803d; border-color: #15803d; }
+
+    /* ประวัติ: สีสถานะชัดขึ้น */
+    .lv-chip.sick { background: #ffe4e6; color: #be123c; } .lv-chip.personal { background: #dbeafe; color: #1d4ed8; }
+    .lv-chip.pending { background: #fef08a; color: #854d0e; } .lv-chip.approved { background: #bbf7d0; color: #166534; }
+    .lv-chip.rejected { background: #fecaca; color: #991b1b; } .lv-chip.cancelled { background: #e5e7eb; color: #4b5563; }
+    .lv-item.st-pending { background: #fffbeb; } .lv-item.st-approved { background: #f0fdf4; } .lv-item.st-rejected { background: #fef2f2; }
+    .lv-item.cancelled { background: #f8fafc; }
+    .lv-item .when { color: #0f172a; }
 </style>
 
 <main class="main-content">
@@ -97,18 +139,19 @@ $nick = $child['nickname'] ?? '';
                 <div class="ic"><i class="bi bi-calendar-x"></i></div>
             </div>
 
+            <div class="lv-grid">
             <!-- ฟอร์มแจ้งลา: 4 ขั้นตอน -->
-            <div class="lv-card">
+            <div class="lv-card form">
                 <h5 class="lv-card-title">แจ้งลาใหม่</h5>
                 <form id="leaveForm" novalidate>
                     <div class="lv-step">
                         <div class="lv-step-title"><span class="no">1</span>ประเภทการลา</div>
                         <div class="lv-types">
-                            <div class="lv-type">
+                            <div class="lv-type personal">
                                 <input type="radio" name="leave_type" id="typePersonal" value="personal">
                                 <label for="typePersonal"><i class="bi bi-briefcase"></i><span>ลากิจ<small>ธุระส่วนตัว / ครอบครัว</small></span></label>
                             </div>
-                            <div class="lv-type">
+                            <div class="lv-type sick">
                                 <input type="radio" name="leave_type" id="typeSick" value="sick">
                                 <label for="typeSick"><i class="bi bi-thermometer-half"></i><span>ลาป่วย<small>เด็กไม่สบาย</small></span></label>
                             </div>
@@ -156,9 +199,10 @@ $nick = $child['nickname'] ?? '';
             </div>
 
             <!-- ประวัติการลา -->
-            <div class="lv-card">
+            <div class="lv-card hist">
                 <h5 class="lv-card-title">ประวัติการลา <span class="count" id="leaveCount" style="display:none"></span></h5>
-                <div id="leaveList"><div class="lv-empty"><div class="spinner-border spinner-border-sm text-primary me-2"></div>กำลังโหลด...</div></div>
+            </div>
+            </div><!-- /lv-grid -->
             </div>
         </div>
     </div>
