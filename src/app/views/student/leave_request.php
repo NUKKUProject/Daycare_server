@@ -16,22 +16,25 @@ $nick = $child['nickname'] ?? '';
 
 <style>
     .lv-wrap { max-width: 1100px; margin: 0 auto; }
-    .lv-header { background: linear-gradient(135deg, #0f2460 0%, #1a3a8f 60%, #1e4db7 100%); border-radius: 18px; color: #fff; padding: 1.15rem 1.5rem; margin-bottom: 1rem; box-shadow: 0 4px 15px rgba(0, 0, 0, .1); }
+    .lv-header { background: radial-gradient(circle at 92% 15%, rgba(255,255,255,.22) 0 8%, transparent 8.5%), radial-gradient(circle at 78% 95%, rgba(255,255,255,.12) 0 12%, transparent 12.5%), linear-gradient(120deg, #1E4F6F 0%, #26648E 58%, #4f88aa 100%); border-radius: 1.75rem; color: #fff; padding: 1.5rem 2rem; margin-bottom: 1.25rem; box-shadow: 0 18px 40px rgba(38, 100, 142, .2); position: relative; overflow: hidden; }
     .lv-header .t { font-size: .85rem; opacity: .75; }
     .lv-header .n { font-size: clamp(1.3rem, 5vw, 1.8rem); font-weight: 800; line-height: 1.15; }
     .lv-header .f { font-size: .85rem; opacity: .85; }
     .lv-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
     @media (max-width: 992px) { .lv-grid { grid-template-columns: 1fr; } }
-    .lv-card { background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(0, 0, 0, .06); padding: 1.1rem 1.25rem; }
-    .lv-card h5 { font-size: 1.05rem; font-weight: 800; color: #0f2460; margin: 0 0 .75rem; display: flex; align-items: center; gap: .5rem; }
-    .lv-label { display: block; font-size: .8rem; font-weight: 700; color: #475569; margin: .8rem 0 .3rem; }
+    .lv-card { background: #fff; border: 1px solid #d9e6ee; border-radius: 1.25rem; box-shadow: 0 12px 30px rgba(15, 23, 42, .06); padding: 1.25rem 1.4rem; }
+    .lv-card h5 { font-size: 1.1rem; font-weight: 800; color: #1E4F6F; margin: 0 0 .75rem; padding-bottom: .7rem; border-bottom: 1px solid #d9e6ee; display: flex; align-items: center; gap: .55rem; }
+    .lv-card h5 i { width: 34px; height: 34px; border-radius: .7rem; background: #ebf4fb; color: #26648E !important; display: inline-flex; align-items: center; justify-content: center; font-size: 1.05rem; }
+    .lv-card .form-control:focus, .lv-card .form-select:focus { border-color: #26648E; box-shadow: 0 0 0 .2rem rgba(38, 100, 142, .2); }
+    .lv-card .form-control, .lv-card .form-select { border-color: #cbd9e3; border-radius: .7rem; }
+    .lv-label { display: block; font-size: .8rem; font-weight: 700; color: #2c3e50; margin: .8rem 0 .3rem; }
     .lv-types { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
     .lv-type { position: relative; }
     .lv-type input { position: absolute; opacity: 0; pointer-events: none; }
     .lv-type label { display: flex; flex-direction: column; align-items: center; gap: .2rem; padding: .85rem .5rem; border: 2px solid #e2e8f0; border-radius: 14px; background: #fff; font-weight: 800; color: #475569; cursor: pointer; text-align: center; transition: border-color .15s, background-color .15s, color .15s; }
     .lv-type label i { font-size: 1.5rem; }
     .lv-type label small { font-weight: 400; font-size: .72rem; color: #94a3b8; }
-    .lv-type input:checked + label { border-color: #1e4db7; background: #eff6ff; color: #1e4db7; }
+    .lv-type input:checked + label { border-color: #26648E; background: #ebf4fb; color: #1E4F6F; box-shadow: 0 6px 16px rgba(38, 100, 142, .16); }
     .lv-type input:focus-visible + label { outline: 3px solid #93c5fd; }
     .lv-illness { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
     @media (max-width: 480px) { .lv-illness { grid-template-columns: 1fr; } }
@@ -42,16 +45,17 @@ $nick = $child['nickname'] ?? '';
     .lv-ill input:focus-visible + label { outline: 3px solid #fca5a5; }
     .lv-ill.wide { grid-column: 1 / -1; }
     .lv-actions { margin-top: 1.1rem; display: flex; gap: .5rem; }
-    .lv-submit { background: #15803d; border-color: #15803d; color: #fff; font-weight: 800; padding: .6rem 1.4rem; border-radius: 12px; }
-    .lv-submit:hover:not(:disabled) { background: #166534; border-color: #166534; color: #fff; }
+    .lv-submit { background: #26648E; border-color: #26648E; color: #fff; font-weight: 800; padding: .6rem 1.5rem; border-radius: .8rem; box-shadow: 0 6px 16px rgba(38, 100, 142, .25); }
+    .lv-submit:hover:not(:disabled) { background: #1E4F6F; border-color: #1E4F6F; color: #fff; }
     .lv-days { font-size: .82rem; color: #64748b; margin-top: .35rem; }
-    .lv-item { border: 1px solid #e2e8f0; border-radius: 12px; padding: .7rem .9rem; margin-bottom: .6rem; }
-    .lv-item.cancelled { opacity: .6; background: #f8fafc; }
+    .lv-item { border: 1px solid #d9e6ee; border-left: 5px solid #26648E; border-radius: .9rem; padding: .7rem .9rem; margin-bottom: .6rem; }
+    .lv-item.cancelled { opacity: .6; background: #f8fafc; border-left-color: #cbd5e1; }
+    .lv-item.st-pending { border-left-color: #f59e0b; } .lv-item.st-approved { border-left-color: #22c55e; } .lv-item.st-rejected { border-left-color: #ef4444; }
     .lv-item .top { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .6rem; }
-    .lv-item .when { font-weight: 800; color: #0f2460; }
+    .lv-item .when { font-weight: 800; color: #1E4F6F; }
     .lv-item .meta { font-size: .8rem; color: #64748b; margin-top: .25rem; }
     .lv-chip { font-size: .72rem; font-weight: 800; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
-    .lv-chip.sick { background: #fee2e2; color: #b91c1c; } .lv-chip.personal { background: #dbeafe; color: #1d4ed8; }
+    .lv-chip.sick { background: #fee2e2; color: #b91c1c; } .lv-chip.personal { background: #dcebf3; color: #1E4F6F; }
     .lv-chip.pending { background: #fef3c7; color: #b45309; } .lv-chip.approved { background: #dcfce7; color: #15803d; }
     .lv-chip.rejected { background: #fee2e2; color: #b91c1c; } .lv-chip.cancelled { background: #e5e7eb; color: #64748b; }
     .lv-decision { font-size: .78rem; margin-top: .3rem; padding: .3rem .6rem; border-radius: 8px; background: #f1f5f9; color: #475569; }
@@ -233,7 +237,7 @@ $nick = $child['nickname'] ?? '';
                 const detail = [r.leave_type === 'sick' && r.illness_name ? 'โรค: ' + esc(r.illness_name) : '', r.reason ? esc(r.reason) : ''].filter(Boolean).join(' · ');
                 const decision = (r.status === 'approved' || r.status === 'rejected') && (r.decided_by || r.decision_note)
                     ? `<div class="lv-decision">${r.status === 'rejected' ? 'เหตุผลที่ไม่อนุมัติ' : 'ครูแจ้ง'}: ${r.decision_note ? esc(r.decision_note) : '-'}${r.decided_by ? ` <span class="text-muted">(${esc(r.decided_by)})</span>` : ''}</div>` : '';
-                return `<div class="lv-item ${cancelled || r.status === 'rejected' ? 'cancelled' : ''}">
+                return `<div class="lv-item st-${r.status} ${cancelled || r.status === 'rejected' ? 'cancelled' : ''}">
                     <div class="top">
                         <span class="when">${range}</span>
                         <span class="lv-chip ${r.leave_type}">${TYPE_TEXT[r.leave_type] || ''}</span>

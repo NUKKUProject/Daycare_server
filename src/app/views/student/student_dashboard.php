@@ -289,6 +289,14 @@ $viewTabs = [
         'href' => 'daily_notebook.php',
     ],
     [
+        'id' => 'leave',
+        'icon' => 'bi bi-calendar-x',
+        'title' => 'การลา',
+        'description' => 'แจ้งลากิจ ลาป่วย และดูสถานะการอนุมัติ',
+        'color' => 'teal',
+        'href' => 'leave_request.php',
+    ],
+    [
         'id' => 'vaccine',
         'icon' => 'fa-solid fa-syringe',
         'title' => 'วัคซีน',
