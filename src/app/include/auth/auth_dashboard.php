@@ -23,6 +23,7 @@ function isCurrentPage($path)
 // วาดเมนูแบบกลุ่มที่พับ/กางได้ (ใช้ร่วมกันระหว่าง admin และครู)
 // $menu = [['title' =>, 'icon' =>, 'items' => [['label', 'href', 'match', 'icon', 'sub'?]]]]
 require_once __DIR__ . '/../function/health_followup_functions.php';
+require_once __DIR__ . '/../function/leave_functions.php';
 
 function renderSidebarGroups(array $menu, string $storageKey)
 {
@@ -159,6 +160,7 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                     ['label' => 'เมนูอาหารรายวัน', 'href' => '/app/views/teacher/daily_menu.php', 'match' => 'daily_menu.php', 'icon' => 'cil-restaurant'],
                                     ['label' => 'ตรวจร่างกายประจำวัน', 'href' => '/app/views/checklist_history.php', 'match' => 'checklist_history.php', 'icon' => 'fa-solid fa-stethoscope'],
                                     ['label' => 'ประวัติการมาเรียน', 'href' => '/app/views/attendance_history.php', 'match' => 'attendance_history.php', 'icon' => 'bi bi-archive-fill'],
+                                    ['label' => 'อนุมัติการลา', 'href' => '/app/views/leave_approvals.php', 'match' => 'leave_approvals.php', 'icon' => 'bi bi-calendar-check', 'badge' => leave_pending_count()],
                                 ],
                             ],
                             [
@@ -218,6 +220,7 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                     ['label' => 'เมนูอาหารรายวัน', 'href' => '/app/views/teacher/daily_menu.php', 'match' => 'daily_menu.php', 'icon' => 'cil-restaurant'],
                                     ['label' => 'ตรวจร่างกายประจำวัน', 'href' => '/app/views/checklist_history.php', 'match' => 'checklist_history.php', 'icon' => 'fa-solid fa-stethoscope'],
                                     ['label' => 'ประวัติการมาเรียน', 'href' => '/app/views/attendance_history.php', 'match' => 'attendance_history.php', 'icon' => 'bi bi-archive-fill'],
+                                    ['label' => 'อนุมัติการลา', 'href' => '/app/views/leave_approvals.php', 'match' => 'leave_approvals.php', 'icon' => 'bi bi-calendar-check', 'badge' => leave_pending_count()],
                                 ],
                             ],
                             [
@@ -286,6 +289,13 @@ function renderSidebarGroups(array $menu, string $storageKey)
                                 class="nav-link <?php echo isCurrentPage('daily_notebook.php') ? 'active' : ''; ?>">
                                 <i class="bi bi-journal-text" style="font-size: 23px;"></i>
                                 สมุดสื่อสารประจำวัน
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/app/views/student/leave_request.php"
+                                class="nav-link <?php echo isCurrentPage('leave_request.php') ? 'active' : ''; ?>">
+                                <i class="bi bi-calendar-x" style="font-size: 23px;"></i>
+                                การลา
                             </a>
                         </li>
 

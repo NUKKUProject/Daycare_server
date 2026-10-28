@@ -18,6 +18,7 @@ try {
             WHEN a.status = 'present' THEN 'มาเรียน'
             WHEN a.status = 'late' THEN 'มาสาย'
             WHEN a.status = 'absent' THEN 'ขาดเรียน'
+            WHEN a.status = 'leave' THEN 'ลา'
             ELSE a.status
         END AS status,
         a.temperature,
