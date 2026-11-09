@@ -118,6 +118,60 @@ try {
         exit;
     }
 
+    // อนุมัติ/ไม่อนุมัติหลายรายการพร้อมกัน: ข้ามรายการที่ไม่มีสิทธิ์หรือถูกดำเนินการไปแล้ว
+    if ($action === 'decide_bulk') {
+        $ids = array_values(array_unique(array_filter(array_map('intval', (array)($input['ids'] ?? [])))));
+        $decision = (string)($input['decision'] ?? '');
+        if (!$ids) {
+            manageFail('กรุณาเลือกรายการ');
+        }
+        if (count($ids) > 200) {
+            manageFail('เลือกได้ครั้งละไม่เกิน 200 รายการ');
+        }
+        if (!in_array($decision, ['approve', 'reject'], true)) {
+            manageFail('คำสั่งไม่ถูกต้อง');
+        }
+        $note = trim((string)($input['note'] ?? ''));
+        if ($decision === 'reject' && $note === '') {
+            manageFail('กรุณาระบุเหตุผลที่ไม่อนุมัติ');
+        }
+        $note = $note !== '' ? mb_substr($note, 0, 300) : null;
+        $newStatus = $decision === 'approve' ? 'approved' : 'rejected';
+        $by = function_exists('getFullName') ? getFullName() : ($_SESSION['username'] ?? '');
+
+        $done = 0;
+        $skipped = 0;
+        $attendance = 0;
+        $pdo->beginTransaction();
+        foreach ($ids as $id) {
+            $sql = "SELECT l.* FROM leave_requests l JOIN children c ON c.studentid = l.student_id WHERE l.id = :id";
+            $params = [':id' => $id];
+            if ($isTeacher) {
+                $sql .= devScreeningTeacherScopeSql();
+                $params[':teacher_id'] = $_SESSION['user_id'];
+            }
+            $sel = $pdo->prepare($sql . " FOR UPDATE OF l");
+            $sel->execute($params);
+            $row = $sel->fetch(PDO::FETCH_ASSOC);
+            if (!$row || $row['status'] !== 'pending') {
+                $skipped++;
+                continue;
+            }
+            $upd = $pdo->prepare("UPDATE leave_requests SET status = :st, decided_by = :by, decided_at = NOW(), decision_note = :note WHERE id = :id");
+            $upd->execute([':st' => $newStatus, ':by' => $by, ':note' => $note, ':id' => $id]);
+            if ($newStatus === 'approved') {
+                $attendance += leaveApplyToAttendance($pdo, $row);
+            }
+            $done++;
+        }
+        $pdo->commit();
+
+        $label = $newStatus === 'approved' ? 'อนุมัติ' : 'ไม่อนุมัติ';
+        echo json_encode(['status' => 'success', 'done' => $done, 'skipped' => $skipped, 'attendance_updated' => $attendance,
+            'message' => "$label $done รายการแล้ว" . ($skipped ? " (ข้าม $skipped รายการที่ดำเนินการไปแล้วหรือไม่มีสิทธิ์)" : '')]);
+        exit;
+    }
+
     manageFail('คำสั่งไม่ถูกต้อง');
 } catch (Exception $e) {
     if (isset($pdo) && $pdo->inTransaction()) {

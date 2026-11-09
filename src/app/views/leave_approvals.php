@@ -53,6 +53,14 @@ $groups = get_childgroup();
     .la-btn.ok { background: #f0fdf4; border-color: #86efac; color: #15803d; } .la-btn.ok:hover { background: #15803d; color: #fff; }
     .la-btn.no { background: #fef2f2; border-color: #fecaca; color: #b91c1c; } .la-btn.no:hover { background: #dc2626; color: #fff; }
     .la-decision { font-size: .74rem; color: #64748b; text-align: left; }
+    .la-table input.la-chk { width: 1.1rem; height: 1.1rem; cursor: pointer; accent-color: #1e4db7; }
+    .la-table th.chk, .la-table td.chk { width: 42px; padding-left: 14px; padding-right: 4px; }
+    .la-table tr.selected td { background: #eff6ff; }
+    .la-bulk { position: sticky; bottom: 12px; z-index: 5; display: none; align-items: center; flex-wrap: wrap; gap: .6rem; margin-top: .75rem; padding: .6rem 1rem; background: #0f2460; color: #fff; border-radius: 12px; box-shadow: 0 6px 20px rgba(15, 36, 96, .35); }
+    .la-bulk.show { display: flex; }
+    .la-bulk .cnt { font-weight: 700; margin-right: auto; }
+    .la-bulk .la-btn { padding: 6px 16px; font-size: .85rem; }
+    .la-bulk .la-btn.clr { background: transparent; border-color: rgba(255, 255, 255, .45); color: #fff; }
     .la-empty { text-align: center; padding: 2.5rem 1rem; color: #64748b; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, .06); }
     .la-empty > i { display: block; font-size: 2rem; color: #94a3b8; margin-bottom: .4rem; }
     .la-empty .big { font-size: 1.05rem; font-weight: 700; color: #334155; margin-bottom: .25rem; }
@@ -107,6 +115,12 @@ $groups = get_childgroup();
 
         <div class="la-pills" id="laSummary" style="display:none"></div>
         <div id="laList"></div>
+        <div class="la-bulk" id="laBulk">
+            <span class="cnt" id="laBulkCnt"></span>
+            <button type="button" class="la-btn ok" id="laBulkOk"><i class="bi bi-check-lg"></i>อนุมัติที่เลือก</button>
+            <button type="button" class="la-btn no" id="laBulkNo"><i class="bi bi-x-lg"></i>ไม่อนุมัติที่เลือก</button>
+            <button type="button" class="la-btn clr" id="laBulkClr">ล้างที่เลือก</button>
+        </div>
     </div>
 </main>
 
@@ -122,11 +136,26 @@ $groups = get_childgroup();
     let status = 'pending';
     let todayStr = '';
     let debounceT;
+    const selected = new Set();
+
+    function updateBulk() {
+        const n = selected.size;
+        $('laBulk').classList.toggle('show', n > 0);
+        $('laBulkCnt').textContent = `เลือกแล้ว ${n} รายการ`;
+        document.querySelectorAll('.la-chk[data-id]').forEach((c) => {
+            c.checked = selected.has(c.dataset.id);
+            c.closest('tr').classList.toggle('selected', c.checked);
+        });
+        const all = $('laChkAll'), boxes = document.querySelectorAll('.la-chk[data-id]');
+        if (all) { all.checked = boxes.length > 0 && [...boxes].every((c) => c.checked); all.indeterminate = n > 0 && !all.checked; }
+    }
 
     function dayCount(a, b) { return Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000) + 1; }
 
     async function load() {
         const box = $('laList');
+        selected.clear();
+        updateBulk();
         box.innerHTML = '<div class="la-empty"><div class="spinner-border text-primary"></div></div>';
         const q = new URLSearchParams({ status, child_group: $('fGroup').value, classroom: $('fRoom').value, search: $('fSearch').value.trim(), date_from: $('fFrom').value, date_to: $('fTo').value });
         try {
@@ -162,7 +191,9 @@ $groups = get_childgroup();
                 ? `<button type="button" class="la-btn ok" data-act="approve" data-id="${esc(r.id)}" data-name="${esc(name)}"><i class="bi bi-check-lg"></i>อนุมัติ</button>
                    <button type="button" class="la-btn no" data-act="reject" data-id="${esc(r.id)}" data-name="${esc(name)}"><i class="bi bi-x-lg"></i>ไม่อนุมัติ</button>`
                 : decided || '<span class="text-muted">-</span>';
+            const chk = r.status === 'pending' ? `<input type="checkbox" class="la-chk" data-id="${esc(r.id)}" aria-label="เลือก ${esc(name)}">` : '';
             return `<tr class="${esc(r.status)}">
+                <td class="chk">${chk}</td>
                 <td class="left"><div class="la-name">${esc(name)}</div><div class="la-nick">${r.nickname ? 'ชื่อเล่น ' + esc(r.nickname) + ' · ' : ''}${esc(r.child_group)} · ${esc(r.classroom)}</div></td>
                 <td><span class="la-chip ${esc(r.leave_type)}">${TYPE_TEXT[r.leave_type] || ''}</span></td>
                 <td class="nw"><div>${range}</div><div class="la-days">${dayCount(r.start_date, r.end_date)} วัน</div></td>
@@ -174,7 +205,7 @@ $groups = get_childgroup();
         }).join('');
 
         box.innerHTML = `<div class="la-tablecard"><div class="la-wrap"><table class="la-table">
-            <thead><tr><th class="left">เด็ก</th><th>ประเภท</th><th>วันที่ลา</th><th class="left">โรค / เหตุผล</th><th>แจ้งเมื่อ</th><th>สถานะ</th><th>การดำเนินการ</th></tr></thead>
+            <thead><tr><th class="chk">${rows.some((r) => r.status === 'pending') ? '<input type="checkbox" class="la-chk" id="laChkAll" aria-label="เลือกทั้งหมด">' : ''}</th><th class="left">เด็ก</th><th>ประเภท</th><th>วันที่ลา</th><th class="left">โรค / เหตุผล</th><th>แจ้งเมื่อ</th><th>สถานะ</th><th>การดำเนินการ</th></tr></thead>
             <tbody>${body}</tbody></table></div></div>`;
     }
 
@@ -203,6 +234,32 @@ $groups = get_childgroup();
         } catch (e) { Swal.fire({ icon: 'error', title: 'ดำเนินการไม่สำเร็จ', text: e.message, confirmButtonText: 'ตกลง' }); load(); }
     }
 
+    async function decideBulk(decision) {
+        const ids = [...selected].map(Number);
+        if (!ids.length) return;
+        const approve = decision === 'approve';
+        const res = await Swal.fire({
+            icon: approve ? 'question' : 'warning',
+            title: `${approve ? 'อนุมัติ' : 'ไม่อนุมัติ'} ${ids.length} รายการ?`,
+            html: `<textarea id="swNote" class="form-control" rows="3" maxlength="300" placeholder="${approve ? 'หมายเหตุถึงผู้ปกครอง (ไม่บังคับ)' : 'ระบุเหตุผลที่ไม่อนุมัติ (จำเป็น)'}"></textarea>`,
+            showCancelButton: true, confirmButtonText: approve ? 'อนุมัติทั้งหมด' : 'ไม่อนุมัติทั้งหมด', cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: approve ? '#15803d' : '#dc2626',
+            preConfirm: () => {
+                const note = document.getElementById('swNote').value.trim();
+                if (!approve && !note) { Swal.showValidationMessage('กรุณาระบุเหตุผลที่ไม่อนุมัติ'); return false; }
+                return note;
+            }
+        });
+        if (!res.isConfirmed) return;
+        try {
+            const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json', ...XHR }, body: JSON.stringify({ action: 'decide_bulk', ids, decision, note: res.value }) });
+            const data = await r.json();
+            if (data.status !== 'success') throw new Error(data.message || 'ดำเนินการไม่สำเร็จ');
+            Swal.fire({ icon: 'success', title: data.message, timer: 2200, showConfirmButton: false });
+        } catch (e) { Swal.fire({ icon: 'error', title: 'ดำเนินการไม่สำเร็จ', text: e.message, confirmButtonText: 'ตกลง' }); }
+        load();
+    }
+
     function loadRooms() {
         const group = $('fGroup').value, sel = $('fRoom');
         sel.innerHTML = '<option value="">-- ทั้งหมด --</option>';
@@ -229,6 +286,18 @@ $groups = get_childgroup();
             const b = e.target.closest('button[data-act]'); if (!b) return;
             decide(b.dataset.id, b.dataset.name, b.dataset.act);
         });
+        $('laList').addEventListener('change', (e) => {
+            const c = e.target.closest('.la-chk'); if (!c) return;
+            if (c.id === 'laChkAll') {
+                document.querySelectorAll('.la-chk[data-id]').forEach((x) => { c.checked ? selected.add(x.dataset.id) : selected.delete(x.dataset.id); });
+            } else {
+                c.checked ? selected.add(c.dataset.id) : selected.delete(c.dataset.id);
+            }
+            updateBulk();
+        });
+        $('laBulkOk').addEventListener('click', () => decideBulk('approve'));
+        $('laBulkNo').addEventListener('click', () => decideBulk('reject'));
+        $('laBulkClr').addEventListener('click', () => { selected.clear(); updateBulk(); });
         load();
     });
 </script>
