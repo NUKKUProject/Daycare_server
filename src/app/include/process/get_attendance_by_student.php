@@ -9,6 +9,18 @@ try {
     $student_id = $_GET['student_id'];
     $pdo = getDatabaseConnection();
 
+    // เติมสถานะ "ลา" ให้วันที่ลาที่อนุมัติแล้วแต่ยังไม่มีแถวเช็กชื่อ (รวมรายการที่อนุมัติไปก่อนหน้านี้)
+    try {
+        require_once(__DIR__ . '/../function/leave_functions.php');
+        $lv = $pdo->prepare("SELECT * FROM leave_requests WHERE student_id = :sid AND status = 'approved' AND start_date <= CURRENT_DATE");
+        $lv->execute(['sid' => $student_id]);
+        foreach ($lv->fetchAll(PDO::FETCH_ASSOC) as $leaveRow) {
+            leaveApplyToAttendance($pdo, $leaveRow);
+        }
+    } catch (Exception $e) {
+        error_log('get_attendance_by_student leave sync: ' . $e->getMessage());
+    }
+
     $stmt = $pdo->prepare("
         SELECT a.*,
             CASE 

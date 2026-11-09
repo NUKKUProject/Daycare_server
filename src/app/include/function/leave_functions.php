@@ -36,7 +36,17 @@ function leaveApplyToAttendance(PDO $pdo, array $row): int
           AND DATE(check_date) BETWEEN :s AND LEAST(CAST(:e AS date), CURRENT_DATE)
           AND (status IS NULL OR status = 'absent')");
     $stmt->execute([':note' => leaveAttendanceNote($row), ':sid' => $row['student_id'], ':s' => $row['start_date'], ':e' => $row['end_date']]);
-    return $stmt->rowCount();
+    $updated = $stmt->rowCount();
+
+    // วันธรรมดาที่ผ่านมา/วันนี้ ที่ยังไม่มีแถวเช็กชื่อเลย ให้สร้างเป็น "ลา" เพื่อให้ขึ้นในประวัติ
+    $ins = $pdo->prepare("INSERT INTO attendance (student_id, check_date, status, leave_note, updated_at)
+        SELECT :sid, d::date, 'leave', :note, NOW()
+        FROM generate_series(CAST(:s AS date), LEAST(CAST(:e AS date), CURRENT_DATE), INTERVAL '1 day') AS d
+        WHERE EXTRACT(ISODOW FROM d) < 6
+          AND NOT EXISTS (SELECT 1 FROM attendance a WHERE a.student_id = :sid2 AND DATE(a.check_date) = d::date)");
+    $ins->execute([':sid' => $row['student_id'], ':sid2' => $row['student_id'], ':note' => leaveAttendanceNote($row),
+        ':s' => $row['start_date'], ':e' => $row['end_date']]);
+    return $updated + $ins->rowCount();
 }
 
 // จำนวนคำขอลาที่รออนุมัติ (ตัวเลขบนเมนูของครู/แอดมิน) ครูนับเฉพาะเด็กในห้องที่ดูแล
