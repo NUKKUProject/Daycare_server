@@ -83,6 +83,8 @@ $nick = $child['nickname'] ?? '';
     .lv-cancel { margin-left: auto; border: 1.5px solid #fecaca; background: #fff; color: #b91c1c; border-radius: 999px; font-size: .75rem; font-weight: 700; padding: 2px 12px; cursor: pointer; }
     .lv-cancel:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
     .lv-empty { text-align: center; color: #94a3b8; padding: 1rem .5rem; font-size: .9rem; }
+    .lv-more { display: block; width: 100%; margin-top: .4rem; padding: .5rem; border: 1.5px dashed #99d6cf; border-radius: .8rem; background: #f0fdfa; color: #0f766e; font-weight: 700; font-size: .85rem; cursor: pointer; }
+    .lv-more:hover { background: #ccfbf1; }
 
     /* ===== สองคอลัมน์ (ซ้าย ฟอร์ม / ขวา ประวัติ) + สีที่สื่อความหมาย ===== */
     .lv-wrap { max-width: 1180px; }
@@ -125,6 +127,23 @@ $nick = $child['nickname'] ?? '';
     .lv-item.st-pending { background: #fffbeb; } .lv-item.st-approved { background: #f0fdf4; } .lv-item.st-rejected { background: #fef2f2; }
     .lv-item.cancelled { background: #f8fafc; }
     .lv-item .when { color: #0f172a; }
+
+    /* ===== มือถือ: ไม่ให้เนื้อหาล้นจอ ===== */
+    .lv-wrap, .lv-grid, .lv-card, .lv-step, .lv-header { min-width: 0; }
+    @media (max-width: 992px) { .lv-grid { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 576px) {
+        .lv-card { padding: 1.1rem 1rem; }
+        .lv-header { padding: 1rem 1.1rem; }
+        .lv-type label { padding: .6rem .6rem; gap: .5rem; }
+        .lv-type label i { width: 32px; height: 32px; font-size: 1rem; }
+        .lv-type label small { display: none; }
+        /* วันที่: เรียงบนล่าง คั่นด้วยคำว่า "ถึง" */
+        .lv-dates { flex-direction: column; align-items: stretch; gap: .35rem; }
+        .lv-dates .sep { text-align: center; font-size: .8rem; }
+        .lv-dates .form-control { width: 100%; flex: none; }
+        .lv-item .top { gap: .3rem .45rem; }
+        .lv-cancel { margin-left: 0; }
+    }
 </style>
 
 <main class="main-content">
@@ -201,9 +220,9 @@ $nick = $child['nickname'] ?? '';
             <!-- ประวัติการลา -->
             <div class="lv-card hist">
                 <h5 class="lv-card-title">ประวัติการลา <span class="count" id="leaveCount" style="display:none"></span></h5>
+                <div id="leaveList"><div class="lv-empty"><div class="spinner-border spinner-border-sm text-primary me-2"></div>กำลังโหลด...</div></div>
             </div>
             </div><!-- /lv-grid -->
-            </div>
         </div>
     </div>
 </main>
@@ -219,6 +238,8 @@ $nick = $child['nickname'] ?? '';
     const TYPE_TEXT = { personal: 'ลากิจ', sick: 'ลาป่วย' };
     const STATUS_TEXT = { pending: 'รออนุมัติ', approved: 'อนุมัติแล้ว', rejected: 'ไม่อนุมัติ', cancelled: 'ยกเลิกแล้ว' };
     let todayStr = iso(new Date());
+    const LEAVE_VISIBLE = 5;
+    let leaveRows = [], leaveShowAll = false;
 
     function selectedType() { const r = document.querySelector('input[name="leave_type"]:checked'); return r ? r.value : ''; }
     function selectedIllness() { const r = document.querySelector('input[name="illness"]:checked'); return r ? r.value : ''; }
@@ -299,7 +320,12 @@ $nick = $child['nickname'] ?? '';
             $('leaveCount').style.display = data.rows.length ? '' : 'none';
             $('leaveCount').textContent = data.rows.length + ' รายการ';
             if (!data.rows.length) { box.innerHTML = '<div class="lv-empty"><i class="bi bi-inbox fs-3 d-block mb-1"></i>ยังไม่มีประวัติการลา</div>'; return; }
-            box.innerHTML = data.rows.map((r) => {
+            // แสดงเฉพาะรายการล่าสุดก่อน (LEAVE_VISIBLE) ที่เหลือกด "ดูทั้งหมด"
+            leaveRows = data.rows;
+            const shown = leaveShowAll ? leaveRows : leaveRows.slice(0, LEAVE_VISIBLE);
+            const moreHtml = leaveRows.length > LEAVE_VISIBLE
+                ? `<button type="button" class="lv-more" id="lvMore">${leaveShowAll ? 'แสดงเฉพาะรายการล่าสุด' : 'ดูทั้งหมด (' + leaveRows.length + ' รายการ)'}</button>` : '';
+            box.innerHTML = shown.map((r) => {
                 const cancelled = r.status === 'cancelled';
                 const range = r.start_date === r.end_date ? thai(r.start_date) : `${thai(r.start_date)} - ${thai(r.end_date)}`;
                 // ช่วงเวลา (กำลังลา/ผ่านมาแล้ว) แสดงเฉพาะที่อนุมัติแล้ว
@@ -320,7 +346,7 @@ $nick = $child['nickname'] ?? '';
                     ${detail ? `<div class="meta">${detail}</div>` : ''}
                     ${decision}
                 </div>`;
-            }).join('');
+            }).join('') + moreHtml;
         } catch (err) {
             box.innerHTML = `<div class="lv-empty text-danger">${esc(err.message)}</div>`;
         }
@@ -346,7 +372,10 @@ $nick = $child['nickname'] ?? '';
         $('endDate').addEventListener('change', countDays);
         $('leaveForm').addEventListener('submit', submitLeave);
         $('leaveForm').addEventListener('reset', () => setTimeout(() => { syncType(); syncIllness(); initDates(); }, 0));
-        $('leaveList').addEventListener('click', (e) => { const b = e.target.closest('.lv-cancel'); if (b) cancelLeave(b.dataset.id); });
+        $('leaveList').addEventListener('click', (e) => {
+            if (e.target.closest('#lvMore')) { leaveShowAll = !leaveShowAll; loadList(); return; }
+            const b = e.target.closest('.lv-cancel'); if (b) cancelLeave(b.dataset.id);
+        });
     });
 </script>
 </body>
