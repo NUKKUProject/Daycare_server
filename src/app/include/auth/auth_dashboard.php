@@ -53,6 +53,10 @@ function renderSidebarGroups(array $menu, string $storageKey)
             .nav-group-toggle:hover { background: rgba(255, 255, 255, .08); color: #fff; }
             .nav-group-toggle .chev { margin-left: auto; font-size: .75rem; transition: transform .2s ease; }
             .nav-group.open > .nav-group-toggle .chev { transform: rotate(180deg); }
+            .nav-group-toggle .group-badge { margin-left: auto; font-size: .7rem; }
+            .nav-group.open > .nav-group-toggle .group-badge { display: none; }
+            .nav-group-toggle .group-badge + .chev { margin-left: .35rem; }
+            .nav-group.open > .nav-group-toggle .group-badge + .chev { margin-left: auto; }
             .nav-group.has-active > .nav-group-toggle { color: #fff; }
             .nav-group-items { list-style: none; padding: 0; margin: .15rem 0 0; display: none; }
             .nav-group.open > .nav-group-items { display: block; }
@@ -71,7 +75,11 @@ function renderSidebarGroups(array $menu, string $storageKey)
             <button type="button" class="nav-group-toggle" aria-expanded="<?php echo $isOpen ? 'true' : 'false'; ?>">
                 <i class="<?php echo htmlspecialchars($group['icon']); ?>"></i>
                 <span><?php echo htmlspecialchars($group['title']); ?></span>
-                <i class="bi bi-chevron-down chev"></i>
+                <?php $groupBadge = array_sum(array_map(function ($it) { return (int) ($it['badge'] ?? 0); }, $group['items'])); ?>
+                <?php if ($groupBadge > 0): ?>
+                    <span class="badge rounded-pill bg-danger ms-auto group-badge"><?php echo $groupBadge; ?></span>
+                <?php endif; ?>
+                <i class="bi bi-chevron-down chev<?php echo $groupBadge > 0 ? ' ms-1' : ''; ?>"></i>
             </button>
             <ul class="nav-group-items">
                 <?php foreach ($group['items'] as $item): ?>
