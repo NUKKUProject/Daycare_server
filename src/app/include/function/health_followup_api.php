@@ -24,8 +24,52 @@ try {
     $type = (string) ($in['type'] ?? 'dental');
     $id = (int) ($in['id'] ?? 0);
     $status = (string) ($in['status'] ?? '');
-    if ($username === '' || !$id || !isset(hf_types()[$type]) || !in_array($status, HF_STATUSES, true)) {
+    if ($username === '' || (!isset($in['items']) && (!$id || !isset(hf_types()[$type]) || !in_array($status, HF_STATUSES, true)))) {
         out(['status' => 'error', 'message' => 'ข้อมูลไม่ถูกต้อง'], 400);
+    }
+
+    // บันทึกหลายรายการพร้อมกัน (ศูนย์เท่านั้น): items = [{type, id}, ...] ใช้สถานะ/วันที่/หมายเหตุเดียวกัน
+    if (isset($in['items'])) {
+        if ($isParent) {
+            out(['status' => 'error', 'message' => 'ไม่มีสิทธิ์'], 403);
+        }
+        $list = is_array($in['items']) ? array_slice($in['items'], 0, 300) : [];
+        $status = (string) ($in['status'] ?? '');
+        if (!$list || !in_array($status, HF_STATUSES, true)) {
+            out(['status' => 'error', 'message' => 'ข้อมูลไม่ถูกต้อง'], 400);
+        }
+        $date = null;
+        if ($status !== 'acknowledged') {
+            $d = DateTime::createFromFormat('Y-m-d', (string) ($in['date'] ?? ''));
+            if (!$d) {
+                out(['status' => 'error', 'message' => 'กรุณาระบุวันที่'], 400);
+            }
+            if ($status === 'treated' && $d > new DateTime('today')) {
+                out(['status' => 'error', 'message' => 'วันที่พาไปรักษาต้องไม่เป็นวันในอนาคต'], 400);
+            }
+            $date = $d->format('Y-m-d');
+        }
+        $note = mb_substr(trim((string) ($in['note'] ?? '')), 0, 300);
+        $pdo = getDatabaseConnection();
+        $saved = [];
+        $failed = 0;
+        foreach ($list as $row) {
+            $t = (string) ($row['type'] ?? '');
+            $rid = (int) ($row['id'] ?? 0);
+            if (!$rid || !isset(hf_types()[$t])) {
+                $failed++;
+                continue;
+            }
+            $sid = hf_verify_source($pdo, $t, $rid, null);
+            if ($sid === null) {
+                $failed++;
+                continue;
+            }
+            hf_save($pdo, $t, $rid, $sid, $status, $date, $note !== '' ? $note : null, $username, 'center');
+            $saved[] = ['type' => $t, 'id' => $rid];
+        }
+        out(['status' => 'success', 'saved' => $saved, 'failed' => $failed,
+            'message' => 'บันทึกการติดตาม ' . count($saved) . ' รายการแล้ว' . ($failed ? " (ไม่สำเร็จ $failed รายการ)" : '')]);
     }
 
     $date = null;

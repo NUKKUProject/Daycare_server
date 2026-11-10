@@ -83,6 +83,16 @@ $types = array_map(fn($t) => ['label' => $t['label'], 'icon' => $t['icon']], hf_
     .hf-btn.edit:hover { background: #16a34a; color: #fff; }
     .hf-link { background: #fff; border: 1.5px solid #cbd5e1; border-radius: .6rem; color: #475569; font-size: .8rem; font-weight: 700; padding: .3rem .8rem; text-decoration: none; white-space: nowrap; }
     .hf-link:hover { background: #f1f5f9; color: #1E4F6F; }
+    .hf-chk { accent-color: #1E4F6F; cursor: pointer; flex-shrink: 0; height: 1.15rem; width: 1.15rem; }
+    .hf-who .hf-chk { margin-right: -.1rem; }
+    .hf thead th .hf-chk { margin-right: .5rem; vertical-align: -3px; }
+    .hf tbody tr.sel td { background: #eff6ff; }
+    .hf-bulk { align-items: center; background: #1E4F6F; border-radius: 1rem; bottom: 12px; box-shadow: 0 8px 24px rgba(30, 79, 111, .4); color: #fff; display: none; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; padding: .65rem 1rem; position: sticky; z-index: 5; }
+    .hf-bulk.show { display: flex; }
+    .hf-bulk .cnt { font-weight: 700; margin-right: auto; }
+    .hf-bulk button { background: #fff; border: 0; border-radius: .6rem; color: #1E4F6F; font-size: .85rem; font-weight: 700; padding: .4rem .9rem; white-space: nowrap; }
+    .hf-bulk button:hover { background: #dbeafe; }
+    .hf-bulk button.clr { background: transparent; border: 1.5px solid rgba(255, 255, 255, .5); color: #fff; }
     .hf-empty { color: #64748b; padding: 3rem 1rem; text-align: center; }
     .hf-empty i { color: #86efac; display: block; font-size: 2.6rem; margin-bottom: .5rem; }
     .hf-empty.neutral i { color: #cbd5e1; }
@@ -147,6 +157,13 @@ $types = array_map(fn($t) => ['label' => $t['label'], 'icon' => $t['icon']], hf_
 
         <div class="hf-count" id="hfCount"></div>
         <div id="hfTable"></div>
+        <div class="hf-bulk" id="hfBulk">
+            <span class="cnt" id="hfBulkCnt"></span>
+            <button type="button" data-bs="acknowledged"><i class="bi bi-hand-thumbs-up me-1"></i>ทราบแล้ว</button>
+            <button type="button" data-bs="scheduled"><i class="bi bi-calendar-event me-1"></i>นัดหมอแล้ว</button>
+            <button type="button" data-bs="treated"><i class="bi bi-check2-circle me-1"></i>พาไปรักษาแล้ว</button>
+            <button type="button" class="clr" id="hfBulkClr">ล้างที่เลือก</button>
+        </div>
     </div>
 </main>
 
@@ -171,6 +188,21 @@ $types = array_map(fn($t) => ['label' => $t['label'], 'icon' => $t['icon']], hf_
     const st = (it) => it.status || 'none';
     const avColor = (id) => AV_COLORS[[...String(id)].reduce((a, c) => a + c.charCodeAt(0), 0) % AV_COLORS.length];
     let typeFilter = 'all';
+    const selected = new Set();
+    let visibleKeys = [];
+    const keyOf = (it) => `${it.source_type}:${it.source_id}`;
+
+    function updateBulk() {
+        [...selected].forEach((k) => { if (!visibleKeys.includes(k)) selected.delete(k); });
+        byId('hfBulk').classList.toggle('show', selected.size > 0);
+        byId('hfBulkCnt').textContent = `เลือกแล้ว ${selected.size} รายการ`;
+        document.querySelectorAll('input.hf-chk[data-key]').forEach((c) => {
+            c.checked = selected.has(c.dataset.key);
+            c.closest('tr').classList.toggle('sel', c.checked);
+        });
+        const all = byId('hfChkAll');
+        if (all) { all.checked = visibleKeys.length > 0 && visibleKeys.every((k) => selected.has(k)); all.indeterminate = selected.size > 0 && !all.checked; }
+    }
 
     function matches(it, ignoreStatus, ignoreType) {
         if (!ignoreType && typeFilter !== 'all' && it.source_type !== typeFilter) return false;
@@ -209,21 +241,23 @@ $types = array_map(fn($t) => ['label' => $t['label'], 'icon' => $t['icon']], hf_
             return String(b.replied_at).localeCompare(String(a.replied_at));
         });
         byId('hfCount').textContent = list.length ? `แสดง ${list.length} รายการ` : '';
+        visibleKeys = list.map(keyOf);
         if (!list.length) {
+            updateBulk();
             const pendingDone = ITEMS.length && byId('hfStatus').value === 'none' && !byId('hfSearch').value && !byId('hfGroup').value && !byId('hfRoom').value && typeFilter === 'all';
             byId('hfTable').innerHTML = pendingDone
                 ? '<div class="hf-card hf-empty"><i class="bi bi-check-circle-fill"></i><div class="fw-bold">ผู้ปกครองตอบกลับครบทุกเรื่องแล้ว</div><div class="small">ไม่มีเรื่องที่ค้างตอบ</div></div>'
                 : `<div class="hf-card hf-empty neutral"><i class="bi bi-inbox"></i><div class="fw-bold">${ITEMS.length ? 'ไม่พบรายการตามเงื่อนไข' : 'ยังไม่มีเรื่องสุขภาพที่ต้องติดตาม'}</div><div class="small">${ITEMS.length ? 'ลองเปลี่ยนสถานะหรือล้างตัวกรอง' : 'เมื่อทันตแพทย์ตรวจพบฟันผุ เรื่องจะขึ้นที่นี่'}</div></div>`;
             return;
         }
-        byId('hfTable').innerHTML = `<table class="hf"><thead><tr><th>เด็ก</th><th>ประเภท / สิ่งที่พบ</th><th>ตรวจเมื่อ</th><th>การตอบกลับ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody>` +
+        byId('hfTable').innerHTML = `<table class="hf"><thead><tr><th><input type="checkbox" class="hf-chk" id="hfChkAll" aria-label="เลือกทั้งหมด">เด็ก</th><th>ประเภท / สิ่งที่พบ</th><th>ตรวจเมื่อ</th><th>การตอบกลับ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody>` +
             list.map((it) => {
                 const s = st(it);
                 const when = it.status_date && s !== 'acknowledged' ? ' ' + thaiDate(it.status_date) : '';
                 const who = it.by === 'center' ? 'ศูนย์บันทึก' : (it.by === 'parent' ? 'ผู้ปกครอง' : '');
                 const rowCls = s === 'treated' ? 'done' : (s === 'none' && it.urgency === 'urgent' ? 'urgent' : (s === 'none' && it.urgency === 'preventable' ? 'preventable' : ''));
                 return `<tr class="${rowCls}">
-                    <td><div class="hf-who"><span class="hf-av" style="background:${avColor(it.student_id)}">${esc(String(it.nickname || it.name).replace(/^น้อง/, '').charAt(0) || '?')}</span>
+                    <td><div class="hf-who"><input type="checkbox" class="hf-chk" data-key="${esc(keyOf(it))}" aria-label="เลือก ${esc(it.nickname || it.name)}"><span class="hf-av" style="background:${avColor(it.student_id)}">${esc(String(it.nickname || it.name).replace(/^น้อง/, '').charAt(0) || '?')}</span>
                         <div><div class="nick">${esc(it.nickname || it.name)}</div>${it.nickname ? `<div class="full">${esc(it.name)}</div>` : ''}<span class="hf-room">ห้อง ${esc(it.classroom || '-')}</span></div></div></td>
                     <td><span class="hf-tag">${esc(it.type_label)}</span> <span class="hf-find">${esc(it.detail)}${it.count_text ? ` <span class="text-danger">${esc(it.count_text)}</span>` : ''}</span>
                         ${it.urgency ? `<div><span class="hf-urg ${it.urgency}">${URG[it.urgency] || ''}</span></div>` : ''}</td>
@@ -234,6 +268,46 @@ $types = array_map(fn($t) => ['label' => $t['label'], 'icon' => $t['icon']], hf_
                         <a class="hf-link" href="${esc(it.link)}"><i class="bi bi-box-arrow-up-right me-1"></i>ดูผลตรวจ</a></div></td>
                 </tr>`;
             }).join('') + '</tbody></table>';
+        updateBulk();
+    }
+
+    // บันทึกการติดตามหลายรายการพร้อมกัน
+    async function bulkFollowup(status) {
+        const chosen = ITEMS.filter((it) => selected.has(keyOf(it)));
+        if (!chosen.length) return;
+        const todayDate = new Date(); const today = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
+        const needDate = status !== 'acknowledged';
+        const res = await Swal.fire({
+            width: 480,
+            html: `<div style="text-align:left">
+                <div style="font-weight:700;font-size:1.15rem;color:#1E4F6F">${esc(STATUS_TEXT[status])} · ${chosen.length} รายการ</div>
+                <div class="text-muted small mb-3">บันทึกแทนผู้ปกครองให้ทุกรายการที่เลือก</div>
+                ${needDate ? `<div class="mb-3"><label class="fo-lb" for="foDate">วันที่${status === 'scheduled' ? 'นัดหมอ' : 'พาไปรักษา'}</label><input id="foDate" type="date" class="form-control" value="${today}"></div>` : ''}
+                <label class="fo-lb" for="foNote">หมายเหตุ <span class="text-muted fw-normal">(ไม่บังคับ)</span></label>
+                <textarea id="foNote" class="form-control" rows="3" maxlength="300"></textarea></div>`,
+            showCancelButton: true, buttonsStyling: false, reverseButtons: true,
+            confirmButtonText: '<i class="bi bi-check-circle me-1"></i>บันทึกทั้งหมด', cancelButtonText: 'ยกเลิก',
+            customClass: { popup: 'fo-popup', confirmButton: 'fo-confirm', cancelButton: 'fo-cancel' },
+            preConfirm: () => {
+                const date = needDate ? byId('foDate').value : '';
+                if (needDate && !date) { Swal.showValidationMessage('กรุณาระบุวันที่'); return false; }
+                return { date, note: byId('foNote').value.trim() };
+            }
+        });
+        if (!res.isConfirmed) return;
+        try {
+            const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ items: chosen.map((it) => ({ type: it.source_type, id: it.source_id })), status, date: res.value.date, note: res.value.note }) });
+            const data = await r.json();
+            if (data.status !== 'success') throw new Error(data.message || 'บันทึกไม่สำเร็จ');
+            const done = new Set((data.saved || []).map((s) => `${s.type}:${s.id}`));
+            chosen.forEach((it) => { if (done.has(keyOf(it))) Object.assign(it, { status, status_date: res.value.date || null, note: res.value.note || null, replied_at: new Date().toISOString(), by: 'center' }); });
+            selected.clear();
+            renderAll();
+            Swal.fire({ icon: 'success', title: data.message, timer: 1800, showConfirmButton: false });
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: e.message, confirmButtonText: 'ตกลง' });
+        }
     }
 
     function renderAll() { renderStats(); renderTabs(); renderTable(); }
@@ -309,6 +383,14 @@ $types = array_map(fn($t) => ['label' => $t['label'], 'icon' => $t['icon']], hf_
         byId('hfRoom').addEventListener('change', renderAll);
         byId('hfReset').addEventListener('click', () => { byId('hfSearch').value = ''; byId('hfGroup').value = ''; fillRooms(); byId('hfStatus').value = 'none'; typeFilter = 'all'; renderAll(); });
         let t; byId('hfSearch').addEventListener('input', () => { clearTimeout(t); t = setTimeout(renderAll, 250); });
+        byId('hfTable').addEventListener('change', (e) => {
+            const c = e.target.closest('.hf-chk'); if (!c) return;
+            if (c.id === 'hfChkAll') visibleKeys.forEach((k) => (c.checked ? selected.add(k) : selected.delete(k)));
+            else c.checked ? selected.add(c.dataset.key) : selected.delete(c.dataset.key);
+            updateBulk();
+        });
+        byId('hfBulk').addEventListener('click', (e) => { const b = e.target.closest('[data-bs]'); if (b) bulkFollowup(b.dataset.bs); });
+        byId('hfBulkClr').addEventListener('click', () => { selected.clear(); updateBulk(); });
         byId('hfTable').addEventListener('click', (e) => {
             const b = e.target.closest('.hf-btn'); if (!b) return;
             const it = ITEMS.find((x) => x.source_type === b.dataset.type && String(x.source_id) === b.dataset.sid);
