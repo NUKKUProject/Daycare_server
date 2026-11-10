@@ -172,8 +172,8 @@ $types = array_map(fn($t) => ['label' => $t['label'], 'icon' => $t['icon']], hf_
     const avColor = (id) => AV_COLORS[[...String(id)].reduce((a, c) => a + c.charCodeAt(0), 0) % AV_COLORS.length];
     let typeFilter = 'all';
 
-    function matches(it, ignoreStatus) {
-        if (typeFilter !== 'all' && it.source_type !== typeFilter) return false;
+    function matches(it, ignoreStatus, ignoreType) {
+        if (!ignoreType && typeFilter !== 'all' && it.source_type !== typeFilter) return false;
         if (byId('hfGroup').value && it.child_group !== byId('hfGroup').value) return false;
         if (byId('hfRoom').value && it.classroom !== byId('hfRoom').value) return false;
         const q = byId('hfSearch').value.trim().toLowerCase();
@@ -195,7 +195,8 @@ $types = array_map(fn($t) => ['label' => $t['label'], 'icon' => $t['icon']], hf_
 
     function renderTabs() {
         const keys = Object.keys(TYPES);
-        const count = (k) => ITEMS.filter((it) => k === 'all' || it.source_type === k).length;
+        // นับตามตัวกรองสถานะ/กลุ่ม/ห้อง/คำค้นที่เลือกอยู่ (ไม่รวมตัวกรองประเภท) ให้ตรงกับรายการที่จะแสดงเมื่อกดแท็บ
+        const count = (k) => ITEMS.filter((it) => (k === 'all' || it.source_type === k) && matches(it, false, true)).length;
         byId('hfTabs').innerHTML = [['all', 'ทั้งหมด', 'bi bi-grid']].concat(keys.map((k) => [k, TYPES[k].label, TYPES[k].icon])).map(([k, l, ic]) =>
             `<button type="button" class="hf-tab${typeFilter === k ? ' on' : ''}" data-k="${k}"><i class="${esc(ic)} me-1"></i>${esc(l)}<span class="c">${count(k)}</span></button>`).join('');
     }
